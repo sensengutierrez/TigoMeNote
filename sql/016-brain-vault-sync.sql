@@ -1,4 +1,4 @@
--- TigoMeNote · 016 · vault sync: profile edit + viewer fixes (record lang; napatakbo na)
+-- TigoMeNote · 016 · vault sync: profile edit + viewer fixes (HINDI PA NAPAPATAKBO: na-cancel ang sync; patakbuhin sa SQL Editor o sa susunod na sync)
 insert into public.brain_notes (title, body, tags, updated_by) values ('Build - Profile edit', $md$---
 tags: [build]
 updated: 2026-10-23
