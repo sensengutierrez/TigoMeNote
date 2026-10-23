@@ -19,6 +19,8 @@
 </head>
 <body data-page="profile">
   <main id="page" class="page">
+   <div class="layout aside-left">
+    <aside class="layout-aside">
     <section class="profile card">
       <div class="profile-banner"></div>
       <div class="profile-body">
@@ -42,12 +44,24 @@
         </div>
       </div>
     </section>
+    </aside>
 
-    <section class="card empty" style="margin-top:16px">
-      <div class="empty-art"><i data-icon="image" data-size="lg"></i></div>
-      <h3>No shared posts yet</h3>
-      <p>Ang mga shinare mo sa Explore ay lalabas dito.</p>
+    <section class="card posts">
+      <div class="posts-head">
+        <h3>Posts</h3>
+        <div class="chips" role="tablist" aria-label="Filter posts">
+          <button class="chip active" type="button" role="tab" aria-selected="true">All</button>
+          <button class="chip" type="button" role="tab" aria-selected="false">Photos</button>
+          <button class="chip" type="button" role="tab" aria-selected="false">Videos</button>
+        </div>
+      </div>
+      <div class="empty posts-empty">
+        <div class="empty-art"><i data-icon="image" data-size="lg"></i></div>
+        <h3>No shared posts yet</h3>
+        <p>Ang mga shinare mo sa Explore ay lalabas dito.</p>
+      </div>
     </section>
+   </div>
   </main>
   <script src="../assets/js/icons.js"></script>
   <script src="../assets/js/nav-items.js"></script>

@@ -35,6 +35,7 @@ File: `assets/js/config.js`, sa loob ng `fn: { ... }`. Walang page na may sarili
 4. Isulat sa [[Change log]] at [[System map]].
 
 ## Layout rule
+- **Desktop/laptop = full UI/UX:** gamitin ang buong lapad (hindi makitid na card sa gitna). Gamitin ang `.layout` (main + side panel sa kanan) o `.layout.aside-left` (panel sa kaliwa), at `.layout-aside` para sa side panel.
 - Desktop (≥ 900 px): isang screen lang, walang whole-page scroll; ang content box lang ang nag-i-scroll.
 - Phone: normal na scroll.
 - Laging i-check ang dark mode.

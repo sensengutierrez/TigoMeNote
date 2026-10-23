@@ -27,7 +27,8 @@
       </div>
     </header>
 
-    <div class="stack">
+    <div class="layout">
+     <div class="stack">
       <div class="composer card">
         <span class="avatar" id="meAvatar" style="--size:42px"></span>
         <button class="composer-input" type="button" disabled>What's your note today?</button>
@@ -37,13 +38,31 @@
         </div>
       </div>
 
-      <div class="week" id="week" aria-label="This week"></div>
-
-      <section class="card empty">
+      <section class="card empty feed-empty">
         <div class="empty-art"><i data-icon="sun" data-size="lg"></i></div>
         <h3>No notes yet today</h3>
         <p>Pag ready na ang Daily, dito lalabas ang notes, photos at videos mo sa araw na ito.</p>
       </section>
+     </div>
+
+     <aside class="layout-aside">
+      <section class="card">
+        <h3 class="side-title">This week</h3>
+        <div class="week" id="week" aria-label="This week"></div>
+      </section>
+      <section class="card">
+        <h3 class="side-title">Today</h3>
+        <div class="today-stats">
+          <div><b>0</b><span>Notes</span></div>
+          <div><b>0</b><span>Photos</span></div>
+          <div><b>0</b><span>Videos</span></div>
+        </div>
+      </section>
+      <section class="card card-flat side-note">
+        <i data-icon="lock"></i>
+        <p>Ang Daily notes mo ay naka-save sa device mo lang. Ikaw ang pipili kung alin ang ishe-share.</p>
+      </section>
+     </aside>
     </div>
   </main>
 

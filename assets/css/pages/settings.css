@@ -7,3 +7,9 @@
   .set-row .segmented { width: 100%; }
   .set-row .segmented button { flex: 1; justify-content: center; }
 }
+
+.settings-grid { display: grid; gap: 16px; }
+@media (min-width: 900px) {
+  .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .settings-version { grid-column: 1 / -1; }
+}

@@ -95,6 +95,8 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .page-head .eyebrow { font-size: 12.5px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
 .page-head .lead { color: var(--text-2); margin-top: 6px; }
 .stack { display: grid; gap: 16px; }
+.layout { display: grid; gap: 16px; }
+.layout-aside { display: grid; gap: 16px; }
 
 /* ================= Desktop ================= */
 @media (min-width: 900px) {
@@ -113,9 +115,20 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
   .sidebar-foot { margin-top: auto; display: grid; gap: 10px; padding-top: 16px; }
 
   .shell-main { height: 100%; overflow-y: auto; padding-bottom: 0; background: var(--bg); scrollbar-gutter: stable; }
-  .page { padding: 36px 32px 48px; }
+  /* Full UI sa desktop/laptop: buong lapad ang gamit (rule ni Bench) */
+  .page, .page.wide { max-width: 1480px; padding: 32px 40px 48px; }
+
+  /* 2 columns: main + side panel (aside sa kanan). .layout.aside-left = aside sa kaliwa */
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+  .layout.aside-left { grid-template-columns: 360px minmax(0, 1fr); }
+  .layout-aside { position: sticky; top: 0; display: grid; gap: 16px; }
 
   /* Pages na buong taas ang gamit (hal. Messages): .page.fill */
   .shell-main:has(.page.fill) { overflow: hidden; }
   .page.fill { height: 100%; display: flex; flex-direction: column; padding-bottom: 24px; }
+}
+
+/* Malapad na screen: mas malaking side panel */
+@media (min-width: 1500px) {
+  .layout { grid-template-columns: minmax(0, 1fr) 380px; }
 }

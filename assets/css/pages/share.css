@@ -23,3 +23,10 @@
   .capture { grid-template-columns: 1fr 1fr; }
   .capture-tile:first-child { grid-column: 1 / -1; min-height: 130px; }
 }
+
+@media (min-width: 900px) {
+  .capture { margin-bottom: 0; }
+  .capture-tile { min-height: 260px; padding: 22px; }
+  .capture-tile .cap-icon { width: 60px; height: 60px; border-radius: 18px; }
+  .capture-tile .cap-title { font-size: 19px; }
+}

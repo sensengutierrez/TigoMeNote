@@ -21,3 +21,6 @@
   .explore-tools { grid-template-columns: minmax(260px, 380px) 1fr; align-items: center; }
   .explore-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
 }
+
+@media (min-width: 1200px) { .explore-grid { grid-template-columns: repeat(5, 1fr); } }
+@media (min-width: 1500px) { .explore-grid { grid-template-columns: repeat(6, 1fr); } }

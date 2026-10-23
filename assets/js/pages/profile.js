@@ -16,4 +16,11 @@
   }
   paint();
   document.addEventListener("tmn:user", paint);
+
+  document.querySelectorAll(".posts .chip").forEach(function (c) {
+    c.addEventListener("click", function () {
+      document.querySelectorAll(".posts .chip").forEach(function (x) { x.classList.remove("active"); x.setAttribute("aria-selected", "false"); });
+      c.classList.add("active"); c.setAttribute("aria-selected", "true");
+    });
+  });
 })();
