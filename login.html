@@ -74,6 +74,7 @@
           </div>
           <div class="strength reg-only hidden" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
           <span class="hint reg-only hidden" id="passHint">At least 8 characters.</span>
+          <button class="link-btn forgot-link login-only" type="button" id="forgotLink">Forgot password?</button>
         </div>
 
         <label class="check"><input type="checkbox" id="fRemember" checked> Keep me signed in on this device</label>
@@ -111,6 +112,50 @@
         <button class="link-btn" type="button" id="vBack">Back to sign in</button>
       </div>
       <p class="faint small auth-foot">Wala sa inbox? Tingnan ang Spam o Promotions folder.</p>
+     </section>
+
+     <!-- Forgot password: step 1 (hingi ng code) at step 2 (code + bagong password) -->
+     <section id="resetView" class="verify hidden" aria-labelledby="rTitle">
+      <div class="verify-ic"><i data-icon="lock" data-size="lg"></i></div>
+      <h1 id="rTitle">Forgot password?</h1>
+      <p class="muted" id="rSub">Ilagay ang username o email mo. Padadalhan ka namin ng 6-digit code.</p>
+
+      <form id="rForm1" class="verify-form" novalidate>
+        <div class="field">
+          <label for="rId">Username o email</label>
+          <input class="input" id="rId" maxlength="254" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="yourname o you@gmail.com">
+        </div>
+        <div class="alert hidden" id="rMsg1" role="alert"></div>
+        <button class="btn btn-primary btn-lg btn-block" type="submit" id="rBtn1">Send code</button>
+      </form>
+
+      <form id="rForm2" class="verify-form hidden" novalidate>
+        <div class="otp" id="otp2" role="group" aria-label="6-digit code">
+          <input inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="Digit 1">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 2">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 3">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 4">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 5">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 6">
+        </div>
+        <div class="field">
+          <label for="rPass">Bagong password</label>
+          <div class="input-wrap">
+            <input class="input" id="rPass" type="password" maxlength="72" autocomplete="new-password" placeholder="••••••••">
+            <button class="icon-btn" type="button" id="rEye" aria-label="Show password"></button>
+          </div>
+          <div class="strength" id="rStrength" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <span class="hint" id="rHint">At least 8 characters.</span>
+        </div>
+        <div class="alert hidden" id="rMsg2" role="alert"></div>
+        <button class="btn btn-primary btn-lg btn-block" type="submit" id="rBtn2">Change password</button>
+      </form>
+
+      <div class="verify-links">
+        <button class="link-btn hidden" type="button" id="rResend">Resend code</button>
+        <span class="faint hidden" id="rDot">·</span>
+        <button class="link-btn" type="button" id="rBack">Back to sign in</button>
+      </div>
      </section>
     </div>
   </main>

@@ -54,7 +54,7 @@ updated: 2026-10-23
 
 ## Known limits / hindi pa na-test
 - Hindi pa na-test ang totoong pagpapadala ng Gmail mula sa Supabase (hindi abot ng sandbox).
-- Wala pang "Forgot password" (handa na ang `email_codes.purpose = 'reset'`).
+- Forgot password: tapos na, tingnan ang [[Build - Forgot password]].
 - Wala pang "palitan ang email" sa Settings.
 
 Tingnan din: [[Build - Login page]], [[Supabase setup]], [[Change log]]

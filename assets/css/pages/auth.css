@@ -154,3 +154,7 @@
 .link-btn { border: 0; background: none; padding: 6px 2px; font-weight: 600; font-size: 14px; color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 .link-btn:disabled { color: var(--text-3); text-decoration: none; cursor: default; }
 @media (max-width: 380px) { .otp { gap: 6px; } .otp input { height: 50px; font-size: 22px; } }
+
+/* ---------- Forgot password ---------- */
+.forgot-link { justify-self: end; font-size: 13px; margin-top: 2px; }
+.verify-form .field { text-align: left; }

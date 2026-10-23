@@ -1,5 +1,5 @@
 // TigoMeNote · auth-fast (Supabase Edge Function, verify_jwt = off)
-// Actions: register, login, verifyEmail, resendCode, checkSession, logout
+// Actions: register, login, verifyEmail, resendCode, forgotPassword, resetPassword, checkSession, logout
 // Secrets: AUTH_PEPPER (required), SMTP_USER + SMTP_PASS (Gmail + App Password, required para sa email)
 // Optional: SMTP_HOST (default smtp.gmail.com), MAIL_FROM_NAME (default TigoMeNote), REQUIRE_APPROVAL = "true"
 // SUPABASE_URL at SUPABASE_SERVICE_ROLE_KEY ay automatic sa Supabase.
@@ -32,6 +32,7 @@ const RESEND_COOLDOWN_S = 60;     // hintay bago mag-resend
 const CODES_PER_HOUR = 5;         // max codes bawat user bawat oras
 const VERIFY_FAILS_PER_IP_10MIN = 30;
 const UNVERIFIED_TTL_HOURS = 24;  // binubura ang hindi na-verify na account pagkatapos nito
+const FORGOT_PER_IP_PER_HOUR = 10; // max forgot-password requests bawat IP
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -139,27 +140,29 @@ const mailer = SMTP_USER && SMTP_PASS
   ? nodemailer.createTransport({ host: SMTP_HOST, port: 465, secure: true, auth: { user: SMTP_USER, pass: SMTP_PASS } })
   : null;
 
-function codeEmailHtml(name: string, code: string) {
+function codeEmailHtml(name: string, code: string, purpose: Purpose) {
   const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
   return `<!doctype html><html><body style="margin:0;background:#f6f6f4;font-family:Inter,Arial,sans-serif;color:#121212">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
   <table role="presentation" width="100%" style="max-width:440px;background:#ffffff;border:1px solid #e7e6e3;border-radius:18px" cellpadding="0" cellspacing="0">
   <tr><td style="padding:28px 28px 8px"><div style="font-weight:800;font-size:18px">Tigo<span style="color:#ff5a36">Me</span>Note</div></td></tr>
-  <tr><td style="padding:8px 28px 0;font-size:15px;line-height:1.5">Hi ${esc(name)}, ito ang code para ma-verify ang email mo:</td></tr>
+  <tr><td style="padding:8px 28px 0;font-size:15px;line-height:1.5">Hi ${esc(name)}, ${purpose === "reset" ? "ito ang code para mapalitan ang password mo:" : "ito ang code para ma-verify ang email mo:"}</td></tr>
   <tr><td style="padding:18px 28px"><div style="font-size:34px;font-weight:800;letter-spacing:10px;background:#f3f3f1;border-radius:12px;padding:16px 0;text-align:center">${code}</div></td></tr>
-  <tr><td style="padding:0 28px 28px;font-size:13px;color:#55545a;line-height:1.5">Mag-e-expire ito sa ${CODE_MINUTES} minuto. Kung hindi ikaw ang gumawa ng account, i-ignore lang ang email na ito.</td></tr>
+  <tr><td style="padding:0 28px 28px;font-size:13px;color:#55545a;line-height:1.5">Mag-e-expire ito sa ${CODE_MINUTES} minuto. ${purpose === "reset" ? "Kung hindi ikaw ang nag-request, i-ignore lang ito; hindi magbabago ang password mo." : "Kung hindi ikaw ang gumawa ng account, i-ignore lang ang email na ito."}</td></tr>
   </table></td></tr></table></body></html>`;
 }
 
-async function sendCode(user: Record<string, any>) {
+type Purpose = "verify" | "reset";
+
+async function sendCode(user: Record<string, any>, purpose: Purpose = "verify") {
   if (!mailer) throw new Error("SMTP not configured");
   // patayin ang mga lumang code
   await db.from("email_codes").update({ used_at: new Date().toISOString() })
-    .eq("user_id", user.id).eq("purpose", "verify").is("used_at", null);
+    .eq("user_id", user.id).eq("purpose", purpose).is("used_at", null);
   const n = crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000;
   const code = String(n).padStart(6, "0");
   const { error } = await db.from("email_codes").insert({
-    user_id: user.id, purpose: "verify",
+    user_id: user.id, purpose,
     code_hash: await sha256Hex(code + ":" + user.id + ":" + PEPPER),
     expires_at: new Date(Date.now() + CODE_MINUTES * 60_000).toISOString(),
   });
@@ -167,23 +170,23 @@ async function sendCode(user: Record<string, any>) {
   await mailer.sendMail({
     from: `"${FROM_NAME}" <${SMTP_USER}>`,
     to: user.email,
-    subject: `${code} ang TigoMeNote code mo`,
-    text: `Hi ${user.display_name}, ang verification code mo ay ${code}. Mag-e-expire ito sa ${CODE_MINUTES} minuto.`,
-    html: codeEmailHtml(user.display_name, code),
+    subject: purpose === "reset" ? `${code} ang TigoMeNote reset code mo` : `${code} ang TigoMeNote code mo`,
+    text: `Hi ${user.display_name}, ang ${purpose === "reset" ? "password reset" : "verification"} code mo ay ${code}. Mag-e-expire ito sa ${CODE_MINUTES} minuto.`,
+    html: codeEmailHtml(user.display_name, code, purpose),
   });
 }
 
-async function lastCode(userId: string) {
+async function lastCode(userId: string, purpose: Purpose = "verify") {
   const { data } = await db.from("email_codes").select("*")
-    .eq("user_id", userId).eq("purpose", "verify")
+    .eq("user_id", userId).eq("purpose", purpose)
     .order("created_at", { ascending: false }).limit(1).maybeSingle();
   return data;
 }
 
-async function codesLastHour(userId: string) {
+async function codesLastHour(userId: string, purpose: Purpose = "verify") {
   const since = new Date(Date.now() - 3_600_000).toISOString();
   const { count } = await db.from("email_codes").select("id", { count: "exact", head: true })
-    .eq("user_id", userId).eq("purpose", "verify").gte("created_at", since);
+    .eq("user_id", userId).eq("purpose", purpose).gte("created_at", since);
   return count ?? 0;
 }
 
@@ -373,6 +376,97 @@ async function resendCode(p: Record<string, string>) {
   return reply({ ok: true, sent: true, email_masked: maskEmail(user.email), resend_in: RESEND_COOLDOWN_S });
 }
 
+// ---------- forgot password ----------
+async function findByIdentifier(id: string) {
+  const v = String(id ?? "").trim().toLowerCase();
+  if (!v) return null;
+  const { data } = await db.from("users").select("*").eq(v.includes("@") ? "email" : "username", v).maybeSingle();
+  return data;
+}
+
+async function forgotPassword(p: Record<string, string>, req: Request) {
+  const identifier = String(p.identifier ?? "").trim().toLowerCase();
+  if (!identifier) return fail("Ilagay ang username o email mo.");
+
+  const ipKey = "forgot:" + clientIp(req);
+  if (await countRecent(ipKey, 60) >= FORGOT_PER_IP_PER_HOUR)
+    return fail("Masyadong maraming request. Subukan ulit mamaya.", 429);
+  await mark(ipKey, "forgot");
+
+  // Pareho ang sagot kahit walang account, para hindi mahulaan kung sino ang may account
+  const generic = { ok: true, sent: true, resend_in: RESEND_COOLDOWN_S,
+    message: "Kung may account na tugma, nagpadala kami ng 6-digit code sa email nito." };
+
+  const user = await findByIdentifier(identifier);
+  if (!user || !user.email || user.status === "Inactive") return reply(generic);
+
+  const last = await lastCode(user.id, "reset");
+  const age = last ? (Date.now() - new Date(last.created_at).getTime()) / 1000 : Infinity;
+  // Kapag masyadong madalas, hindi na magpapadala pero pareho pa rin ang sagot
+  if (age < RESEND_COOLDOWN_S) return reply({ ...generic, resend_in: Math.ceil(RESEND_COOLDOWN_S - age) });
+  if (await codesLastHour(user.id, "reset") >= CODES_PER_HOUR) return reply({ ...generic, resend_in: 600 });
+
+  try {
+    await sendCode(user, "reset");
+  } catch (e) {
+    console.error("sendCode(reset) failed", e);
+    return fail("Hindi naipadala ang email. Subukan ulit.", 502, { resend_in: 0 });
+  }
+  return reply(generic);
+}
+
+async function resetPassword(p: Record<string, string>, req: Request) {
+  const identifier = String(p.identifier ?? "").trim().toLowerCase();
+  const code = String(p.code ?? "").replace(/\D/g, "");
+  const password = String(p.password ?? "");
+  if (!identifier || code.length !== 6) return fail("Ilagay ang 6-digit code.");
+  if (password.length < 8 || password.length > 72) return fail("Bagong password: 8–72 characters.");
+
+  const ipKey = "verifyfail:" + clientIp(req);
+  if (await countRecent(ipKey, 10) >= VERIFY_FAILS_PER_IP_10MIN)
+    return fail("Masyadong maraming maling code. Subukan ulit pagkalipas ng 10 minuto.", 429);
+
+  const user = await findByIdentifier(identifier);
+  const last = user ? await lastCode(user.id, "reset") : null;
+  if (!user || !last || last.used_at || new Date(last.expires_at) <= new Date() || last.attempts >= CODE_TRIES) {
+    await mark(ipKey, "reset_fail", user?.id ?? null);
+    return fail("Expired o walang active na code. Mag-request ng bago.", 410, { expired: true });
+  }
+
+  const good = safeEqual(await sha256Hex(code + ":" + user.id + ":" + PEPPER), last.code_hash);
+  if (!good) {
+    const attempts = last.attempts + 1;
+    await db.from("email_codes").update({ attempts }).eq("id", last.id);
+    await mark(ipKey, "reset_fail", user.id);
+    const left = CODE_TRIES - attempts;
+    return left > 0
+      ? fail("Mali ang code.", 401, { tries_left: left })
+      : fail("Sobra na ang maling hula. Mag-request ng bagong code.", 410, { expired: true });
+  }
+
+  const now = new Date().toISOString();
+  const salt = toB64(crypto.getRandomValues(new Uint8Array(16)));
+  const changes: Record<string, unknown> = {
+    password_salt: salt, password_hash: await hashPassword(password, salt),
+    failed_attempts: 0, locked_until: null, updated_at: now,
+  };
+  // Napatunayan na hawak nila ang email, kaya verified na rin kung hindi pa
+  if (user.status === "Unverified") { changes.status = statusAfterVerify(user); changes.email_verified_at = now; }
+
+  await db.from("email_codes").update({ used_at: now }).eq("user_id", user.id).is("used_at", null);
+  const { data: updated, error } = await db.from("users").update(changes).eq("id", user.id).select("*").single();
+  if (error) throw error;
+  // I-logout ang lahat ng lumang session (hal. kung may ibang nakapasok)
+  await db.from("sessions").update({ revoked_at: now }).eq("user_id", user.id).is("revoked_at", null);
+
+  if (updated.status !== "Active")
+    return reply({ ok: true, pending: updated.status === "Pending", message: "Napalitan na ang password." + (updated.status === "Pending" ? " Hintayin ang approval ng admin." : "") });
+
+  await db.from("users").update({ last_login_at: now }).eq("id", user.id);
+  const s = await createSession(user.id, req);
+  return reply({ ok: true, reset: true, ...s, user: publicUser(updated) });
+}
+
 async function findSession(token: string) {
   if (!token || token.length < 20) return null;
   const { data } = await db.from("sessions")
@@ -421,6 +515,8 @@ Deno.serve(async (req) => {
       case "login":        return post ? await login(p, req) : fail("POST lang.", 405);
       case "verifyEmail":  return post ? await verifyEmail(p, req) : fail("POST lang.", 405);
       case "resendCode":   return post ? await resendCode(p) : fail("POST lang.", 405);
+      case "forgotPassword": return post ? await forgotPassword(p, req) : fail("POST lang.", 405);
+      case "resetPassword":  return post ? await resetPassword(p, req) : fail("POST lang.", 405);
       case "checkSession": return await checkSession(token);
       case "logout":       return await logout(token);
       default:             return fail("Unknown action.");
