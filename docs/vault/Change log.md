@@ -123,3 +123,9 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Hiling ni Bench (screenshot ng TikTok): "makikita ilang ng view at ng ❤️, pwede mag pin ng 3, merron private, recent view, at repost".
 - **Files:** `sql/020-views-pins.sql`, `backend/posts-fast.ts` (v4), `backend/profile-fast.ts` (v3), `backend/social-fast.ts` (v3), `app/profile.html`, `assets/js/pages/profile.js`, `assets/js/components/post-viewer.js`, `assets/js/components/social-ui.js`, `assets/js/pages/explore.js`, `assets/css/pages/profile.css`, `assets/css/posts.css`, `assets/js/lang/ar.js`, `assets/js/lang/fil.js`, `assets/js/i18n.js`, `assets/js/config.js` (0.5.0), `tools/cache-bust.py`, lahat ng `.html` (`?v=`)
 - **Paano:** Bagong `post_views` + `posts.view_count/pinned_at`. Detalye: [[Build - Profile tabs and pins]].
+
+## 2026-10-24 · #19 Plano: Safety, family at wellbeing (vault lang)
+- **Ano:** Isinulat ang plano ng Family/Friends circle, Locate (30 araw), SOS, age limit, parental, auto sleep at give a break, pati ang guidelines na ipapakita sa APK.
+- **Bakit:** Ayon kay Bench, safety ang pundasyon ng app, at kailangang nasa vault para magamit sa instructions ng APK.
+- **Files:** `docs/vault/Plan - Safety, family and wellbeing.md`, `00 Home.md`, `Decisions.md`
+- **Paano:** Wala pang code. Detalye: [[Plan - Safety, family and wellbeing]].

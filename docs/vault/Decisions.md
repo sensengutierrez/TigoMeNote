@@ -33,9 +33,13 @@ updated: 2026-10-23
 | 2026-10-24 | View = ≥60% nakita nang 1.5 s o binuksan; isang beses bawat tao bawat 6 oras; hindi binibilang ang sarili | Patas na bilang, hindi madaling dayain |
 | 2026-10-24 | Pin hanggang **3** (parang TikTok) | Hiling ni Bench |
 | 2026-10-24 | Cache busting gamit ang `?v=<version>` sa HTML | Para makuha agad ng phone ang bagong code |
+| 2026-10-24 | **Safety ang pundasyon ng app**: Family/Friends circle, Locate, SOS | Hiling ni Bench. Detalye: [[Plan - Safety, family and wellbeing]] |
+| 2026-10-24 | Location history **30 araw**; Friends na pinili puwedeng mag-Locate; laging invite + accept | Pinili ni Bench |
+| 2026-10-24 | May **age limit**, **parental**, **auto sleep**, **give a break** | Hiling ni Bench; SOS laging gumagana |
 | 2026-10-23 | Lipat sa **Brevo** (free 300/araw) | Ayaw tanggapin ng Gmail ang App Password; walang domain na kailangan sa Brevo. SMS ay hindi pinili kasi may bayad. |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)
+- **Minimum age** (mungkahi 13+) at default ng **break reminder** para sa adults.
 
 Tingnan din: [[Build - Foundation]]

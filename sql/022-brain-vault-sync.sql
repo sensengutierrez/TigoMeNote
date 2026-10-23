@@ -1,0 +1,2 @@
+-- TigoMeNote · 022 · vault sync: Plan - Safety, family and wellbeing (record lang; napatakbo na)
+-- Plan note = buong body; 00 Home, Decisions, Change log = replace() upsert. Tingnan ang docs/vault para sa laman.

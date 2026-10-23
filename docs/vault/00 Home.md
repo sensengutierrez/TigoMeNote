@@ -26,6 +26,9 @@ Ito ang "utak" ng project: lahat ng ginawa, paano ginawa, at bakit. Buksan ang f
 - [[Build - Language (i18n)]] — English default, Arabic (RTL), Filipino
 - [[Build - Profile tabs and pins]] — TikTok-style tabs, views at ❤️, Pin (3)
 
+## Plans (wala pang code)
+- [[Plan - Safety, family and wellbeing]] — Family/Friends, Locate, SOS, age limit, parental, sleep, break + guidelines ng APK
+
 ## Setup
 - [[Supabase setup]] — project, tables, secrets (walang totoong value dito)
 - [[GitHub and deploy]] — repo, Pages, paano mag-update
