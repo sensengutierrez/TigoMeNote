@@ -1,6 +1,8 @@
 // TigoMeNote · posts-fast (Supabase Edge Function, verify_jwt = off)
-// Posts na may offline queue + schedule. Lahat ng action ay kailangan ng session token (x-session-token).
-// Actions: createUpload, createPost, myPosts, feed, updatePost, deletePost
+// Posts na may offline queue + schedule, at interactions (reactions, comments, bookmark, repost/share).
+// Lahat ng action ay kailangan ng session token (x-session-token).
+// Actions: createUpload, createPost, myPosts, userPosts, getPost, feed, updatePost, deletePost,
+//          react, reactions, comments, addComment, deleteComment, bookmark, bookmarks, share, unrepost, shares
 // Storage: private bucket "post-media" — signed upload URL (pang-upload) at signed read URL (1 oras).
 // Secrets: AUTH_PEPPER (hindi ginagamit dito), SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY (automatic).
 
@@ -60,32 +62,87 @@ function parsePublishAt(v: unknown) {
   return d.getTime() > max ? null : d;
 }
 
-// ---------- signed read URLs + author info ----------
+const EMOJIS = ["❤️", "😂", "😮", "😢", "🔥", "👏"];
+const nowIso = () => new Date().toISOString();
+
+// deno-lint-ignore no-explicit-any
+async function followingIds(me: any): Promise<string[]> {
+  const { data } = await db.from("follows").select("following_id").eq("follower_id", me.id);
+  return (data ?? []).map((r) => r.following_id);
+}
+// Pwede bang makita ni "me" ang post na ito?
+// deno-lint-ignore no-explicit-any
+async function canSee(post: any, me: any) {
+  if (!post || post.deleted_at) return false;
+  if (post.user_id === me.id) return true;
+  if (new Date(post.publish_at) > new Date()) return false;
+  if (post.visibility === "public") return true;
+  if (post.visibility === "followers") {
+    const { data } = await db.from("follows").select("follower_id").eq("follower_id", me.id).eq("following_id", post.user_id).maybeSingle();
+    return !!data;
+  }
+  return false;
+}
+// deno-lint-ignore no-explicit-any
+async function visiblePost(id: unknown, me: any) {
+  const { data } = await db.from("posts").select("*").eq("id", String(id || "")).maybeSingle();
+  return (await canSee(data, me)) ? data : null;
+}
+// deno-lint-ignore no-explicit-any
+async function usersById(ids: string[]): Promise<Record<string, any>> {
+  if (!ids.length) return {};
+  const { data } = await db.from("users").select("id, username, display_name, avatar_url").in("id", [...new Set(ids)]);
+  return Object.fromEntries((data ?? []).map((a) => [a.id, a]));
+}
+
+// ---------- signed read URLs + author info + interactions ----------
 // deno-lint-ignore no-explicit-any
 async function hydrate(posts: any[], me: any) {
   if (!posts.length) return [];
   const ids = posts.map((p) => p.id);
-  const { data: media } = await db.from("post_media").select("*").in("post_id", ids).order("position");
+  const [{ data: media }, { data: reacts }, { data: comments }, { data: shares }, { data: marks }, { data: fol }] = await Promise.all([
+    db.from("post_media").select("*").in("post_id", ids).order("position"),
+    db.from("post_reactions").select("post_id, user_id, emoji").in("post_id", ids),
+    db.from("post_comments").select("post_id").in("post_id", ids).is("deleted_at", null),
+    db.from("post_shares").select("post_id, user_id, kind").in("post_id", ids),
+    db.from("post_bookmarks").select("post_id").in("post_id", ids).eq("user_id", me.id),
+    db.from("follows").select("following_id").eq("follower_id", me.id),
+  ]);
   const paths = (media ?? []).map((m) => m.path);
-  // deno-lint-ignore no-explicit-any
   const signed: Record<string, string> = {};
   if (paths.length) {
     const { data } = await db.storage.from(BUCKET).createSignedUrls(paths, READ_URL_SECONDS);
     (data ?? []).forEach((s) => { if (s.signedUrl && s.path) signed[s.path] = s.signedUrl; });
   }
-  const userIds = [...new Set(posts.map((p) => p.user_id))];
-  const { data: authors } = await db.from("users").select("id, username, display_name, avatar_url").in("id", userIds);
-  const byId = Object.fromEntries((authors ?? []).map((a) => [a.id, a]));
+  const byId = await usersById(posts.map((p) => p.user_id));
+  const following = new Set((fol ?? []).map((r) => r.following_id));
+  const marked = new Set((marks ?? []).map((r) => r.post_id));
   const now = Date.now();
-  return posts.map((p) => ({
-    id: p.id, client_id: p.client_id, caption: p.caption, visibility: p.visibility,
-    publish_at: p.publish_at, created_at: p.created_at, mine: p.user_id === me.id,
-    scheduled: new Date(p.publish_at).getTime() > now,
-    author: byId[p.user_id] ?? null,
-    media: (media ?? []).filter((m) => m.post_id === p.id).map((m) => ({
-      kind: m.kind, url: signed[m.path] ?? null, w: m.w, h: m.h, duration: m.duration, mime: m.mime,
-    })),
-  }));
+  return posts.map((p) => {
+    const rs = (reacts ?? []).filter((r) => r.post_id === p.id);
+    const counts: Record<string, number> = {};
+    rs.forEach((r) => { counts[r.emoji] = (counts[r.emoji] || 0) + 1; });
+    const sh = (shares ?? []).filter((r) => r.post_id === p.id);
+    return {
+      id: p.id, client_id: p.client_id, caption: p.caption, visibility: p.visibility,
+      publish_at: p.publish_at, created_at: p.created_at, mine: p.user_id === me.id,
+      scheduled: new Date(p.publish_at).getTime() > now,
+      author: byId[p.user_id] ? { ...byId[p.user_id], following: following.has(p.user_id) } : null,
+      media: (media ?? []).filter((m) => m.post_id === p.id).map((m) => ({
+        kind: m.kind, url: signed[m.path] ?? null, w: m.w, h: m.h, duration: m.duration, mime: m.mime,
+      })),
+      stats: {
+        reactions: rs.length,
+        top: Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 3),
+        my_reaction: (rs.find((r) => r.user_id === me.id) || {}).emoji ?? null,
+        comments: (comments ?? []).filter((c) => c.post_id === p.id).length,
+        reposts: sh.filter((r) => r.kind === "repost").length,
+        shares: sh.length,
+        reposted: sh.some((r) => r.kind === "repost" && r.user_id === me.id),
+        bookmarked: marked.has(p.id),
+      },
+    };
+  });
 }
 
 // ---------- actions ----------
@@ -184,20 +241,179 @@ async function myPosts(p: any, me: any) {
   return reply({ ok: true, posts: await hydrate(data ?? [], me) });
 }
 
+// Feed: mode "all" = public ng lahat + followers-only ng fina-follow + sarili;
+//       mode "following" = posts at reposts ng mga fina-follow mo (at sarili mo)
 // deno-lint-ignore no-explicit-any
 async function feed(p: any, me: any) {
+  const limit = Math.min(40, Math.max(1, Number(p.limit) || 20));
+  const before = p.before ? String(p.before) : null;
+  const following = await followingIds(me);
+  const circle = [me.id, ...following];
+  let q = db.from("posts").select("*").is("deleted_at", null).lte("publish_at", nowIso()).order("publish_at", { ascending: false }).limit(limit);
+  if (p.mode === "following") {
+    q = q.in("user_id", circle);
+  } else {
+    const ors = ["visibility.eq.public", `user_id.eq.${me.id}`];
+    if (following.length) ors.push(`and(visibility.eq.followers,user_id.in.(${following.join(",")}))`);
+    q = q.or(ors.join(","));
+  }
+  if (before) q = q.lt("publish_at", before);
+  const { data: posts } = await q;
+  // Reposts ng mga fina-follow mo (public posts lang ang pwedeng i-repost)
+  let rq = db.from("post_shares").select("post_id, user_id, created_at").eq("kind", "repost").in("user_id", circle)
+    .order("created_at", { ascending: false }).limit(limit);
+  if (before) rq = rq.lt("created_at", before);
+  const { data: reps } = await rq;
+  const items: { post: any; at: string; by?: string }[] = (posts ?? []).map((x) => ({ post: x, at: x.publish_at }));
+  const repIds = [...new Set((reps ?? []).map((r) => r.post_id))].filter((id) => !items.some((i) => i.post.id === id));
+  if (repIds.length) {
+    const { data: rp } = await db.from("posts").select("*").in("id", repIds).is("deleted_at", null).eq("visibility", "public").lte("publish_at", nowIso());
+    for (const r of reps ?? []) {
+      const post = (rp ?? []).find((x) => x.id === r.post_id);
+      if (post && !items.some((i) => i.post.id === post.id)) items.push({ post, at: r.created_at, by: r.user_id });
+    }
+  }
+  items.sort((a, b) => (a.at < b.at ? 1 : -1));
+  const page = items.slice(0, limit);
+  const hyd = await hydrate(page.map((i) => i.post), me);
+  const by = await usersById(page.filter((i) => i.by).map((i) => i.by as string));
+  const out = hyd.map((h, i) => ({ ...h, feed_at: page[i].at, repost_by: page[i].by ? by[page[i].by as string] ?? null : null }));
+  return reply({ ok: true, posts: out, more: items.length >= limit });
+}
+
+// deno-lint-ignore no-explicit-any
+async function userPosts(p: any, me: any) {
+  const uid = String(p.user_id || "");
   const limit = Math.min(60, Math.max(1, Number(p.limit) || 30));
-  const now = new Date().toISOString();
-  const { data: f } = await db.from("follows").select("following_id").eq("follower_id", me.id);
-  const following = (f ?? []).map((r) => r.following_id);
-  // public ng lahat + followers-only ng mga fina-follow + sariling posts (lahat ng visibility)
-  const ors = ["visibility.eq.public", `user_id.eq.${me.id}`];
-  if (following.length) ors.push(`and(visibility.eq.followers,user_id.in.(${following.join(",")}))`);
-  let q = db.from("posts").select("*").is("deleted_at", null).lte("publish_at", now)
-    .or(ors.join(",")).order("publish_at", { ascending: false }).limit(limit);
+  const isMe = uid === me.id;
+  let vis = ["public"];
+  if (isMe) vis = ["public", "followers", "private"];
+  else if ((await followingIds(me)).includes(uid)) vis = ["public", "followers"];
+  let q = db.from("posts").select("*").eq("user_id", uid).is("deleted_at", null).in("visibility", vis)
+    .order("publish_at", { ascending: false }).limit(limit);
+  if (!isMe) q = q.lte("publish_at", nowIso());
   if (p.before) q = q.lt("publish_at", String(p.before));
   const { data } = await q;
   return reply({ ok: true, posts: await hydrate(data ?? [], me) });
+}
+
+// deno-lint-ignore no-explicit-any
+async function getPost(p: any, me: any) {
+  const post = await visiblePost(p.id, me);
+  if (!post) return fail("Hindi makita ang post (nabura o private).", 404);
+  return reply({ ok: true, post: (await hydrate([post], me))[0] });
+}
+
+// ---------- interactions ----------
+// deno-lint-ignore no-explicit-any
+async function react(p: any, me: any) {
+  const post = await visiblePost(p.post_id, me);
+  if (!post) return fail("Hindi makita ang post.", 404);
+  if (p.emoji === null || p.emoji === "") {
+    await db.from("post_reactions").delete().eq("post_id", post.id).eq("user_id", me.id);
+  } else {
+    if (!EMOJIS.includes(p.emoji)) return fail("Maling reaction.");
+    await db.from("post_reactions").upsert({ post_id: post.id, user_id: me.id, emoji: p.emoji, created_at: nowIso() });
+  }
+  return reply({ ok: true, post: (await hydrate([post], me))[0] });
+}
+
+// Sino ang nag-react / nag-repost / nag-share
+// deno-lint-ignore no-explicit-any
+async function reactions(p: any, me: any) {
+  const post = await visiblePost(p.post_id, me);
+  if (!post) return fail("Hindi makita ang post.", 404);
+  const { data } = await db.from("post_reactions").select("user_id, emoji, created_at").eq("post_id", post.id).order("created_at", { ascending: false }).limit(200);
+  const u = await usersById((data ?? []).map((r) => r.user_id));
+  return reply({ ok: true, list: (data ?? []).map((r) => ({ user: u[r.user_id] ?? null, emoji: r.emoji, at: r.created_at })) });
+}
+// deno-lint-ignore no-explicit-any
+async function shares(p: any, me: any) {
+  const post = await visiblePost(p.post_id, me);
+  if (!post) return fail("Hindi makita ang post.", 404);
+  const { data } = await db.from("post_shares").select("user_id, kind, created_at").eq("post_id", post.id).order("created_at", { ascending: false }).limit(200);
+  const u = await usersById((data ?? []).map((r) => r.user_id));
+  return reply({ ok: true, list: (data ?? []).map((r) => ({ user: u[r.user_id] ?? null, kind: r.kind, at: r.created_at })) });
+}
+
+// deno-lint-ignore no-explicit-any
+async function comments(p: any, me: any) {
+  const post = await visiblePost(p.post_id, me);
+  if (!post) return fail("Hindi makita ang post.", 404);
+  let q = db.from("post_comments").select("id, user_id, body, created_at").eq("post_id", post.id).is("deleted_at", null)
+    .order("created_at", { ascending: true }).limit(200);
+  if (p.after) q = q.gt("created_at", String(p.after));
+  const { data } = await q;
+  const u = await usersById((data ?? []).map((r) => r.user_id));
+  return reply({ ok: true, list: (data ?? []).map((c) => ({
+    id: c.id, body: c.body, at: c.created_at, user: u[c.user_id] ?? null,
+    can_delete: c.user_id === me.id || post.user_id === me.id,
+  })) });
+}
+// deno-lint-ignore no-explicit-any
+async function addComment(p: any, me: any) {
+  const post = await visiblePost(p.post_id, me);
+  if (!post) return fail("Hindi makita ang post.", 404);
+  const body = String(p.body ?? "").trim().replace(/\n{3,}/g, "\n\n");
+  if (!body || body.length > 500) return fail("Comment: 1–500 characters.");
+  const since = new Date(Date.now() - 60_000).toISOString();
+  const { count } = await db.from("post_comments").select("id", { count: "exact", head: true }).eq("user_id", me.id).gte("created_at", since);
+  if ((count ?? 0) >= 10) return fail("Dahan-dahan lang 🙂 Subukan ulit mamaya.", 429);
+  const { data, error } = await db.from("post_comments").insert({ post_id: post.id, user_id: me.id, body }).select("*").single();
+  if (error) throw error;
+  const u = await usersById([me.id]);
+  return reply({ ok: true, comment: { id: data.id, body: data.body, at: data.created_at, user: u[me.id], can_delete: true } });
+}
+// deno-lint-ignore no-explicit-any
+async function deleteComment(p: any, me: any) {
+  const { data: c } = await db.from("post_comments").select("id, user_id, post_id").eq("id", String(p.id || "")).maybeSingle();
+  if (!c) return fail("Hindi makita ang comment.", 404);
+  const { data: post } = await db.from("posts").select("user_id").eq("id", c.post_id).maybeSingle();
+  if (c.user_id !== me.id && post?.user_id !== me.id) return fail("Hindi mo ito pwedeng burahin.", 403);
+  await db.from("post_comments").update({ deleted_at: nowIso() }).eq("id", c.id);
+  return reply({ ok: true });
+}
+
+// deno-lint-ignore no-explicit-any
+async function bookmark(p: any, me: any) {
+  const post = await visiblePost(p.post_id, me);
+  if (!post) return fail("Hindi makita ang post.", 404);
+  if (p.on) await db.from("post_bookmarks").upsert({ post_id: post.id, user_id: me.id });
+  else await db.from("post_bookmarks").delete().eq("post_id", post.id).eq("user_id", me.id);
+  return reply({ ok: true, post: (await hydrate([post], me))[0] });
+}
+// deno-lint-ignore no-explicit-any
+async function bookmarks(_p: any, me: any) {
+  const { data: m } = await db.from("post_bookmarks").select("post_id, created_at").eq("user_id", me.id).order("created_at", { ascending: false }).limit(100);
+  const ids = (m ?? []).map((r) => r.post_id);
+  if (!ids.length) return reply({ ok: true, posts: [] });
+  const { data } = await db.from("posts").select("*").in("id", ids);
+  const ok = [];
+  for (const id of ids) { const x = (data ?? []).find((d) => d.id === id); if (x && await canSee(x, me)) ok.push(x); }
+  return reply({ ok: true, posts: await hydrate(ok, me) });
+}
+
+// kind "repost" (public posts lang) o "link" (record lang na shinare ang link)
+// deno-lint-ignore no-explicit-any
+async function share(p: any, me: any) {
+  const post = await visiblePost(p.post_id, me);
+  if (!post) return fail("Hindi makita ang post.", 404);
+  const kind = p.kind === "repost" ? "repost" : "link";
+  if (kind === "repost") {
+    if (post.visibility !== "public") return fail("Public posts lang ang pwedeng i-repost.", 403);
+    if (post.user_id === me.id) return fail("Sariling post mo ito.");
+    const { error } = await db.from("post_shares").insert({ post_id: post.id, user_id: me.id, kind });
+    if (error && error.code !== "23505") throw error;
+  } else {
+    await db.from("post_shares").insert({ post_id: post.id, user_id: me.id, kind });
+  }
+  return reply({ ok: true, post: (await hydrate([post], me))[0] });
+}
+// deno-lint-ignore no-explicit-any
+async function unrepost(p: any, me: any) {
+  await db.from("post_shares").delete().eq("post_id", String(p.post_id || "")).eq("user_id", me.id).eq("kind", "repost");
+  const post = await visiblePost(p.post_id, me);
+  return reply({ ok: true, post: post ? (await hydrate([post], me))[0] : null });
 }
 
 // deno-lint-ignore no-explicit-any
@@ -243,6 +459,18 @@ Deno.serve(async (req) => {
       case "createPost":   return await createPost(p, me);
       case "myPosts":      return await myPosts(p, me);
       case "feed":         return await feed(p, me);
+      case "userPosts":    return await userPosts(p, me);
+      case "getPost":      return await getPost(p, me);
+      case "react":        return await react(p, me);
+      case "reactions":    return await reactions(p, me);
+      case "comments":     return await comments(p, me);
+      case "addComment":   return await addComment(p, me);
+      case "deleteComment":return await deleteComment(p, me);
+      case "bookmark":     return await bookmark(p, me);
+      case "bookmarks":    return await bookmarks(p, me);
+      case "share":        return await share(p, me);
+      case "unrepost":     return await unrepost(p, me);
+      case "shares":       return await shares(p, me);
       case "updatePost":   return await updatePost(p, me);
       case "deletePost":   return await deletePost(p, me);
       default:             return fail("Unknown action.");

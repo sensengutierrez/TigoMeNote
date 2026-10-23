@@ -32,7 +32,8 @@
 .profile-meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .profile-meta > span { display: inline-flex; align-items: center; gap: 6px; }
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); margin: 14px 18px 0; border-top: 1px solid var(--line); padding: 12px 0 16px; }
-.stats div { display: grid; justify-items: center; }
+.stats > * { display: grid; justify-items: center; border: 0; background: none; padding: 0; color: inherit; font: inherit; }
+.stats button { cursor: pointer; }
 .stats b { font-family: var(--font-display); font-size: 20px; }
 .stats span { font-size: 12.5px; color: var(--text-3); }
 
@@ -46,7 +47,7 @@
   .p-actions .btn { flex: none; }
   .p-about { padding: 12px 28px 0 calc(28px + 152px + 20px); }
   .stats { margin: 16px 28px 0 calc(28px + 152px + 20px); max-width: 420px; border-top: 0; padding-top: 4px; }
-  .stats div { justify-items: start; }
+  .stats > * { justify-items: start; }
   .p-hero { margin-bottom: 24px; }
 }
 

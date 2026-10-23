@@ -50,7 +50,7 @@
         '<button type="button" class="vw-nav next" aria-label="Next">' + I("chevronR") + "</button>" +
         '<div class="pv-dots"></div></div>' +
       '<div class="pv-info"><div class="pv-author"></div><div class="pv-badges"></div><p class="pv-cap"></p>' +
-        '<div class="pv-actions"></div></div>';
+        '<div class="pv-social"></div><div class="pv-actions"></div></div>';
     var media = root.querySelector(".pv-media"), dots = root.querySelector(".pv-dots");
     var prev = root.querySelector(".prev"), next = root.querySelector(".next");
 
@@ -79,6 +79,13 @@
         ? '<button type="button" class="btn btn-ghost btn-sm" data-a="edit">' + I("edit", "ic-sm") + "Edit</button>" +
           '<button type="button" class="btn btn-danger btn-sm" data-a="delete">' + I("trash", "ic-sm") + "Delete</button>"
         : "";
+      // Reactions, comments, share, bookmark (kapag naka-load ang post-card.js)
+      var soc = root.querySelector(".pv-social");
+      if (window.TMN_POST_CARD && p.stats && !p.scheduled) {
+        soc.dataset.id = p.id;
+        soc.innerHTML = TMN_POST_CARD.actionsHtml(p) +
+          (p.stats.comments ? '<button type="button" class="pc-more-comments" data-act="comments">Tingnan ang ' + p.stats.comments + " comment" + (p.stats.comments > 1 ? "s" : "") + "</button>" : "");
+      } else soc.innerHTML = "";
       modal.el.querySelector(".modal-head h3").textContent = posts.length > 1 ? (idx + 1) + " / " + posts.length : "Post";
       showSlide();
     }
@@ -116,6 +123,12 @@
       }
     });
 
+    if (window.TMN_POST_CARD) {
+      TMN_POST_CARD.bind(root.querySelector(".pv-social"), {
+        find: function (id) { return posts.filter(function (x) { return x.id === id; })[0]; },
+        update: function (np) { posts[idx] = np; if (o.onChange) o.onChange({ type: "update", post: np }); }
+      });
+    }
     modal = MODAL.open({
       title: "", size: "full", cls: "modal-viewer modal-post", body: root,
       onClose: function () { document.removeEventListener("keydown", onKey); }

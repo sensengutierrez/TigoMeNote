@@ -1,16 +1,29 @@
 /* TigoMeNote · pages/explore.css (app/explore.html)
-   Ang tiles mismo ay nasa assets/css/posts.css (.post-grid, .pt) */
+   Ang cards, status at sheets ay nasa assets/css/social.css */
 
-.explore-tools { display: grid; gap: 12px; margin-bottom: 18px; }
+.ex-main { width: 100%; max-width: 640px; justify-self: center; display: grid; gap: 14px; align-content: start; }
+.ex-head { display: flex; align-items: center; justify-content: space-between; }
+.ex-head h1 { font-size: 28px; }
+.ex-tabs { display: flex; width: 100%; }
+.ex-tabs button { flex: 1; justify-content: center; }
+.more-wrap { display: flex; justify-content: center; padding: 6px 0 18px; }
+
+.ex-aside { display: none; }
+.ex-people { display: grid; gap: 8px; }
+.ex-people h3 { font-size: 15px; }
 .search { position: relative; display: block; }
 .search .ic { position: absolute; left: 14px; top: 13px; color: var(--text-3); }
-.search .input { padding-left: 44px; border-radius: var(--r-full); background: var(--bg-soft); border-color: transparent; }
-.explore-grid .pt.skel { cursor: default; }
-.more-wrap { display: flex; justify-content: center; padding: 18px 0 8px; }
+.search .input { padding-left: 44px; border-radius: var(--r-full); background: var(--bg-soft); border-color: transparent; width: 100%; }
+.ex-results { border-top: 1px solid var(--line); padding-top: 4px; }
+.ex-find-sheet { display: grid; gap: 10px; }
+.ex-find-sheet .search .input { padding-left: 16px; }
+.ex-find-sheet h4 { margin-top: 6px; }
 
 @media (min-width: 900px) {
-  .explore-tools { grid-template-columns: minmax(260px, 380px) 1fr; align-items: center; }
-  .explore-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .ex-aside { display: grid; }
+  .ex-find { display: none; }
+  .ex-head h1 { font-size: 32px; }
 }
-@media (min-width: 1200px) { .explore-grid { grid-template-columns: repeat(5, 1fr); } }
-@media (min-width: 1500px) { .explore-grid { grid-template-columns: repeat(6, 1fr); } }
+@media (min-width: 1200px) {
+  .ex-main { max-width: 660px; }
+}

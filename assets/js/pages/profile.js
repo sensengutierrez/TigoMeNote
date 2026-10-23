@@ -100,7 +100,9 @@
   window.addEventListener("online", renderQueue); window.addEventListener("offline", renderQueue);
 
   // ---------- Posts (server) ----------
+  var saved = null; // bookmarks (Saved), kinukuha lang pag binuksan ang tab
   function shown() {
+    if (filter === "saved") return saved || [];
     return posts.filter(function (p) {
       if (filter === "scheduled") return p.scheduled;
       if (filter === "photo") return p.media.some(function (m) { return m.kind === "photo"; });
@@ -111,10 +113,13 @@
   function renderPosts() {
     var list = shown();
     $("statPosts").textContent = posts.filter(function (p) { return !p.scheduled; }).length;
-    $("postGrid").innerHTML = PU.tiles(list, { showVis: true });
+    $("postGrid").innerHTML = PU.tiles(list, { showVis: filter !== "saved", showAuthor: filter === "saved" });
     $("postGrid").classList.toggle("hidden", !list.length);
     $("postsEmpty").classList.toggle("hidden", !!list.length);
-    if (!list.length && posts.length) {
+    if (!list.length && filter === "saved") {
+      $("emptyTitle").textContent = saved ? "Wala pang naka-save" : "Naglo-load…";
+      $("emptyText").textContent = "Pindutin ang bookmark sa isang post sa Explore para ma-save dito.";
+    } else if (!list.length && posts.length) {
       $("emptyTitle").textContent = filter === "scheduled" ? "Walang naka-schedule" : "Wala sa filter na ito";
       $("emptyText").textContent = "Subukan ang ibang filter.";
     }
@@ -137,7 +142,11 @@
     var list = shown();
     PU.open(list.slice(), Number(t.dataset.pi), { onChange: function (ch) {
       if (ch.type === "delete") posts = posts.filter(function (p) { return p.id !== ch.id; });
-      if (ch.type === "update") posts = posts.map(function (p) { return p.id === ch.post.id ? ch.post : p; });
+      if (ch.type === "update") {
+        posts = posts.map(function (p) { return p.id === ch.post.id ? ch.post : p; });
+        if (saved) saved = saved.map(function (p) { return p.id === ch.post.id ? ch.post : p; });
+        if (saved && ch.post.stats && !ch.post.stats.bookmarked) saved = saved.filter(function (p) { return p.id !== ch.post.id; });
+      }
       renderPosts();
     } });
   });
@@ -145,6 +154,18 @@
     var c = e.target.closest(".chip"); if (!c) return;
     this.querySelectorAll(".chip").forEach(function (x) { x.classList.toggle("active", x === c); x.setAttribute("aria-selected", String(x === c)); });
     filter = c.dataset.f; renderPosts();
+    if (filter === "saved") loadSaved();
+  });
+  async function loadSaved() {
+    if (!navigator.onLine) return;
+    try { var r = await TMN_API.call("posts", "bookmarks", {}); saved = r.posts || []; } catch (e) { saved = []; UI.toast(e.message); }
+    if (filter === "saved") renderPosts();
+  }
+  // Followers / Following list
+  document.querySelector(".p-hero .stats").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-list]"); if (!b || !window.TMN_SOCIAL) return;
+    var u = window.TMN_USER || {};
+    TMN_SOCIAL.followList({ id: u.id, username: u.username }, b.dataset.list);
   });
   window.addEventListener("online", function () { loadPosts(); });
 

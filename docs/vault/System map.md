@@ -10,7 +10,7 @@ updated: 2026-10-23
 | `index.html` | ROOT | Landing page | hindi |
 | `login.html` | ROOT | Sign in / Create account | hindi |
 | `home.html` | app/ | Daily | oo |
-| `explore.html` | app/ | Explore: feed ng posts (search, filter) | oo |
+| `explore.html` | app/ | Explore: status, feed na may reactions/comments/share, hanap ng tao | oo |
 | `share.html` | app/ | Share: camera / video / files → Gallery (+ "I-post din") | oo |
 | `messages.html` | app/ | Messages (placeholder) | oo |
 | `gallery.html` | app/ | Gallery: albums, upload, edit (device lang) | oo |
@@ -34,6 +34,9 @@ updated: 2026-10-23
 | `post-queue.js` | Offline outbox ng posts: compress + kusang upload (`TMN_POSTQ`) |
 | `components/post-composer.js` | "Bagong post" modal: caption, visibility, schedule |
 | `components/post-viewer.js` | Post tiles + viewer + edit/delete (`TMN_POSTS_UI`) |
+| `components/post-card.js` | Feed card + reactions/comment/share/bookmark (`TMN_POST_CARD`) |
+| `components/social-ui.js` | Comments, sino ang nag-react/share, follow, mini profile (`TMN_SOCIAL`) |
+| `components/stories.js` | Status / stories (`TMN_STORIES`) |
 | `components/image-cropper.js` | Crop ng larawan bago i-upload (`TMN_CROPPER`) |
 | `components/profile-editor.js` | Edit profile + palit ng photo/cover (`TMN_PROFILE_EDIT`) |
 | `components/app-shell.js` | Gumagawa ng layout ng app pages mula sa nav-items |
@@ -46,6 +49,7 @@ updated: 2026-10-23
 | `base.css` | Reset at typography |
 | `components.css` | Buttons, inputs, cards, badges, toast, segmented |
 | `posts.css` | Composer, post tiles, post viewer, queue list |
+| `social.css` | Feed cards, status, comments at social sheets |
 | `shell.css` | Layout: sidebar, topbar, drawer, tabs |
 | `pages/<page>.css` | Style ng isang page lang |
 
@@ -53,7 +57,8 @@ updated: 2026-10-23
 | Function | Actions | Source |
 |---|---|---|
 | `auth-fast` | register, login, verifyEmail, resendCode, forgotPassword, resetPassword, checkSession, logout | `backend/auth-fast.ts` |
-| `posts-fast` | createUpload, createPost, myPosts, feed, updatePost, deletePost | `backend/posts-fast.ts` |
+| `posts-fast` | createUpload, createPost, myPosts, userPosts, getPost, feed, updatePost, deletePost, react, reactions, comments, addComment, deleteComment, bookmark, bookmarks, share, unrepost, shares | `backend/posts-fast.ts` |
+| `social-fast` | follow, unfollow, people, profile, followList, stories, storyUpload, createStory, viewStory, storyViewers, deleteStory | `backend/social-fast.ts` |
 | `profile-fast` | get, update, imageUpload, setImage, removeImage | `backend/profile-fast.ts` |
 
 | Table | Para saan | SQL |
@@ -66,6 +71,11 @@ updated: 2026-10-23
 | `posts` | caption, visibility, `publish_at` (schedule), `client_id` (walang doble) | `sql/013-posts.sql` |
 | `post_media` | photos/videos ng post (path sa bucket) | `sql/013-posts.sql` |
 | `follows` | sino ang naka-follow kanino (para sa "Followers") | `sql/013-posts.sql` |
+| `post_reactions` | isang emoji bawat tao bawat post | `sql/017-social.sql` |
+| `post_comments` | comments (soft delete) | `sql/017-social.sql` |
+| `post_bookmarks` | Saved posts | `sql/017-social.sql` |
+| `post_shares` | repost o link share | `sql/017-social.sql` |
+| `stories` / `story_views` | status (24 oras) at sino ang nanood | `sql/017-social.sql` |
 
 Storage bucket: **`post-media`** (private, 12 MB/file, jpeg/webp/webm/mp4). Signed URLs lang galing sa `posts-fast`.
 Storage bucket: **`profile-media`** (public na view, 3 MB/file, jpeg/webp). Upload ay galing lang sa `profile-fast`.
