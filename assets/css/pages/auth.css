@@ -126,3 +126,31 @@
 
 /* Walang animation sa unang load */
 .no-anim *, .no-anim *::before, .no-anim *::after { transition: none !important; }
+
+/* ---------- Username field: walang @ sa Sign in (pwede email) ---------- */
+.at-wrap.no-at .at { display: none; }
+.at-wrap.no-at .input { padding-left: 14px; }
+
+/* ---------- Verify email ---------- */
+.verify { display: grid; gap: 8px; }
+.verify-ic {
+  width: 60px; height: 60px; border-radius: 18px; display: grid; place-items: center; margin-bottom: 8px;
+  background: var(--accent-soft); color: var(--accent);
+}
+.verify h1 { font-size: 32px; letter-spacing: -0.035em; }
+.verify b { color: var(--text); font-weight: 600; white-space: nowrap; }
+.verify-form { display: grid; gap: 16px; margin-top: 18px; }
+.otp { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.otp input {
+  width: 100%; height: 58px; text-align: center; font-family: var(--font-display); font-size: 26px; font-weight: 700;
+  border-radius: var(--r-md); border: 1px solid var(--line-strong); background: var(--surface); color: var(--text);
+  transition: border-color .15s, box-shadow .15s, transform .15s var(--ease); caret-color: var(--accent);
+}
+.otp input:focus { outline: none; border-color: var(--text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--text) 10%, transparent); transform: translateY(-1px); }
+.otp input.bad { border-color: var(--danger); }
+.otp.shake { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.verify-links { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.link-btn { border: 0; background: none; padding: 6px 2px; font-weight: 600; font-size: 14px; color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+.link-btn:disabled { color: var(--text-3); text-decoration: none; cursor: default; }
+@media (max-width: 380px) { .otp { gap: 6px; } .otp input { height: 50px; font-size: 22px; } }

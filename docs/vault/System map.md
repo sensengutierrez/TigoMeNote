@@ -41,7 +41,7 @@ updated: 2026-10-23
 ## Back end (Supabase project `tigomenote`)
 | Function | Actions | Source |
 |---|---|---|
-| `auth-fast` | register, login, checkSession, logout | `backend/auth-fast.ts` |
+| `auth-fast` | register, login, verifyEmail, resendCode, checkSession, logout | `backend/auth-fast.ts` |
 
 | Table | Para saan | SQL |
 |---|---|---|
@@ -49,6 +49,9 @@ updated: 2026-10-23
 | `sessions` | login tokens (hash lang) | `sql/002-sessions.sql` |
 | `write_action_dedup` | rate limit / duplicate guard | `sql/003-write-action-dedup.sql` |
 | `brain_notes` | kopya ng vault na ito sa database | `sql/004-brain-notes.sql` |
+| `email_codes` | 6-digit codes (hash lang) | `sql/007-email-verify.sql` |
+
+`users` ay may `email` at `email_verified_at` (sql/007). Status: Unverified → Active / Pending / Inactive.
 
 ## Paano dumadaloy ang isang private page
 1. `theme.js` → kulay agad

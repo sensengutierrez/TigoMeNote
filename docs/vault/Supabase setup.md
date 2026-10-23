@@ -12,6 +12,9 @@ updated: 2026-10-23
 | Name | Para saan | Note |
 |---|---|---|
 | `AUTH_PEPPER` | dagdag sa password hash | **Required. Huwag palitan** — mawawalan ng access ang lahat ng account. |
+| `SMTP_USER` | Gmail address na magpapadala ng codes | Required para sa sign-up |
+| `SMTP_PASS` | Gmail **App Password** (16 letters) | Required. Hindi ang normal na Gmail password. |
+| `MAIL_FROM_NAME` | Pangalan ng sender | Optional (default TigoMeNote) |
 | `REQUIRE_APPROVAL` | `"true"` = Pending ang bagong users | Optional |
 
 > Walang totoong value ng secret dito, at hindi dapat ilagay kailanman.

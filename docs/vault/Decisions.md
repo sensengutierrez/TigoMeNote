@@ -13,6 +13,8 @@ updated: 2026-10-23
 | 2026-10-23 | **Public repo**, No license | Libre ang Pages sa public; "no license" = all rights reserved. Walang secret sa code. |
 | 2026-10-23 | GitHub Desktop para sa updates | Kasama ang dotfiles, kita ang binago bago i-push |
 | 2026-10-23 | Unang nag-register = Admin | Si Bench dapat ang mauna |
+| 2026-10-23 | **Email verification: required + verify**, 6-digit code | Pinili ni Bench; code kaysa link para gumana rin sa APK |
+| 2026-10-23 | Email sender: **Gmail** (App Password) muna | Libre at mabilis; lilipat sa Resend + domain pag lumaki |
 
 ## Bukas pa (hinihintay si Bench)
 - **Media plan:** Daily = sa device lang (sariling folder sa app); Share = maliit na compressed copy sa server para makita ng iba. Okay ba?

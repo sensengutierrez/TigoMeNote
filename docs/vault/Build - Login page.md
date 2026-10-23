@@ -38,4 +38,4 @@ updated: 2026-10-23
 - **Text ng quote:** `.q-login` at `.q-register` sa `login.html`.
 - **Kulay ng blobs:** `.b1`, `.b2`, `.b3` (at `.is-register .b1/.b2`).
 
-Tingnan din: [[Build - Foundation]], [[Change log]]
+Tingnan din: [[Build - Foundation]], [[Build - Email verification]], [[Change log]]

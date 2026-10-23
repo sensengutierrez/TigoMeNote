@@ -16,6 +16,7 @@ Ito ang "utak" ng project: lahat ng ginawa, paano ginawa, at bakit. Buksan ang f
 ## Build records (isang note bawat feature)
 - [[Build - Foundation]] — database, login back end, app shell
 - [[Build - Login page]] — sign in / create account na may panel swap animation
+- [[Build - Email verification]] — 6-digit code sa Gmail bago makapasok
 
 ## Setup
 - [[Supabase setup]] — project, tables, secrets (walang totoong value dito)
