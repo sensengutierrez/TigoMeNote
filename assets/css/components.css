@@ -1,0 +1,119 @@
+/* TigoMeNote · components.css — buttons, inputs, cards, badges, empty states, toast */
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 42px; padding: 0 18px; border-radius: var(--r-full);
+  border: 1px solid transparent; background: var(--surface-2); color: var(--text);
+  font-weight: 600; font-size: 14px; white-space: nowrap;
+  transition: transform .12s var(--ease), background-color .15s, opacity .15s, border-color .15s;
+}
+.btn:active { transform: scale(.97); }
+.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.btn-primary { background: var(--ink); color: var(--ink-text); }
+.btn-primary:hover:not(:disabled) { opacity: .88; }
+.btn-ghost { background: transparent; border-color: var(--line); }
+.btn-ghost:hover:not(:disabled) { background: var(--surface-2); }
+.btn-danger { background: var(--danger-soft); color: var(--danger); }
+.btn-block { width: 100%; }
+.btn-lg { height: 50px; font-size: 15px; padding: 0 24px; }
+.btn .spinner { width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.icon-btn {
+  width: 40px; height: 40px; display: inline-grid; place-items: center;
+  border-radius: var(--r-full); border: 0; background: transparent; color: var(--text);
+  transition: background-color .15s;
+}
+.icon-btn:hover { background: var(--surface-2); }
+
+/* Inputs */
+.field { display: grid; gap: 6px; }
+.field label { font-size: 13px; font-weight: 600; color: var(--text-2); }
+.input {
+  width: 100%; height: 46px; padding: 0 14px; border-radius: var(--r-md);
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--text);
+  transition: border-color .15s, box-shadow .15s;
+}
+.input::placeholder { color: var(--text-3); }
+.input:focus { outline: none; border-color: var(--text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--text) 10%, transparent); }
+.input-wrap { position: relative; }
+.input-wrap .input { padding-right: 46px; }
+.input-wrap .icon-btn { position: absolute; right: 3px; top: 3px; color: var(--text-3); }
+.hint { font-size: 12px; color: var(--text-3); }
+.check { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-2); cursor: pointer; user-select: none; }
+.check input { width: 18px; height: 18px; accent-color: var(--ink); }
+
+/* Alert */
+.alert { padding: 11px 14px; border-radius: var(--r-md); font-size: 14px; background: var(--danger-soft); color: var(--danger); }
+.alert.ok { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
+
+/* Card */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 18px; }
+.card-flat { background: var(--bg-soft); border: 0; }
+
+/* Badge / chip */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 9px;
+  border-radius: var(--r-full); font-size: 11.5px; font-weight: 600;
+  background: var(--surface-2); color: var(--text-2);
+}
+.badge-accent { background: var(--accent-soft); color: var(--accent); }
+.dot-count {
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-full);
+  background: var(--accent); color: #fff; font-size: 11px; font-weight: 700;
+  display: inline-grid; place-items: center;
+}
+.chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  height: 34px; padding: 0 14px; border-radius: var(--r-full); white-space: nowrap;
+  border: 1px solid var(--line); background: var(--surface); font-size: 13.5px; font-weight: 500; color: var(--text-2);
+}
+.chip.active { background: var(--ink); color: var(--ink-text); border-color: var(--ink); }
+
+/* Segmented control */
+.segmented { display: inline-flex; padding: 4px; border-radius: var(--r-full); background: var(--surface-2); gap: 2px; }
+.segmented button {
+  border: 0; background: transparent; height: 34px; padding: 0 16px; border-radius: var(--r-full);
+  font-size: 13.5px; font-weight: 600; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px;
+}
+.segmented button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+
+/* Avatar */
+.avatar {
+  --size: 40px; width: var(--size); height: var(--size); border-radius: 50%; flex: none;
+  display: grid; place-items: center; font-weight: 700; font-size: calc(var(--size) * .38);
+  background: var(--surface-2); color: var(--text); overflow: hidden; font-family: var(--font-display);
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Empty state */
+.empty { text-align: center; padding: 40px 20px; display: grid; justify-items: center; gap: 10px; }
+.empty .empty-art {
+  width: 72px; height: 72px; border-radius: 22px; display: grid; place-items: center;
+  background: var(--bg-soft); color: var(--text-2); margin-bottom: 6px;
+}
+.empty h3 { font-size: 18px; }
+.empty p { color: var(--text-2); max-width: 340px; font-size: 14px; }
+
+/* Skeleton */
+.skel { background: linear-gradient(90deg, var(--surface-2), var(--bg-soft), var(--surface-2)); background-size: 200% 100%; animation: shimmer 1.6s infinite; border-radius: var(--r-md); }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* Toast */
+.toast-host { position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + 16px); transform: translateX(-50%); z-index: 100; display: grid; gap: 8px; pointer-events: none; }
+@media (min-width: 900px) { .toast-host { bottom: 24px; } }
+.toast {
+  background: var(--ink); color: var(--ink-text); padding: 11px 18px; border-radius: var(--r-full);
+  font-size: 14px; font-weight: 500; box-shadow: var(--shadow-lg); animation: toast-in .25s var(--ease);
+}
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+
+/* List rows (settings) */
+.rows { display: grid; }
+.row { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-top: 1px solid var(--line); }
+.row:first-child { border-top: 0; }
+.row .row-main { flex: 1; min-width: 0; }
+.row .row-title { font-weight: 600; font-size: 14.5px; }
+.row .row-sub { color: var(--text-3); font-size: 13px; }

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>Messages · TigoMeNote</title>
+  <script src="../assets/js/theme.js"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/auth-guard.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/tokens.css">
+  <link rel="stylesheet" href="../assets/css/base.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/shell.css">
+  <link rel="stylesheet" href="../assets/css/pages/messages.css">
+</head>
+<body data-page="messages">
+  <main id="page" class="page wide fill">
+    <header class="page-head">
+      <div>
+        <h1>Messages</h1>
+      </div>
+    </header>
+
+    <div class="inbox card">
+      <aside class="inbox-list">
+        <label class="search">
+          <i data-icon="search"></i>
+          <span class="sr-only">Search chats</span>
+          <input class="input" type="search" placeholder="Search chats" disabled>
+        </label>
+        <div class="inbox-empty">
+          <p class="faint small">Wala pang conversation.</p>
+        </div>
+      </aside>
+      <section class="inbox-thread">
+        <div class="empty">
+          <div class="empty-art"><i data-icon="chat" data-size="lg"></i></div>
+          <h3>Messenger is coming next</h3>
+          <p>Text, voice, photos, GIF/stickers at reactions. Iisang account para sa buong TigoMeNote.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/nav-items.js"></script>
+  <script src="../assets/js/components/app-shell.js"></script>
+  <script src="../assets/js/pages/messages.js"></script>
+</body>
+</html>

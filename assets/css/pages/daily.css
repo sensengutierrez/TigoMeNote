@@ -1,0 +1,22 @@
+/* TigoMeNote · pages/daily.css (app/home.html) */
+
+.composer { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px; }
+.composer-input {
+  flex: 1; text-align: left; height: 44px; padding: 0 16px; border-radius: var(--r-full);
+  border: 1px solid var(--line); background: var(--bg-soft); color: var(--text-3); font-size: 15px;
+}
+.composer-input:disabled { cursor: default; }
+.composer-actions { display: flex; align-items: center; gap: 4px; }
+.composer-actions .icon-btn:disabled { color: var(--text-3); cursor: default; }
+
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.day {
+  display: grid; justify-items: center; gap: 4px; padding: 10px 0 12px; border-radius: var(--r-md);
+  border: 1px solid var(--line); background: var(--surface);
+}
+.day .d-name { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); }
+.day .d-num { font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+.day .d-dot { width: 5px; height: 5px; border-radius: 50%; background: transparent; }
+.day.today { background: var(--ink); color: var(--ink-text); border-color: var(--ink); }
+.day.today .d-name { color: inherit; opacity: .7; }
+.day.today .d-dot { background: var(--accent); }

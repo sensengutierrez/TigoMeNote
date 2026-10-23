@@ -1,0 +1,70 @@
+/* TigoMeNote · tokens.css
+   Lahat ng kulay, font, radius at shadow dito lang. Palitan dito, sabay-sabay magbabago ang buong site. */
+
+:root {
+  /* Fonts */
+  --font-display: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Light theme (default: plain white) */
+  --bg: #ffffff;
+  --bg-soft: #f6f6f4;
+  --surface: #ffffff;
+  --surface-2: #f3f3f1;
+  --line: #e7e6e3;
+  --line-strong: #d6d5d1;
+  --text: #121212;
+  --text-2: #55545a;
+  --text-3: #8b8a90;
+  --ink: #121212;          /* primary buttons */
+  --ink-text: #ffffff;
+  --accent: #ff5a36;       /* isang accent lang: active dot, badge, highlight */
+  --accent-soft: #fff0eb;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --danger-soft: #fdecec;
+  --focus: #2563eb;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+  --shadow-md: 0 6px 24px -8px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.04);
+  --shadow-lg: 0 24px 60px -20px rgba(0,0,0,.25);
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 26px;
+  --r-full: 999px;
+
+  --sidebar-w: 248px;
+  --topbar-h: 56px;
+  --tabbar-h: 64px;
+  --content-max: 680px;
+
+  --ease: cubic-bezier(.2,.8,.2,1);
+  color-scheme: light;
+}
+
+/* Dark theme: data-theme="dark" sa <html>, nilalagay ng theme.js */
+:root[data-theme="dark"] {
+  --bg: #0e0e10;
+  --bg-soft: #141417;
+  --surface: #17171a;
+  --surface-2: #1f1f23;
+  --line: #2a2a2f;
+  --line-strong: #3a3a40;
+  --text: #f2f2f3;
+  --text-2: #b4b4ba;
+  --text-3: #7d7d85;
+  --ink: #f2f2f3;
+  --ink-text: #0e0e10;
+  --accent: #ff7a5c;
+  --accent-soft: #2a1914;
+  --danger: #f87171;
+  --danger-soft: #2a1515;
+  --focus: #60a5fa;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+  --shadow-md: 0 8px 28px -10px rgba(0,0,0,.6);
+  --shadow-lg: 0 24px 60px -20px rgba(0,0,0,.8);
+  color-scheme: dark;
+}

@@ -1,0 +1,49 @@
+/* TigoMeNote · pages/auth.css (login.html) */
+
+.auth { min-height: 100vh; min-height: 100dvh; display: grid; }
+
+/* Left art panel (desktop lang) */
+.auth-art { display: none; }
+
+.auth-main { display: flex; flex-direction: column; padding: 14px 18px 32px; }
+.auth-top { display: flex; align-items: center; justify-content: space-between; }
+.auth-card { width: 100%; max-width: 400px; margin: 0 auto; padding-top: 7vh; display: grid; gap: 6px; }
+.auth-card h1 { font-size: 32px; letter-spacing: -0.035em; }
+.auth-tabs { margin: 20px 0 6px; width: 100%; }
+.auth-tabs button { flex: 1; justify-content: center; height: 38px; }
+.auth-form { display: grid; gap: 16px; margin-top: 10px; }
+.auth-foot { margin-top: 16px; text-align: center; }
+
+.at-wrap .at { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-weight: 500; pointer-events: none; }
+.at-wrap .input { padding-left: 32px; padding-right: 14px; }
+
+.strength { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 2px; }
+.strength i { height: 4px; border-radius: 2px; background: var(--surface-2); transition: background-color .2s; }
+.strength[data-level="1"] i:nth-child(-n+1) { background: var(--danger); }
+.strength[data-level="2"] i:nth-child(-n+2) { background: #f59e0b; }
+.strength[data-level="3"] i:nth-child(-n+3) { background: #84cc16; }
+.strength[data-level="4"] i { background: var(--success); }
+
+.input[aria-invalid="true"] { border-color: var(--danger); }
+
+@media (min-width: 900px) {
+  .auth { height: 100vh; height: 100dvh; overflow: hidden; grid-template-columns: minmax(380px, 44%) 1fr; }
+  .auth-art {
+    display: flex; flex-direction: column; justify-content: space-between; padding: 30px 36px;
+    background: var(--ink); color: var(--ink-text); position: relative; overflow: hidden;
+  }
+  .auth-art .brand-mark { background: var(--ink-text); color: var(--ink); }
+  .auth-art .brand-mark::after { border-color: var(--ink); }
+  .auth-quote p { font-family: var(--font-display); font-size: clamp(28px, 2.6vw, 40px); font-weight: 700; line-height: 1.12; letter-spacing: -0.03em; }
+  .auth-quote span { opacity: .5; }
+  .auth-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .auth-tiles .t { aspect-ratio: 3 / 4; border-radius: 18px; }
+  .t1 { background: linear-gradient(160deg, #ffd9cc, #ff8a6b 60%, #c2410c); }
+  .t2 { background: linear-gradient(160deg, #e9d5ff, #a78bfa 60%, #6d28d9); transform: translateY(-18px); }
+  .t3 { background: linear-gradient(160deg, #dbeafe, #93c5fd 60%, #2563eb); }
+  .t4 { background: linear-gradient(160deg, #dcfce7, #86efac 60%, #15803d); transform: translateY(-18px); }
+
+  .auth-main { padding: 24px 36px; overflow-y: auto; }
+  .auth-brand-sm { visibility: hidden; }
+  .auth-card { margin: auto; padding-top: 0; }
+}

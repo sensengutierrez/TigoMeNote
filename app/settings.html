@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>Settings · TigoMeNote</title>
+  <script src="../assets/js/theme.js"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/auth-guard.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/tokens.css">
+  <link rel="stylesheet" href="../assets/css/base.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/shell.css">
+  <link rel="stylesheet" href="../assets/css/pages/settings.css">
+</head>
+<body data-page="settings">
+  <main id="page" class="page">
+    <header class="page-head">
+      <div>
+        <h1>Settings</h1>
+      </div>
+    </header>
+
+    <div class="stack">
+      <section class="card">
+        <h3 class="set-title">Appearance</h3>
+        <div class="rows">
+          <div class="row set-row">
+            <div class="row-main">
+              <div class="row-title">Theme</div>
+              <div class="row-sub">Plain white, dark, o sundan ang device.</div>
+            </div>
+            <div class="segmented" id="themeSeg" role="group" aria-label="Theme">
+              <button type="button" data-mode="light"><i data-icon="sun" data-size="sm"></i>Light</button>
+              <button type="button" data-mode="dark"><i data-icon="moon" data-size="sm"></i>Dark</button>
+              <button type="button" data-mode="system"><i data-icon="monitor" data-size="sm"></i>Auto</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3 class="set-title">Account</h3>
+        <div class="rows">
+          <div class="row">
+            <div class="row-main"><div class="row-title">Username</div><div class="row-sub" id="sUser"></div></div>
+          </div>
+          <div class="row">
+            <div class="row-main"><div class="row-title">Role</div><div class="row-sub" id="sRole"></div></div>
+          </div>
+          <div class="row">
+            <div class="row-main"><div class="row-title">Log out</div><div class="row-sub">Lalabas ka sa device na ito.</div></div>
+            <button class="btn btn-danger" type="button" id="sLogout"><i data-icon="logout" data-size="sm"></i>Log out</button>
+          </div>
+        </div>
+      </section>
+
+      <p class="faint small center" id="sVersion"></p>
+    </div>
+  </main>
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/nav-items.js"></script>
+  <script src="../assets/js/components/app-shell.js"></script>
+  <script src="../assets/js/pages/settings.js"></script>
+</body>
+</html>

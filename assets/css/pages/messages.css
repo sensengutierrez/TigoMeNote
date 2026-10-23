@@ -1,0 +1,16 @@
+/* TigoMeNote · pages/messages.css (app/messages.html)
+   Desktop: dalawang pane (list + thread), bawat isa may sariling scroll. Phone: list lang muna. */
+
+.inbox { padding: 0; overflow: hidden; display: grid; min-height: 420px; }
+.inbox-list { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.inbox-list .search { position: relative; display: block; }
+.inbox-list .search .ic { position: absolute; left: 14px; top: 13px; color: var(--text-3); }
+.inbox-list .search .input { padding-left: 44px; border-radius: var(--r-full); background: var(--bg-soft); border-color: transparent; }
+.inbox-empty { flex: 1; display: grid; place-items: center; padding: 20px; }
+.inbox-thread { display: grid; place-items: center; border-top: 1px solid var(--line); background: var(--bg-soft); }
+
+@media (min-width: 900px) {
+  .inbox { flex: 1; min-height: 0; grid-template-columns: 320px 1fr; }
+  .inbox-list { border-right: 1px solid var(--line); overflow-y: auto; }
+  .inbox-thread { border-top: 0; overflow-y: auto; }
+}

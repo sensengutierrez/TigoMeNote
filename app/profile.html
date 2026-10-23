@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>Profile · TigoMeNote</title>
+  <script src="../assets/js/theme.js"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/auth-guard.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/tokens.css">
+  <link rel="stylesheet" href="../assets/css/base.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/shell.css">
+  <link rel="stylesheet" href="../assets/css/pages/profile.css">
+</head>
+<body data-page="profile">
+  <main id="page" class="page">
+    <section class="profile card">
+      <div class="profile-banner"></div>
+      <div class="profile-body">
+        <span class="avatar profile-avatar" id="pAvatar" style="--size:92px"></span>
+        <div class="profile-top">
+          <div>
+            <h1 class="profile-name" id="pName">…</h1>
+            <div class="faint" id="pUser"></div>
+          </div>
+          <button class="btn btn-ghost" type="button" disabled><i data-icon="edit"></i>Edit</button>
+        </div>
+        <p class="profile-bio" id="pBio"></p>
+        <div class="profile-meta faint small">
+          <span id="pRole" class="badge"></span>
+          <span><i data-icon="calendar" data-size="sm"></i><span id="pJoined"></span></span>
+        </div>
+        <div class="stats">
+          <div><b>0</b><span>Posts</span></div>
+          <div><b>0</b><span>Followers</span></div>
+          <div><b>0</b><span>Following</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card empty" style="margin-top:16px">
+      <div class="empty-art"><i data-icon="image" data-size="lg"></i></div>
+      <h3>No shared posts yet</h3>
+      <p>Ang mga shinare mo sa Explore ay lalabas dito.</p>
+    </section>
+  </main>
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/nav-items.js"></script>
+  <script src="../assets/js/components/app-shell.js"></script>
+  <script src="../assets/js/pages/profile.js"></script>
+</body>
+</html>

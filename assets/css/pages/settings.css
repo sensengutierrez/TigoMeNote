@@ -1,0 +1,9 @@
+/* TigoMeNote · pages/settings.css (app/settings.html) */
+
+.set-title { margin-bottom: 4px; }
+.set-row { flex-wrap: wrap; }
+.center { text-align: center; }
+@media (max-width: 520px) {
+  .set-row .segmented { width: 100%; }
+  .set-row .segmented button { flex: 1; justify-content: center; }
+}
