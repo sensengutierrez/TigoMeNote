@@ -90,9 +90,6 @@
 .vw-actions .btn { flex: 1; height: 40px; padding: 0 12px; }
 
 /* Move-to-album picker */
-.pick-list { display: grid; gap: 6px; }
-.pick { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface); text-align: left; font-weight: 600; }
-.pick:hover { background: var(--surface-2); }
 
 @media (min-width: 640px) { .g-grid { grid-template-columns: repeat(4, 1fr); } }
 

@@ -118,8 +118,8 @@
         title: "Edit photo", size: "full", cls: "modal-editor", body: root, closeOnBackdrop: false,
         actions: [
           { label: "Reset", cls: "btn-ghost pe-reset", onClick: function () { reset(); } },
-          { label: "Save as copy", cls: "btn-ghost", onClick: function (m, b) { save("copy", b); } },
-          { label: "Save", cls: "btn-primary", onClick: function (m, b) { save("replace", b); } }
+          { label: "Gawing bagong copy", cls: "btn-ghost", onClick: function (m, b) { save("copy", b); } },
+          { label: "Save (palitan)", cls: "btn-primary", onClick: function (m, b) { save("replace", b); } }
         ],
         onClose: function () { if (!resolved) { resolved = true; resolve(null); } if (src.close) src.close(); window.removeEventListener("resize", render); }
       });

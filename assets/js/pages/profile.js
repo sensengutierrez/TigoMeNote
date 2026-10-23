@@ -1,5 +1,5 @@
 /* TigoMeNote · pages/profile.js (app/profile.html)
-   Profile card + "Naka-pila sa device" (offline queue) + sariling posts mula sa server. */
+   Profile (cover, photo, edit) + "Naka-pila sa device" (offline queue) + sariling posts mula sa server. */
 (function () {
   var UI = window.TMN_UI, I = window.TMN_ICON, Q = window.TMN_POSTQ, PU = window.TMN_POSTS_UI;
   var $ = function (id) { return document.getElementById(id); };
@@ -10,6 +10,9 @@
     var av = $("pAvatar");
     if (u.avatar_url) av.innerHTML = '<img alt="" src="' + UI.esc(u.avatar_url) + '">';
     else av.textContent = UI.initials(u.display_name);
+    var bi = $("pBannerImg");
+    if (u.banner_url) { if (bi.getAttribute("src") !== u.banner_url) bi.src = u.banner_url; bi.classList.remove("hidden"); }
+    else { bi.removeAttribute("src"); bi.classList.add("hidden"); }
     $("pName").textContent = u.display_name || "";
     $("pUser").textContent = u.username ? "@" + u.username : "";
     $("pBio").textContent = u.bio || "";
@@ -20,6 +23,38 @@
   }
   paint();
   document.addEventListener("tmn:user", paint);
+
+  // ---------- Edit profile / palit ng larawan (components/profile-editor.js) ----------
+  var PE = window.TMN_PROFILE_EDIT;
+  $("editBtn").addEventListener("click", function () { PE.open(); });
+  $("avatarBtn").addEventListener("click", function () { photoMenu("avatar"); });
+  $("bannerBtn").addEventListener("click", function () { photoMenu("banner"); });
+  // Kapag may larawan na: Palitan / Alisin. Kapag wala pa: diretso sa pili.
+  function photoMenu(kind) {
+    var u = window.TMN_USER || {};
+    if (!u[kind + "_url"]) { PE.changePhoto(kind); return; }
+    var body = document.createElement("div");
+    body.className = "pick-list";
+    body.innerHTML =
+      '<button type="button" class="pick" data-a="change">' + I("camera") + "Palitan</button>" +
+      '<button type="button" class="pick danger" data-a="remove">' + I("trash") + "Alisin</button>";
+    var m = TMN_MODAL.open({ title: kind === "avatar" ? "Profile photo" : "Cover photo", size: "sm", body: body });
+    body.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-a]"); if (!b) return;
+      m.close();
+      if (b.dataset.a === "change") PE.changePhoto(kind); else PE.removePhoto(kind);
+    });
+  }
+  // Kunin ang pinakabagong profile (cover photo + bilang ng followers)
+  async function loadProfile() {
+    if (!navigator.onLine) return;
+    try {
+      var r = await TMN_API.call("profile", "get", {});
+      if (window.TMN_AUTH && TMN_AUTH.setUser) TMN_AUTH.setUser(Object.assign({}, window.TMN_USER || {}, r.user));
+      $("statFollowers").textContent = r.counts.followers;
+      $("statFollowing").textContent = r.counts.following;
+    } catch (e) {}
+  }
 
   // ---------- Naka-pila (device) ----------
   async function renderQueue() {
@@ -115,4 +150,5 @@
 
   renderQueue();
   loadPosts();
+  loadProfile();
 })();

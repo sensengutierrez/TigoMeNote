@@ -14,7 +14,7 @@ updated: 2026-10-23
 | `share.html` | app/ | Share: camera / video / files → Gallery (+ "I-post din") | oo |
 | `messages.html` | app/ | Messages (placeholder) | oo |
 | `gallery.html` | app/ | Gallery: albums, upload, edit (device lang) | oo |
-| `profile.html` | app/ | Profile: naka-pilang uploads + sariling posts | oo |
+| `profile.html` | app/ | Profile: cover, photo, edit profile, naka-pilang uploads, sariling posts | oo |
 | `settings.html` | app/ | Theme + logout | oo |
 | (wala pa) | app/admin/ | Admin pages | Admin lang |
 
@@ -34,6 +34,8 @@ updated: 2026-10-23
 | `post-queue.js` | Offline outbox ng posts: compress + kusang upload (`TMN_POSTQ`) |
 | `components/post-composer.js` | "Bagong post" modal: caption, visibility, schedule |
 | `components/post-viewer.js` | Post tiles + viewer + edit/delete (`TMN_POSTS_UI`) |
+| `components/image-cropper.js` | Crop ng larawan bago i-upload (`TMN_CROPPER`) |
+| `components/profile-editor.js` | Edit profile + palit ng photo/cover (`TMN_PROFILE_EDIT`) |
 | `components/app-shell.js` | Gumagawa ng layout ng app pages mula sa nav-items |
 | `pages/<page>.js` | Code ng isang page lang |
 
@@ -52,6 +54,7 @@ updated: 2026-10-23
 |---|---|---|
 | `auth-fast` | register, login, verifyEmail, resendCode, forgotPassword, resetPassword, checkSession, logout | `backend/auth-fast.ts` |
 | `posts-fast` | createUpload, createPost, myPosts, feed, updatePost, deletePost | `backend/posts-fast.ts` |
+| `profile-fast` | get, update, imageUpload, setImage, removeImage | `backend/profile-fast.ts` |
 
 | Table | Para saan | SQL |
 |---|---|---|
@@ -65,8 +68,9 @@ updated: 2026-10-23
 | `follows` | sino ang naka-follow kanino (para sa "Followers") | `sql/013-posts.sql` |
 
 Storage bucket: **`post-media`** (private, 12 MB/file, jpeg/webp/webm/mp4). Signed URLs lang galing sa `posts-fast`.
+Storage bucket: **`profile-media`** (public na view, 3 MB/file, jpeg/webp). Upload ay galing lang sa `profile-fast`.
 
-`users` ay may `email` at `email_verified_at` (sql/007). Status: Unverified → Active / Pending / Inactive.
+`users` ay may `email` at `email_verified_at` (sql/007), at `banner_url`, `avatar_path`, `banner_path` (sql/015). Status: Unverified → Active / Pending / Inactive.
 
 ## External (libre, walang key)
 Open-Meteo (forecast), BigDataCloud (reverse geocode), ipapi.co / geojs.io (IP location), Brevo (email, server-side).

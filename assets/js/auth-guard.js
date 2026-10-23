@@ -42,6 +42,12 @@
   window.TMN_USER = user;
 
   window.TMN_AUTH = {
+    // Palitan ang naka-save na user (hal. pagka-edit ng profile) at i-refresh ang menu
+    setUser: function (u) {
+      window.TMN_USER = u;
+      set(store, K.user, JSON.stringify(u));
+      document.dispatchEvent(new CustomEvent("tmn:user", { detail: u }));
+    },
     logout: async function () {
       try {
         await fetch(C.fn.auth, {

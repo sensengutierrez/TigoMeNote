@@ -21,6 +21,7 @@ Ito ang "utak" ng project: lahat ng ginawa, paano ginawa, at bakit. Buksan ang f
 - [[Build - Gallery and albums]] — photos/videos sa device, albums, editor
 - [[Build - Weather]] — weather sa Daily, auto Bahrain/Pinas
 - [[Build - Offline posts]] — mag-post kahit offline, may schedule, auto-upload
+- [[Build - Profile edit]] — edit profile, profile photo at cover (banner)
 
 ## Setup
 - [[Supabase setup]] — project, tables, secrets (walang totoong value dito)
@@ -34,6 +35,6 @@ Ito ang "utak" ng project: lahat ng ginawa, paano ginawa, at bakit. Buksan ang f
 | 3 | Front-end shell | ✅ live |
 | 4 | Brain vault | 🟡 md files + DB; brain.html sa web, susunod |
 | 5 | Messaging | ⏳ |
-| 6 | Profile + approval | ⏳ |
+| 6 | Profile + approval | 🟡 Edit profile + cover ✅; approval susunod |
 | 7 | Daily / Explore / Share (ang idea) | 🟡 Gallery, weather, offline posts, Explore feed ✅; follow/likes/comments susunod |
 | 8 | Android APK | ⏳ |

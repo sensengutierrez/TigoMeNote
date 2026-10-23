@@ -197,3 +197,20 @@ body.modal-open { overflow: hidden; }
   .modal-backdrop:has(.modal-viewer) { align-items: stretch; }
   .modal.modal-viewer { max-height: none; height: 100dvh; border-radius: 0; }
 }
+
+/* Listahan ng pagpipilian sa modal (hal. pili ng album, Palitan/Alisin) */
+.pick-list { display: grid; gap: 6px; }
+.pick { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left; font-weight: 600; }
+.pick:hover { background: var(--surface-2); }
+.pick.danger { color: var(--danger); }
+
+/* ---------- Cropper (components/image-cropper.js) ---------- */
+.crop { display: grid; gap: 12px; }
+.crop-frame { position: relative; width: 100%; overflow: hidden; border-radius: var(--r-md); background: #111; touch-action: none; cursor: grab; user-select: none; }
+.crop-frame:active { cursor: grabbing; }
+.crop-frame img { position: absolute; left: 0; top: 0; max-width: none; transform-origin: 0 0; pointer-events: none; }
+.crop-frame.round { max-width: 360px; justify-self: center; }
+.crop-frame.round::after { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 999px rgba(0,0,0,.5); pointer-events: none; }
+.crop-zoom { display: flex; align-items: center; gap: 10px; color: var(--text-3); }
+.crop-zoom input { flex: 1; accent-color: var(--accent); }
+.crop-hint { text-align: center; }
