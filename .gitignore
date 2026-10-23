@@ -1,0 +1,22 @@
+# TigoMeNote · .gitignore
+# Mga file na HINDI dapat ma-upload sa GitHub
+
+# Secrets (huwag kailanman i-upload)
+.env
+.env.*
+*.keystore
+*.jks
+*.p12
+*.pem
+keystore.properties
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Tools / build
+node_modules/
+android/**/build/
+android/**/.gradle/
+*.log
