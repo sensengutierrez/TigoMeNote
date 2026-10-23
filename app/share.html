@@ -7,6 +7,7 @@
   <title>Share · TigoMeNote</title>
   <script src="../assets/js/theme.js"></script>
   <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/i18n.js"></script>
   <script src="../assets/js/auth-guard.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +25,7 @@
       <div>
         <div class="eyebrow">Create</div>
         <h1>Share</h1>
-        <p class="lead">Kumuha ng photo o video para sa Daily mo, o i-share sa Explore.</p>
+        <p class="lead">Take a photo or video for your Daily, or share it to Explore.</p>
       </div>
     </header>
 
@@ -46,33 +47,33 @@
       <label class="capture-tile">
         <span class="cap-icon"><i data-icon="image" data-size="lg"></i></span>
         <span class="cap-title">From gallery</span>
-        <span class="cap-sub">Pumili ng files</span>
+        <span class="cap-sub">Choose files</span>
         <input type="file" accept="image/*,video/*" multiple class="sr-only" data-pick>
       </label>
     </div>
     <div class="card save-to">
-      <label for="albumSel"><i data-icon="album" data-size="sm"></i>I-save sa album</label>
-      <select id="albumSel" class="input"><option value="">Walang album</option></select>
-      <label class="post-too"><input type="checkbox" id="postToo"> <span><b>I-post din</b> <span class="faint small">· lagyan ng caption at oras; gumagana kahit offline</span></span></label>
+      <label for="albumSel"><i data-icon="album" data-size="sm"></i>Save to album</label>
+      <select id="albumSel" class="input"><option value="">No album</option></select>
+      <label class="post-too"><input type="checkbox" id="postToo"> <span><b>Also post it</b> <span class="faint small">· add a caption and time; works offline</span></span></label>
       <a class="btn btn-ghost" href="gallery.html"><i data-icon="grid" data-size="sm"></i>Open Gallery</a>
     </div>
     </div>
 
     <section class="card where">
-      <h3>Saan napupunta ang files mo?</h3>
+      <h3>Where do your files go?</h3>
       <div class="rows">
         <div class="row">
           <span class="where-ic"><i data-icon="phone"></i></span>
           <div class="row-main">
             <div class="row-title">Daily (private)</div>
-            <div class="row-sub">Sa device mo lang. Sa app: sariling folder na <b>TigoMeNote</b>. Hindi ina-upload.</div>
+            <div class="row-sub">On your device only. In the app: its own <b>TigoMeNote</b> folder. Not uploaded.</div>
           </div>
         </div>
         <div class="row">
           <span class="where-ic"><i data-icon="compass"></i></span>
           <div class="row-main">
             <div class="row-title">Share to Explore</div>
-            <div class="row-sub">Maliit na copy lang ang ia-upload (photo ~1600 px, video ≤15 s). Kung offline ka, naka-pila muna sa device at kusang ia-upload pag may internet. Pwedeng i-schedule ang oras.</div>
+            <div class="row-sub">Only a small copy is uploaded (photo ~1600 px, video ≤15 s). If you're offline, it waits on your device and uploads automatically when you're back online. You can schedule the time.</div>
           </div>
         </div>
       </div>

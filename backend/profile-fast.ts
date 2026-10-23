@@ -70,12 +70,12 @@ async function update(p: any, me: any) {
   const ch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (p.display_name !== undefined) {
     const d = String(p.display_name).trim().replace(/\s+/g, " ");
-    if (d.length < 1 || d.length > 40) return fail("Pangalan: 1–40 characters.");
+    if (d.length < 1 || d.length > 40) return fail("Name: 1–40 characters.");
     ch.display_name = d;
   }
   if (p.bio !== undefined) {
     const b = String(p.bio).trim().replace(/\n{3,}/g, "\n\n");
-    if (b.length > 300) return fail("Bio: hanggang 300 characters.");
+    if (b.length > 300) return fail("Bio: up to 300 characters.");
     ch.bio = b;
   }
   const { data, error } = await db.from("users").update(ch).eq("id", me.id).select("*").single();
@@ -86,13 +86,13 @@ async function update(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function imageUpload(p: any, me: any) {
   const kind = String(p.kind);
-  if (!KINDS.includes(kind as typeof KINDS[number])) return fail("Maling uri ng larawan.");
-  if (Number(p.size) > MAX_BYTES) return fail("Masyadong malaki ang larawan (max 3 MB).", 413);
+  if (!KINDS.includes(kind as typeof KINDS[number])) return fail("Invalid image type.");
+  if (Number(p.size) > MAX_BYTES) return fail("The image is too large (max 3 MB).", 413);
   // rate limit gamit ang write_action_dedup (isang row bawat upload)
   const since = new Date(Date.now() - 3600_000).toISOString();
   const { count } = await db.from("write_action_dedup").select("id", { count: "exact", head: true })
     .eq("dedup_key", `profile-img:${me.id}`).gte("created_at", since);
-  if ((count ?? 0) >= UPLOADS_PER_HOUR) return fail("Masyadong madalas magpalit. Subukan ulit mamaya.", 429);
+  if ((count ?? 0) >= UPLOADS_PER_HOUR) return fail("Too many changes. Please try again later.", 429);
   const path = `${me.id}/${kind}-${Date.now().toString(36)}${rand()}.jpg`;
   await db.from("write_action_dedup").insert({ dedup_key: `profile-img:${me.id}`, action: "profileImage", user_id: me.id });
   const { data, error } = await db.storage.from(BUCKET).createSignedUploadUrl(path);
@@ -103,12 +103,12 @@ async function imageUpload(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function setImage(p: any, me: any) {
   const kind = String(p.kind);
-  if (!KINDS.includes(kind as typeof KINDS[number])) return fail("Maling uri ng larawan.");
+  if (!KINDS.includes(kind as typeof KINDS[number])) return fail("Invalid image type.");
   const path = String(p.path ?? "");
-  if (!path.startsWith(`${me.id}/${kind}-`) || path.includes("..")) return fail("Maling file.", 403);
+  if (!path.startsWith(`${me.id}/${kind}-`) || path.includes("..")) return fail("Invalid file.", 403);
   const name = path.slice(me.id.length + 1);
   const { data: listed } = await db.storage.from(BUCKET).list(me.id, { search: name, limit: 5 });
-  if (!(listed ?? []).some((o) => o.name === name)) return fail("Hindi pa tapos ang upload. Subukan ulit.", 409);
+  if (!(listed ?? []).some((o) => o.name === name)) return fail("The upload hasn't finished. Please try again.", 409);
   const old = me[COL[kind].path];
   const { data, error } = await db.from("users").update({
     [COL[kind].url]: publicUrl(path), [COL[kind].path]: path, updated_at: new Date().toISOString(),
@@ -121,7 +121,7 @@ async function setImage(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function removeImage(p: any, me: any) {
   const kind = String(p.kind);
-  if (!KINDS.includes(kind as typeof KINDS[number])) return fail("Maling uri ng larawan.");
+  if (!KINDS.includes(kind as typeof KINDS[number])) return fail("Invalid image type.");
   const old = me[COL[kind].path];
   const { data, error } = await db.from("users").update({
     [COL[kind].url]: null, [COL[kind].path]: null, updated_at: new Date().toISOString(),
@@ -133,11 +133,11 @@ async function removeImage(p: any, me: any) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
-  if (req.method !== "POST") return fail("POST lang.", 405);
+  if (req.method !== "POST") return fail("POST only.", 405);
   try {
     const p = await req.json().catch(() => ({}));
     const me = await sessionUser(String(p.token ?? req.headers.get("x-session-token") ?? ""));
-    if (!me) return fail("Session expired. Mag-login ulit.", 401);
+    if (!me) return fail("Session expired. Please sign in again.", 401);
     switch (p.action) {
       case "get":         return await get(p, me);
       case "update":      return await update(p, me);
@@ -148,6 +148,6 @@ Deno.serve(async (req) => {
     }
   } catch (e) {
     console.error("profile-fast error", e);
-    return fail("Server error. Subukan ulit.", 500);
+    return fail("Server error. Please try again.", 500);
   }
 });

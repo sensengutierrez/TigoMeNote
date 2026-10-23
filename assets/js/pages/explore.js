@@ -37,8 +37,8 @@
   }
   function render() {
     if (!posts.length) {
-      if (mode === "following") empty("Wala pa sa Following", "I-follow ang mga tao sa Suggestions para makita dito ang posts at reposts nila.", false);
-      else empty("Wala pang posts", "Ikaw na ang mauna! Pumili ng photo sa Gallery at pindutin ang Post.", true);
+      if (mode === "following") empty("Nothing in Following yet", "Follow people from Suggestions to see their posts and reposts here.", false);
+      else empty("No posts yet", "Be the first! Pick a photo in Gallery and tap Post.", true);
     } else {
       $("empty").classList.add("hidden");
       $("feed").innerHTML = posts.map(PC.html).join("");
@@ -47,7 +47,7 @@
   }
   async function load(next) {
     if (busy) return;
-    if (!navigator.onLine) { if (!loaded) empty("Offline ka", "Lalabas ang Explore pag may internet na. Pwede ka pa ring mag-post — mase-save muna sa device.", true); return; }
+    if (!navigator.onLine) { if (!loaded) empty("You're offline", "Explore will load once you're online. You can still post — it will be saved on your device first.", true); return; }
     busy = true;
     if (!next) { $("feed").innerHTML = skeleton(); $("empty").classList.add("hidden"); }
     $("more").disabled = true;
@@ -61,7 +61,7 @@
       if (next) { $("feed").insertAdjacentHTML("beforeend", got.map(PC.html).join("")); $("more").classList.toggle("hidden", !more); }
       else render();
     } catch (err) {
-      if (!loaded) empty("Hindi ma-load", err.message, false); else UI.toast(err.message);
+      if (!loaded) empty("Couldn't load", err.message, false); else UI.toast(err.message);
     } finally { busy = false; $("more").disabled = false; }
   }
   function paintTabs() { $("tabs").querySelectorAll("[data-mode]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.mode === mode)); }); }
@@ -94,7 +94,7 @@
   S.bindPeople($("sugg")); S.bindPeople($("results"));
   async function suggestions() {
     if (!navigator.onLine) return;
-    try { var r = await TMN_API.call("social", "people", {}); $("sugg").innerHTML = S.peopleHtml(r.list, "Na-follow mo na lahat 🎉"); }
+    try { var r = await TMN_API.call("social", "people", {}); $("sugg").innerHTML = S.peopleHtml(r.list, "You're following everyone 🎉"); }
     catch (e) { $("sugg").innerHTML = '<p class="faint small sx-empty">' + UI.esc(e.message) + "</p>"; }
   }
   var deb, lastQ = "";
@@ -107,7 +107,7 @@
         try {
           var r = await TMN_API.call("social", "people", { q: v.replace(/^@/, "") });
           if (lastQ !== v) return;
-          out.innerHTML = S.peopleHtml(r.list, "Walang nakita para sa \"" + UI.esc(v) + "\"."); out.classList.remove("hidden");
+          out.innerHTML = S.peopleHtml(r.list, "No results for \"" + UI.esc(v) + "\"."); out.classList.remove("hidden");
         } catch (e) { out.innerHTML = '<p class="faint small sx-empty">' + UI.esc(e.message) + "</p>"; out.classList.remove("hidden"); }
       }, 250);
     });
@@ -117,11 +117,11 @@
   $("findBtn").addEventListener("click", function () {
     var body = document.createElement("div");
     body.className = "ex-find-sheet";
-    body.innerHTML = '<label class="search"><input class="input" type="search" placeholder="Pangalan o @username" autofocus></label>' +
+    body.innerHTML = '<label class="search"><input class="input" type="search" placeholder="Name or @username" autofocus></label>' +
       '<div class="ex-results hidden"></div><h4 class="faint small">Suggestions</h4><div class="ex-sugg">' + $("sugg").innerHTML + "</div>";
     S.bindPeople(body);
     searchInto(body.querySelector("input"), body.querySelector(".ex-results"));
-    TMN_MODAL.open({ title: "Hanapin ang tao", size: "sm", cls: "modal-sheet", body: body });
+    TMN_MODAL.open({ title: "Search people", size: "sm", cls: "modal-sheet", body: body });
   });
 
   // ---------- ?post=<id> ----------

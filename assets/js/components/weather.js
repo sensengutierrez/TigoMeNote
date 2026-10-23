@@ -109,7 +109,7 @@
     function error(msg) {
       el.innerHTML = '<div class="wx-head"><span class="wx-place">' + I("cloud", "ic-sm") + 'Weather</span></div>' +
         '<p class="muted small wx-err">' + msg + '</p>' +
-        '<button type="button" class="btn btn-ghost btn-sm wx-retry">' + I("refresh", "ic-sm") + 'Subukan ulit</button>';
+        '<button type="button" class="btn btn-ghost btn-sm wx-retry">' + I("refresh", "ic-sm") + 'Try again</button>';
       el.querySelector(".wx-retry").addEventListener("click", function () { load(true); });
     }
 
@@ -119,13 +119,13 @@
       var place = [c.place.city, c.place.country].filter(Boolean).join(", ") || "Your location";
       var days = day.time.map(function (t, i) {
         var dd = describe(day.weather_code[i], 1);
-        var name = i === 0 ? "Today" : new Date(t + "T12:00:00").toLocaleDateString(undefined, { weekday: "short" });
+        var name = i === 0 ? "Today" : new Date(t + "T12:00:00").toLocaleDateString(window.TMN_I18N ? TMN_I18N.locale : undefined, { weekday: "short" });
         return '<div class="wx-day' + (i === 0 ? " today" : "") + '"><span>' + name + "</span>" + I(dd[1]) +
           "<b>" + Math.round(day.temperature_2m_max[i]) + "°</b><small>" + Math.round(day.temperature_2m_min[i]) + "°</small></div>";
       }).join("");
       el.innerHTML =
         '<div class="wx-head">' +
-          '<span class="wx-place" title="' + (c.source === "gps" ? "Mula sa GPS ng device" : "Approximate, mula sa internet (IP)") + '">' + I("pin", "ic-sm") +
+          '<span class="wx-place" title="' + (c.source === "gps" ? "From your device's GPS" : "Approximate, from your internet (IP)") + '">' + I("pin", "ic-sm") +
             '<span class="wx-name">' + window.TMN_UI.esc(place) + "</span> " + flag(c.place.cc) + "</span>" +
           '<button type="button" class="icon-btn wx-refresh" aria-label="Refresh weather">' + I("refresh", "ic-sm") + "</button>" +
         "</div>" +
@@ -141,8 +141,8 @@
         "</div>" +
         '<div class="wx-days">' + days + "</div>" +
         '<div class="wx-foot faint">' +
-          (c.source === "gps" ? "Location: GPS ng device" : 'Approximate location (internet). <button type="button" class="link-btn wx-precise">Gamitin ang GPS</button>') +
-          ' · Updated ' + new Date(c.at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) +
+          (c.source === "gps" ? "Location: device GPS" : 'Approximate location (internet). <button type="button" class="link-btn wx-precise">Use GPS</button>') +
+          ' · Updated ' + new Date(c.at).toLocaleTimeString(window.TMN_I18N ? TMN_I18N.locale : undefined, { hour: "numeric", minute: "2-digit" }) +
         "</div>";
       el.querySelector(".wx-refresh").addEventListener("click", function () { load(true); });
       var p = el.querySelector(".wx-precise");
@@ -164,8 +164,8 @@
         writeCache(fresh);
         render(fresh);
       } catch (e) {
-        if (!cache) error("Hindi makuha ang weather ngayon. Tingnan ang internet mo.");
-        else window.TMN_UI && TMN_UI.toast("Hindi ma-update ang weather.");
+        if (!cache) error("Can't get the weather right now. Check your internet.");
+        else window.TMN_UI && TMN_UI.toast("Couldn't update the weather.");
       }
       busy = false;
     }

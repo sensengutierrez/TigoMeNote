@@ -19,7 +19,7 @@
   }
   function needOnline() {
     if (navigator.onLine) return true;
-    window.TMN_UI.toast("Kailangan ng internet para mapalitan ang profile.");
+    window.TMN_UI.toast("You need internet to change your profile.");
     return false;
   }
   function pickFile() {
@@ -39,31 +39,31 @@
     if (!needOnline()) return null;
     file = file || await pickFile();
     if (!file) return null;
-    if (!/^image\//.test(file.type) && !/\.(jpe?g|png|webp|gif|heic)$/i.test(file.name)) { UI.toast("Larawan lang ang pwede."); return null; }
+    if (!/^image\//.test(file.type) && !/\.(jpe?g|png|webp|gif|heic)$/i.test(file.name)) { UI.toast("Only images are allowed."); return null; }
     var blob;
     try { blob = await window.TMN_CROPPER.open(file, sp); }
     catch (e) { UI.toast(e.message); return null; }
     if (!blob) return null;
-    UI.toast("Ina-upload ang " + sp.label.toLowerCase() + "…");
+    UI.toast("Uploading " + sp.label.toLowerCase() + "…");
     try {
       var up = await TMN_API.call("profile", "imageUpload", { kind: kind, size: blob.size });
       var r = await fetch(up.url, { method: "PUT", headers: { "content-type": "image/jpeg" }, body: blob });
-      if (!r.ok) throw new Error("Hindi na-upload (" + r.status + "). Subukan ulit.");
+      if (!r.ok) throw new Error("Upload failed (" + r.status + "). Please try again.");
       var res;
       for (var t = 0; t < 3; t++) {
         try { res = await TMN_API.call("profile", "setImage", { kind: kind, path: up.path }); break; }
         catch (e) { if (e.status === 409 && t < 2) await new Promise(function (ok) { setTimeout(ok, 1200); }); else throw e; }
       }
-      UI.toast(sp.label + " napalitan ✓");
+      UI.toast(sp.label + " updated ✓");
       return saveUser(res.user);
-    } catch (e) { UI.toast(e.message || "Hindi na-upload."); return null; }
+    } catch (e) { UI.toast(e.message || "Upload failed."); return null; }
   }
 
   async function removePhoto(kind) {
     var UI = window.TMN_UI;
     if (!needOnline()) return null;
-    if (!(await TMN_MODAL.confirm("Alisin ang " + SPEC[kind].label.toLowerCase() + "?", { okText: "Alisin", danger: true }))) return null;
-    try { var res = await TMN_API.call("profile", "removeImage", { kind: kind }); UI.toast("Naalis."); return saveUser(res.user); }
+    if (!(await TMN_MODAL.confirm("Remove " + SPEC[kind].label.toLowerCase() + "?", { okText: "Remove", danger: true }))) return null;
+    try { var res = await TMN_API.call("profile", "removeImage", { kind: kind }); UI.toast("Removed."); return saveUser(res.user); }
     catch (e) { UI.toast(e.message); return null; }
   }
 
@@ -77,10 +77,10 @@
         '<div class="pe-pic" data-kind="avatar"><span class="thumb"></span><span class="grow">Profile photo</span><span class="btns"></span></div>' +
         '<div class="pe-pic" data-kind="banner"><span class="thumb wide"></span><span class="grow">Cover photo</span><span class="btns"></span></div>' +
       "</div>" +
-      '<label class="field"><span class="pe-label">Pangalan</span><input class="input" name="name" maxlength="40" autocomplete="name"></label>' +
-      '<label class="field"><span class="pe-label">Bio</span><textarea class="input" name="bio" maxlength="300" rows="4" placeholder="Konting kwento tungkol sa iyo…"></textarea>' +
+      '<label class="field"><span class="pe-label">Name</span><input class="input" name="name" maxlength="40" autocomplete="name"></label>' +
+      '<label class="field"><span class="pe-label">Bio</span><textarea class="input" name="bio" maxlength="300" rows="4" placeholder="A little about you…"></textarea>' +
         '<span class="pe-count faint small"></span></label>' +
-      '<p class="faint small">Username: <b>@' + esc(u.username || "") + "</b> (hindi pa napapalitan)</p>";
+      '<p class="faint small">Username: <b>@' + esc(u.username || "") + "</b> (can't be changed yet)</p>";
     var name = f.querySelector("[name=name]"), bio = f.querySelector("[name=bio]"), cnt = f.querySelector(".pe-count");
     name.value = u.display_name || ""; bio.value = u.bio || "";
     function count() { cnt.textContent = bio.value.length + " / 300"; }
@@ -92,8 +92,8 @@
         var row = f.querySelector('[data-kind="' + k + '"]'), url = cur[k + "_url"];
         row.querySelector(".thumb").innerHTML = url ? '<img alt="" src="' + esc(url) + '">' : (k === "avatar" ? esc(UI.initials(cur.display_name)) : "");
         row.querySelector(".btns").innerHTML =
-          '<button type="button" class="btn btn-ghost btn-sm" data-act="change">' + I("camera", "ic-sm") + (url ? "Palitan" : "Lagyan") + "</button>" +
-          (url ? '<button type="button" class="icon-btn" data-act="remove" aria-label="Alisin">' + I("trash") + "</button>" : "");
+          '<button type="button" class="btn btn-ghost btn-sm" data-act="change">' + I("camera", "ic-sm") + (url ? "Change" : "Add") + "</button>" +
+          (url ? '<button type="button" class="icon-btn" data-act="remove" aria-label="Remove">' + I("trash") + "</button>" : "");
       });
     }
     paintPics();
@@ -112,7 +112,7 @@
       btn.disabled = true;
       try {
         var res = await TMN_API.call("profile", "update", { display_name: d, bio: bio.value });
-        saveUser(res.user); UI.toast("Na-save ang profile ✓"); m.close();
+        saveUser(res.user); UI.toast("Profile saved ✓"); m.close();
       } catch (e) { btn.disabled = false; UI.toast(e.message); }
     }
     f.addEventListener("submit", function (e) { e.preventDefault(); });

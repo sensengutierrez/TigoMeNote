@@ -43,7 +43,7 @@
       "</div>" +
       '<button type="button" class="pc-act" data-act="who-react">' + (s.reactions ? n(s.reactions) : "") + "</button>" +
       '<button type="button" class="pc-act" data-act="comments" aria-label="Comments">' + I("comment") + (s.comments ? "<span>" + n(s.comments) + "</span>" : "") + "</button>" +
-      '<button type="button" class="pc-act' + (s.reposted ? " on-green" : "") + '" data-act="share" aria-label="Repost o share">' + I("repost") + (s.shares ? "<span>" + n(s.shares) + "</span>" : "") + "</button>" +
+      '<button type="button" class="pc-act' + (s.reposted ? " on-green" : "") + '" data-act="share" aria-label="Repost or share">' + I("repost") + (s.shares ? "<span>" + n(s.shares) + "</span>" : "") + "</button>" +
       '<button type="button" class="pc-act" data-act="sendlink" aria-label="Share link">' + I("send") + "</button>" +
       '<button type="button" class="pc-act pc-mark' + (s.bookmarked ? " on" : "") + '" data-act="bookmark" aria-label="Bookmark">' + I(s.bookmarked ? "bookmarkFill" : "bookmark") + "</button>" +
     "</div>" +
@@ -51,7 +51,7 @@
   }
   function summaryText(p) {
     var s = p.stats, t = s.reactions;
-    if (s.my_reaction) return t === 1 ? "Ikaw" : "Ikaw at " + n(t - 1) + " iba pa";
+    if (s.my_reaction) return t === 1 ? "You" : "You and " + n(t - 1) + " other" + (t - 1 === 1 ? "" : "s");
     return n(t) + (t === 1 ? " reaction" : " reactions");
   }
 
@@ -59,7 +59,7 @@
     var a = p.author || {};
     var showFollow = !p.mine && a.id && !a.following;
     return '<article class="pcard" data-id="' + esc(p.id) + '">' +
-      (p.repost_by ? '<div class="pc-repost">' + I("repost", "ic-sm") + '<button type="button" data-act="user" data-uid="' + esc(p.repost_by.id) + '">' + esc(p.repost_by.display_name || p.repost_by.username) + "</button> nag-repost</div>" : "") +
+      (p.repost_by ? '<div class="pc-repost">' + I("repost", "ic-sm") + '<button type="button" data-act="user" data-uid="' + esc(p.repost_by.id) + '">' + esc(p.repost_by.display_name || p.repost_by.username) + "</button> reposted</div>" : "") +
       '<header class="pcard-head">' +
         '<button type="button" class="pc-author" data-act="user" data-uid="' + esc(a.id || "") + '">' + avatar(a, 38) +
           '<span class="pc-who"><b>' + esc(a.display_name || a.username || "") + '</b><span class="faint small">@' + esc(a.username || "") + " · " + ago(p.publish_at) +
@@ -70,8 +70,8 @@
       mediaHtml(p) +
       actionsHtml(p) +
       (p.caption ? '<p class="pc-caption"><b data-act="user" data-uid="' + esc(a.id || "") + '">' + esc(a.username || "") + "</b> " + esc(p.caption) + "</p>" : "") +
-      (p.stats && p.stats.comments ? '<button type="button" class="pc-more-comments" data-act="comments">Tingnan ang ' + (p.stats.comments === 1 ? "1 comment" : "lahat ng " + n(p.stats.comments) + " comments") + "</button>" : "") +
-      '<div class="pc-time faint small">' + new Date(p.publish_at).toLocaleDateString(undefined, { month: "long", day: "numeric" }) + "</div>" +
+      (p.stats && p.stats.comments ? '<button type="button" class="pc-more-comments" data-act="comments">' + (p.stats.comments === 1 ? "View 1 comment" : "View all " + n(p.stats.comments) + " comments") + "</button>" : "") +
+      '<div class="pc-time faint small">' + new Date(p.publish_at).toLocaleDateString(window.TMN_I18N ? TMN_I18N.locale : undefined, { month: "long", day: "numeric" }) + "</div>" +
     "</article>";
   }
 
@@ -106,7 +106,7 @@
       s.reactions += (had ? 0 : 1) - (next ? 0 : 1); s.my_reaction = next;
       if (next && s.top.indexOf(next) < 0) s.top = [next].concat(s.top).slice(0, 3);
       repaint(Object.assign({}, p, { stats: s }));
-      if (!navigator.onLine) { window.TMN_UI.toast("Offline: hindi na-save ang reaction."); repaint(p); return; }
+      if (!navigator.onLine) { window.TMN_UI.toast("Offline: the reaction wasn't saved."); repaint(p); return; }
       await call("react", { post_id: p.id, emoji: next }, p);
     }
     function burst(c, emoji) {
@@ -129,7 +129,7 @@
       if (act === "bookmark") {
         var on = !p.stats.bookmarked;
         repaint(Object.assign({}, p, { stats: Object.assign({}, p.stats, { bookmarked: on }) }));
-        window.TMN_UI.toast(on ? "Na-save sa Bookmarks" : "Inalis sa Bookmarks");
+        window.TMN_UI.toast(on ? "Saved to Bookmarks" : "Removed from Bookmarks");
         await call("bookmark", { post_id: p.id, on: on }, p);
       }
       if (act === "follow") {

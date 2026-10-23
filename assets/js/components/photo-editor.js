@@ -78,7 +78,7 @@
     return new Promise(async function (resolve) {
       var src;
       try { src = await createImageBitmap(blob); }
-      catch (e) { window.TMN_UI && TMN_UI.toast("Hindi ma-edit ang file na ito sa browser."); return resolve(null); }
+      catch (e) { window.TMN_UI && TMN_UI.toast("This file can't be edited in the browser."); return resolve(null); }
 
       var st = { rot: 0, flip: false, aspect: "free", crop: { x: 0, y: 0, w: 1, h: 1 }, b: 0, c: 0, s: 0, preset: "none" };
       var resolved = false;
@@ -118,8 +118,8 @@
         title: "Edit photo", size: "full", cls: "modal-editor", body: root, closeOnBackdrop: false,
         actions: [
           { label: "Reset", cls: "btn-ghost pe-reset", onClick: function () { reset(); } },
-          { label: "Gawing bagong copy", cls: "btn-ghost", onClick: function (m, b) { save("copy", b); } },
-          { label: "Save (palitan)", cls: "btn-primary", onClick: function (m, b) { save("replace", b); } }
+          { label: "Save as new copy", cls: "btn-ghost", onClick: function (m, b) { save("copy", b); } },
+          { label: "Save (replace)", cls: "btn-primary", onClick: function (m, b) { save("replace", b); } }
         ],
         onClose: function () { if (!resolved) { resolved = true; resolve(null); } if (src.close) src.close(); window.removeEventListener("resize", render); }
       });
@@ -275,7 +275,7 @@
           resolve({ blob: blob, mode: mode });
         } catch (e) {
           btn.disabled = false; btn.innerHTML = old;
-          window.TMN_UI && TMN_UI.toast("Hindi ma-save: " + e.message);
+          window.TMN_UI && TMN_UI.toast("Couldn't save: " + e.message);
         }
       }
 

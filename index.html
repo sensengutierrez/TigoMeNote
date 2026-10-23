@@ -4,10 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
-  <meta name="description" content="TigoMeNote: daily notes, photos and videos. Private sa device mo, share kung gusto mo.">
+  <meta name="description" content="TigoMeNote: daily notes, photos and videos. Private on your device, shared when you want.">
   <title>TigoMeNote · Your day, one note at a time</title>
   <script src="assets/js/theme.js"></script>
   <script src="assets/js/config.js"></script>
+  <script src="assets/js/i18n.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
@@ -21,6 +22,7 @@
   <header class="l-nav">
     <a class="brand" href="./"><span class="brand-mark">T</span><span>Tigo<b>Me</b>Note</span></a>
     <div class="l-nav-actions">
+      <span id="langMini"></span>
       <button class="icon-btn js-theme" type="button" aria-label="Toggle dark mode"></button>
       <a class="btn btn-ghost js-signin" href="login.html">Sign in</a>
       <a class="btn btn-primary js-start" href="login.html?mode=register">Get started</a>
@@ -31,14 +33,14 @@
     <section class="l-copy">
       <span class="l-pill"><span class="l-pill-dot"></span>Daily · Explore · Share</span>
       <h1>Your day,<br>one note <em>at a time.</em></h1>
-      <p class="l-sub">Mag-note, kumuha ng photo o video, at itabi sa device mo. I-share lang ang gusto mong makita ng iba.</p>
+      <p class="l-sub">Write notes, take photos and videos, and keep them on your device. Share only what you want others to see.</p>
       <div class="l-cta">
         <a class="btn btn-primary btn-lg js-start" href="login.html?mode=register">Create free account <i data-icon="arrowRight"></i></a>
         <a class="btn btn-ghost btn-lg js-signin" href="login.html">I have an account</a>
       </div>
       <ul class="l-points">
         <li><i data-icon="lock" data-size="sm"></i>Private notes stay on your device</li>
-        <li><i data-icon="phone" data-size="sm"></i>Web at Android app</li>
+        <li><i data-icon="phone" data-size="sm"></i>Web and Android app</li>
       </ul>
     </section>
 
@@ -74,10 +76,10 @@
   </main>
 
   <footer class="l-features">
-    <div class="feat"><span class="feat-ic"><i data-icon="sun"></i></span><div><b>Daily</b><span>Notes at photos ng araw mo</span></div></div>
-    <div class="feat"><span class="feat-ic"><i data-icon="compass"></i></span><div><b>Explore</b><span>Tingnan ang shinare ng iba</span></div></div>
-    <div class="feat"><span class="feat-ic"><i data-icon="camera"></i></span><div><b>Share</b><span>Photo o video, isang tap</span></div></div>
-    <div class="feat"><span class="feat-ic"><i data-icon="chat"></i></span><div><b>Messages</b><span>Chat, voice at stickers</span></div></div>
+    <div class="feat"><span class="feat-ic"><i data-icon="sun"></i></span><div><b>Daily</b><span>Notes and photos of your day</span></div></div>
+    <div class="feat"><span class="feat-ic"><i data-icon="compass"></i></span><div><b>Explore</b><span>See what others shared</span></div></div>
+    <div class="feat"><span class="feat-ic"><i data-icon="camera"></i></span><div><b>Share</b><span>Photo or video, one tap</span></div></div>
+    <div class="feat"><span class="feat-ic"><i data-icon="chat"></i></span><div><b>Messages</b><span>Chat, voice and stickers</span></div></div>
   </footer>
 
   <script src="assets/js/icons.js"></script>

@@ -23,6 +23,7 @@ Ito ang "utak" ng project: lahat ng ginawa, paano ginawa, at bakit. Buksan ang f
 - [[Build - Offline posts]] — mag-post kahit offline, may schedule, auto-upload
 - [[Build - Profile edit]] — edit profile, profile photo at cover (banner)
 - [[Build - Social feed]] — reactions, comments, share, bookmark, follow, status
+- [[Build - Language (i18n)]] — English default, Arabic (RTL), Filipino
 
 ## Setup
 - [[Supabase setup]] — project, tables, secrets (walang totoong value dito)

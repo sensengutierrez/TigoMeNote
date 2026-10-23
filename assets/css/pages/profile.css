@@ -78,3 +78,12 @@
 .posts .post-grid .pt.skel { cursor: default; }
 @media (min-width: 1100px) { .posts .post-grid { grid-template-columns: repeat(4, 1fr); } }
 @media (min-width: 1400px) { .posts .post-grid { grid-template-columns: repeat(5, 1fr); } }
+
+/* RTL (Arabic): ilipat ang Cover button sa kaliwa para hindi tumama sa photo */
+[dir="rtl"] .p-cam-banner { right: auto; left: 12px; }
+[dir="rtl"] .p-cam-avatar { right: auto; left: 2px; }
+@media (min-width: 900px) {
+  [dir="rtl"] .p-about { padding: 12px calc(28px + 152px + 20px) 0 28px; }
+  [dir="rtl"] .stats { margin: 16px calc(28px + 152px + 20px) 0 28px; }
+  [dir="rtl"] .p-cam-avatar { left: 6px; }
+}

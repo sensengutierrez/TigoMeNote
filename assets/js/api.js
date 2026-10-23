@@ -16,6 +16,7 @@
     if (!url) throw ApiError("Unknown function: " + fnName, 0);
     opts = opts || {};
     var body = Object.assign({ action: action }, data || {});
+    if (window.TMN_I18N && body.lang === undefined) body.lang = TMN_I18N.lang; // para sa email (code) sa tamang wika
     var headers = { "Content-Type": "application/json" };
     if (window.TMN_TOKEN) headers["x-session-token"] = window.TMN_TOKEN;
 
@@ -25,7 +26,7 @@
     try {
       res = await fetch(url, { method: "POST", headers: headers, body: JSON.stringify(body), signal: ctrl.signal });
     } catch (e) {
-      throw ApiError(e.name === "AbortError" ? "Matagal sumagot ang server. Subukan ulit." : "Walang internet o hindi maabot ang server.", 0);
+      throw ApiError(e.name === "AbortError" ? "The server took too long. Please try again." : "No internet, or the server can't be reached.", 0);
     } finally {
       clearTimeout(timer);
     }

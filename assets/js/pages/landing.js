@@ -1,5 +1,6 @@
 /* TigoMeNote · pages/landing.js (index.html) */
 (function () {
+  if (window.TMN_I18N) TMN_I18N.mountPicker(document.getElementById("langMini"));
   var I = window.TMN_ICON, C = window.TMN_CONFIG, K = C.storageKeys;
 
   document.querySelectorAll("[data-icon]").forEach(function (el) {

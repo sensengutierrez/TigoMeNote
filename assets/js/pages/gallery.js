@@ -19,10 +19,10 @@
     return (n / Math.pow(1024, i)).toFixed(i ? 1 : 0) + " " + u[i];
   }
   function fmtDur(s) { s = Math.round(s || 0); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
-  function fmtDate(t) { return new Date(t).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }); }
+  function fmtDate(t) { return new Date(t).toLocaleString(window.TMN_I18N ? TMN_I18N.locale : undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }); }
   function albumName(id) {
     if (!id || id === "all") return "All photos & videos";
-    if (id === "none") return "Walang album";
+    if (id === "none") return "No album";
     var a = state.albums.filter(function (x) { return x.id === id; })[0];
     return a ? a.name : "Album";
   }
@@ -47,7 +47,7 @@
         '<span class="album-cover">' + c + '</span><span><span class="album-name">' + UI.esc(name) + '</span><br><span class="album-count">' + count + " item" + (count === 1 ? "" : "s") + "</span></span></button>";
     }
     var html = row("all", "All", all.length, all[0], "grid");
-    if (state.albums.length) html += row("none", "Walang album", noAlbum, all.filter(function (i) { return !i.albumId; })[0], "image");
+    if (state.albums.length) html += row("none", "No album", noAlbum, all.filter(function (i) { return !i.albumId; })[0], "image");
     state.albums.forEach(function (a) { html += row(a.id, a.name, a.count, a.cover, "album"); });
     $("albumList").innerHTML = html;
     $("albumMenu").classList.toggle("hidden", state.album === "all" || state.album === "none");
@@ -58,7 +58,7 @@
     var grid = $("grid");
     $("gCount").textContent = state.items.length + " item" + (state.items.length === 1 ? "" : "s");
     $("gEmpty").classList.toggle("hidden", state.items.length > 0);
-    $("gEmptyTitle").textContent = state.album === "all" ? "Wala pang photos o videos" : "Walang laman ang album na ito";
+    $("gEmptyTitle").textContent = state.album === "all" ? "No photos or videos yet" : "This album is empty";
     grid.innerHTML = state.items.map(function (it) {
       var img = it.thumb ? '<img alt="' + UI.esc(it.caption || it.name) + '" loading="lazy" src="' + track(URL.createObjectURL(it.thumb)) + '">'
                          : '<span class="noprev">' + I(it.type === "video" ? "video" : "image") + "</span>";
@@ -77,23 +77,23 @@
     $("storeUsed").textContent = fmtBytes(u.used) + (u.quota ? " / " + fmtBytes(u.quota) : "");
     $("storeBar").style.width = u.quota ? Math.min(100, (u.used / u.quota) * 100).toFixed(1) + "%" : "0";
     $("storeNote").textContent = u.persisted
-      ? "Protektado: hindi ito kusang buburahin ng browser. Pero mabubura kapag manual na binura ang browser data."
-      : "Kapag binura ang browser data, mabubura rin ang laman nito. I-download ang mahahalaga.";
+      ? "Protected: the browser won't delete these on its own. They will be deleted if you manually clear your browser data."
+      : "If you clear your browser data, these will be deleted too. Download anything important.";
   }
 
   // ================= Upload =================
   async function upload(files) {
     files = [].slice.call(files || []).filter(function (f) { return /^(image|video)\//.test(f.type); });
-    if (!files.length) { UI.toast("Photo o video lang ang pwede."); return; }
+    if (!files.length) { UI.toast("Only photos and videos are allowed."); return; }
     var big = files.filter(function (f) { return f.size > 500 * 1024 * 1024; });
-    if (big.length && !(await MODAL.confirm(big.length + " file ang lagpas 500 MB. Baka mapuno ang storage ng device. Ituloy?", { okText: "Ituloy" }))) return;
+    if (big.length && !(await MODAL.confirm(big.length + " file(s) are over 500 MB. Your device storage may fill up. Continue?", { okText: "Continue" }))) return;
     var album = state.album === "all" || state.album === "none" ? null : state.album;
-    UI.toast("Sine-save " + files.length + " file sa device…", 1800);
+    UI.toast("Saving " + files.length + " file(s) to this device…", 1800);
     try {
       var added = await M.addFiles(files, album);
-      UI.toast(added.length + " na-save sa " + (album ? albumName(album) : "Gallery") + ".");
+      UI.toast(added.length + " saved to " + (album ? albumName(album) : "Gallery") + ".");
     } catch (e) {
-      UI.toast("Hindi na-save: " + (e.message || "puno na ang storage?"), 4000);
+      UI.toast("Not saved: " + (e.message || "is storage full?"), 4000);
     }
   }
   $("fileInput").addEventListener("change", function () { upload(this.files); this.value = ""; });
@@ -117,9 +117,9 @@
   });
 
   $("newAlbum").addEventListener("click", async function () {
-    var name = await MODAL.prompt("Bagong album", { placeholder: "hal. Bahrain trip", okText: "Create" });
+    var name = await MODAL.prompt("New album", { placeholder: "e.g. Bahrain trip", okText: "Create" });
     if (!name) return;
-    try { var a = await M.createAlbum(name); state.album = a.id; UI.toast("Album ginawa: " + a.name); load(); }
+    try { var a = await M.createAlbum(name); state.album = a.id; UI.toast("Album created: " + a.name); load(); }
     catch (e) { UI.toast(e.message); }
   });
 
@@ -129,8 +129,8 @@
     body.className = "pick-list";
     body.innerHTML =
       '<button type="button" class="pick" data-a="rename">' + I("edit") + "Rename</button>" +
-      '<button type="button" class="pick" data-a="keep">' + I("trash") + "Delete album (itira ang photos sa All)</button>" +
-      '<button type="button" class="pick" data-a="all" style="color:var(--danger)">' + I("trash") + "Delete album at lahat ng laman</button>";
+      '<button type="button" class="pick" data-a="keep">' + I("trash") + "Delete album (keep photos in All)</button>" +
+      '<button type="button" class="pick" data-a="all" style="color:var(--danger)">' + I("trash") + "Delete album and everything in it</button>";
     var m = MODAL.open({ title: name, size: "sm", body: body });
     body.addEventListener("click", async function (e) {
       var b = e.target.closest("[data-a]"); if (!b) return;
@@ -140,8 +140,8 @@
         if (n) { await M.renameAlbum(id, n); load(); }
       } else {
         var all = b.dataset.a === "all";
-        var ok = await MODAL.confirm(all ? "Mabubura ang album at LAHAT ng photos/videos sa loob nito. Hindi na ito maibabalik." : "Mabubura ang album. Mananatili ang photos/videos sa All.", { okText: "Delete", danger: true });
-        if (ok) { await M.deleteAlbum(id, all); state.album = "all"; UI.toast("Nabura ang album."); load(); }
+        var ok = await MODAL.confirm(all ? "The album and ALL photos/videos in it will be deleted. This can't be undone." : "The album will be deleted. Photos/videos stay in All.", { okText: "Delete", danger: true });
+        if (ok) { await M.deleteAlbum(id, all); state.album = "all"; UI.toast("Album deleted."); load(); }
       }
     });
   });
@@ -172,19 +172,19 @@
   });
   $("selDelete").addEventListener("click", async function () {
     var n = state.sel.size;
-    if (!(await MODAL.confirm("Burahin ang " + n + " item sa device na ito? Hindi na maibabalik.", { okText: "Delete", danger: true }))) return;
+    if (!(await MODAL.confirm("Delete " + n + " item(s) from this device? This can't be undone.", { okText: "Delete", danger: true }))) return;
     await M.remove([].concat(Array.from(state.sel))); clearSel(); UI.toast(n + " nabura."); load();
   });
   $("selMove").addEventListener("click", async function () {
     var target = await pickAlbum();
     if (target === undefined) return;
     await M.move(Array.from(state.sel), target); var n = state.sel.size; clearSel();
-    UI.toast(n + " nilipat sa " + (target ? albumName(target) : "Walang album") + "."); load();
+    UI.toast(n + " moved to " + (target ? albumName(target) : "No album") + "."); load();
   });
   // Post: bubuksan ang composer (gumagana kahit offline; ia-upload pag may internet)
   $("selPost").addEventListener("click", async function () {
     var ids = state.items.filter(function (i) { return state.sel.has(i.id); }).map(function (i) { return i.id; });
-    if (ids.length > 10) { UI.toast("Hanggang 10 lang bawat post."); return; }
+    if (ids.length > 10) { UI.toast("Up to 10 per post."); return; }
     var items = [];
     for (var i = 0; i < ids.length; i++) { var it = await M.get(ids[i]); if (it) items.push(it); }
     window.TMN_COMPOSER.open(items, { onPosted: function () { clearSel(); renderGrid(); } });
@@ -201,15 +201,15 @@
       var body = document.createElement("div");
       body.className = "pick-list";
       body.innerHTML =
-        state.albums.map(function (a) { return '<button type="button" class="pick" data-id="' + a.id + '">' + I("album") + UI.esc(a.name) + (a.id === current ? " · ngayon" : "") + "</button>"; }).join("") +
-        '<button type="button" class="pick" data-id="">' + I("image") + "Walang album</button>" +
-        '<button type="button" class="pick" data-new="1">' + I("plus") + "Bagong album…</button>";
-      var m = MODAL.open({ title: "Ilipat sa album", size: "sm", body: body, onClose: function () { if (!done) resolve(undefined); } });
+        state.albums.map(function (a) { return '<button type="button" class="pick" data-id="' + a.id + '">' + I("album") + UI.esc(a.name) + (a.id === current ? " · current" : "") + "</button>"; }).join("") +
+        '<button type="button" class="pick" data-id="">' + I("image") + "No album</button>" +
+        '<button type="button" class="pick" data-new="1">' + I("plus") + "New album…</button>";
+      var m = MODAL.open({ title: "Move to album", size: "sm", body: body, onClose: function () { if (!done) resolve(undefined); } });
       body.addEventListener("click", async function (e) {
         var b = e.target.closest(".pick"); if (!b) return;
         if (b.dataset.new) {
           done = true; m.close();
-          var name = await MODAL.prompt("Bagong album", { placeholder: "Pangalan ng album", okText: "Create" });
+          var name = await MODAL.prompt("New album", { placeholder: "Album name", okText: "Create" });
           if (!name) return resolve(undefined);
           var a = await M.createAlbum(name); state.albums = await M.albums(); resolve(a.id); return;
         }
@@ -248,7 +248,7 @@
         '<button type="button" class="vw-nav next" aria-label="Next">' + I("chevronR") + "</button></div>" +
       '<div class="vw-info">' +
         '<div class="vw-meta"></div>' +
-        '<label class="field"><span class="pe-label">Caption</span><textarea maxlength="500" placeholder="Lagyan ng note…"></textarea></label>' +
+        '<label class="field"><span class="pe-label">Caption</span><textarea maxlength="500" placeholder="Add a note…"></textarea></label>' +
         '<label class="field"><span class="pe-label">Album</span><select></select></label>' +
         '<div class="vw-actions">' +
           '<button type="button" class="btn btn-primary" data-v="post">' + I("send", "ic-sm") + "Post</button>" +
@@ -274,7 +274,7 @@
         (it.w ? it.w + " × " + it.h + " · " : "") + fmtBytes(it.size) + (it.type === "video" ? " · " + fmtDur(it.duration) : "") +
         (it.editedAt ? " · Edited" : "") + "</span>";
       cap.value = it.caption || "";
-      sel.innerHTML = '<option value="">Walang album</option>' + state.albums.map(function (a) {
+      sel.innerHTML = '<option value="">No album</option>' + state.albums.map(function (a) {
         return '<option value="' + a.id + '"' + (a.id === it.albumId ? " selected" : "") + ">" + UI.esc(a.name) + "</option>";
       }).join("");
       root.querySelector('[data-v="edit"]').classList.toggle("hidden", it.type !== "photo");
@@ -297,7 +297,7 @@
     cap.addEventListener("change", async function () { var it = current(); it.caption = cap.value.trim(); await M.update(it.id, { caption: it.caption }); UI.toast("Caption saved."); });
     sel.addEventListener("change", async function () {
       var it = current(); await M.move(it.id, sel.value || null); it.albumId = sel.value || null;
-      UI.toast("Nilipat sa " + (sel.value ? albumName(sel.value) : "Walang album") + ".");
+      UI.toast("Moved to " + (sel.value ? albumName(sel.value) : "No album") + ".");
     });
 
     root.querySelector(".vw-actions").addEventListener("click", async function (e) {
@@ -306,7 +306,7 @@
       if (b.dataset.v === "download") download(it);
       if (b.dataset.v === "post") window.TMN_COMPOSER.open([it]);
       if (b.dataset.v === "delete") {
-        if (!(await MODAL.confirm("Burahin ito sa device? Hindi na maibabalik.", { okText: "Delete", danger: true }))) return;
+        if (!(await MODAL.confirm("Delete this from your device? This can't be undone.", { okText: "Delete", danger: true }))) return;
         await M.remove(it.id);
         state.items.splice(idx, 1);
         if (!state.items.length) { modal.close(); return; }
@@ -315,8 +315,8 @@
       if (b.dataset.v === "edit") {
         var res = await window.TMN_PHOTO_EDITOR.open(it.blob);
         if (!res) return;
-        if (res.mode === "copy") { var c = await M.addEditedCopy(it.id, res.blob); state.items.splice(idx, 0, c); UI.toast("Na-save bilang bagong copy."); }
-        else { var upd = await M.update(it.id, { blob: res.blob }); state.items[idx] = upd; UI.toast("Na-save ang edit."); }
+        if (res.mode === "copy") { var c = await M.addEditedCopy(it.id, res.blob); state.items.splice(idx, 0, c); UI.toast("Saved as a new copy."); }
+        else { var upd = await M.update(it.id, { blob: res.blob }); state.items[idx] = upd; UI.toast("Edit saved."); }
         show();
       }
     });
@@ -330,6 +330,6 @@
 
   // ================= Start =================
   document.addEventListener("tmn:media", function () { if (!document.querySelector(".modal-viewer")) load(); });
-  if (!window.indexedDB) { $("gEmptyTitle").textContent = "Hindi suportado ng browser na ito ang device storage."; $("gEmpty").classList.remove("hidden"); return; }
-  load().catch(function (e) { UI.toast(e.message || "Error sa storage."); });
+  if (!window.indexedDB) { $("gEmptyTitle").textContent = "This browser doesn't support device storage."; $("gEmpty").classList.remove("hidden"); return; }
+  load().catch(function (e) { UI.toast(e.message || "Storage error."); });
 })();

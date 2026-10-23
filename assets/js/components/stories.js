@@ -24,9 +24,9 @@
     el.innerHTML =
       '<div class="st-bar" role="list">' +
         '<div class="st-item st-me" role="listitem">' +
-          '<button type="button" class="st-ring' + (mine ? " has" : " none") + '" data-st="' + (mine ? "open-me" : "add") + '" aria-label="Status mo">' + av(me, 62) + "</button>" +
-          '<button type="button" class="st-plus" data-st="add" aria-label="Magdagdag ng status">' + I("plus", "ic-sm") + "</button>" +
-          '<span class="st-name">Status mo</span></div>' +
+          '<button type="button" class="st-ring' + (mine ? " has" : " none") + '" data-st="' + (mine ? "open-me" : "add") + '" aria-label="Your status">' + av(me, 62) + "</button>" +
+          '<button type="button" class="st-plus" data-st="add" aria-label="Add a status">' + I("plus", "ic-sm") + "</button>" +
+          '<span class="st-name">Your status</span></div>' +
         others.map(function (g) {
           return '<div class="st-item" role="listitem"><button type="button" class="st-ring' + (g.unseen ? " has" : " seen") + '" data-st="open" data-uid="' + esc(g.user.id) + '">' + av(g.user, 62) + "</button>" +
             '<span class="st-name">' + esc(g.user.username) + "</span></div>";
@@ -64,7 +64,7 @@
     });
   }
   async function add(file) {
-    if (!navigator.onLine) { UI().toast("Kailangan ng internet para mag-status."); return; }
+    if (!navigator.onLine) { UI().toast("You need internet to post a status."); return; }
     file = file || await pick(); if (!file) return;
     var isVideo = /^video\//.test(file.type);
     var url = URL.createObjectURL(file);
@@ -72,8 +72,8 @@
     root.className = "st-new";
     root.innerHTML =
       '<div class="st-prev">' + (isVideo ? '<video src="' + url + '" autoplay muted loop playsinline></video>' : '<img alt="" src="' + url + '">') + "</div>" +
-      '<input class="input" maxlength="200" placeholder="Lagyan ng caption (optional)">' +
-      '<p class="faint small">Makikita ng mga naka-follow sa iyo. Mawawala pagkalipas ng 24 oras.' + (isVideo ? " Video: unang 15 segundo lang." : "") + "</p>" +
+      '<input class="input" maxlength="200" placeholder="Add a caption (optional)">' +
+      '<p class="faint small">Visible to people who follow you. Disappears after 24 hours.' + (isVideo ? " Video: first 15 seconds only." : "") + "</p>" +
       '<p class="small st-status hidden" aria-live="polite"></p>';
     var cap = root.querySelector("input"), status = root.querySelector(".st-status");
     var busy = false;
@@ -82,26 +82,26 @@
       status.classList.remove("hidden");
       try {
         var item = { id: "st", type: isVideo ? "video" : "photo", blob: file, createdAt: Date.now() };
-        var files = await TMN_POSTQ.prepare([item], function (i, n, pct) { status.textContent = (isVideo ? "Kino-compress ang video… " : "Inaayos… ") + Math.round(pct * 100) + "%"; });
+        var files = await TMN_POSTQ.prepare([item], function (i, n, pct) { status.textContent = (isVideo ? "Compressing video… " : "Preparing… ") + Math.round(pct * 100) + "%"; });
         var f = files[0];
-        status.textContent = "Ina-upload…";
+        status.textContent = "Uploading…";
         var up = await TMN_API.call("social", "storyUpload", { kind: f.kind, mime: f.mime, size: f.size, duration: f.duration });
         var r = await fetch(up.url, { method: "PUT", headers: { "content-type": f.mime }, body: f.blob });
-        if (!r.ok) throw new Error("Hindi na-upload (" + r.status + ").");
+        if (!r.ok) throw new Error("Upload failed (" + r.status + ").");
         for (var t = 0; t < 3; t++) {
           try { await TMN_API.call("social", "createStory", { path: up.path, kind: f.kind, mime: f.mime, w: f.w, h: f.h, duration: f.duration, caption: cap.value.trim() }); break; }
           catch (e) { if (e.status === 409 && t < 2) await new Promise(function (ok) { setTimeout(ok, 1200); }); else throw e; }
         }
-        done = true; m.close(); UI().toast("Na-share ang status ✓"); load();
-      } catch (e) { busy = false; btn.disabled = false; status.textContent = e.message || "Hindi na-share."; status.classList.add("err"); }
+        done = true; m.close(); UI().toast("Status shared ✓"); load();
+      } catch (e) { busy = false; btn.disabled = false; status.textContent = e.message || "Couldn't share."; status.classList.add("err"); }
     }
     root.addEventListener("submit", function (e) { e.preventDefault(); share(m.el.querySelector(".modal-foot .btn-primary")); });
     var done = false;
     var m = TMN_MODAL.open({
-      title: "Bagong status", size: "sm", cls: "modal-sheet", body: root, closeOnBackdrop: false,
+      title: "New status", size: "sm", cls: "modal-sheet", body: root, closeOnBackdrop: false,
       actions: [
         { label: "Cancel", cls: "btn-ghost", onClick: function () { if (!busy) m.close(); } },
-        { label: I("send", "ic-sm") + "I-share", cls: "btn-primary", onClick: function (api, b) { share(b); } }
+        { label: I("send", "ic-sm") + "Share", cls: "btn-primary", onClick: function (api, b) { share(b); } }
       ],
       onClose: function () { URL.revokeObjectURL(url); }
     });
@@ -156,12 +156,12 @@
       g = state.groups[gi];
       var it = item(); if (!it) return close();
       paintBars(0);
-      ov.querySelector(".st-who").innerHTML = av(g.user, 34) + "<b>" + esc(g.me ? "Status mo" : g.user.username) + '</b><span class="st-time">' + ago(it.at) + "</span>";
+      ov.querySelector(".st-who").innerHTML = av(g.user, 34) + "<b>" + esc(g.me ? "Your status" : g.user.username) + '</b><span class="st-time">' + ago(it.at) + "</span>";
       ov.querySelector(".st-who").dataset.uid = g.user.id;
       ov.querySelector('[data-v="del"]').classList.toggle("hidden", !g.me);
       var vb = ov.querySelector(".st-views");
       vb.classList.toggle("hidden", !g.me);
-      if (g.me) vb.querySelector("span").textContent = (it.views || 0) + " nanood";
+      if (g.me) vb.querySelector("span").textContent = (it.views || 0) + " views";
       var cap = ov.querySelector(".st-cap"); cap.textContent = it.caption || ""; cap.classList.toggle("hidden", !it.caption);
       stopTimer();
       if (!it.url) { media.innerHTML = '<div class="pt-missing">' + I("image", "ic-lg") + "</div>"; start(PHOTO_MS); }
@@ -222,12 +222,12 @@
       if (v === "views") { pause(true); await viewers(item()); pause(false); }
       if (v === "del") {
         pause(true);
-        if (await TMN_MODAL.confirm("Burahin ang status na ito?", { okText: "Delete", danger: true })) {
+        if (await TMN_MODAL.confirm("Delete this status?", { okText: "Delete", danger: true })) {
           try {
             await TMN_API.call("social", "deleteStory", { id: item().id });
             g.items.splice(ii, 1);
             if (!g.items.length) { state.groups.splice(gi, 1); close(); return; }
-            ii = Math.min(ii, g.items.length - 1); show(); UI().toast("Nabura.");
+            ii = Math.min(ii, g.items.length - 1); show(); UI().toast("Deleted.");
           } catch (err) { UI().toast(err.message); pause(false); }
         } else pause(false);
       }
@@ -240,8 +240,8 @@
     return new Promise(async function (resolve) {
       var body = document.createElement("div");
       body.className = "sx-people";
-      body.innerHTML = '<p class="faint small sx-empty">Naglo-load…</p>';
-      TMN_MODAL.open({ title: "Mga nanood", size: "sm", cls: "modal-sheet", body: body, onClose: resolve });
+      body.innerHTML = '<p class="faint small sx-empty">Loading…</p>';
+      TMN_MODAL.open({ title: "Viewers", size: "sm", cls: "modal-sheet", body: body, onClose: resolve });
       TMN_SOCIAL.bindPeople(body);
       try {
         var r = await TMN_API.call("social", "storyViewers", { id: it.id });
@@ -249,7 +249,7 @@
           var u = x.user || {};
           return '<div class="sx-row"><button type="button" class="sx-user" data-sx="user" data-uid="' + esc(u.id || "") + '">' + av(u, 40) +
             "<span><b>" + esc(u.display_name || u.username || "?") + '</b><span class="faint small">' + ago(x.at) + "</span></span></button></div>";
-        }).join("") : '<p class="faint small sx-empty">Wala pang nanood.</p>';
+        }).join("") : '<p class="faint small sx-empty">No views yet.</p>';
       } catch (e) { body.innerHTML = '<p class="faint small sx-empty">' + esc(e.message) + "</p>"; }
     });
   }

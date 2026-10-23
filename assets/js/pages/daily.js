@@ -4,7 +4,7 @@
   var now = new Date();
 
   document.getElementById("today").textContent =
-    now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+    now.toLocaleDateString(window.TMN_I18N ? TMN_I18N.locale : undefined, { weekday: "long", month: "long", day: "numeric" });
 
   function paintUser() {
     var u = window.TMN_USER || {};
@@ -25,7 +25,7 @@
     var d = new Date(start); d.setDate(start.getDate() + i);
     var isToday = d.toDateString() === now.toDateString();
     html += '<div class="day' + (isToday ? " today" : "") + '"' + (isToday ? ' aria-current="date"' : "") + ">" +
-      '<span class="d-name">' + d.toLocaleDateString(undefined, { weekday: "short" }) + "</span>" +
+      '<span class="d-name">' + d.toLocaleDateString(window.TMN_I18N ? TMN_I18N.locale : undefined, { weekday: "short" }) + "</span>" +
       '<span class="d-num">' + d.getDate() + "</span><span class=\"d-dot\"></span></div>";
   }
   document.getElementById("week").innerHTML = html;

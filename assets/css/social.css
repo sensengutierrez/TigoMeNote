@@ -150,3 +150,13 @@
 @media (max-width: 899px) {
   .modal-sheet { max-height: 88dvh; }
 }
+
+/* ---------- RTL (Arabic) ---------- */
+[dir="rtl"] .pc-mark { margin-left: 0; margin-right: auto; }
+[dir="rtl"] .pc-count-badge { right: auto; left: 10px; }
+[dir="rtl"] .pc-sound { right: auto; left: 10px; }
+[dir="rtl"] .pc-picker { left: auto; right: -4px; }
+[dir="rtl"] .st-plus { right: auto; left: 2px; }
+[dir="rtl"] .st-tap.prev { left: auto; right: 0; } [dir="rtl"] .st-tap.next { right: auto; left: 0; }
+[dir="rtl"] .pc-act[data-act="who-react"] { margin-left: 0; margin-right: -4px; padding: 0 0 0 4px; }
+[dir="rtl"] .pcard-head { padding: 10px 12px 10px 8px; }

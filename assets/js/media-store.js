@@ -22,7 +22,7 @@
   function open() {
     if (dbPromise) return dbPromise;
     dbPromise = new Promise(function (resolve, reject) {
-      if (!window.indexedDB) return reject(new Error("Hindi suportado ng browser na ito ang device storage."));
+      if (!window.indexedDB) return reject(new Error("This browser doesn't support device storage."));
       var req = indexedDB.open(userKey(), DB_VERSION);
       req.onupgradeneeded = function () {
         var db = req.result;
@@ -34,7 +34,7 @@
         }
       };
       req.onsuccess = function () { resolve(req.result); };
-      req.onerror = function () { reject(req.error || new Error("Hindi mabuksan ang device storage.")); };
+      req.onerror = function () { reject(req.error || new Error("Can't open device storage.")); };
     });
     // Hilingin na huwag burahin ng browser kapag kulang sa space
     try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
@@ -49,7 +49,7 @@
         var out = fn(s);
         t.oncomplete = function () { resolve(out && typeof out === "object" && "__result" in out ? out.__result : undefined); };
         t.onerror = function () { reject(t.error); };
-        t.onabort = function () { reject(t.error || new Error("Na-cancel ang pag-save (baka puno na ang storage).")); };
+        t.onabort = function () { reject(t.error || new Error("Saving was cancelled (storage may be full).")); };
       });
     });
   }
@@ -141,7 +141,7 @@
 
   async function update(id, changes) {
     var it = await get(id);
-    if (!it) throw new Error("Wala na ang item.");
+    if (!it) throw new Error("The item no longer exists.");
     Object.assign(it, changes);
     if (changes.blob && it.type === "photo") {
       try { var info = await imageInfo(changes.blob); it.thumb = info.thumb; it.w = info.w; it.h = info.h; } catch (e) {}
@@ -189,7 +189,7 @@
 
   async function createAlbum(name) {
     name = String(name || "").trim().slice(0, 40);
-    if (!name) throw new Error("Lagyan ng pangalan ang album.");
+    if (!name) throw new Error("Give the album a name.");
     var a = { id: uid(), name: name, createdAt: Date.now() };
     await tx("albums", "readwrite", function (s) { s.put(a); });
     changed();
@@ -198,7 +198,7 @@
 
   async function renameAlbum(id, name) {
     name = String(name || "").trim().slice(0, 40);
-    if (!name) throw new Error("Lagyan ng pangalan ang album.");
+    if (!name) throw new Error("Give the album a name.");
     var a = await tx("albums", "readonly", function (s) { return reqResult(s.get(id)); });
     a.name = name;
     await tx("albums", "readwrite", function (s) { s.put(a); });

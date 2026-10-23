@@ -7,6 +7,7 @@
   <title>Profile · TigoMeNote</title>
   <script src="../assets/js/theme.js"></script>
   <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/i18n.js"></script>
   <script src="../assets/js/auth-guard.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,12 +25,12 @@
     <section class="card p-hero">
       <div class="p-banner" id="pBanner">
         <img alt="" id="pBannerImg" class="hidden">
-        <button class="p-cam p-cam-banner" type="button" id="bannerBtn" aria-label="Palitan ang cover photo"><i data-icon="camera" data-size="sm"></i><span>Cover</span></button>
+        <button class="p-cam p-cam-banner" type="button" id="bannerBtn" aria-label="Change cover photo"><i data-icon="camera" data-size="sm"></i><span>Cover</span></button>
       </div>
       <div class="p-main">
         <div class="p-avatar-wrap">
           <span class="avatar p-avatar" id="pAvatar"></span>
-          <button class="p-cam p-cam-avatar" type="button" id="avatarBtn" aria-label="Palitan ang profile photo"><i data-icon="camera" data-size="sm"></i></button>
+          <button class="p-cam p-cam-avatar" type="button" id="avatarBtn" aria-label="Change profile photo"><i data-icon="camera" data-size="sm"></i></button>
         </div>
         <div class="p-id">
           <h1 class="profile-name" id="pName">…</h1>
@@ -55,7 +56,7 @@
 
     <section class="card posts">
       <div class="q-wrap hidden" id="qWrap">
-        <div class="q-head"><h3>Naka-pila sa device</h3><span class="faint small" id="qNet"></span></div>
+        <div class="q-head"><h3>Waiting on this device</h3><span class="faint small" id="qNet"></span></div>
         <div class="queue" id="queue"></div>
       </div>
       <div class="posts-head">
@@ -71,9 +72,9 @@
       <div class="post-grid" id="postGrid"></div>
       <div class="empty posts-empty hidden" id="postsEmpty">
         <div class="empty-art"><i data-icon="image" data-size="lg"></i></div>
-        <h3 id="emptyTitle">Wala pang post</h3>
-        <p id="emptyText">Pumili ng photo o video sa Gallery, tapos pindutin ang <b>Post</b>. Gumagana kahit offline.</p>
-        <a class="btn btn-primary" href="gallery.html"><i data-icon="album" data-size="sm"></i>Buksan ang Gallery</a>
+        <h3 id="emptyTitle">No posts yet</h3>
+        <p id="emptyText">Pick a photo or video in Gallery, then tap <b>Post</b>. Works offline.</p>
+        <a class="btn btn-primary" href="gallery.html"><i data-icon="album" data-size="sm"></i>Open Gallery</a>
       </div>
     </section>
   </main>

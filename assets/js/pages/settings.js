@@ -29,5 +29,16 @@
     window.TMN_AUTH.logout();
   });
 
+  // Language (assets/js/i18n.js). Naka-save sa browser; nagre-reload ang page para mailapat.
+  var L = window.TMN_I18N, pick = document.getElementById("langPick");
+  pick.innerHTML = L.langs.map(function (l) {
+    return '<button type="button" role="radio" data-lang="' + l.code + '" aria-checked="' + (l.code === L.lang) + '" lang="' + l.code + '"' + (l.dir ? ' dir="' + l.dir + '"' : "") + ">" +
+      "<b>" + l.native + "</b>" + (l.native !== l.name ? '<span class="faint small">' + l.name + "</span>" : "") + "</button>";
+  }).join("");
+  pick.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-lang]"); if (!b || b.dataset.lang === L.lang) return;
+    L.set(b.dataset.lang);
+  });
+
   document.getElementById("sVersion").textContent = C.appName + " v" + C.version;
 })();

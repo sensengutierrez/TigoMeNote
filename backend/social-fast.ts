@@ -54,9 +54,9 @@ const rand = () => [...crypto.getRandomValues(new Uint8Array(6))].map((x) => x.t
 // deno-lint-ignore no-explicit-any
 async function follow(p: any, me: any) {
   const id = String(p.user_id || "");
-  if (!id || id === me.id) return fail("Hindi pwedeng i-follow ang sarili.");
+  if (!id || id === me.id) return fail("You can't follow yourself.");
   const { data: u } = await db.from("users").select("id").eq("id", id).eq("status", "Active").maybeSingle();
-  if (!u) return fail("Hindi makita ang user.", 404);
+  if (!u) return fail("User not found.", 404);
   const { error } = await db.from("follows").insert({ follower_id: me.id, following_id: id });
   if (error && error.code !== "23505") throw error;
   return reply({ ok: true, following: true });
@@ -86,7 +86,7 @@ async function profile(p: any, me: any) {
   let q = db.from("users").select(PUB).eq("status", "Active");
   q = p.user_id ? q.eq("id", String(p.user_id)) : q.ilike("username", String(p.username || "").replace(/[%_]/g, ""));
   const { data: u } = await q.maybeSingle();
-  if (!u) return fail("Hindi makita ang user.", 404);
+  if (!u) return fail("User not found.", 404);
   const [posts, followers, following, fme, fback] = await Promise.all([
     db.from("posts").select("id", { count: "exact", head: true }).eq("user_id", u.id).is("deleted_at", null).lte("publish_at", nowIso())
       .in("visibility", u.id === me.id ? ["public", "followers", "private"] : ["public", "followers"]),
@@ -154,11 +154,11 @@ async function stories(_p: any, me: any) {
 async function storyUpload(p: any, me: any) {
   const kind = p.kind === "video" ? "video" : "photo";
   const size = Number(p.size) || 0;
-  if (kind === "photo" && size > MAX_PHOTO_BYTES) return fail("Masyadong malaki ang photo.", 413);
-  if (kind === "video" && (size > MAX_VIDEO_BYTES || Number(p.duration) > MAX_VIDEO_SECONDS)) return fail("Video: hanggang 15 segundo at 12 MB.", 413);
+  if (kind === "photo" && size > MAX_PHOTO_BYTES) return fail("The photo is too large.", 413);
+  if (kind === "video" && (size > MAX_VIDEO_BYTES || Number(p.duration) > MAX_VIDEO_SECONDS)) return fail("Video: up to 15 seconds and 12 MB.", 413);
   const since = new Date(Date.now() - 86_400_000).toISOString();
   const { count } = await db.from("stories").select("id", { count: "exact", head: true }).eq("user_id", me.id).gte("created_at", since);
-  if ((count ?? 0) >= STORIES_PER_DAY) return fail(`Hanggang ${STORIES_PER_DAY} status bawat araw.`, 429);
+  if ((count ?? 0) >= STORIES_PER_DAY) return fail(`Up to ${STORIES_PER_DAY} statuses per day.`, 429);
   const mime = String(p.mime || "image/jpeg");
   const ext = mime === "video/mp4" ? "mp4" : mime === "video/webm" ? "webm" : "jpg";
   const path = `${me.id}/stories/${Date.now().toString(36)}${rand()}.${ext}`;
@@ -169,10 +169,10 @@ async function storyUpload(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function createStory(p: any, me: any) {
   const path = String(p.path || "");
-  if (!path.startsWith(`${me.id}/stories/`) || path.includes("..")) return fail("Maling file.", 403);
+  if (!path.startsWith(`${me.id}/stories/`) || path.includes("..")) return fail("Invalid file.", 403);
   const name = path.split("/").pop()!;
   const { data: listed } = await db.storage.from(BUCKET).list(`${me.id}/stories`, { search: name, limit: 5 });
-  if (!(listed ?? []).some((o) => o.name === name)) return fail("Hindi pa tapos ang upload.", 409, { retry: true });
+  if (!(listed ?? []).some((o) => o.name === name)) return fail("The upload hasn't finished.", 409, { retry: true });
   const kind = p.kind === "video" ? "video" : "photo";
   const { data, error } = await db.from("stories").insert({
     user_id: me.id, kind, path, mime: String(p.mime || "image/jpeg"), w: Number(p.w) || null, h: Number(p.h) || null,
@@ -198,7 +198,7 @@ async function viewStory(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function storyViewers(p: any, me: any) {
   const { data: s } = await db.from("stories").select("id, user_id").eq("id", String(p.id || "")).maybeSingle();
-  if (!s || s.user_id !== me.id) return fail("Sa iyo lang makikita kung sino ang nanood.", 403);
+  if (!s || s.user_id !== me.id) return fail("Only you can see who viewed your status.", 403);
   const { data } = await db.from("story_views").select("viewer_id, created_at").eq("story_id", s.id).order("created_at", { ascending: false });
   const ids = (data ?? []).map((r) => r.viewer_id);
   const { data: us } = ids.length ? await db.from("users").select("id, username, display_name, avatar_url").in("id", ids) : { data: [] };
@@ -207,7 +207,7 @@ async function storyViewers(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function deleteStory(p: any, me: any) {
   const { data: s } = await db.from("stories").select("id, user_id, path").eq("id", String(p.id || "")).maybeSingle();
-  if (!s || s.user_id !== me.id) return fail("Hindi makita.", 404);
+  if (!s || s.user_id !== me.id) return fail("Not found.", 404);
   await db.storage.from(BUCKET).remove([s.path]);
   await db.from("stories").delete().eq("id", s.id);
   return reply({ ok: true });
@@ -215,11 +215,11 @@ async function deleteStory(p: any, me: any) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
-  if (req.method !== "POST") return fail("POST lang.", 405);
+  if (req.method !== "POST") return fail("POST only.", 405);
   try {
     const p = await req.json().catch(() => ({}));
     const me = await sessionUser(String(p.token ?? req.headers.get("x-session-token") ?? ""));
-    if (!me) return fail("Session expired. Mag-login ulit.", 401);
+    if (!me) return fail("Session expired. Please sign in again.", 401);
     switch (p.action) {
       case "follow":       return await follow(p, me);
       case "unfollow":     return await unfollow(p, me);
@@ -236,6 +236,6 @@ Deno.serve(async (req) => {
     }
   } catch (e) {
     console.error("social-fast error", e);
-    return fail("Server error. Subukan ulit.", 500);
+    return fail("Server error. Please try again.", 500);
   }
 });

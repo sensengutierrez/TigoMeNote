@@ -31,7 +31,7 @@
         fn(s, box);
         t.oncomplete = function () { res(box.v); };
         t.onerror = function () { rej(t.error); };
-        t.onabort = function () { rej(t.error || new Error("Puno na ang storage ng device.")); };
+        t.onabort = function () { rej(t.error || new Error("Device storage is full.")); };
       });
     });
   }
@@ -72,7 +72,7 @@
       var url = URL.createObjectURL(blob);
       var v = document.createElement("video");
       v.src = url; v.playsInline = true; v.preload = "auto"; v.crossOrigin = "anonymous";
-      v.onerror = function () { URL.revokeObjectURL(url); reject(new Error("Hindi mabasa ang video.")); };
+      v.onerror = function () { URL.revokeObjectURL(url); reject(new Error("Can't read the video.")); };
       v.onloadedmetadata = async function () {
         var dur = Math.min(isFinite(v.duration) && v.duration > 0 ? v.duration : VIDEO_MAX_SEC, VIDEO_MAX_SEC);
         var mime = pickVideoMime();
@@ -82,7 +82,7 @@
           URL.revokeObjectURL(url);
           if ((v.duration || 0) <= VIDEO_MAX_SEC + 0.5 && blob.size <= 12 * 1024 * 1024)
             return resolve({ kind: "video", blob: blob, mime: /mp4/.test(blob.type) ? "video/mp4" : "video/webm", w: v.videoWidth, h: v.videoHeight, duration: v.duration, size: blob.size });
-          return reject(new Error("Hindi ma-compress ang video sa browser na ito. Gumamit ng video na ≤15 s at ≤12 MB."));
+          return reject(new Error("This browser can't compress the video. Use a video of 15 s or less and 12 MB or less."));
         }
         var c = document.createElement("canvas"); c.width = s.w; c.height = s.h;
         var ctx = c.getContext("2d");
@@ -106,8 +106,8 @@
           var origOk = (v.duration || 0) <= VIDEO_MAX_SEC + 0.5 && blob.size <= 12 * 1024 * 1024 && /^video\/(webm|mp4)/.test(blob.type);
           if (origOk && (out.size >= blob.size || !out.size))
             return resolve({ kind: "video", blob: blob, mime: /mp4/.test(blob.type) ? "video/mp4" : "video/webm", w: v.videoWidth, h: v.videoHeight, duration: v.duration, size: blob.size });
-          if (!out.size) return reject(new Error("Hindi na-compress ang video. Subukan ulit."));
-          if (out.size > 12 * 1024 * 1024) return reject(new Error("Masyadong malaki pa rin ang video pagka-compress."));
+          if (!out.size) return reject(new Error("The video wasn't compressed. Please try again."));
+          if (out.size > 12 * 1024 * 1024) return reject(new Error("The video is still too large after compressing."));
           resolve({ kind: "video", blob: out, mime: type, w: s.w, h: s.h, duration: dur, size: out.size });
         };
         var stopped = false, loop = null, guard = null;
@@ -133,7 +133,7 @@
           rec.start(500);
           loop = setInterval(draw, 33); draw();
           guard = setTimeout(finish, (dur + 8) * 1000); // safety: huwag ma-stuck
-        } catch (e) { URL.revokeObjectURL(url); reject(new Error("Hindi ma-play ang video para i-compress.")); }
+        } catch (e) { URL.revokeObjectURL(url); reject(new Error("Can't play the video to compress it.")); }
       };
     });
   }
@@ -213,7 +213,7 @@
           e.status = "done"; e.postId = (res && res.post && res.post.id) || up.post_id || null;
           e.doneAt = Date.now(); e.files = e.files.map(function (f) { return { kind: f.kind, size: f.size }; });
           await put(e); emit();
-          if (window.TMN_UI) TMN_UI.toast(e.publishAt && new Date(e.publishAt) > new Date() ? "Na-upload ✓ Lalabas sa naka-schedule na oras." : "Na-post ✓");
+          if (window.TMN_UI) TMN_UI.toast(e.publishAt && new Date(e.publishAt) > new Date() ? "Uploaded ✓ It will appear at the scheduled time." : "Posted ✓");
         } catch (err) {
           e.attempts = (e.attempts || 0) + 1;
           e.status = navigator.onLine ? "error" : "queued";
@@ -239,11 +239,11 @@
   window.addEventListener("online", function () {
     getAll().then(function (l) {
       var n = l.filter(function (e) { return e.status !== "done"; }).length;
-      if (n && window.TMN_UI) TMN_UI.toast("Online na — ina-upload ang " + n + " naka-pilang post…");
+      if (n && window.TMN_UI) TMN_UI.toast("Back online — uploading " + n + " waiting post(s)…");
     });
     process();
   });
-  window.addEventListener("offline", function () { if (window.TMN_UI) TMN_UI.toast("Offline ka. Mase-save muna sa device ang mga post."); });
+  window.addEventListener("offline", function () { if (window.TMN_UI) TMN_UI.toast("You're offline. Posts will be saved on your device for now."); });
   document.addEventListener("visibilitychange", function () { if (!document.hidden) process(); });
   setInterval(process, 45000);
   setTimeout(function () { process(); badge(); }, 800);

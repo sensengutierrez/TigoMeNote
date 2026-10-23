@@ -214,3 +214,19 @@ body.modal-open { overflow: hidden; }
 .crop-zoom { display: flex; align-items: center; gap: 10px; color: var(--text-3); }
 .crop-zoom input { flex: 1; accent-color: var(--accent); }
 .crop-hint { text-align: center; }
+
+/* Maliit na language dropdown (login, landing) — i18n.js mountPicker */
+.lang-mini { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 10px; border-radius: var(--r-full); border: 1px solid var(--line); background: var(--surface); color: var(--text-2); font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.lang-mini select { appearance: none; -webkit-appearance: none; border: 0; background: transparent; color: var(--text); font: inherit; cursor: pointer; padding-inline-end: 2px; }
+.lang-mini select:focus { outline: none; }
+.lang-mini:focus-within { box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* ---------- RTL (Arabic) ---------- */
+[dir="rtl"] .vw-nav.prev { left: auto; right: 12px; }
+[dir="rtl"] .vw-nav.next { right: auto; left: 12px; }
+[dir="rtl"] .vw-nav .ic, [dir="rtl"] .ic-dir { transform: scaleX(-1); }
+[dir="rtl"] .pick, [dir="rtl"] .sx-user, [dir="rtl"] .pc-author, [dir="rtl"] .lang-pick button { text-align: right; }
+[dir="rtl"] .search .ic { left: auto; right: 14px; }
+[dir="rtl"] .search .input { padding-left: 16px; padding-right: 44px; }
+[dir="rtl"] .toast-host { direction: rtl; }
+.chip { display: inline-flex; align-items: center; gap: 6px; }

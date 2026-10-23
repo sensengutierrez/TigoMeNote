@@ -7,6 +7,7 @@
   <title>Explore · TigoMeNote</title>
   <script src="../assets/js/theme.js"></script>
   <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/i18n.js"></script>
   <script src="../assets/js/auth-guard.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,19 +26,19 @@
       <div class="ex-main">
         <header class="ex-head">
           <h1>Explore</h1>
-          <button class="icon-btn ex-find" type="button" id="findBtn" aria-label="Hanapin ang tao"><i data-icon="search"></i></button>
+          <button class="icon-btn ex-find" type="button" id="findBtn" aria-label="Search people"><i data-icon="search"></i></button>
         </header>
         <section class="card ex-stories" id="stories" aria-label="Status"></section>
         <div class="segmented ex-tabs" role="tablist" id="tabs">
-          <button type="button" role="tab" data-mode="all" aria-pressed="true"><i data-icon="globe" data-size="sm"></i>Para sa iyo</button>
+          <button type="button" role="tab" data-mode="all" aria-pressed="true"><i data-icon="globe" data-size="sm"></i>For you</button>
           <button type="button" role="tab" data-mode="following" aria-pressed="false"><i data-icon="users" data-size="sm"></i>Following</button>
         </div>
         <div class="feed" id="feed"></div>
         <div class="empty hidden" id="empty">
           <div class="empty-art"><i data-icon="compass" data-size="lg"></i></div>
-          <h3 id="emptyTitle">Wala pang posts</h3>
-          <p id="emptyText">Ikaw na ang mauna! Pumili ng photo sa Gallery at pindutin ang Post.</p>
-          <a class="btn btn-primary" href="gallery.html" id="emptyBtn"><i data-icon="album" data-size="sm"></i>Buksan ang Gallery</a>
+          <h3 id="emptyTitle">No posts yet</h3>
+          <p id="emptyText">Be the first! Pick a photo in Gallery and tap Post.</p>
+          <a class="btn btn-primary" href="gallery.html" id="emptyBtn"><i data-icon="album" data-size="sm"></i>Open Gallery</a>
         </div>
         <div class="more-wrap"><button class="btn btn-ghost hidden" type="button" id="more">Load more</button></div>
       </div>
@@ -46,14 +47,14 @@
         <section class="card ex-people">
           <label class="search">
             <i data-icon="search"></i>
-            <span class="sr-only">Hanapin ang tao</span>
-            <input class="input" type="search" id="q" placeholder="Hanapin ang tao (pangalan o @username)">
+            <span class="sr-only">Search people</span>
+            <input class="input" type="search" id="q" placeholder="Search people (name or @username)">
           </label>
           <div class="ex-results hidden" id="results"></div>
         </section>
         <section class="card ex-people">
-          <h3>Suggestions para sa iyo</h3>
-          <div id="sugg"><p class="faint small sx-empty">Naglo-load…</p></div>
+          <h3>Suggested for you</h3>
+          <div id="sugg"><p class="faint small sx-empty">Loading…</p></div>
         </section>
       </aside>
     </div>

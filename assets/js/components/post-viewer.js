@@ -5,19 +5,19 @@
    Kailangan: modal.js, api.js, app-shell.js */
 (function () {
   var I = function (n, c) { return window.TMN_ICON ? window.TMN_ICON(n, c) : ""; };
-  var VIS = { public: ["globe", "Public"], followers: ["users", "Followers"], private: ["lock", "Ako lang"] };
+  var VIS = { public: ["globe", "Public"], followers: ["users", "Followers"], private: ["lock", "Only me"] };
   function esc(s) { return window.TMN_UI.esc(s); }
   function pad(n) { return String(n).padStart(2, "0"); }
   function localInput(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes()); }
-  function when(iso) { return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }); }
-  function short(iso) { var d = new Date(iso); return d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " · " + d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }); }
+  function when(iso) { return new Date(iso).toLocaleString(window.TMN_I18N ? TMN_I18N.locale : undefined, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }); }
+  function short(iso) { var d = new Date(iso); return d.toLocaleDateString(window.TMN_I18N ? TMN_I18N.locale : undefined, { month: "short", day: "numeric" }) + " · " + d.toLocaleTimeString(window.TMN_I18N ? TMN_I18N.locale : undefined, { hour: "numeric", minute: "2-digit" }); }
   function ago(iso) {
     var s = (Date.now() - new Date(iso).getTime()) / 1000;
-    if (s < 60) return "ngayon lang";
+    if (s < 60) return "just now";
     if (s < 3600) return Math.floor(s / 60) + "m";
     if (s < 86400) return Math.floor(s / 3600) + "h";
     if (s < 604800) return Math.floor(s / 86400) + "d";
-    return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    return new Date(iso).toLocaleDateString(window.TMN_I18N ? TMN_I18N.locale : undefined, { month: "short", day: "numeric" });
   }
 
   function tiles(posts, opts) {
@@ -57,7 +57,7 @@
     function cur() { return posts[idx]; }
     function showSlide() {
       var p = cur(), m = p.media[slide] || {};
-      media.innerHTML = !m.url ? '<div class="pt-missing">' + I("image", "ic-lg") + "<span>Hindi ma-load. Subukan ulit.</span></div>"
+      media.innerHTML = !m.url ? '<div class="pt-missing">' + I("image", "ic-lg") + "<span>Couldn't load. Please try again.</span></div>"
         : m.kind === "video" ? '<video src="' + esc(m.url) + '" controls playsinline autoplay></video>'
         : '<img alt="" src="' + esc(m.url) + '">';
       dots.innerHTML = p.media.length > 1 ? p.media.map(function (_, i) { return '<span class="' + (i === slide ? "on" : "") + '"></span>'; }).join("") : "";
@@ -69,11 +69,11 @@
       var a = p.author || {};
       root.querySelector(".pv-author").innerHTML =
         '<span class="avatar" style="--size:38px">' + (a.avatar_url ? '<img alt="" src="' + esc(a.avatar_url) + '">' : esc(UI.initials(a.display_name || a.username || "?"))) + "</span>" +
-        "<div><b>" + esc(a.display_name || a.username || "") + '</b><div class="faint small">@' + esc(a.username || "") + " · " + (p.scheduled ? "naka-schedule" : ago(p.publish_at)) + "</div></div>";
+        "<div><b>" + esc(a.display_name || a.username || "") + '</b><div class="faint small">@' + esc(a.username || "") + " · " + (p.scheduled ? "scheduled" : ago(p.publish_at)) + "</div></div>";
       var v = VIS[p.visibility] || VIS.public;
       root.querySelector(".pv-badges").innerHTML =
         (p.mine ? '<span class="badge">' + I(v[0], "ic-sm") + v[1] + "</span>" : "") +
-        (p.scheduled ? '<span class="badge badge-accent">' + I("clock", "ic-sm") + "Lalabas " + when(p.publish_at) + "</span>" : "");
+        (p.scheduled ? '<span class="badge badge-accent">' + I("clock", "ic-sm") + "Appears " + when(p.publish_at) + "</span>" : "");
       root.querySelector(".pv-cap").textContent = p.caption || "";
       root.querySelector(".pv-actions").innerHTML = p.mine
         ? '<button type="button" class="btn btn-ghost btn-sm" data-a="edit">' + I("edit", "ic-sm") + "Edit</button>" +
@@ -84,7 +84,7 @@
       if (window.TMN_POST_CARD && p.stats && !p.scheduled) {
         soc.dataset.id = p.id;
         soc.innerHTML = TMN_POST_CARD.actionsHtml(p) +
-          (p.stats.comments ? '<button type="button" class="pc-more-comments" data-act="comments">Tingnan ang ' + p.stats.comments + " comment" + (p.stats.comments > 1 ? "s" : "") + "</button>" : "");
+          (p.stats.comments ? '<button type="button" class="pc-more-comments" data-act="comments">View ' + p.stats.comments + " comment" + (p.stats.comments > 1 ? "s" : "") + "</button>" : "");
       } else soc.innerHTML = "";
       modal.el.querySelector(".modal-head h3").textContent = posts.length > 1 ? (idx + 1) + " / " + posts.length : "Post";
       showSlide();
@@ -108,10 +108,10 @@
       var b = e.target.closest("[data-a]"); if (!b) return;
       var p = cur();
       if (b.dataset.a === "delete") {
-        if (!(await MODAL.confirm("Burahin ang post na ito sa server? (Hindi kasama ang copy sa Gallery mo.)", { okText: "Delete", danger: true }))) return;
+        if (!(await MODAL.confirm("Delete this post from the server? (Your Gallery copy stays.)", { okText: "Delete", danger: true }))) return;
         try {
           await TMN_API.call("posts", "deletePost", { id: p.id });
-          posts.splice(idx, 1); UI.toast("Nabura ang post.");
+          posts.splice(idx, 1); UI.toast("Post deleted.");
           if (o.onChange) o.onChange({ type: "delete", id: p.id });
           if (!posts.length) { modal.close(); return; }
           idx = Math.min(idx, posts.length - 1); slide = 0; show();
@@ -119,7 +119,7 @@
       }
       if (b.dataset.a === "edit") {
         var upd = await edit(p);
-        if (upd) { posts[idx] = upd; UI.toast("Na-save."); if (o.onChange) o.onChange({ type: "update", post: upd }); show(); }
+        if (upd) { posts[idx] = upd; UI.toast("Saved."); if (o.onChange) o.onChange({ type: "update", post: upd }); show(); }
       }
     });
 
@@ -146,13 +146,13 @@
       var d = new Date(p.publish_at); if (!sched) { d = new Date(Date.now() + 3600000); d.setMinutes(0, 0, 0); }
       f.innerHTML =
         '<label class="field"><span class="pe-label">Caption</span><textarea class="input" rows="4" maxlength="1000"></textarea></label>' +
-        '<div class="field"><span class="pe-label">Sino ang makakakita</span><div class="segmented" data-g="vis">' +
+        '<div class="field"><span class="pe-label">Who can see this</span><div class="segmented" data-g="vis">' +
           Object.keys(VIS).map(function (k) { return '<button type="button" data-v="' + k + '" aria-pressed="' + (k === vis) + '">' + I(VIS[k][0], "ic-sm") + VIS[k][1] + "</button>"; }).join("") +
         "</div></div>" +
         (p.scheduled
           ? '<div class="field"><span class="pe-label">Schedule</span><div class="segmented" data-g="when">' +
-              '<button type="button" data-v="later" aria-pressed="true">' + I("calendar", "ic-sm") + "Naka-schedule</button>" +
-              '<button type="button" data-v="now" aria-pressed="false">' + I("send", "ic-sm") + "Ipalabas ngayon</button></div>" +
+              '<button type="button" data-v="later" aria-pressed="true">' + I("calendar", "ic-sm") + "Scheduled</button>" +
+              '<button type="button" data-v="now" aria-pressed="false">' + I("send", "ic-sm") + "Publish now</button></div>" +
               '<input class="input pc-date" type="datetime-local" value="' + localInput(d) + '"></div>'
           : "");
       var ta = f.querySelector("textarea"); ta.value = p.caption || "";
@@ -169,7 +169,7 @@
         if (p.scheduled) {
           if (sched) {
             var t = new Date(date.value);
-            if (isNaN(t) || t.getTime() < Date.now() + 60000) { UI.toast("Dapat sa hinaharap ang schedule."); return; }
+            if (isNaN(t) || t.getTime() < Date.now() + 60000) { UI.toast("The schedule must be in the future."); return; }
             body.publish_at = t.toISOString();
           } else body.publish_at = new Date().toISOString();
         }
@@ -179,7 +179,7 @@
       }
       f.addEventListener("submit", function (e) { e.preventDefault(); });
       var m = window.TMN_MODAL.open({
-        title: "I-edit ang post", size: "sm", body: f,
+        title: "Edit post", size: "sm", body: f,
         actions: [
           { label: "Cancel", cls: "btn-ghost", onClick: function () { done = true; m.close(); resolve(null); } },
           { label: "Save", cls: "btn-primary", onClick: function (api, btn) { save(api, btn); } }

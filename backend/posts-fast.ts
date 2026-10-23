@@ -149,9 +149,9 @@ async function hydrate(posts: any[], me: any) {
 // deno-lint-ignore no-explicit-any
 async function createUpload(p: any, me: any) {
   const clientId = cleanId(p.client_id);
-  if (!clientId) return fail("Kulang ang client_id.");
+  if (!clientId) return fail("Missing client_id.");
   const files = Array.isArray(p.files) ? p.files : [];
-  if (!files.length || files.length > MAX_MEDIA_PER_POST) return fail(`1 hanggang ${MAX_MEDIA_PER_POST} photo/video bawat post.`);
+  if (!files.length || files.length > MAX_MEDIA_PER_POST) return fail(`1 to ${MAX_MEDIA_PER_POST} photos/videos per post.`);
 
   // Kung na-post na ito dati (retry), huwag nang ulitin
   const { data: existing } = await db.from("posts").select("id").eq("user_id", me.id).eq("client_id", clientId).maybeSingle();
@@ -161,19 +161,19 @@ async function createUpload(p: any, me: any) {
   for (const f of files) {
     const kind = f.kind === "video" ? "video" : "photo";
     const size = Number(f.size) || 0;
-    if (kind === "photo" && size > MAX_PHOTO_BYTES) return fail("Masyadong malaki ang photo.", 413);
-    if (kind === "video" && size > MAX_VIDEO_BYTES) return fail("Masyadong malaki ang video (max ~12 MB).", 413);
-    if (kind === "video" && Number(f.duration) > MAX_VIDEO_SECONDS) return fail("Hanggang 15 segundo lang ang video.", 413);
+    if (kind === "photo" && size > MAX_PHOTO_BYTES) return fail("The photo is too large.", 413);
+    if (kind === "video" && size > MAX_VIDEO_BYTES) return fail("The video is too large (max ~12 MB).", 413);
+    if (kind === "video" && Number(f.duration) > MAX_VIDEO_SECONDS) return fail("Videos can be up to 15 seconds.", 413);
     total += size;
   }
 
   const since = new Date(Date.now() - 86_400_000).toISOString();
   const { count: today } = await db.from("post_media").select("id", { count: "exact", head: true }).eq("user_id", me.id).gte("created_at", since);
-  if ((today ?? 0) + files.length > MEDIA_PER_DAY) return fail(`Hanggang ${MEDIA_PER_DAY} photo/video bawat araw.`, 429);
+  if ((today ?? 0) + files.length > MEDIA_PER_DAY) return fail(`Up to ${MEDIA_PER_DAY} photos/videos per day.`, 429);
 
   const { data: used } = await db.from("post_media").select("size");
   const usedBytes = (used ?? []).reduce((a, r) => a + (r.size || 0), 0);
-  if (usedBytes + total > STORAGE_CAP_BYTES) return fail("Puno na ang storage ng server. Subukan ulit mamaya.", 507);
+  if (usedBytes + total > STORAGE_CAP_BYTES) return fail("Server storage is full. Please try again later.", 507);
 
   const uploads = [];
   for (let i = 0; i < files.length; i++) {
@@ -189,16 +189,16 @@ async function createUpload(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function createPost(p: any, me: any) {
   const clientId = cleanId(p.client_id);
-  if (!clientId) return fail("Kulang ang client_id.");
+  if (!clientId) return fail("Missing client_id.");
   const { data: existing } = await db.from("posts").select("*").eq("user_id", me.id).eq("client_id", clientId).maybeSingle();
   if (existing) return reply({ ok: true, already: true, post: (await hydrate([existing], me))[0] });
 
   const caption = String(p.caption ?? "").slice(0, 1000);
   const visibility = ["public", "followers", "private"].includes(p.visibility) ? p.visibility : "public";
   const publishAt = parsePublishAt(p.publish_at);
-  if (!publishAt) return fail("Mali ang petsa/oras ng schedule.");
+  if (!publishAt) return fail("Invalid schedule date/time.");
   const media = Array.isArray(p.media) ? p.media.slice(0, MAX_MEDIA_PER_POST) : [];
-  if (!media.length) return fail("Walang photo/video.");
+  if (!media.length) return fail("No photo or video.");
 
   // Siguraduhing sa user na ito ang mga path at nandoon talaga ang files
   const prefix = `${me.id}/${clientId}/`;
@@ -206,8 +206,8 @@ async function createPost(p: any, me: any) {
   const present = new Set((listed ?? []).map((o) => prefix + o.name));
   const sizes = Object.fromEntries((listed ?? []).map((o) => [prefix + o.name, (o.metadata && o.metadata.size) || 0]));
   for (const m of media) {
-    if (typeof m.path !== "string" || !m.path.startsWith(prefix)) return fail("Maling file path.", 403);
-    if (!present.has(m.path)) return fail("Hindi pa tapos ang upload ng isang file. Susubukan ulit.", 409, { retry: true });
+    if (typeof m.path !== "string" || !m.path.startsWith(prefix)) return fail("Invalid file path.", 403);
+    if (!present.has(m.path)) return fail("A file hasn't finished uploading. Retrying.", 409, { retry: true });
   }
 
   const { data: post, error } = await db.from("posts").insert({
@@ -300,7 +300,7 @@ async function userPosts(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function getPost(p: any, me: any) {
   const post = await visiblePost(p.id, me);
-  if (!post) return fail("Hindi makita ang post (nabura o private).", 404);
+  if (!post) return fail("Post not found (deleted or private).", 404);
   return reply({ ok: true, post: (await hydrate([post], me))[0] });
 }
 
@@ -308,11 +308,11 @@ async function getPost(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function react(p: any, me: any) {
   const post = await visiblePost(p.post_id, me);
-  if (!post) return fail("Hindi makita ang post.", 404);
+  if (!post) return fail("Post not found.", 404);
   if (p.emoji === null || p.emoji === "") {
     await db.from("post_reactions").delete().eq("post_id", post.id).eq("user_id", me.id);
   } else {
-    if (!EMOJIS.includes(p.emoji)) return fail("Maling reaction.");
+    if (!EMOJIS.includes(p.emoji)) return fail("Invalid reaction.");
     await db.from("post_reactions").upsert({ post_id: post.id, user_id: me.id, emoji: p.emoji, created_at: nowIso() });
   }
   return reply({ ok: true, post: (await hydrate([post], me))[0] });
@@ -322,7 +322,7 @@ async function react(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function reactions(p: any, me: any) {
   const post = await visiblePost(p.post_id, me);
-  if (!post) return fail("Hindi makita ang post.", 404);
+  if (!post) return fail("Post not found.", 404);
   const { data } = await db.from("post_reactions").select("user_id, emoji, created_at").eq("post_id", post.id).order("created_at", { ascending: false }).limit(200);
   const u = await usersById((data ?? []).map((r) => r.user_id));
   return reply({ ok: true, list: (data ?? []).map((r) => ({ user: u[r.user_id] ?? null, emoji: r.emoji, at: r.created_at })) });
@@ -330,7 +330,7 @@ async function reactions(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function shares(p: any, me: any) {
   const post = await visiblePost(p.post_id, me);
-  if (!post) return fail("Hindi makita ang post.", 404);
+  if (!post) return fail("Post not found.", 404);
   const { data } = await db.from("post_shares").select("user_id, kind, created_at").eq("post_id", post.id).order("created_at", { ascending: false }).limit(200);
   const u = await usersById((data ?? []).map((r) => r.user_id));
   return reply({ ok: true, list: (data ?? []).map((r) => ({ user: u[r.user_id] ?? null, kind: r.kind, at: r.created_at })) });
@@ -339,7 +339,7 @@ async function shares(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function comments(p: any, me: any) {
   const post = await visiblePost(p.post_id, me);
-  if (!post) return fail("Hindi makita ang post.", 404);
+  if (!post) return fail("Post not found.", 404);
   let q = db.from("post_comments").select("id, user_id, body, created_at").eq("post_id", post.id).is("deleted_at", null)
     .order("created_at", { ascending: true }).limit(200);
   if (p.after) q = q.gt("created_at", String(p.after));
@@ -353,12 +353,12 @@ async function comments(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function addComment(p: any, me: any) {
   const post = await visiblePost(p.post_id, me);
-  if (!post) return fail("Hindi makita ang post.", 404);
+  if (!post) return fail("Post not found.", 404);
   const body = String(p.body ?? "").trim().replace(/\n{3,}/g, "\n\n");
   if (!body || body.length > 500) return fail("Comment: 1–500 characters.");
   const since = new Date(Date.now() - 60_000).toISOString();
   const { count } = await db.from("post_comments").select("id", { count: "exact", head: true }).eq("user_id", me.id).gte("created_at", since);
-  if ((count ?? 0) >= 10) return fail("Dahan-dahan lang 🙂 Subukan ulit mamaya.", 429);
+  if ((count ?? 0) >= 10) return fail("Slow down a bit 🙂 Try again later.", 429);
   const { data, error } = await db.from("post_comments").insert({ post_id: post.id, user_id: me.id, body }).select("*").single();
   if (error) throw error;
   const u = await usersById([me.id]);
@@ -367,9 +367,9 @@ async function addComment(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function deleteComment(p: any, me: any) {
   const { data: c } = await db.from("post_comments").select("id, user_id, post_id").eq("id", String(p.id || "")).maybeSingle();
-  if (!c) return fail("Hindi makita ang comment.", 404);
+  if (!c) return fail("Comment not found.", 404);
   const { data: post } = await db.from("posts").select("user_id").eq("id", c.post_id).maybeSingle();
-  if (c.user_id !== me.id && post?.user_id !== me.id) return fail("Hindi mo ito pwedeng burahin.", 403);
+  if (c.user_id !== me.id && post?.user_id !== me.id) return fail("You can't delete this.", 403);
   await db.from("post_comments").update({ deleted_at: nowIso() }).eq("id", c.id);
   return reply({ ok: true });
 }
@@ -377,7 +377,7 @@ async function deleteComment(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function bookmark(p: any, me: any) {
   const post = await visiblePost(p.post_id, me);
-  if (!post) return fail("Hindi makita ang post.", 404);
+  if (!post) return fail("Post not found.", 404);
   if (p.on) await db.from("post_bookmarks").upsert({ post_id: post.id, user_id: me.id });
   else await db.from("post_bookmarks").delete().eq("post_id", post.id).eq("user_id", me.id);
   return reply({ ok: true, post: (await hydrate([post], me))[0] });
@@ -397,11 +397,11 @@ async function bookmarks(_p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function share(p: any, me: any) {
   const post = await visiblePost(p.post_id, me);
-  if (!post) return fail("Hindi makita ang post.", 404);
+  if (!post) return fail("Post not found.", 404);
   const kind = p.kind === "repost" ? "repost" : "link";
   if (kind === "repost") {
-    if (post.visibility !== "public") return fail("Public posts lang ang pwedeng i-repost.", 403);
-    if (post.user_id === me.id) return fail("Sariling post mo ito.");
+    if (post.visibility !== "public") return fail("Only public posts can be reposted.", 403);
+    if (post.user_id === me.id) return fail("This is your own post.");
     const { error } = await db.from("post_shares").insert({ post_id: post.id, user_id: me.id, kind });
     if (error && error.code !== "23505") throw error;
   } else {
@@ -419,16 +419,16 @@ async function unrepost(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function updatePost(p: any, me: any) {
   const { data: post } = await db.from("posts").select("*").eq("id", String(p.id || "")).eq("user_id", me.id).is("deleted_at", null).maybeSingle();
-  if (!post) return fail("Hindi makita ang post.", 404);
+  if (!post) return fail("Post not found.", 404);
   const ch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (p.caption !== undefined) ch.caption = String(p.caption).slice(0, 1000);
   if (p.visibility !== undefined) {
-    if (!["public", "followers", "private"].includes(p.visibility)) return fail("Maling visibility.");
+    if (!["public", "followers", "private"].includes(p.visibility)) return fail("Invalid visibility.");
     ch.visibility = p.visibility;
   }
   if (p.publish_at !== undefined) {
     const d = parsePublishAt(p.publish_at);
-    if (!d) return fail("Mali ang petsa/oras ng schedule.");
+    if (!d) return fail("Invalid schedule date/time.");
     ch.publish_at = d.toISOString();
   }
   const { data: upd, error } = await db.from("posts").update(ch).eq("id", post.id).select("*").single();
@@ -439,7 +439,7 @@ async function updatePost(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function deletePost(p: any, me: any) {
   const { data: post } = await db.from("posts").select("id").eq("id", String(p.id || "")).eq("user_id", me.id).maybeSingle();
-  if (!post) return fail("Hindi makita ang post.", 404);
+  if (!post) return fail("Post not found.", 404);
   const { data: media } = await db.from("post_media").select("path").eq("post_id", post.id);
   const paths = (media ?? []).map((m) => m.path);
   if (paths.length) await db.storage.from(BUCKET).remove(paths);
@@ -449,11 +449,11 @@ async function deletePost(p: any, me: any) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
-  if (req.method !== "POST") return fail("POST lang.", 405);
+  if (req.method !== "POST") return fail("POST only.", 405);
   try {
     const p = await req.json().catch(() => ({}));
     const me = await sessionUser(String(p.token ?? req.headers.get("x-session-token") ?? ""));
-    if (!me) return fail("Session expired. Mag-login ulit.", 401);
+    if (!me) return fail("Session expired. Please sign in again.", 401);
     switch (p.action) {
       case "createUpload": return await createUpload(p, me);
       case "createPost":   return await createPost(p, me);
@@ -477,6 +477,6 @@ Deno.serve(async (req) => {
     }
   } catch (e) {
     console.error("posts-fast error", e);
-    return fail("Server error. Subukan ulit.", 500);
+    return fail("Server error. Please try again.", 500);
   }
 });

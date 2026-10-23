@@ -7,6 +7,7 @@
   <title>Settings · TigoMeNote</title>
   <script src="../assets/js/theme.js"></script>
   <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/i18n.js"></script>
   <script src="../assets/js/auth-guard.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,13 +33,20 @@
           <div class="row set-row">
             <div class="row-main">
               <div class="row-title">Theme</div>
-              <div class="row-sub">Plain white, dark, o sundan ang device.</div>
+              <div class="row-sub">Plain white, dark, or follow your device.</div>
             </div>
             <div class="segmented" id="themeSeg" role="group" aria-label="Theme">
               <button type="button" data-mode="light"><i data-icon="sun" data-size="sm"></i>Light</button>
               <button type="button" data-mode="dark"><i data-icon="moon" data-size="sm"></i>Dark</button>
               <button type="button" data-mode="system"><i data-icon="monitor" data-size="sm"></i>Auto</button>
             </div>
+          </div>
+          <div class="row set-row">
+            <div class="row-main">
+              <div class="row-title">Language</div>
+              <div class="row-sub">Choose the language of TigoMeNote on this device.</div>
+            </div>
+            <div class="lang-pick" id="langPick" role="radiogroup" aria-label="Language" translate="no"></div>
           </div>
         </div>
       </section>
@@ -53,7 +61,7 @@
             <div class="row-main"><div class="row-title">Role</div><div class="row-sub" id="sRole"></div></div>
           </div>
           <div class="row">
-            <div class="row-main"><div class="row-title">Log out</div><div class="row-sub">Lalabas ka sa device na ito.</div></div>
+            <div class="row-main"><div class="row-title">Log out</div><div class="row-sub">You'll be signed out on this device.</div></div>
             <button class="btn btn-danger" type="button" id="sLogout"><i data-icon="logout" data-size="sm"></i>Log out</button>
           </div>
         </div>

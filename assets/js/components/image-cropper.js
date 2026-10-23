@@ -10,7 +10,7 @@
     return new Promise(function (res, rej) {
       var url = URL.createObjectURL(file), img = new Image();
       img.onload = function () { res({ img: img, url: url }); };
-      img.onerror = function () { URL.revokeObjectURL(url); rej(new Error("Hindi mabasa ang larawan. Subukan ang JPG o PNG.")); };
+      img.onerror = function () { URL.revokeObjectURL(url); rej(new Error("Can't read this image. Try a JPG or PNG.")); };
       img.src = url;
     });
   }
@@ -27,7 +27,7 @@
       root.innerHTML =
         '<div class="crop-frame' + (o.round ? " round" : "") + '" style="aspect-ratio:' + aspect + '"><img alt="" draggable="false"></div>' +
         '<label class="crop-zoom">' + I("image", "ic-sm") + '<input type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom">' + I("image") + "</label>" +
-        '<p class="faint small crop-hint">I-drag para iusog · i-slide para mag-zoom</p>';
+        '<p class="faint small crop-hint">Drag to move · slide to zoom</p>';
       var frame = root.querySelector(".crop-frame"), el = root.querySelector("img"), zoomIn = root.querySelector("input");
       el.src = loaded.url;
 
@@ -101,10 +101,10 @@
         finish(blob);
       }
       var m = window.TMN_MODAL.open({
-        title: o.title || "I-crop", size: aspect > 1.5 ? "lg" : "sm", cls: "modal-crop", body: root,
+        title: o.title || "Crop", size: aspect > 1.5 ? "lg" : "sm", cls: "modal-crop", body: root,
         actions: [
           { label: "Cancel", cls: "btn-ghost", onClick: function () { finish(null); } },
-          { label: I("check", "ic-sm") + "Gamitin", cls: "btn-primary", onClick: function (api, b) { save(b); } }
+          { label: I("check", "ic-sm") + "Use", cls: "btn-primary", onClick: function (api, b) { save(b); } }
         ],
         onClose: function () { window.removeEventListener("resize", measure); URL.revokeObjectURL(loaded.url); if (!done) resolve(null); }
       });

@@ -7,6 +7,7 @@
   <title>Gallery · TigoMeNote</title>
   <script src="../assets/js/theme.js"></script>
   <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/i18n.js"></script>
   <script src="../assets/js/auth-guard.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,9 +23,9 @@
   <main id="page" class="page fill">
     <header class="page-head gallery-head">
       <div>
-        <div class="eyebrow"><i data-icon="phone" data-size="sm"></i> Naka-save sa device na ito</div>
+        <div class="eyebrow"><i data-icon="phone" data-size="sm"></i> Saved on this device</div>
         <h1>Gallery</h1>
-        <p class="lead">Photos at videos mo, naka-organize sa albums. Hindi ina-upload sa server.</p>
+        <p class="lead">Your photos and videos, organized in albums. Not uploaded to the server.</p>
       </div>
       <div class="head-actions">
         <label class="btn btn-ghost cam-btn">
@@ -48,9 +49,9 @@
           <nav class="album-list" id="albumList" aria-label="Albums"></nav>
         </section>
         <section class="card card-flat storage-card">
-          <div class="storage-top"><span>Storage sa device</span><b id="storeUsed">—</b></div>
+          <div class="storage-top"><span>Device storage</span><b id="storeUsed">—</b></div>
           <div class="bar"><i id="storeBar"></i></div>
-          <p class="faint small" id="storeNote">Kapag binura ang browser data, mabubura rin ang laman nito.</p>
+          <p class="faint small" id="storeNote">If you clear your browser data, these will be deleted too.</p>
         </section>
       </aside>
 
@@ -87,11 +88,11 @@
           <div class="g-grid" id="grid"></div>
           <div class="empty hidden" id="gEmpty">
             <div class="empty-art"><i data-icon="image" data-size="lg"></i></div>
-            <h3 id="gEmptyTitle">Wala pang photos o videos</h3>
-            <p>Pindutin ang Upload, o i-drag dito ang files mula sa computer mo.</p>
+            <h3 id="gEmptyTitle">No photos or videos yet</h3>
+            <p>Tap Upload, or drag files here from your computer.</p>
           </div>
         </div>
-        <div class="drop-hint" aria-hidden="true"><i data-icon="upload" data-size="lg"></i><b>I-drop para ma-save sa device</b></div>
+        <div class="drop-hint" aria-hidden="true"><i data-icon="upload" data-size="lg"></i><b>Drop to save on this device</b></div>
       </section>
     </div>
   </main>

@@ -22,6 +22,7 @@ updated: 2026-10-23
 | File | Trabaho |
 |---|---|
 | `config.js` | **Lahat ng backend URL** at storage keys (`TMN_CONFIG`) |
+| `i18n.js` | Wika ng site (`TMN_I18N`), auto-translate; dictionaries sa `lang/<code>.js` |
 | `theme.js` | Light / Dark / Auto; nilalagay sa `<head>` para walang flash |
 | `auth-guard.js` | Bantay ng private pages; redirect sa login kung walang session |
 | `api.js` | `TMN_API.call(fn, action, data)` — isang paraan ng pagtawag sa server |

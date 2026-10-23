@@ -90,7 +90,7 @@
       var p = document.createElement("p");
       p.className = "muted"; p.textContent = message;
       var m = open({
-        title: o.title || "Sigurado ka ba?", size: "sm", body: p,
+        title: o.title || "Are you sure?", size: "sm", body: p,
         actions: [
           { label: o.cancelText || "Cancel", cls: "btn-ghost", onClick: function () { done = true; m.close(); resolve(false); } },
           { label: o.okText || "OK", cls: o.danger ? "btn-danger-solid" : "btn-primary", onClick: function () { done = true; m.close(); resolve(true); } }

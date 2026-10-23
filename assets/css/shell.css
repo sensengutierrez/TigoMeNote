@@ -133,3 +133,11 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 @media (min-width: 1500px) {
   .layout { grid-template-columns: minmax(0, 1fr) 380px; }
 }
+
+/* ---------- RTL (Arabic) ---------- */
+[dir="rtl"] .drawer { left: auto; right: 0; border-right: 0; border-left: 1px solid var(--line); transform: translateX(102%); }
+[dir="rtl"] body.drawer-open .drawer { transform: none; }
+[dir="rtl"] .topbar-title { padding-left: 0; padding-right: 4px; }
+[dir="rtl"] .tab .dot-count { left: auto; right: calc(50% + 6px); }
+[dir="rtl"] .brand-mark::after { right: auto; left: -2px; }
+@media (min-width: 900px) { [dir="rtl"] .sidebar { border-right: 0; border-left: 1px solid var(--line); } }

@@ -11,15 +11,15 @@
   async function fillAlbums() {
     var keep = sel.value;
     var albums = await M.albums();
-    sel.innerHTML = '<option value="">Walang album</option>' + albums.map(function (a) {
+    sel.innerHTML = '<option value="">No album</option>' + albums.map(function (a) {
       return '<option value="' + a.id + '">' + UI.esc(a.name) + " (" + a.count + ")</option>";
-    }).join("") + '<option value="__new">+ Bagong album…</option>';
+    }).join("") + '<option value="__new">+ New album…</option>';
     if (keep && keep !== "__new") sel.value = keep;
   }
 
   sel.addEventListener("change", async function () {
     if (sel.value !== "__new") return;
-    var name = await window.TMN_MODAL.prompt("Bagong album", { placeholder: "hal. Bahrain trip", okText: "Create" });
+    var name = await window.TMN_MODAL.prompt("New album", { placeholder: "e.g. Bahrain trip", okText: "Create" });
     if (!name) { sel.value = ""; return; }
     var a = await M.createAlbum(name);
     await fillAlbums(); sel.value = a.id;
@@ -30,17 +30,17 @@
       var files = [].slice.call(this.files || []); this.value = "";
       if (!files.length) return;
       var album = sel.value && sel.value !== "__new" ? sel.value : null;
-      UI.toast("Sine-save sa device…", 1500);
+      UI.toast("Saving to device…", 1500);
       try {
         var added = await M.addFiles(files, album);
         if (postToo.checked) {
-          UI.toast(added.length + " na-save sa Gallery.");
+          UI.toast(added.length + " saved to Gallery.");
           window.TMN_COMPOSER.open(added.slice(0, 10), { onPosted: function () { setTimeout(function () { location.href = "profile.html"; }, 900); } });
           return;
         }
-        UI.toast(added.length + " na-save! Bubuksan ang Gallery…");
+        UI.toast(added.length + " saved! Opening Gallery…");
         setTimeout(function () { location.href = "gallery.html" + (album ? "?album=" + encodeURIComponent(album) : ""); }, 900);
-      } catch (e) { UI.toast("Hindi na-save: " + e.message, 4000); }
+      } catch (e) { UI.toast("Not saved: " + e.message, 4000); }
     });
   });
 

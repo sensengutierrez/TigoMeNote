@@ -18,7 +18,7 @@
     $("pBio").textContent = u.bio || "";
     $("pRole").textContent = u.role || "";
     $("pJoined").textContent = u.created_at
-      ? "Joined " + new Date(u.created_at).toLocaleDateString(undefined, { month: "long", year: "numeric" })
+      ? "Joined " + new Date(u.created_at).toLocaleDateString(window.TMN_I18N ? TMN_I18N.locale : undefined, { month: "long", year: "numeric" })
       : "";
   }
   paint();
@@ -36,8 +36,8 @@
     var body = document.createElement("div");
     body.className = "pick-list";
     body.innerHTML =
-      '<button type="button" class="pick" data-a="change">' + I("camera") + "Palitan</button>" +
-      '<button type="button" class="pick danger" data-a="remove">' + I("trash") + "Alisin</button>";
+      '<button type="button" class="pick" data-a="change">' + I("camera") + "Change</button>" +
+      '<button type="button" class="pick danger" data-a="remove">' + I("trash") + "Remove</button>";
     var m = TMN_MODAL.open({ title: kind === "avatar" ? "Profile photo" : "Cover photo", size: "sm", body: body });
     body.addEventListener("click", function (e) {
       var b = e.target.closest("[data-a]"); if (!b) return;
@@ -61,22 +61,22 @@
     var list = (await Q.list()).sort(function (a, b) { return b.createdAt - a.createdAt; });
     qUrls.forEach(function (u) { URL.revokeObjectURL(u); }); qUrls = [];
     $("qWrap").classList.toggle("hidden", !list.length);
-    $("qNet").textContent = navigator.onLine ? "Online" : "Offline · ia-upload pag may internet";
+    $("qNet").textContent = navigator.onLine ? "Online" : "Offline · will upload when online";
     $("queue").innerHTML = list.map(function (e) {
       var thumb = e.cover ? (function () { var u = URL.createObjectURL(e.cover); qUrls.push(u); return '<img alt="" src="' + u + '">'; })() : I(e.files[0] && e.files[0].kind === "video" ? "video" : "image");
       var n = e.files.length, kinds = n + (n > 1 ? " items" : " item");
       var v = PU.VIS[e.visibility] || PU.VIS.public;
-      var st = e.status === "uploading" ? '<span class="q-state uploading">' + I("refresh", "ic-sm spin") + "Ina-upload " + e.progress.done + "/" + e.progress.total + "</span>"
-        : e.status === "done" ? '<span class="q-state done">' + I("check", "ic-sm") + (e.publishAt && new Date(e.publishAt) > new Date() ? "Na-upload · naka-schedule" : "Na-post") + "</span>"
-        : e.status === "error" ? '<span class="q-state">' + I("info", "ic-sm") + "Hindi pa na-upload</span>"
-        : '<span class="q-state">' + I("clock", "ic-sm") + (navigator.onLine ? "Naghihintay" : "Naghihintay ng internet") + "</span>";
+      var st = e.status === "uploading" ? '<span class="q-state uploading">' + I("refresh", "ic-sm spin") + "Uploading " + e.progress.done + "/" + e.progress.total + "</span>"
+        : e.status === "done" ? '<span class="q-state done">' + I("check", "ic-sm") + (e.publishAt && new Date(e.publishAt) > new Date() ? "Uploaded · scheduled" : "Posted") + "</span>"
+        : e.status === "error" ? '<span class="q-state">' + I("info", "ic-sm") + "Not uploaded yet</span>"
+        : '<span class="q-state">' + I("clock", "ic-sm") + (navigator.onLine ? "Waiting" : "Waiting for internet") + "</span>";
       var sub = st + "<span>" + kinds + "</span><span>" + I(v[0], "ic-sm") + v[1] + "</span>" +
         (e.publishAt ? "<span>" + I("calendar", "ic-sm") + PU.short(e.publishAt) + "</span>" : "");
-      var acts = e.status === "done" ? '<button class="icon-btn" type="button" data-q="clear" data-id="' + e.id + '" aria-label="Alisin">' + I("x") + "</button>"
+      var acts = e.status === "done" ? '<button class="icon-btn" type="button" data-q="clear" data-id="' + e.id + '" aria-label="Remove">' + I("x") + "</button>"
         : (e.status === "error" ? '<button class="btn btn-ghost btn-sm" type="button" data-q="retry" data-id="' + e.id + '">' + I("refresh", "ic-sm") + "Retry</button>" : "") +
           (e.status !== "uploading" ? '<button class="icon-btn" type="button" data-q="cancel" data-id="' + e.id + '" aria-label="Cancel">' + I("trash") + "</button>" : "");
       return '<div class="q-item"><div class="q-thumb">' + thumb + '</div><div class="q-main">' +
-        '<div class="q-title">' + (UI.esc(e.caption) || '<span class="faint">Walang caption</span>') + "</div>" +
+        '<div class="q-title">' + (UI.esc(e.caption) || '<span class="faint">No caption</span>') + "</div>" +
         '<div class="q-sub">' + sub + "</div>" +
         (e.status === "error" && e.error ? '<div class="q-sub err">' + UI.esc(e.error) + "</div>" : "") +
         (e.status === "uploading" ? '<div class="q-bar"><span style="width:' + Math.round(100 * e.progress.done / Math.max(1, e.progress.total)) + '%"></span></div>' : "") +
@@ -93,7 +93,7 @@
     if (b.dataset.q === "retry") Q.retry(id);
     if (b.dataset.q === "clear") Q.cancel(id);
     if (b.dataset.q === "cancel") {
-      if (await TMN_MODAL.confirm("Alisin ang post na ito sa pila? Hindi ito ma-uupload. (Hindi mabubura sa Gallery.)", { okText: "Alisin", danger: true })) Q.cancel(id);
+      if (await TMN_MODAL.confirm("Remove this post from the queue? It won't be uploaded. (It stays in your Gallery.)", { okText: "Remove", danger: true })) Q.cancel(id);
     }
   });
   document.addEventListener("tmn:queue", renderQueue);
@@ -117,16 +117,16 @@
     $("postGrid").classList.toggle("hidden", !list.length);
     $("postsEmpty").classList.toggle("hidden", !!list.length);
     if (!list.length && filter === "saved") {
-      $("emptyTitle").textContent = saved ? "Wala pang naka-save" : "Naglo-load…";
-      $("emptyText").textContent = "Pindutin ang bookmark sa isang post sa Explore para ma-save dito.";
+      $("emptyTitle").textContent = saved ? "Nothing saved yet" : "Loading…";
+      $("emptyText").textContent = "Tap the bookmark on a post in Explore to save it here.";
     } else if (!list.length && posts.length) {
-      $("emptyTitle").textContent = filter === "scheduled" ? "Walang naka-schedule" : "Wala sa filter na ito";
-      $("emptyText").textContent = "Subukan ang ibang filter.";
+      $("emptyTitle").textContent = filter === "scheduled" ? "Nothing scheduled" : "Nothing in this filter";
+      $("emptyText").textContent = "Try another filter.";
     }
   }
   async function loadPosts() {
     if (!navigator.onLine) {
-      if (!loaded) { $("postGrid").innerHTML = ""; $("postsEmpty").classList.remove("hidden"); $("emptyTitle").textContent = "Offline ka"; $("emptyText").textContent = "Lalabas dito ang posts mo pag may internet na."; }
+      if (!loaded) { $("postGrid").innerHTML = ""; $("postsEmpty").classList.remove("hidden"); $("emptyTitle").textContent = "You're offline"; $("emptyText").textContent = "Your posts will appear here once you're online."; }
       return;
     }
     if (!loaded) $("postGrid").innerHTML = new Array(6).join(".").split(".").map(function () { return '<div class="pt skel"></div>'; }).join("");
@@ -134,7 +134,7 @@
       var r = await TMN_API.call("posts", "myPosts", { limit: 60 });
       posts = r.posts || []; loaded = true; renderPosts();
     } catch (err) {
-      if (!loaded) { $("postGrid").innerHTML = ""; $("postsEmpty").classList.remove("hidden"); $("emptyTitle").textContent = "Hindi ma-load"; $("emptyText").textContent = err.message; }
+      if (!loaded) { $("postGrid").innerHTML = ""; $("postsEmpty").classList.remove("hidden"); $("emptyTitle").textContent = "Couldn't load"; $("emptyText").textContent = err.message; }
     }
   }
   $("postGrid").addEventListener("click", function (e) {

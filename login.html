@@ -7,6 +7,7 @@
   <title>Sign in · TigoMeNote</title>
   <script src="assets/js/theme.js"></script>
   <script src="assets/js/config.js"></script>
+  <script src="assets/js/i18n.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
@@ -21,8 +22,8 @@
     <div class="art-bg"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i><i class="grain"></i></div>
     <a class="brand" href="./" tabindex="-1"><span class="brand-mark">T</span><span>Tigo<b>Me</b>Note</span></a>
     <div class="auth-quote">
-      <p class="q q-login">Isang note bawat araw.<br>Sa'yo ang original,<br><span>ikaw ang pipili kung ano ang ishe-share.</span></p>
-      <p class="q q-register">Simulan ang<br>unang note mo<br><span>ngayong araw.</span></p>
+      <p class="q q-login">One note a day.<br>The original stays yours,<br><span>you choose what to share.</span></p>
+      <p class="q q-register">Start<br>your first note<br><span>today.</span></p>
     </div>
     <div class="auth-tiles">
       <span class="t t1"></span><span class="t t2"></span><span class="t t3"></span><span class="t t4"></span>
@@ -32,13 +33,13 @@
   <main class="auth-main">
     <div class="auth-top">
       <a class="brand auth-brand-sm" href="./"><span class="brand-mark">T</span><span>Tigo<b>Me</b>Note</span></a>
-      <button class="icon-btn js-theme" type="button" aria-label="Toggle dark mode"></button>
+      <div class="auth-top-actions"><span id="langMini"></span><button class="icon-btn js-theme" type="button" aria-label="Toggle dark mode"></button></div>
     </div>
 
     <div class="auth-card">
      <div id="authView">
       <h1 id="authTitle">Welcome back</h1>
-      <p class="muted" id="authSub">Mag-sign in para ituloy ang Daily mo.</p>
+      <p class="muted" id="authSub">Sign in to continue your Daily.</p>
 
       <div class="segmented auth-tabs" role="tablist" aria-label="Sign in or register">
         <button type="button" role="tab" id="tabLogin" data-mode="login" aria-pressed="true">Sign in</button>
@@ -54,16 +55,16 @@
         <div class="field reg-only hidden">
           <label for="fEmail">Email</label>
           <input class="input" id="fEmail" name="email" type="email" maxlength="254" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="you@gmail.com">
-          <span class="hint">Padadalhan ka namin ng 6-digit code para ma-verify.</span>
+          <span class="hint">We'll send you a 6-digit code to verify.</span>
         </div>
 
         <div class="field">
-          <label for="fUser" id="fUserLabel">Username o email</label>
+          <label for="fUser" id="fUserLabel">Username or email</label>
           <div class="input-wrap at-wrap" id="userWrap">
             <span class="at">@</span>
             <input class="input" id="fUser" name="username" maxlength="254" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="yourname">
           </div>
-          <span class="hint reg-only hidden">3–24 characters: letters, numbers, _ o .</span>
+          <span class="hint reg-only hidden">3–24 characters: letters, numbers, _ or .</span>
         </div>
 
         <div class="field">
@@ -84,14 +85,14 @@
         <button class="btn btn-primary btn-lg btn-block" type="submit" id="authBtn">Sign in</button>
       </form>
 
-      <p class="faint small auth-foot">By continuing, private Daily notes mo ay nasa device mo lang.</p>
+      <p class="faint small auth-foot">By continuing, your private Daily notes stay on your device.</p>
      </div>
 
      <!-- Verify email (6-digit code) -->
      <section id="verifyView" class="verify hidden" aria-labelledby="vTitle">
       <div class="verify-ic"><i data-icon="mail" data-size="lg"></i></div>
       <h1 id="vTitle">Check your email</h1>
-      <p class="muted">Nagpadala kami ng 6-digit code sa <b id="vEmail"></b>. I-type dito para ma-verify ang account mo.</p>
+      <p class="muted">We sent a 6-digit code to <b id="vEmail"></b>. Enter it here to verify your account.</p>
 
       <form id="verifyForm" class="verify-form" novalidate>
         <div class="otp" id="otp" role="group" aria-label="6-digit code">
@@ -111,19 +112,19 @@
         <span class="faint">·</span>
         <button class="link-btn" type="button" id="vBack">Back to sign in</button>
       </div>
-      <p class="faint small auth-foot">Wala sa inbox? Tingnan ang Spam o Promotions folder.</p>
+      <p class="faint small auth-foot">Not in your inbox? Check the Spam or Promotions folder.</p>
      </section>
 
      <!-- Forgot password: step 1 (hingi ng code) at step 2 (code + bagong password) -->
      <section id="resetView" class="verify hidden" aria-labelledby="rTitle">
       <div class="verify-ic"><i data-icon="lock" data-size="lg"></i></div>
       <h1 id="rTitle">Forgot password?</h1>
-      <p class="muted" id="rSub">Ilagay ang username o email mo. Padadalhan ka namin ng 6-digit code.</p>
+      <p class="muted" id="rSub">Enter your username or email. We'll send you a 6-digit code.</p>
 
       <form id="rForm1" class="verify-form" novalidate>
         <div class="field">
-          <label for="rId">Username o email</label>
-          <input class="input" id="rId" maxlength="254" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="yourname o you@gmail.com">
+          <label for="rId">Username or email</label>
+          <input class="input" id="rId" maxlength="254" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="yourname or you@gmail.com">
         </div>
         <div class="alert hidden" id="rMsg1" role="alert"></div>
         <button class="btn btn-primary btn-lg btn-block" type="submit" id="rBtn1">Send code</button>
@@ -139,7 +140,7 @@
           <input inputmode="numeric" maxlength="1" aria-label="Digit 6">
         </div>
         <div class="field">
-          <label for="rPass">Bagong password</label>
+          <label for="rPass">New password</label>
           <div class="input-wrap">
             <input class="input" id="rPass" type="password" maxlength="72" autocomplete="new-password" placeholder="••••••••">
             <button class="icon-btn" type="button" id="rEye" aria-label="Show password"></button>

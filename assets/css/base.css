@@ -38,3 +38,13 @@ button { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* ---------- Arabic / right-to-left (i18n.js nagse-set ng <html dir="rtl">) ---------- */
+[lang="ar"] body { font-family: var(--font-body, Inter), "Segoe UI", Tahoma, "Noto Sans Arabic", "Geeza Pro", Arial, sans-serif; }
+[lang="ar"] * { letter-spacing: 0 !important; }   /* hindi pwedeng may letter-spacing ang Arabic (napuputol ang letra) */
+[dir="rtl"] { text-align: right; }
+[dir="rtl"] .pc-who .faint, [dir="rtl"] .sx-user .faint, [dir="rtl"] #pUser, [dir="rtl"] .user-card .faint,
+[dir="rtl"] .sx-pname .faint, [dir="rtl"] .pv-author .faint, [dir="rtl"] .brand, [dir="rtl"] #storeUsed, [dir="rtl"] .q-sub { unicode-bidi: plaintext; }
+[dir="rtl"] .brand { direction: ltr; }
+/* Laman ng users (pwedeng English/Tagalog sa Arabic na page): sariling direksyon bawat talata */
+.pc-caption, .pv-cap, .sx-cbody, .sx-bio, .profile-bio, .st-cap, .q-title, .profile-name, .pc-who b, .sx-user b { unicode-bidi: plaintext; }

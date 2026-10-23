@@ -3,6 +3,7 @@
    Daloy ng bagong user: Create account → 6-digit code sa email → Verify → pasok sa app.
    Forgot password: username/email → code sa email → code + bagong password → pasok sa app. */
 (function () {
+  if (window.TMN_I18N) TMN_I18N.mountPicker(document.getElementById("langMini"));
   var C = window.TMN_CONFIG, K = C.storageKeys, I = window.TMN_ICON;
   var $ = function (id) { return document.getElementById(id); };
   var VERIFY_KEY = "tmnVerify"; // naaalala ang verify screen kahit i-refresh
@@ -198,12 +199,12 @@
     document.querySelectorAll(".reg-only").forEach(function (el) { el.classList.toggle("hidden", !reg); });
     document.querySelectorAll(".login-only").forEach(function (el) { el.classList.toggle("hidden", reg); });
     $("authTitle").textContent = reg ? "Create your account" : "Welcome back";
-    $("authSub").textContent = reg ? "Libre. Ilang segundo lang." : "Mag-sign in para ituloy ang Daily mo.";
+    $("authSub").textContent = reg ? "Free. Takes only a few seconds." : "Sign in to continue your Daily.";
     // Sign in: username O email. Create account: username lang (may @ sa harap)
-    $("fUserLabel").textContent = reg ? "Username" : "Username o email";
+    $("fUserLabel").textContent = reg ? "Username" : "Username or email";
     $("userWrap").classList.toggle("no-at", !reg);
     fUser.maxLength = reg ? 24 : 254;
-    fUser.placeholder = reg ? "yourname" : "yourname o you@gmail.com";
+    fUser.placeholder = reg ? "yourname" : "yourname or you@gmail.com";
     if (reg) fUser.value = fUser.value.toLowerCase().replace(/[^a-z0-9_.]/g, "").slice(0, 24);
     btn.textContent = reg ? "Create account" : "Sign in";
     fPass.autocomplete = reg ? "new-password" : "current-password";
@@ -228,12 +229,12 @@
   function validate() {
     [fName, fEmail, fUser, fPass].forEach(function (el) { el.removeAttribute("aria-invalid"); });
     var reg = mode === "register";
-    if (reg && !fName.value.trim()) return invalid(fName, "Ilagay ang display name mo.");
-    if (reg && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(fEmail.value.trim())) return invalid(fEmail, "Ilagay ang tamang email address.");
-    if (!fUser.value) return invalid(fUser, reg ? "Ilagay ang username." : "Ilagay ang username o email.");
-    if (!reg && missingAt(fUser.value)) return invalid(fUser, "Mukhang email ito pero walang @. Halimbawa: name@gmail.com");
-    if (reg && !/^[a-z0-9_.]{3,24}$/.test(fUser.value)) return invalid(fUser, "Username: 3–24 letters, numbers, _ o . lang.");
-    if (!fPass.value) return invalid(fPass, "Ilagay ang password.");
+    if (reg && !fName.value.trim()) return invalid(fName, "Enter your display name.");
+    if (reg && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(fEmail.value.trim())) return invalid(fEmail, "Enter a valid email address.");
+    if (!fUser.value) return invalid(fUser, reg ? "Enter a username." : "Enter your username or email.");
+    if (!reg && missingAt(fUser.value)) return invalid(fUser, "This looks like an email but has no @. Example: name@gmail.com");
+    if (reg && !/^[a-z0-9_.]{3,24}$/.test(fUser.value)) return invalid(fUser, "Username: 3–24 letters, numbers, _ or . only.");
+    if (!fPass.value) return invalid(fPass, "Enter your password.");
     if (reg && fPass.value.length < 8) return invalid(fPass, "Password: at least 8 characters.");
     return true;
   }
@@ -254,9 +255,9 @@
       var res = await window.TMN_API.call("auth", mode, payload);
       setBusy(false);
       if (res.verify) { openVerify(res); return; }
-      if (res.pending) { setMode("login", true); main.show(res.message || "Hintayin ang approval ng admin.", true); return; }
+      if (res.pending) { setMode("login", true); main.show(res.message || "Please wait for admin approval.", true); return; }
       if (saveSession(res)) location.replace(nextUrl());
-      else main.show("Hindi ma-save ang login sa browser na ito (private mode?).");
+      else main.show("Can't save your sign-in in this browser (private mode?).");
     } catch (err) {
       setBusy(false);
       main.show(errText(err));
@@ -285,11 +286,11 @@
   function openVerify(res, instant) {
     pending = { username: res.username, email_masked: res.email_masked };
     showView("verify", instant, function () {
-      $("vEmail").textContent = pending.email_masked || "email mo";
+      $("vEmail").textContent = pending.email_masked || "your email";
       document.title = "Verify email · " + C.appName;
       vOtp.clear(); vMsg.hide();
       if (res.warning) vMsg.show(res.warning);
-      else if (res.sent === false && !instant) vMsg.show("May code na kaming naipadala kanina. Tingnan ang email mo.", true);
+      else if (res.sent === false && !instant) vMsg.show("We already sent you a code. Check your email.", true);
       vCd.start(res.resend_in || 0);
       remember();
       vOtp.focus();
@@ -306,7 +307,7 @@
   async function submitVerify() {
     if (vBusy || !pending) return;
     var c = vOtp.code();
-    if (c.length !== 6) { vMsg.show("Ilagay ang 6-digit code."); vOtp.focus(); return; }
+    if (c.length !== 6) { vMsg.show("Enter the 6-digit code."); vOtp.focus(); return; }
     vMsg.hide();
     vBusy = true; busyBtn(vBtn, true, "Verify email", "Verifying…");
     try {
@@ -314,11 +315,11 @@
       if (res.pending) {
         vBusy = false; busyBtn(vBtn, false, "Verify email");
         try { sessionStorage.removeItem(VERIFY_KEY); } catch (e) {}
-        vMsg.show(res.message || "Verified! Hintayin ang approval ng admin.", true);
+        vMsg.show(res.message || "Verified! Please wait for admin approval.", true);
         return;
       }
-      if (saveSession(res)) { vMsg.show("Verified! Papasok na…", true); location.replace(nextUrl()); }
-      else { vBusy = false; busyBtn(vBtn, false, "Verify email"); vMsg.show("Verified na! Pero hindi ma-save ang login sa browser na ito. Mag-sign in ulit."); }
+      if (saveSession(res)) { vMsg.show("Verified! Signing you in…", true); location.replace(nextUrl()); }
+      else { vBusy = false; busyBtn(vBtn, false, "Verify email"); vMsg.show("Verified! But your sign-in can't be saved in this browser. Please sign in again."); }
     } catch (err) {
       vBusy = false; busyBtn(vBtn, false, "Verify email");
       if (err.data && err.data.already) { vMsg.show(err.message, true); setTimeout(closeVerify, 1500); return; }
@@ -338,7 +339,7 @@
       var res = await window.TMN_API.call("auth", "resendCode", { username: pending.username });
       vCd.start(res.resend_in || 60);
       if (res.email_masked) { pending.email_masked = res.email_masked; $("vEmail").textContent = res.email_masked; }
-      vMsg.show("Nagpadala ulit ng bagong code.", true);
+      vMsg.show("We sent a new code.", true);
       vOtp.clear(); vOtp.focus();
     } catch (err) {
       vCd.start((err.data && err.data.resend_in) || 0);
@@ -368,8 +369,8 @@
     $("rDot").classList.toggle("hidden", !two);
     $("rTitle").textContent = two ? "Enter the code" : "Forgot password?";
     $("rSub").textContent = two
-      ? "Kung may account na tugma sa “" + rIdentifier + "”, nagpadala kami ng 6-digit code sa email nito. Ilagay ang code at ang bagong password mo."
-      : "Ilagay ang username o email mo. Padadalhan ka namin ng 6-digit code.";
+      ? "If an account matches “" + rIdentifier + "”, we sent a 6-digit code to its email. Enter the code and your new password."
+      : "Enter your username or email. We'll send you a 6-digit code.";
   }
 
   $("forgotLink").addEventListener("click", function () {
@@ -387,8 +388,8 @@
     e.preventDefault();
     if (rBusy) return;
     var id = rId.value.trim().toLowerCase();
-    if (!id) { rMsg1.show("Ilagay ang username o email mo."); rId.focus(); return; }
-    if (missingAt(id)) { rMsg1.show("Mukhang email ito pero walang @. Halimbawa: name@gmail.com"); rId.focus(); return; }
+    if (!id) { rMsg1.show("Enter your username or email."); rId.focus(); return; }
+    if (missingAt(id)) { rMsg1.show("This looks like an email but has no @. Example: name@gmail.com"); rId.focus(); return; }
     rMsg1.hide();
     rBusy = true; busyBtn(rBtn1, true, "Send code", "Sending…");
     try {
@@ -410,17 +411,17 @@
     e.preventDefault();
     if (rBusy) return;
     var c = rOtp.code();
-    if (c.length !== 6) { rMsg2.show("Ilagay ang 6-digit code."); rOtp.focus(); return; }
-    if (rPass.value.length < 8) { rMsg2.show("Bagong password: at least 8 characters."); rPass.focus(); return; }
+    if (c.length !== 6) { rMsg2.show("Enter the 6-digit code."); rOtp.focus(); return; }
+    if (rPass.value.length < 8) { rMsg2.show("New password: at least 8 characters."); rPass.focus(); return; }
     rMsg2.hide();
     rBusy = true; busyBtn(rBtn2, true, "Change password", "Saving…");
     try {
       var res = await window.TMN_API.call("auth", "resetPassword", { identifier: rIdentifier, code: c, password: rPass.value });
-      if (res.token && saveSession(res)) { rMsg2.show("Napalitan na ang password! Papasok na…", true); location.replace(nextUrl()); return; }
+      if (res.token && saveSession(res)) { rMsg2.show("Password changed! Signing you in…", true); location.replace(nextUrl()); return; }
       rBusy = false; busyBtn(rBtn2, false, "Change password");
       rCd.stop();
       backToSignIn(rIdentifier);
-      setTimeout(function () { main.show(res.message || "Napalitan na ang password. Mag-sign in na.", true); }, 300);
+      setTimeout(function () { main.show(res.message || "Password changed. Please sign in.", true); }, 300);
     } catch (err) {
       rBusy = false; busyBtn(rBtn2, false, "Change password");
       rMsg2.show(errText(err));
@@ -436,7 +437,7 @@
     try {
       var res = await window.TMN_API.call("auth", "forgotPassword", { identifier: rIdentifier });
       rCd.start(res.resend_in || 60);
-      rMsg2.show("Nagpadala ulit ng bagong code.", true);
+      rMsg2.show("We sent a new code.", true);
       rOtp.clear(); rOtp.focus();
     } catch (err) {
       rCd.start((err.data && err.data.resend_in) || 0);

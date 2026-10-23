@@ -156,3 +156,5 @@
 /* ---------- Forgot password ---------- */
 .forgot-link { justify-self: end; font-size: 13px; margin-top: 2px; }
 .verify-form .field { text-align: left; }
+
+.auth-top-actions { display: flex; align-items: center; gap: 8px; }
