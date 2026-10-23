@@ -18,11 +18,13 @@ updated: 2026-10-23
 | 2026-10-23 | **Desktop/laptop = full UI/UX** (buong lapad) | Rule ni Bench |
 | 2026-10-23 | **Gallery sa device lang** (IndexedDB), walang upload | Tugma sa "sa device mag-save"; walang gastos sa server storage |
 | 2026-10-23 | Weather: **Open-Meteo** + GPS/IP auto-detect | Libre, walang API key |
+| 2026-10-23 | Posts: **maliit na copy** sa server (photo 1600 px JPEG, video 720p) | Pinili ni Bench; kasya sa 1 GB na libre |
+| 2026-10-23 | Video sa post: **max 15 segundo** | Pinili ni Bench |
+| 2026-10-23 | **Visibility bawat post** (Public / Followers / Ako lang) | Pinili ni Bench |
+| 2026-10-23 | **Offline queue** sa device + schedule sa server (`publish_at`) | Idea ni Bench; gumagana kahit walang net |
 | 2026-10-23 | Lipat sa **Brevo** (free 300/araw) | Ayaw tanggapin ng Gmail ang App Password; walang domain na kailangan sa Brevo. SMS ay hindi pinili kasi may bayad. |
 
 ## Bukas pa (hinihintay si Bench)
-- **Media plan:** Daily = sa device lang (sariling folder sa app); Share = maliit na compressed copy sa server para makita ng iba. Okay ba?
-- **Max na haba ng video** sa Share (hal. 15 s?)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)
 
 Tingnan din: [[Build - Foundation]]

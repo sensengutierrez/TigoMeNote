@@ -1,26 +1,16 @@
-/* TigoMeNote · pages/explore.css (app/explore.html) */
+/* TigoMeNote · pages/explore.css (app/explore.html)
+   Ang tiles mismo ay nasa assets/css/posts.css (.post-grid, .pt) */
 
 .explore-tools { display: grid; gap: 12px; margin-bottom: 18px; }
 .search { position: relative; display: block; }
 .search .ic { position: absolute; left: 14px; top: 13px; color: var(--text-3); }
 .search .input { padding-left: 44px; border-radius: var(--r-full); background: var(--bg-soft); border-color: transparent; }
-
-.grid-wrap { position: relative; }
-.explore-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; border-radius: var(--r-lg); overflow: hidden; }
-.explore-grid .skel { aspect-ratio: 1; border-radius: 0; }
-.explore-grid .skel.tall { grid-row: span 2; aspect-ratio: auto; }
-
-.grid-note {
-  position: absolute; left: 50%; top: 96px; transform: translateX(-50%);
-  width: min(340px, calc(100% - 32px)); text-align: center; display: grid; justify-items: center; gap: 8px;
-  box-shadow: var(--shadow-lg); padding: 26px 22px;
-}
-.grid-note .empty-art { width: 60px; height: 60px; border-radius: 18px; display: grid; place-items: center; background: var(--bg-soft); color: var(--text-2); }
+.explore-grid .pt.skel { cursor: default; }
+.more-wrap { display: flex; justify-content: center; padding: 18px 0 8px; }
 
 @media (min-width: 900px) {
   .explore-tools { grid-template-columns: minmax(260px, 380px) 1fr; align-items: center; }
   .explore-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
 }
-
 @media (min-width: 1200px) { .explore-grid { grid-template-columns: repeat(5, 1fr); } }
 @media (min-width: 1500px) { .explore-grid { grid-template-columns: repeat(6, 1fr); } }

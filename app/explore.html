@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="../assets/css/base.css">
   <link rel="stylesheet" href="../assets/css/components.css">
   <link rel="stylesheet" href="../assets/css/shell.css">
+  <link rel="stylesheet" href="../assets/css/posts.css">
   <link rel="stylesheet" href="../assets/css/pages/explore.css">
 </head>
 <body data-page="explore">
@@ -23,7 +24,7 @@
       <div>
         <div class="eyebrow">Discover</div>
         <h1>Explore</h1>
-        <p class="lead">Photos and videos na shinare ng ibang users.</p>
+        <p class="lead">Mga photo at video na shinare ng users.</p>
       </div>
     </header>
 
@@ -31,28 +32,32 @@
       <label class="search">
         <i data-icon="search"></i>
         <span class="sr-only">Search</span>
-        <input class="input" type="search" placeholder="Search people or posts" disabled>
+        <input class="input" type="search" id="q" placeholder="Hanapin sa caption o @username">
       </label>
-      <div class="chips" role="tablist" aria-label="Filter">
-        <button class="chip active" type="button" role="tab" aria-selected="true">All</button>
-        <button class="chip" type="button" role="tab" aria-selected="false">Photos</button>
-        <button class="chip" type="button" role="tab" aria-selected="false">Videos</button>
-        <button class="chip" type="button" role="tab" aria-selected="false">People</button>
+      <div class="chips" role="tablist" aria-label="Filter" id="chips">
+        <button class="chip active" type="button" role="tab" aria-selected="true" data-f="all">All</button>
+        <button class="chip" type="button" role="tab" aria-selected="false" data-f="photo">Photos</button>
+        <button class="chip" type="button" role="tab" aria-selected="false" data-f="video">Videos</button>
+        <button class="chip" type="button" role="tab" aria-selected="false" data-f="mine">Akin</button>
       </div>
     </div>
 
-    <div class="grid-wrap">
-      <div class="explore-grid" id="grid" aria-hidden="true"></div>
-      <div class="grid-note card">
-        <div class="empty-art"><i data-icon="compass" data-size="lg"></i></div>
-        <h3>Explore opens soon</h3>
-        <p class="muted">Lalabas dito ang posts pag live na ang Share.</p>
-      </div>
+    <div class="post-grid explore-grid" id="grid"></div>
+    <div class="empty hidden" id="empty">
+      <div class="empty-art"><i data-icon="compass" data-size="lg"></i></div>
+      <h3 id="emptyTitle">Wala pang posts</h3>
+      <p id="emptyText">Ikaw na ang mauna! Pumili ng photo sa Gallery at pindutin ang Post.</p>
+      <a class="btn btn-primary" href="gallery.html" id="emptyBtn"><i data-icon="album" data-size="sm"></i>Buksan ang Gallery</a>
     </div>
+    <div class="more-wrap"><button class="btn btn-ghost hidden" type="button" id="more">Load more</button></div>
   </main>
   <script src="../assets/js/icons.js"></script>
   <script src="../assets/js/nav-items.js"></script>
   <script src="../assets/js/components/app-shell.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/components/modal.js"></script>
+  <script src="../assets/js/post-queue.js"></script>
+  <script src="../assets/js/components/post-viewer.js"></script>
   <script src="../assets/js/pages/explore.js"></script>
 </body>
 </html>

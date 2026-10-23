@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="../assets/css/base.css">
   <link rel="stylesheet" href="../assets/css/components.css">
   <link rel="stylesheet" href="../assets/css/shell.css">
+  <link rel="stylesheet" href="../assets/css/posts.css">
   <link rel="stylesheet" href="../assets/css/pages/share.css">
 </head>
 <body data-page="share">
@@ -52,6 +53,7 @@
     <div class="card save-to">
       <label for="albumSel"><i data-icon="album" data-size="sm"></i>I-save sa album</label>
       <select id="albumSel" class="input"><option value="">Walang album</option></select>
+      <label class="post-too"><input type="checkbox" id="postToo"> <span><b>I-post din</b> <span class="faint small">· lagyan ng caption at oras; gumagana kahit offline</span></span></label>
       <a class="btn btn-ghost" href="gallery.html"><i data-icon="grid" data-size="sm"></i>Open Gallery</a>
     </div>
     </div>
@@ -70,7 +72,7 @@
           <span class="where-ic"><i data-icon="compass"></i></span>
           <div class="row-main">
             <div class="row-title">Share to Explore</div>
-            <div class="row-sub">Maliit na copy lang ang ia-upload para makita ng iba. Original ay nasa device mo pa rin.</div>
+            <div class="row-sub">Maliit na copy lang ang ia-upload (photo ~1600 px, video ≤15 s). Kung offline ka, naka-pila muna sa device at kusang ia-upload pag may internet. Pwedeng i-schedule ang oras.</div>
           </div>
         </div>
       </div>
@@ -82,6 +84,9 @@
   <script src="../assets/js/components/app-shell.js"></script>
   <script src="../assets/js/components/modal.js"></script>
   <script src="../assets/js/media-store.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/post-queue.js"></script>
+  <script src="../assets/js/components/post-composer.js"></script>
   <script src="../assets/js/pages/share.js"></script>
 </body>
 </html>

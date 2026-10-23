@@ -1,8 +1,12 @@
 /* TigoMeNote · pages/share.js (app/share.html)
-   Take photo / Record video / From gallery → naka-save sa device (media-store.js), sa napiling album. */
+   Take photo / Record video / From gallery → naka-save sa device (media-store.js), sa napiling album.
+   Kapag naka-check ang "I-post din": bubuksan ang composer (post-composer.js) pagka-save. */
 (function () {
   var M = window.TMN_MEDIA, UI = window.TMN_UI;
   var sel = document.getElementById("albumSel");
+  var postToo = document.getElementById("postToo");
+  try { postToo.checked = localStorage.getItem("tmnPostToo") === "1"; } catch (e) {}
+  postToo.addEventListener("change", function () { try { localStorage.setItem("tmnPostToo", postToo.checked ? "1" : "0"); } catch (e) {} });
 
   async function fillAlbums() {
     var keep = sel.value;
@@ -23,15 +27,20 @@
 
   document.querySelectorAll("[data-pick]").forEach(function (inp) {
     inp.addEventListener("change", async function () {
-      var files = this.files; if (!files || !files.length) return;
+      var files = [].slice.call(this.files || []); this.value = "";
+      if (!files.length) return;
       var album = sel.value && sel.value !== "__new" ? sel.value : null;
       UI.toast("Sine-save sa device…", 1500);
       try {
         var added = await M.addFiles(files, album);
+        if (postToo.checked) {
+          UI.toast(added.length + " na-save sa Gallery.");
+          window.TMN_COMPOSER.open(added.slice(0, 10), { onPosted: function () { setTimeout(function () { location.href = "profile.html"; }, 900); } });
+          return;
+        }
         UI.toast(added.length + " na-save! Bubuksan ang Gallery…");
         setTimeout(function () { location.href = "gallery.html" + (album ? "?album=" + encodeURIComponent(album) : ""); }, 900);
       } catch (e) { UI.toast("Hindi na-save: " + e.message, 4000); }
-      this.value = "";
     });
   });
 

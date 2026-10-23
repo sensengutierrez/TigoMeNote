@@ -10,11 +10,11 @@ updated: 2026-10-23
 | `index.html` | ROOT | Landing page | hindi |
 | `login.html` | ROOT | Sign in / Create account | hindi |
 | `home.html` | app/ | Daily | oo |
-| `explore.html` | app/ | Explore (placeholder) | oo |
-| `share.html` | app/ | Share: camera / video / files → Gallery | oo |
+| `explore.html` | app/ | Explore: feed ng posts (search, filter) | oo |
+| `share.html` | app/ | Share: camera / video / files → Gallery (+ "I-post din") | oo |
 | `messages.html` | app/ | Messages (placeholder) | oo |
 | `gallery.html` | app/ | Gallery: albums, upload, edit (device lang) | oo |
-| `profile.html` | app/ | Profile | oo |
+| `profile.html` | app/ | Profile: naka-pilang uploads + sariling posts | oo |
 | `settings.html` | app/ | Theme + logout | oo |
 | (wala pa) | app/admin/ | Admin pages | Admin lang |
 
@@ -31,6 +31,9 @@ updated: 2026-10-23
 | `components/modal.js` | Modal, confirm, prompt (iisa sa buong site) |
 | `components/photo-editor.js` | Crop, rotate, flip, adjust, filters |
 | `components/weather.js` | Weather card + auto location |
+| `post-queue.js` | Offline outbox ng posts: compress + kusang upload (`TMN_POSTQ`) |
+| `components/post-composer.js` | "Bagong post" modal: caption, visibility, schedule |
+| `components/post-viewer.js` | Post tiles + viewer + edit/delete (`TMN_POSTS_UI`) |
 | `components/app-shell.js` | Gumagawa ng layout ng app pages mula sa nav-items |
 | `pages/<page>.js` | Code ng isang page lang |
 
@@ -40,6 +43,7 @@ updated: 2026-10-23
 | `tokens.css` | **Lahat ng kulay, font, radius, shadow** (light + dark) |
 | `base.css` | Reset at typography |
 | `components.css` | Buttons, inputs, cards, badges, toast, segmented |
+| `posts.css` | Composer, post tiles, post viewer, queue list |
 | `shell.css` | Layout: sidebar, topbar, drawer, tabs |
 | `pages/<page>.css` | Style ng isang page lang |
 
@@ -47,6 +51,7 @@ updated: 2026-10-23
 | Function | Actions | Source |
 |---|---|---|
 | `auth-fast` | register, login, verifyEmail, resendCode, forgotPassword, resetPassword, checkSession, logout | `backend/auth-fast.ts` |
+| `posts-fast` | createUpload, createPost, myPosts, feed, updatePost, deletePost | `backend/posts-fast.ts` |
 
 | Table | Para saan | SQL |
 |---|---|---|
@@ -55,6 +60,11 @@ updated: 2026-10-23
 | `write_action_dedup` | rate limit / duplicate guard | `sql/003-write-action-dedup.sql` |
 | `brain_notes` | kopya ng vault na ito sa database | `sql/004-brain-notes.sql` |
 | `email_codes` | 6-digit codes (hash lang), purpose `verify` o `reset` | `sql/007-email-verify.sql` |
+| `posts` | caption, visibility, `publish_at` (schedule), `client_id` (walang doble) | `sql/013-posts.sql` |
+| `post_media` | photos/videos ng post (path sa bucket) | `sql/013-posts.sql` |
+| `follows` | sino ang naka-follow kanino (para sa "Followers") | `sql/013-posts.sql` |
+
+Storage bucket: **`post-media`** (private, 12 MB/file, jpeg/webp/webm/mp4). Signed URLs lang galing sa `posts-fast`.
 
 `users` ay may `email` at `email_verified_at` (sql/007). Status: Unverified → Active / Pending / Inactive.
 

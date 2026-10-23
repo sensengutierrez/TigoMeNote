@@ -20,6 +20,7 @@ Ito ang "utak" ng project: lahat ng ginawa, paano ginawa, at bakit. Buksan ang f
 - [[Build - Forgot password]] — reset ng password gamit ang code sa email
 - [[Build - Gallery and albums]] — photos/videos sa device, albums, editor
 - [[Build - Weather]] — weather sa Daily, auto Bahrain/Pinas
+- [[Build - Offline posts]] — mag-post kahit offline, may schedule, auto-upload
 
 ## Setup
 - [[Supabase setup]] — project, tables, secrets (walang totoong value dito)
@@ -34,5 +35,5 @@ Ito ang "utak" ng project: lahat ng ginawa, paano ginawa, at bakit. Buksan ang f
 | 4 | Brain vault | 🟡 md files + DB; brain.html sa web, susunod |
 | 5 | Messaging | ⏳ |
 | 6 | Profile + approval | ⏳ |
-| 7 | Daily / Explore / Share (ang idea) | ⏳ hinihintay ang sagot sa media plan |
+| 7 | Daily / Explore / Share (ang idea) | 🟡 Gallery, weather, offline posts, Explore feed ✅; follow/likes/comments susunod |
 | 8 | Android APK | ⏳ |

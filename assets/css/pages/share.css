@@ -38,3 +38,5 @@
 .save-to { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; }
 .save-to label { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
 .save-to select { flex: 1; min-width: 160px; height: 42px; }
+.save-to .post-too { flex-basis: 100%; order: 3; font-weight: 500; cursor: pointer; padding-top: 4px; }
+.save-to .post-too input { width: 18px; height: 18px; accent-color: var(--accent); }

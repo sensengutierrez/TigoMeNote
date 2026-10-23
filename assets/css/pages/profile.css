@@ -26,3 +26,11 @@
   .posts { min-height: calc(100vh - 80px); display: flex; flex-direction: column; }
   .posts-empty { flex: 1; align-content: center; }
 }
+
+/* Naka-pila sa device + posts grid */
+.q-wrap { padding-bottom: 16px; margin-bottom: 14px; border-bottom: 1px solid var(--line); display: grid; gap: 10px; }
+.q-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.q-head h3 { font-size: 16px; }
+.posts .post-grid { margin-top: 14px; }
+.posts .post-grid .pt.skel { cursor: default; }
+@media (min-width: 1200px) { .posts .post-grid { grid-template-columns: repeat(4, 1fr); } }

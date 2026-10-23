@@ -159,7 +159,7 @@
   function updateSelBar() {
     $("selBar").classList.toggle("hidden", !state.selecting);
     $("selCount").textContent = state.sel.size + " selected";
-    ["selMove", "selDownload", "selDelete"].forEach(function (id) { $(id).disabled = !state.sel.size; });
+    ["selMove", "selDownload", "selDelete", "selPost"].forEach(function (id) { $(id).disabled = !state.sel.size; });
     $("selectBtn").classList.toggle("hidden", state.selecting);
   }
   $("selectBtn").addEventListener("click", function () { state.selecting = true; renderGrid(); });
@@ -180,6 +180,14 @@
     if (target === undefined) return;
     await M.move(Array.from(state.sel), target); var n = state.sel.size; clearSel();
     UI.toast(n + " nilipat sa " + (target ? albumName(target) : "Walang album") + "."); load();
+  });
+  // Post: bubuksan ang composer (gumagana kahit offline; ia-upload pag may internet)
+  $("selPost").addEventListener("click", async function () {
+    var ids = state.items.filter(function (i) { return state.sel.has(i.id); }).map(function (i) { return i.id; });
+    if (ids.length > 10) { UI.toast("Hanggang 10 lang bawat post."); return; }
+    var items = [];
+    for (var i = 0; i < ids.length; i++) { var it = await M.get(ids[i]); if (it) items.push(it); }
+    window.TMN_COMPOSER.open(items, { onPosted: function () { clearSel(); renderGrid(); } });
   });
   $("selDownload").addEventListener("click", async function () {
     var ids = Array.from(state.sel);
@@ -243,7 +251,8 @@
         '<label class="field"><span class="pe-label">Caption</span><textarea maxlength="500" placeholder="Lagyan ng note…"></textarea></label>' +
         '<label class="field"><span class="pe-label">Album</span><select></select></label>' +
         '<div class="vw-actions">' +
-          '<button type="button" class="btn btn-primary" data-v="edit">' + I("edit", "ic-sm") + "Edit</button>" +
+          '<button type="button" class="btn btn-primary" data-v="post">' + I("send", "ic-sm") + "Post</button>" +
+          '<button type="button" class="btn btn-ghost" data-v="edit">' + I("edit", "ic-sm") + "Edit</button>" +
           '<button type="button" class="btn btn-ghost" data-v="download">' + I("download", "ic-sm") + "Download</button>" +
           '<button type="button" class="btn btn-danger" data-v="delete">' + I("trash", "ic-sm") + "Delete</button>" +
         "</div></div>";
@@ -295,6 +304,7 @@
       var b = e.target.closest("[data-v]"); if (!b) return;
       var it = current();
       if (b.dataset.v === "download") download(it);
+      if (b.dataset.v === "post") window.TMN_COMPOSER.open([it]);
       if (b.dataset.v === "delete") {
         if (!(await MODAL.confirm("Burahin ito sa device? Hindi na maibabalik.", { okText: "Delete", danger: true }))) return;
         await M.remove(it.id);

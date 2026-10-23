@@ -16,6 +16,7 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-10-23 · Brevo: "401 unrecognised IP address" → naka-on ang Authorized IPs sa Brevo, at paiba-iba ang IP ng Supabase → Brevo → Settings → Security → Authorized IPs → Deactivate for API keys
 - 2026-10-23 · Forgot password: "Masyadong maraming request" → 10 request/oras bawat IP + email na walang `@` → nilinis ang rate-limit rows; may paalala na kapag email na walang `@` (`login.js` → `missingAt()`)
 - 2026-10-23 · Daily: "Gamitin ang GPS" mukhang gray na kahon → ang `.link-btn` style ay nasa `auth.css` lang (login) → inilipat sa `components.css`
+- 2026-10-23 · Posts (test): na-stuck sa "Kino-compress ang video" → hindi tumatakbo ang `requestVideoFrameCallback` sa nakatagong video at naghihintay ang `AudioContext.resume()` ng tap → timer loop + `onended` + safety timeout, at max 0.6 s na hintay sa resume (`post-queue.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.
