@@ -9,6 +9,7 @@
   var params = new URLSearchParams(location.search);
   var mode = params.get("mode") === "register" ? "register" : "login";
   var busy = false;
+  var card = document.querySelector(".auth-card"), swapTimer = 0;
 
   // Saan babalik pagka-login (same site lang, para walang open redirect)
   function nextUrl() {
@@ -40,12 +41,30 @@
   paintEye();
 
   // Mode switch
-  function setMode(m) {
+  function setMode(m, instant) {
     mode = m;
     var reg = m === "register";
-    document.querySelectorAll(".reg-only").forEach(function (el) { el.classList.toggle("hidden", !reg); });
+    // Panels nagpapalit ng puwesto (CSS: .is-register)
+    document.body.classList.toggle("is-register", reg);
     $("tabLogin").setAttribute("aria-pressed", String(!reg));
     $("tabRegister").setAttribute("aria-pressed", String(reg));
+    var u = new URL(location.href);
+    if (reg) u.searchParams.set("mode", "register"); else u.searchParams.delete("mode");
+    history.replaceState(null, "", u);
+
+    if (instant) { fill(reg); return; }
+    // Fade-out ng form, palit ng laman, fade-in
+    clearTimeout(swapTimer);
+    card.classList.add("swap-out");
+    swapTimer = setTimeout(function () {
+      fill(reg);
+      card.classList.remove("swap-out");
+      (reg ? fName : fUser).focus({ preventScroll: true });
+    }, 260);
+  }
+
+  function fill(reg) {
+    document.querySelectorAll(".reg-only").forEach(function (el) { el.classList.toggle("hidden", !reg); });
     $("authTitle").textContent = reg ? "Create your account" : "Welcome back";
     $("authSub").textContent = reg ? "Libre. Ilang segundo lang." : "Mag-sign in para ituloy ang Daily mo.";
     btn.textContent = reg ? "Create account" : "Sign in";
@@ -53,13 +72,10 @@
     document.title = (reg ? "Create account" : "Sign in") + " · " + C.appName;
     hideMsg();
     [fName, fUser, fPass].forEach(function (el) { el.removeAttribute("aria-invalid"); });
-    var u = new URL(location.href);
-    if (reg) u.searchParams.set("mode", "register"); else u.searchParams.delete("mode");
-    history.replaceState(null, "", u);
   }
   document.querySelector(".auth-tabs").addEventListener("click", function (e) {
     var b = e.target.closest("button[data-mode]");
-    if (b && !busy) setMode(b.dataset.mode);
+    if (b && !busy && b.dataset.mode !== mode) setMode(b.dataset.mode);
   });
 
   // Username: lowercase, allowed chars lang
@@ -129,7 +145,7 @@
       var res = await window.TMN_API.call("auth", mode, payload);
       if (res.pending) {
         setBusy(false);
-        setMode("login");
+        setMode("login", true);
         showMsg(res.message || "Account ginawa na. Hintayin ang approval.", true);
         return;
       }
@@ -144,6 +160,7 @@
     }
   });
 
-  setMode(mode);
+  setMode(mode, true);
+  requestAnimationFrame(function () { requestAnimationFrame(function () { document.body.classList.remove("no-anim"); }); });
   (mode === "register" ? fName : fUser).focus();
 })();

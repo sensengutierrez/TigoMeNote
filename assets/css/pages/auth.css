@@ -1,18 +1,43 @@
-/* TigoMeNote · pages/auth.css (login.html) */
+/* TigoMeNote · pages/auth.css (login.html)
+   Desktop: nagpapalit ng puwesto ang art panel at form pag Sign in ↔ Create account (body.is-register).
+   Phone: form lang, may malambot na background at slide ng card. */
 
-.auth { min-height: 100vh; min-height: 100dvh; display: grid; }
+.auth { min-height: 100vh; min-height: 100dvh; position: relative; overflow-x: hidden; }
 
-/* Left art panel (desktop lang) */
-.auth-art { display: none; }
-
-.auth-main { display: flex; flex-direction: column; padding: 14px 18px 32px; }
+/* ---------- Form side ---------- */
+.auth-main { position: relative; isolation: isolate; display: flex; flex-direction: column; padding: 14px 18px 32px; min-height: 100vh; min-height: 100dvh; }
+.auth-main::before {
+  /* malambot na background: dot grid + accent glow */
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(60% 45% at 85% 0%, var(--accent-soft) 0%, transparent 70%),
+    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--text) 9%, transparent) 1px, transparent 0) 0 0 / 22px 22px;
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 40%, #000 40%, transparent 100%);
+          mask-image: radial-gradient(120% 90% at 50% 40%, #000 40%, transparent 100%);
+}
 .auth-top { display: flex; align-items: center; justify-content: space-between; }
-.auth-card { width: 100%; max-width: 400px; margin: 0 auto; padding-top: 7vh; display: grid; gap: 6px; }
+.auth-card {
+  width: 100%; max-width: 400px; margin: 0 auto; padding: 7vh 0 0; display: grid; gap: 6px;
+  transition: opacity .35s var(--ease), transform .45s var(--ease);
+}
+.auth-card.swap-out { opacity: 0; transform: translateY(10px) scale(.985); }
 .auth-card h1 { font-size: 32px; letter-spacing: -0.035em; }
-.auth-tabs { margin: 20px 0 6px; width: 100%; }
-.auth-tabs button { flex: 1; justify-content: center; height: 38px; }
+.auth-tabs { margin: 20px 0 6px; width: 100%; position: relative; }
+.auth-tabs button { flex: 1; justify-content: center; height: 38px; position: relative; z-index: 1; transition: color .25s; }
+.auth-tabs button[aria-pressed="true"] { background: transparent; box-shadow: none; }
+.auth-tabs::before {
+  /* sliding pill sa likod ng active tab */
+  content: ""; position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 5px);
+  border-radius: var(--r-full); background: var(--surface); box-shadow: var(--shadow-sm);
+  transition: transform .45s var(--ease);
+}
+.is-register .auth-tabs::before { transform: translateX(calc(100% + 2px)); }
+
 .auth-form { display: grid; gap: 16px; margin-top: 10px; }
 .auth-foot { margin-top: 16px; text-align: center; }
+
+.reg-only { animation: field-in .4s var(--ease); }
+@keyframes field-in { from { opacity: 0; transform: translateY(-6px); } }
 
 .at-wrap .at { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-weight: 500; pointer-events: none; }
 .at-wrap .input { padding-left: 32px; padding-right: 14px; }
@@ -26,24 +51,78 @@
 
 .input[aria-invalid="true"] { border-color: var(--danger); }
 
+/* ---------- Art panel (desktop lang) ---------- */
+.auth-art { display: none; }
+
 @media (min-width: 900px) {
-  .auth { height: 100vh; height: 100dvh; overflow: hidden; grid-template-columns: minmax(380px, 44%) 1fr; }
+  :root { --art-w: 44%; }
+  .auth { height: 100vh; height: 100dvh; overflow: hidden; }
+
+  .auth-art, .auth-main {
+    position: absolute; top: 0; bottom: 0;
+    transition: left .8s cubic-bezier(.7,0,.2,1), border-radius .8s cubic-bezier(.7,0,.2,1);
+  }
+  .auth-art { left: 0; width: var(--art-w); }
+  .auth-main { left: var(--art-w); width: calc(100% - var(--art-w)); min-height: 0; padding: 24px 36px; overflow-y: auto; }
+  .is-register .auth-art { left: calc(100% - var(--art-w)); }
+  .is-register .auth-main { left: 0; }
+
   .auth-art {
     display: flex; flex-direction: column; justify-content: space-between; padding: 30px 36px;
-    background: var(--ink); color: var(--ink-text); position: relative; overflow: hidden;
+    background: #0d0d10; color: #fff; overflow: hidden; z-index: 2;
   }
-  .auth-art .brand-mark { background: var(--ink-text); color: var(--ink); }
-  .auth-art .brand-mark::after { border-color: var(--ink); }
-  .auth-quote p { font-family: var(--font-display); font-size: clamp(28px, 2.6vw, 40px); font-weight: 700; line-height: 1.12; letter-spacing: -0.03em; }
-  .auth-quote span { opacity: .5; }
-  .auth-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-  .auth-tiles .t { aspect-ratio: 3 / 4; border-radius: 18px; }
-  .t1 { background: linear-gradient(160deg, #ffd9cc, #ff8a6b 60%, #c2410c); }
-  .t2 { background: linear-gradient(160deg, #e9d5ff, #a78bfa 60%, #6d28d9); transform: translateY(-18px); }
-  .t3 { background: linear-gradient(160deg, #dbeafe, #93c5fd 60%, #2563eb); }
-  .t4 { background: linear-gradient(160deg, #dcfce7, #86efac 60%, #15803d); transform: translateY(-18px); }
+  .auth-art > * { position: relative; }
+  .auth-art .brand-mark { background: #fff; color: #0d0d10; }
+  .auth-art .brand-mark::after { border-color: #0d0d10; }
 
-  .auth-main { padding: 24px 36px; overflow-y: auto; }
+  /* Gumagalaw na kulay sa likod */
+  .art-bg { position: absolute !important; inset: 0; overflow: hidden; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .55; }
+  .b1 { width: 60%; aspect-ratio: 1; background: #ff5a36; left: -15%; top: -10%; animation: drift1 16s ease-in-out infinite alternate; }
+  .b2 { width: 55%; aspect-ratio: 1; background: #7c3aed; right: -20%; top: 30%; animation: drift2 19s ease-in-out infinite alternate; }
+  .b3 { width: 50%; aspect-ratio: 1; background: #2563eb; left: 10%; bottom: -25%; animation: drift3 22s ease-in-out infinite alternate; }
+  .grain {
+    position: absolute; inset: 0; opacity: .12; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  @keyframes drift1 { to { transform: translate(30%, 25%) scale(1.15); } }
+  @keyframes drift2 { to { transform: translate(-35%, -20%) scale(.9); } }
+  @keyframes drift3 { to { transform: translate(25%, -30%) scale(1.1); } }
+  .is-register .b1 { background: #16a34a; }
+  .is-register .b2 { background: #ff5a36; }
+  .blob { transition: background-color 1.2s var(--ease); }
+
+  /* Quote: magpapalit depende sa mode */
+  .auth-quote { display: grid; }
+  .auth-quote .q {
+    grid-area: 1 / 1; font-family: var(--font-display); font-size: clamp(28px, 2.6vw, 42px); font-weight: 700;
+    line-height: 1.1; letter-spacing: -0.03em; transition: opacity .5s var(--ease) .25s, transform .6s var(--ease) .25s;
+  }
+  .auth-quote span { opacity: .5; }
+  .q-register { opacity: 0; transform: translateY(14px); }
+  .is-register .q-login { opacity: 0; transform: translateY(-14px); transition-delay: 0s; }
+  .is-register .q-register { opacity: 1; transform: none; }
+
+  /* Tiles: lumulutang at nagpapalit ng ayos */
+  .auth-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .auth-tiles .t {
+    aspect-ratio: 3 / 4; border-radius: 18px; box-shadow: 0 20px 40px -18px rgba(0,0,0,.6);
+    transition: transform .8s cubic-bezier(.7,0,.2,1);
+    animation: bob 6s ease-in-out infinite;
+  }
+  .t1 { background: linear-gradient(160deg, #ffd9cc, #ff8a6b 60%, #c2410c); }
+  .t2 { background: linear-gradient(160deg, #e9d5ff, #a78bfa 60%, #6d28d9); animation-delay: -1.5s; }
+  .t3 { background: linear-gradient(160deg, #dbeafe, #93c5fd 60%, #2563eb); animation-delay: -3s; }
+  .t4 { background: linear-gradient(160deg, #dcfce7, #86efac 60%, #15803d); animation-delay: -4.5s; }
+  @keyframes bob { 50% { translate: 0 -12px; } }
+  .is-register .t1 { transform: translateX(calc(300% + 30px)) rotate(4deg); }
+  .is-register .t2 { transform: translateX(-100%) translateX(-10px) rotate(-3deg); }
+  .is-register .t3 { transform: translateX(-100%) translateX(-10px) rotate(3deg); }
+  .is-register .t4 { transform: translateX(-100%) translateX(-10px) rotate(-4deg); }
+
   .auth-brand-sm { visibility: hidden; }
   .auth-card { margin: auto; padding-top: 0; }
 }
+
+/* Walang animation sa unang load */
+.no-anim *, .no-anim *::before, .no-anim *::after { transition: none !important; }
