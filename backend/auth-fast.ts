@@ -1,6 +1,7 @@
 // TigoMeNote · auth-fast (Supabase Edge Function, verify_jwt = off)
 // Actions: register, login, verifyEmail, resendCode, forgotPassword, resetPassword, checkSession, logout
-// Secrets: AUTH_PEPPER (required), SMTP_USER + SMTP_PASS (Gmail + App Password, required para sa email)
+// Secrets: AUTH_PEPPER (required)
+// Email (isa sa dalawa): BREVO_API_KEY + MAIL_FROM_EMAIL (recommended)  o  SMTP_USER + SMTP_PASS (Gmail App Password)
 // Optional: SMTP_HOST (default smtp.gmail.com), MAIL_FROM_NAME (default TigoMeNote), REQUIRE_APPROVAL = "true"
 // SUPABASE_URL at SUPABASE_SERVICE_ROLE_KEY ay automatic sa Supabase.
 
@@ -19,6 +20,8 @@ const SMTP_USER = Deno.env.get("SMTP_USER") ?? "";
 const SMTP_PASS = (Deno.env.get("SMTP_PASS") ?? "").replace(/\s+/g, ""); // tinatanggal ang spaces ng Gmail app password
 const SMTP_HOST = Deno.env.get("SMTP_HOST") ?? "smtp.gmail.com";
 const FROM_NAME = Deno.env.get("MAIL_FROM_NAME") ?? "TigoMeNote";
+const BREVO_API_KEY = (Deno.env.get("BREVO_API_KEY") ?? "").trim();
+const FROM_EMAIL = (Deno.env.get("MAIL_FROM_EMAIL") ?? SMTP_USER).trim();
 
 const ITERATIONS = 120_000;
 const SESSION_HOURS = 24;
@@ -136,9 +139,29 @@ async function housekeeping() {
 }
 
 // ---------- email ----------
-const mailer = SMTP_USER && SMTP_PASS
+// Brevo (HTTP API) ang gamit kapag may BREVO_API_KEY; kung wala, Gmail SMTP
+const mailer = !BREVO_API_KEY && SMTP_USER && SMTP_PASS
   ? nodemailer.createTransport({ host: SMTP_HOST, port: 465, secure: true, auth: { user: SMTP_USER, pass: SMTP_PASS } })
   : null;
+const canMail = (!!BREVO_API_KEY && !!FROM_EMAIL) || !!mailer;
+
+async function deliver(m: { to: string; toName: string; subject: string; text: string; html: string }) {
+  if (BREVO_API_KEY) {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: { "api-key": BREVO_API_KEY, "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify({
+        sender: { name: FROM_NAME, email: FROM_EMAIL },
+        to: [{ email: m.to, name: m.toName }],
+        subject: m.subject, textContent: m.text, htmlContent: m.html,
+      }),
+    });
+    if (!res.ok) throw new Error(`Brevo ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    return;
+  }
+  if (!mailer) throw new Error("Email not configured");
+  await mailer.sendMail({ from: `"${FROM_NAME}" <${FROM_EMAIL}>`, to: m.to, subject: m.subject, text: m.text, html: m.html });
+}
 
 function codeEmailHtml(name: string, code: string, purpose: Purpose) {
   const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
@@ -155,7 +178,7 @@ function codeEmailHtml(name: string, code: string, purpose: Purpose) {
 type Purpose = "verify" | "reset";
 
 async function sendCode(user: Record<string, any>, purpose: Purpose = "verify") {
-  if (!mailer) throw new Error("SMTP not configured");
+  if (!canMail) throw new Error("Email not configured");
   // patayin ang mga lumang code
   await db.from("email_codes").update({ used_at: new Date().toISOString() })
     .eq("user_id", user.id).eq("purpose", purpose).is("used_at", null);
@@ -167,9 +190,9 @@ async function sendCode(user: Record<string, any>, purpose: Purpose = "verify") 
     expires_at: new Date(Date.now() + CODE_MINUTES * 60_000).toISOString(),
   });
   if (error) throw error;
-  await mailer.sendMail({
-    from: `"${FROM_NAME}" <${SMTP_USER}>`,
+  await deliver({
     to: user.email,
+    toName: user.display_name,
     subject: purpose === "reset" ? `${code} ang TigoMeNote reset code mo` : `${code} ang TigoMeNote code mo`,
     text: `Hi ${user.display_name}, ang ${purpose === "reset" ? "password reset" : "verification"} code mo ay ${code}. Mag-e-expire ito sa ${CODE_MINUTES} minuto.`,
     html: codeEmailHtml(user.display_name, code, purpose),
@@ -212,7 +235,7 @@ async function register(p: Record<string, string>, req: Request) {
     return fail("Username: 3–24 letters, numbers, _ or . lang.");
   if (password.length < 8 || password.length > 72)
     return fail("Password: 8–72 characters.");
-  if (!mailer) return fail("Hindi pa naka-setup ang email ng server (SMTP).", 500);
+  if (!canMail) return fail("Hindi pa naka-setup ang email ng server.", 500);
 
   const ipKey = "reg:" + clientIp(req);
   if (await countRecent(ipKey, 60) >= REG_PER_IP_PER_HOUR)

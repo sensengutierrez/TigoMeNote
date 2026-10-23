@@ -15,6 +15,7 @@ updated: 2026-10-23
 | 2026-10-23 | Unang nag-register = Admin | Si Bench dapat ang mauna |
 | 2026-10-23 | **Email verification: required + verify**, 6-digit code | Pinili ni Bench; code kaysa link para gumana rin sa APK |
 | 2026-10-23 | Email sender: **Gmail** (App Password) muna | Libre at mabilis; lilipat sa Resend + domain pag lumaki |
+| 2026-10-23 | Lipat sa **Brevo** (free 300/araw) | Ayaw tanggapin ng Gmail ang App Password; walang domain na kailangan sa Brevo. SMS ay hindi pinili kasi may bayad. |
 
 ## Bukas pa (hinihintay si Bench)
 - **Media plan:** Daily = sa device lang (sariling folder sa app); Share = maliit na compressed copy sa server para makita ng iba. Okay ba?

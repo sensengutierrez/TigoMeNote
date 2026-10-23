@@ -33,7 +33,9 @@ updated: 2026-10-23
 - Ang `resendCode` ay pareho ang sagot kahit walang account, para hindi mahulaan ang usernames.
 - Email masked sa screen (`be••••@gmail.com`).
 
-## Email sending (Gmail)
+## Email sending (Brevo, fallback: Gmail)
+- **Ngayon:** Brevo API (`BREVO_API_KEY` + `MAIL_FROM_EMAIL`). Libre: 300 emails/araw. Ang sender email ay dapat verified sa Brevo → Senders.
+- Fallback kung walang Brevo key: Gmail SMTP sa ibaba.
 - Library: `nodemailer` sa edge function, `smtp.gmail.com` port **465** (SSL). Bawal ang port 25/587 sa Supabase Edge.
 - Kailangan naka-**2-Step Verification** ang Gmail para makagawa ng **App Password** (16 letters).
 - Limit ng Gmail: ~500 emails bawat araw. Pag lumaki, lilipat sa Resend + sariling domain.

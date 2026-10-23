@@ -12,8 +12,10 @@ updated: 2026-10-23
 | Name | Para saan | Note |
 |---|---|---|
 | `AUTH_PEPPER` | dagdag sa password hash | **Required. Huwag palitan** — mawawalan ng access ang lahat ng account. |
-| `SMTP_USER` | Gmail address na magpapadala ng codes | Required para sa sign-up |
-| `SMTP_PASS` | Gmail **App Password** (16 letters) | Required. Hindi ang normal na Gmail password. |
+| `BREVO_API_KEY` | Brevo API key (`xkeysib-…`) pang-send ng email | **Ito ang gamit ngayon** |
+| `MAIL_FROM_EMAIL` | Sender email (verified sa Brevo → Senders) | Required kasama ng Brevo |
+| `SMTP_USER` | Gmail address (fallback lang kung walang Brevo) | Optional na |
+| `SMTP_PASS` | Gmail **App Password** (fallback) | Optional na |
 | `MAIL_FROM_NAME` | Pangalan ng sender | Optional (default TigoMeNote) |
 | `REQUIRE_APPROVAL` | `"true"` = Pending ang bagong users | Optional |
 
