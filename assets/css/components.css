@@ -191,3 +191,9 @@ body.modal-open { overflow: hidden; }
 /* Text link na button (hal. Resend code, Gamitin ang GPS) */
 .link-btn { border: 0; background: none; padding: 6px 2px; font-weight: 600; font-size: 14px; color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 .link-btn:disabled { color: var(--text-3); text-decoration: none; cursor: default; }
+
+/* Viewer (photo / post) sa phone: buong screen, hindi sheet */
+@media (max-width: 899px) {
+  .modal-backdrop:has(.modal-viewer) { align-items: stretch; }
+  .modal.modal-viewer { max-height: none; height: 100dvh; border-radius: 0; }
+}

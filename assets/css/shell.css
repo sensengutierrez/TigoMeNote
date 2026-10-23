@@ -95,8 +95,9 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
 .page-head .eyebrow { font-size: 12.5px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
 .page-head .lead { color: var(--text-2); margin-top: 6px; }
 .stack { display: grid; gap: 16px; }
-.layout { display: grid; gap: 16px; }
-.layout-aside { display: grid; gap: 16px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.layout > * { min-width: 0; } /* para hindi lumapad ang page sa phone dahil sa mahabang laman (hal. albums) */
+.layout-aside { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 
 /* ================= Desktop ================= */
 @media (min-width: 900px) {
