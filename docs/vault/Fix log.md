@@ -19,6 +19,8 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-10-23 · Posts (test): na-stuck sa "Kino-compress ang video" → hindi tumatakbo ang `requestVideoFrameCallback` sa nakatagong video at naghihintay ang `AudioContext.resume()` ng tap → timer loop + `onended` + safety timeout, at max 0.6 s na hintay sa resume (`post-queue.js`)
 - 2026-10-23 · Gallery viewer: ang portrait na photo ay lumalampas sa ibaba ng screen → walang limit ang taas ng larawan sa desktop → `max-height` na naka-base sa taas ng screen (`gallery.css`, `posts.css`)
 - 2026-10-23 · Phone: lumiit/lumapad ang buong Gallery page at kalahating screen lang ang viewer → ang mahabang albums row ay nagpapalapad sa grid column (`min-width: auto`) → `minmax(0, 1fr)` sa `.layout` at `.layout-aside`; full screen ang viewer sa phone (`shell.css`, `components.css`)
+- 2026-10-24 · Settings sa phone: walang Language buttons → lumang `settings.js` pa ang naka-cache sa phone (bago ang Language) → `?v=<version>` sa lahat ng sariling `.js`/`.css` sa HTML (`tools/cache-bust.py`), version 0.5.0
+- 2026-10-24 · Viewer sa phone (Arabic): naputol ang Delete button → hindi nagwa-wrap ang `.pv-actions` → `flex-wrap` + mas maikling "Pin" (`posts.css`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

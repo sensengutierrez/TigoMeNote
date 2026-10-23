@@ -5,20 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
   <title>Profile · TigoMeNote</title>
-  <script src="../assets/js/theme.js"></script>
-  <script src="../assets/js/config.js"></script>
-  <script src="../assets/js/i18n.js"></script>
-  <script src="../assets/js/auth-guard.js"></script>
+  <script src="../assets/js/theme.js?v=0.5.0"></script>
+  <script src="../assets/js/config.js?v=0.5.0"></script>
+  <script src="../assets/js/i18n.js?v=0.5.0"></script>
+  <script src="../assets/js/auth-guard.js?v=0.5.0"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="../assets/css/tokens.css">
-  <link rel="stylesheet" href="../assets/css/base.css">
-  <link rel="stylesheet" href="../assets/css/components.css">
-  <link rel="stylesheet" href="../assets/css/shell.css">
-  <link rel="stylesheet" href="../assets/css/posts.css">
-  <link rel="stylesheet" href="../assets/css/social.css">
-  <link rel="stylesheet" href="../assets/css/pages/profile.css">
+  <link rel="stylesheet" href="../assets/css/tokens.css?v=0.5.0">
+  <link rel="stylesheet" href="../assets/css/base.css?v=0.5.0">
+  <link rel="stylesheet" href="../assets/css/components.css?v=0.5.0">
+  <link rel="stylesheet" href="../assets/css/shell.css?v=0.5.0">
+  <link rel="stylesheet" href="../assets/css/posts.css?v=0.5.0">
+  <link rel="stylesheet" href="../assets/css/social.css?v=0.5.0">
+  <link rel="stylesheet" href="../assets/css/pages/profile.css?v=0.5.0">
 </head>
 <body data-page="profile">
   <main id="page" class="page">
@@ -51,6 +51,7 @@
         <div><b id="statPosts">0</b><span>Posts</span></div>
         <button type="button" data-list="followers"><b id="statFollowers">0</b><span>Followers</span></button>
         <button type="button" data-list="following"><b id="statFollowing">0</b><span>Following</span></button>
+        <div><b id="statLikes">0</b><span>Likes</span></div>
       </div>
     </section>
 
@@ -59,16 +60,30 @@
         <div class="q-head"><h3>Waiting on this device</h3><span class="faint small" id="qNet"></span></div>
         <div class="queue" id="queue"></div>
       </div>
-      <div class="posts-head">
-        <h3>Posts</h3>
-        <div class="chips" role="tablist" aria-label="Filter posts" id="postChips">
-          <button class="chip active" type="button" role="tab" aria-selected="true" data-f="all">All</button>
-          <button class="chip" type="button" role="tab" aria-selected="false" data-f="photo">Photos</button>
-          <button class="chip" type="button" role="tab" aria-selected="false" data-f="video">Videos</button>
-          <button class="chip" type="button" role="tab" aria-selected="false" data-f="scheduled">Scheduled</button>
-          <button class="chip" type="button" role="tab" aria-selected="false" data-f="saved"><i data-icon="bookmark" data-size="sm"></i>Saved</button>
-        </div>
+      <div class="p-tabs" role="tablist" aria-label="Profile tabs" id="pTabs">
+        <button type="button" role="tab" aria-selected="true" data-t="posts" title="Posts"><i data-icon="grid"></i><span>Posts</span></button>
+        <button type="button" role="tab" aria-selected="false" data-t="private" title="Private"><i data-icon="lock"></i><span>Private</span></button>
+        <button type="button" role="tab" aria-selected="false" data-t="reposts" title="Reposts"><i data-icon="repost"></i><span>Reposts</span></button>
+        <button type="button" role="tab" aria-selected="false" data-t="saved" title="Saved"><i data-icon="bookmark"></i><span>Saved</span></button>
+        <button type="button" role="tab" aria-selected="false" data-t="liked" title="Liked"><i data-icon="heart"></i><span>Liked</span></button>
+        <button type="button" role="tab" aria-selected="false" data-t="history" title="Recently viewed"><i data-icon="clock"></i><span>History</span></button>
       </div>
+      <div class="posts-head" id="postsHead">
+        <div class="chips" role="group" aria-label="Filter posts" id="postChips">
+          <button class="chip active" type="button" aria-pressed="true" data-f="all">All</button>
+          <button class="chip" type="button" aria-pressed="false" data-f="photo">Photos</button>
+          <button class="chip" type="button" aria-pressed="false" data-f="video">Videos</button>
+          <button class="chip" type="button" aria-pressed="false" data-f="scheduled">Scheduled</button>
+        </div>
+        <label class="p-sort"><span class="sr-only">Sort</span>
+          <select class="input" id="pSort">
+            <option value="latest">Latest</option>
+            <option value="popular">Popular</option>
+            <option value="oldest">Oldest</option>
+          </select>
+        </label>
+      </div>
+      <p class="faint small p-tabnote hidden" id="tabNote"></p>
       <div class="post-grid" id="postGrid"></div>
       <div class="empty posts-empty hidden" id="postsEmpty">
         <div class="empty-art"><i data-icon="image" data-size="lg"></i></div>
@@ -78,17 +93,17 @@
       </div>
     </section>
   </main>
-  <script src="../assets/js/icons.js"></script>
-  <script src="../assets/js/nav-items.js"></script>
-  <script src="../assets/js/components/app-shell.js"></script>
-  <script src="../assets/js/api.js"></script>
-  <script src="../assets/js/components/modal.js"></script>
-  <script src="../assets/js/post-queue.js"></script>
-  <script src="../assets/js/components/post-viewer.js"></script>
-  <script src="../assets/js/components/post-card.js"></script>
-  <script src="../assets/js/components/social-ui.js"></script>
-  <script src="../assets/js/components/image-cropper.js"></script>
-  <script src="../assets/js/components/profile-editor.js"></script>
-  <script src="../assets/js/pages/profile.js"></script>
+  <script src="../assets/js/icons.js?v=0.5.0"></script>
+  <script src="../assets/js/nav-items.js?v=0.5.0"></script>
+  <script src="../assets/js/components/app-shell.js?v=0.5.0"></script>
+  <script src="../assets/js/api.js?v=0.5.0"></script>
+  <script src="../assets/js/components/modal.js?v=0.5.0"></script>
+  <script src="../assets/js/post-queue.js?v=0.5.0"></script>
+  <script src="../assets/js/components/post-viewer.js?v=0.5.0"></script>
+  <script src="../assets/js/components/post-card.js?v=0.5.0"></script>
+  <script src="../assets/js/components/social-ui.js?v=0.5.0"></script>
+  <script src="../assets/js/components/image-cropper.js?v=0.5.0"></script>
+  <script src="../assets/js/components/profile-editor.js?v=0.5.0"></script>
+  <script src="../assets/js/pages/profile.js?v=0.5.0"></script>
 </body>
 </html>

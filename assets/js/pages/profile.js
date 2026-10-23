@@ -53,6 +53,7 @@
       if (window.TMN_AUTH && TMN_AUTH.setUser) TMN_AUTH.setUser(Object.assign({}, window.TMN_USER || {}, r.user));
       $("statFollowers").textContent = r.counts.followers;
       $("statFollowing").textContent = r.counts.following;
+      $("statLikes").textContent = PU.num(r.counts.likes || 0);
     } catch (e) {}
   }
 
@@ -99,29 +100,70 @@
   document.addEventListener("tmn:queue", renderQueue);
   window.addEventListener("online", renderQueue); window.addEventListener("offline", renderQueue);
 
-  // ---------- Posts (server) ----------
-  var saved = null; // bookmarks (Saved), kinukuha lang pag binuksan ang tab
+  // ---------- Posts (server) at mga tab na parang TikTok ----------
+  // posts = sarili mong posts · private = "Only me" posts · reposts / saved / liked / history = galing sa server pag binuksan
+  var tab = "posts", sort = "latest";
+  try { sort = localStorage.getItem("tmnProfSort") || "latest"; } catch (e) {}
+  $("pSort").value = sort;
+  var remote = { reposts: null, saved: null, liked: null, history: null };
+  var ACTION = { reposts: "reposts", saved: "bookmarks", liked: "liked", history: "history" };
+  var EMPTY = {
+    posts: ["No posts yet", null],
+    private: ["No private posts", "Posts you set to “Only me” show here. Only you can see them."],
+    reposts: ["No reposts yet", "Posts you repost from Explore show here."],
+    saved: ["Nothing saved yet", "Tap the bookmark on a post in Explore to save it here."],
+    liked: ["No likes yet", "Posts you react to in Explore show here."],
+    history: ["Nothing viewed yet", "Posts you open or scroll past in Explore show here."]
+  };
+  var NOTE = { private: "Only you can see this tab.", liked: "Only you can see this tab.", saved: "Only you can see this tab.", history: "Recently viewed · only you can see this." };
+  function score(p) { var s = p.stats || {}; return (s.views || 0) + 5 * (s.reactions || 0) + 8 * (s.comments || 0) + 10 * (s.reposts || 0); }
+  function sorted(list) {
+    var out = list.slice();
+    if (sort === "oldest") out.sort(function (a, b) { return a.publish_at < b.publish_at ? -1 : 1; });
+    else if (sort === "popular") out.sort(function (a, b) { return score(b) - score(a); });
+    else out.sort(function (a, b) { return a.publish_at < b.publish_at ? 1 : -1; });
+    // Naka-pin: laging una (sa Latest lang, gaya ng TikTok)
+    if (sort === "latest") out.sort(function (a, b) {
+      if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+      if (a.pinned && b.pinned) return a.pinned_at < b.pinned_at ? 1 : -1;
+      return 0;
+    });
+    return out;
+  }
   function shown() {
-    if (filter === "saved") return saved || [];
-    return posts.filter(function (p) {
+    if (tab === "private") return sorted(posts.filter(function (p) { return p.visibility === "private"; }));
+    if (tab !== "posts") return remote[tab] || [];
+    return sorted(posts.filter(function (p) {
       if (filter === "scheduled") return p.scheduled;
       if (filter === "photo") return p.media.some(function (m) { return m.kind === "photo"; });
       if (filter === "video") return p.media.some(function (m) { return m.kind === "video"; });
       return true;
-    });
+    }));
   }
   function renderPosts() {
-    var list = shown();
+    var list = shown(), mineTab = tab === "posts" || tab === "private";
     $("statPosts").textContent = posts.filter(function (p) { return !p.scheduled; }).length;
-    $("postGrid").innerHTML = PU.tiles(list, { showVis: filter !== "saved", showAuthor: filter === "saved" });
+    $("postsHead").classList.toggle("hidden", !mineTab);
+    $("postChips").classList.toggle("hidden", tab !== "posts");
+    $("tabNote").textContent = NOTE[tab] || "";
+    $("tabNote").classList.toggle("hidden", !NOTE[tab] || !list.length);
+    $("postGrid").innerHTML = PU.tiles(list, { showVis: tab === "posts", showAuthor: !mineTab, pins: tab === "posts" && sort === "latest" });
     $("postGrid").classList.toggle("hidden", !list.length);
     $("postsEmpty").classList.toggle("hidden", !!list.length);
-    if (!list.length && filter === "saved") {
-      $("emptyTitle").textContent = saved ? "Nothing saved yet" : "Loading…";
-      $("emptyText").textContent = "Tap the bookmark on a post in Explore to save it here.";
-    } else if (!list.length && posts.length) {
+    var link = $("postsEmpty").querySelector(".btn");
+    link.classList.toggle("hidden", tab !== "posts");
+    if (list.length) return;
+    if (tab === "posts" && posts.length) {
       $("emptyTitle").textContent = filter === "scheduled" ? "Nothing scheduled" : "Nothing in this filter";
       $("emptyText").textContent = "Try another filter.";
+    } else if (tab === "posts") {
+      if (!loaded) return;
+      $("emptyTitle").textContent = EMPTY.posts[0];
+      $("emptyText").innerHTML = "Pick a photo or video in Gallery, then tap <b>Post</b>. Works offline.";
+    } else {
+      var loading = !mineTab && remote[tab] === null;
+      $("emptyTitle").textContent = loading ? "Loading…" : EMPTY[tab][0];
+      $("emptyText").textContent = loading ? "" : EMPTY[tab][1];
     }
   }
   async function loadPosts() {
@@ -137,37 +179,56 @@
       if (!loaded) { $("postGrid").innerHTML = ""; $("postsEmpty").classList.remove("hidden"); $("emptyTitle").textContent = "Couldn't load"; $("emptyText").textContent = err.message; }
     }
   }
+  async function loadTab(t) {
+    if (!navigator.onLine) { if (remote[t] === null) { remote[t] = []; } if (tab === t) renderPosts(); return; }
+    try { var r = await TMN_API.call("posts", ACTION[t], {}); remote[t] = r.posts || []; }
+    catch (e) { if (remote[t] === null) remote[t] = []; UI.toast(e.message); }
+    if (tab === t) renderPosts();
+  }
+  function replaceIn(list, np) { return list ? list.map(function (p) { return p.id === np.id ? np : p; }) : list; }
   $("postGrid").addEventListener("click", function (e) {
     var t = e.target.closest("[data-pi]"); if (!t) return;
     var list = shown();
     PU.open(list.slice(), Number(t.dataset.pi), { onChange: function (ch) {
-      if (ch.type === "delete") posts = posts.filter(function (p) { return p.id !== ch.id; });
+      if (ch.type === "delete") {
+        posts = posts.filter(function (p) { return p.id !== ch.id; });
+        Object.keys(remote).forEach(function (k) { if (remote[k]) remote[k] = remote[k].filter(function (p) { return p.id !== ch.id; }); });
+      }
       if (ch.type === "update") {
-        posts = posts.map(function (p) { return p.id === ch.post.id ? ch.post : p; });
-        if (saved) saved = saved.map(function (p) { return p.id === ch.post.id ? ch.post : p; });
-        if (saved && ch.post.stats && !ch.post.stats.bookmarked) saved = saved.filter(function (p) { return p.id !== ch.post.id; });
+        var np = ch.post;
+        posts = replaceIn(posts, np);
+        Object.keys(remote).forEach(function (k) { remote[k] = replaceIn(remote[k], np); });
+        var st = np.stats || {};
+        if (remote.saved && !st.bookmarked) remote.saved = remote.saved.filter(function (p) { return p.id !== np.id; });
+        if (remote.liked && !st.my_reaction) remote.liked = remote.liked.filter(function (p) { return p.id !== np.id; });
+        if (remote.reposts && !st.reposted) remote.reposts = remote.reposts.filter(function (p) { return p.id !== np.id; });
       }
       renderPosts();
     } });
   });
+  $("pTabs").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-t]"); if (!b || b.dataset.t === tab) return;
+    this.querySelectorAll("[data-t]").forEach(function (x) { x.setAttribute("aria-selected", String(x === b)); });
+    tab = b.dataset.t;
+    renderPosts();
+    if (ACTION[tab]) loadTab(tab); // laging kunin ang pinakabago
+  });
   $("postChips").addEventListener("click", function (e) {
     var c = e.target.closest(".chip"); if (!c) return;
-    this.querySelectorAll(".chip").forEach(function (x) { x.classList.toggle("active", x === c); x.setAttribute("aria-selected", String(x === c)); });
+    this.querySelectorAll(".chip").forEach(function (x) { x.classList.toggle("active", x === c); x.setAttribute("aria-pressed", String(x === c)); });
     filter = c.dataset.f; renderPosts();
-    if (filter === "saved") loadSaved();
   });
-  async function loadSaved() {
-    if (!navigator.onLine) return;
-    try { var r = await TMN_API.call("posts", "bookmarks", {}); saved = r.posts || []; } catch (e) { saved = []; UI.toast(e.message); }
-    if (filter === "saved") renderPosts();
-  }
+  $("pSort").addEventListener("change", function () {
+    sort = this.value; try { localStorage.setItem("tmnProfSort", sort); } catch (e) {}
+    renderPosts();
+  });
   // Followers / Following list
   document.querySelector(".p-hero .stats").addEventListener("click", function (e) {
     var b = e.target.closest("[data-list]"); if (!b || !window.TMN_SOCIAL) return;
     var u = window.TMN_USER || {};
     TMN_SOCIAL.followList({ id: u.id, username: u.username }, b.dataset.list);
   });
-  window.addEventListener("online", function () { loadPosts(); });
+  window.addEventListener("online", function () { loadPosts(); if (ACTION[tab]) loadTab(tab); });
 
   renderQueue();
   loadPosts();

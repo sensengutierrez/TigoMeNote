@@ -2,7 +2,8 @@
 // Posts na may offline queue + schedule, at interactions (reactions, comments, bookmark, repost/share).
 // Lahat ng action ay kailangan ng session token (x-session-token).
 // Actions: createUpload, createPost, myPosts, userPosts, getPost, feed, updatePost, deletePost,
-//          react, reactions, comments, addComment, deleteComment, bookmark, bookmarks, share, unrepost, shares
+//          react, reactions, comments, addComment, deleteComment, bookmark, bookmarks, share, unrepost, shares,
+//          view, pin, liked, reposts, history
 // Storage: private bucket "post-media" — signed upload URL (pang-upload) at signed read URL (1 oras).
 // Secrets: AUTH_PEPPER (hindi ginagamit dito), SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY (automatic).
 
@@ -127,11 +128,13 @@ async function hydrate(posts: any[], me: any) {
       id: p.id, client_id: p.client_id, caption: p.caption, visibility: p.visibility,
       publish_at: p.publish_at, created_at: p.created_at, mine: p.user_id === me.id,
       scheduled: new Date(p.publish_at).getTime() > now,
+      pinned: !!p.pinned_at, pinned_at: p.pinned_at ?? null,
       author: byId[p.user_id] ? { ...byId[p.user_id], following: following.has(p.user_id) } : null,
       media: (media ?? []).filter((m) => m.post_id === p.id).map((m) => ({
         kind: m.kind, url: signed[m.path] ?? null, w: m.w, h: m.h, duration: m.duration, mime: m.mime,
       })),
       stats: {
+        views: p.view_count ?? 0,
         reactions: rs.length,
         top: Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 3),
         my_reaction: (rs.find((r) => r.user_id === me.id) || {}).emoji ?? null,
@@ -294,7 +297,64 @@ async function userPosts(p: any, me: any) {
   if (!isMe) q = q.lte("publish_at", nowIso());
   if (p.before) q = q.lt("publish_at", String(p.before));
   const { data } = await q;
-  return reply({ ok: true, posts: await hydrate(data ?? [], me) });
+  const list = (data ?? []).slice().sort((a, b) => (a.pinned_at ? 1 : 0) === (b.pinned_at ? 1 : 0)
+    ? (a.pinned_at && b.pinned_at ? (a.pinned_at < b.pinned_at ? 1 : -1) : 0) : (a.pinned_at ? -1 : 1));
+  return reply({ ok: true, posts: await hydrate(list, me) });
+}
+
+// ---------- views, pin, at mga tab ng profile ----------
+// Bilang ng view: tinatawag ng browser kapag nakita ang post (feed) o binuksan (viewer). Max 30 bawat tawag.
+// deno-lint-ignore no-explicit-any
+async function view(p: any, me: any) {
+  const ids = (Array.isArray(p.ids) ? p.ids : []).map((x: unknown) => String(x)).filter((x: string) => /^[0-9a-f-]{36}$/.test(x)).slice(0, 30);
+  if (!ids.length) return reply({ ok: true, added: 0 });
+  const { data, error } = await db.rpc("record_post_views", { p_user: me.id, p_posts: ids });
+  if (error) throw error;
+  return reply({ ok: true, added: data ?? 0 });
+}
+// I-pin sa profile (hanggang 3)
+// deno-lint-ignore no-explicit-any
+async function pin(p: any, me: any) {
+  const { data: post } = await db.from("posts").select("*").eq("id", String(p.id || "")).eq("user_id", me.id).is("deleted_at", null).maybeSingle();
+  if (!post) return fail("Post not found.", 404);
+  if (p.on) {
+    if (!post.pinned_at) {
+      const { count } = await db.from("posts").select("id", { count: "exact", head: true }).eq("user_id", me.id).is("deleted_at", null).not("pinned_at", "is", null);
+      if ((count ?? 0) >= 3) return fail("You can pin up to 3 posts. Unpin one first.", 409);
+    }
+    await db.from("posts").update({ pinned_at: nowIso() }).eq("id", post.id);
+  } else {
+    await db.from("posts").update({ pinned_at: null }).eq("id", post.id);
+  }
+  const { data: upd } = await db.from("posts").select("*").eq("id", post.id).single();
+  return reply({ ok: true, post: (await hydrate([upd], me))[0] });
+}
+// deno-lint-ignore no-explicit-any
+async function visibleList(ids: string[], me: any) {
+  if (!ids.length) return [];
+  const { data } = await db.from("posts").select("*").in("id", ids);
+  const out = [];
+  for (const id of ids) { const x = (data ?? []).find((d) => d.id === id); if (x && await canSee(x, me)) out.push(x); }
+  return out;
+}
+// Mga post na ni-react-an mo (❤️ tab)
+// deno-lint-ignore no-explicit-any
+async function liked(_p: any, me: any) {
+  const { data } = await db.from("post_reactions").select("post_id, created_at").eq("user_id", me.id).order("created_at", { ascending: false }).limit(90);
+  return reply({ ok: true, posts: await hydrate(await visibleList((data ?? []).map((r) => r.post_id), me), me) });
+}
+// Mga ni-repost mo (o ng ibang user kung may user_id)
+// deno-lint-ignore no-explicit-any
+async function reposts(p: any, me: any) {
+  const uid = String(p.user_id || me.id);
+  const { data } = await db.from("post_shares").select("post_id, created_at").eq("user_id", uid).eq("kind", "repost").order("created_at", { ascending: false }).limit(90);
+  return reply({ ok: true, posts: await hydrate(await visibleList((data ?? []).map((r) => r.post_id), me), me) });
+}
+// Mga huling nakita mo (History)
+// deno-lint-ignore no-explicit-any
+async function history(_p: any, me: any) {
+  const { data } = await db.from("post_views").select("post_id, viewed_at").eq("user_id", me.id).order("viewed_at", { ascending: false }).limit(90);
+  return reply({ ok: true, posts: await hydrate(await visibleList((data ?? []).map((r) => r.post_id), me), me) });
 }
 
 // deno-lint-ignore no-explicit-any
@@ -471,6 +531,11 @@ Deno.serve(async (req) => {
       case "share":        return await share(p, me);
       case "unrepost":     return await unrepost(p, me);
       case "shares":       return await shares(p, me);
+      case "view":         return await view(p, me);
+      case "pin":          return await pin(p, me);
+      case "liked":        return await liked(p, me);
+      case "reposts":      return await reposts(p, me);
+      case "history":      return await history(p, me);
       case "updatePost":   return await updatePost(p, me);
       case "deletePost":   return await deletePost(p, me);
       default:             return fail("Unknown action.");

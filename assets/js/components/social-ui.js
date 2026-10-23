@@ -217,6 +217,7 @@
     body.innerHTML =
       '<button type="button" class="pick" data-a="open">' + I("image") + "Open post</button>" +
       '<button type="button" class="pick" data-a="copy">' + I("link") + "Copy link</button>" +
+      (p.mine && !p.scheduled ? '<button type="button" class="pick" data-a="pin">' + I("pin") + (p.pinned ? "Unpin from profile" : "Pin to profile") + "</button>" : "") +
       (p.mine ? '<button type="button" class="pick" data-a="edit">' + I("edit") + "Edit</button>" +
         '<button type="button" class="pick danger" data-a="delete">' + I("trash") + "Delete</button>" : "") +
       (!p.mine && p.author ? '<button type="button" class="pick" data-a="user">' + I("user") + "View @" + esc(p.author.username) + "</button>" : "");
@@ -231,6 +232,13 @@
         try { await navigator.clipboard.writeText(url); UI().toast("Link copied ✓"); } catch (err) { TMN_MODAL.prompt("Copy the link", { value: url, okText: "OK", maxLength: 500 }); }
       }
       if (a === "user") userSheet(p.author.id);
+      if (a === "pin") {
+        try {
+          var pr = await TMN_API.call("posts", "pin", { id: p.id, on: !p.pinned });
+          UI().toast(pr.post.pinned ? "Pinned to your profile." : "Unpinned.");
+          if (api && api.changed) api.changed({ type: "update", post: Object.assign({}, p, pr.post, { repost_by: p.repost_by }) });
+        } catch (err) { UI().toast(err.message); }
+      }
       if (a === "edit") { var upd = await TMN_POSTS_UI.edit(p); if (upd && api && api.changed) api.changed({ type: "update", post: Object.assign({}, p, upd, { repost_by: p.repost_by }) }); }
       if (a === "delete") {
         if (!(await TMN_MODAL.confirm("Delete this post?", { okText: "Delete", danger: true }))) return;
@@ -259,7 +267,8 @@
         (u.bio ? '<p class="sx-bio">' + esc(u.bio) + "</p>" : "") +
         '<div class="sx-stats"><span><b>' + c.posts + "</b> posts</span>" +
           '<button type="button" data-list="followers"><b>' + c.followers + "</b> followers</button>" +
-          '<button type="button" data-list="following"><b>' + c.following + "</b> following</button></div>" +
+          '<button type="button" data-list="following"><b>' + c.following + "</b> following</button>" +
+          '<span><b>' + TMN_POSTS_UI.num(c.likes || 0) + "</b> likes</span></div>" +
         '<div class="post-grid sx-grid"><div class="pt skel"></div><div class="pt skel"></div><div class="pt skel"></div></div>';
       bindPeople(root);
       root.addEventListener("click", function (e) {

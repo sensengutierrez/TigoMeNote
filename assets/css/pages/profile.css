@@ -31,7 +31,7 @@
 .profile-bio:empty { display: none; }
 .profile-meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .profile-meta > span { display: inline-flex; align-items: center; gap: 6px; }
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); margin: 14px 18px 0; border-top: 1px solid var(--line); padding: 12px 0 16px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); margin: 14px 18px 0; border-top: 1px solid var(--line); padding: 12px 0 16px; }
 .stats > * { display: grid; justify-items: center; border: 0; background: none; padding: 0; color: inherit; font: inherit; }
 .stats button { cursor: pointer; }
 .stats b { font-family: var(--font-display); font-size: 20px; }
@@ -46,7 +46,7 @@
   .p-actions { grid-column: auto; margin: 0 0 8px; }
   .p-actions .btn { flex: none; }
   .p-about { padding: 12px 28px 0 calc(28px + 152px + 20px); }
-  .stats { margin: 16px 28px 0 calc(28px + 152px + 20px); max-width: 420px; border-top: 0; padding-top: 4px; }
+  .stats { margin: 16px 28px 0 calc(28px + 152px + 20px); max-width: 520px; border-top: 0; padding-top: 4px; }
   .stats > * { justify-items: start; }
   .p-hero { margin-bottom: 24px; }
 }
@@ -64,7 +64,20 @@
 .pe-pic .grow { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; }
 .pe-pic .btns { display: flex; gap: 6px; }
 
-.posts-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.posts-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; }
+.posts-head .chips { min-width: 0; flex: 1; }
+.p-sort select { height: 34px; padding: 0 30px 0 12px; font-size: 13.5px; border-radius: var(--r-full); width: auto; }
+.posts-head.hidden { display: none; }
+.p-tabnote { margin: 12px 0 0; }
+
+/* Tabs na parang TikTok: icon (at label sa desktop) */
+.p-tabs { display: grid; grid-template-columns: repeat(6, 1fr); border-bottom: 1px solid var(--line); margin: -4px -4px 0; }
+.p-tabs button { display: flex; align-items: center; justify-content: center; gap: 7px; height: 46px; border: 0; background: none; color: var(--text-3); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; position: relative; min-width: 0; }
+.p-tabs button:hover { color: var(--text); }
+.p-tabs button[aria-selected="true"] { color: var(--text); }
+.p-tabs button[aria-selected="true"]::after { content: ""; position: absolute; left: 18%; right: 18%; bottom: -1px; height: 2px; border-radius: 2px; background: var(--text); }
+.p-tabs button span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 899px) { .p-tabs button span { display: none; } }
 @media (min-width: 900px) {
   .posts { min-height: 50vh; display: flex; flex-direction: column; }
   .posts-empty { flex: 1; align-content: center; }

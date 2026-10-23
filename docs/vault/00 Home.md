@@ -24,6 +24,7 @@ Ito ang "utak" ng project: lahat ng ginawa, paano ginawa, at bakit. Buksan ang f
 - [[Build - Profile edit]] — edit profile, profile photo at cover (banner)
 - [[Build - Social feed]] — reactions, comments, share, bookmark, follow, status
 - [[Build - Language (i18n)]] — English default, Arabic (RTL), Filipino
+- [[Build - Profile tabs and pins]] — TikTok-style tabs, views at ❤️, Pin (3)
 
 ## Setup
 - [[Supabase setup]] — project, tables, secrets (walang totoong value dito)

@@ -94,7 +94,8 @@
     var me = document.currentScript && document.currentScript.src;
     var base = me ? me.replace(/i18n\.js(\?.*)?$/, "") : "";
     // Synchronous para walang "flash" ng English bago maisalin
-    document.write('<script src="' + base + "lang/" + lang + '.js"><\/script>');
+    var v = window.TMN_CONFIG && TMN_CONFIG.version ? "?v=" + TMN_CONFIG.version : "";
+    document.write('<script src="' + base + "lang/" + lang + ".js" + v + '"><\/script>');
     var obs = new MutationObserver(function (list) {
       list.forEach(function (m) {
         if (m.type === "characterData") translateNode(m.target);

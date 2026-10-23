@@ -71,6 +71,20 @@
     try { localStorage.setItem("tmnFeedMode", mode); } catch (er) {}
     posts = []; loaded = false; load(false);
   });
+  // Bilang ng view: kapag ≥60% ng post ay nakita nang 1.5 segundo (hindi binibilang ang sarili mong post)
+  if ("IntersectionObserver" in window) {
+    var vt = {};
+    var vio = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        var id = e.target.dataset.id;
+        if (e.isIntersecting) { if (!vt[id]) vt[id] = setTimeout(function () { var p = api.find(id); if (p && !p.mine) window.TMN_POSTS_UI.markViewed(id); vio.unobserve(e.target); }, 1500); }
+        else { clearTimeout(vt[id]); delete vt[id]; }
+      });
+    }, { threshold: 0.6 });
+    new MutationObserver(function () {
+      $("feed").querySelectorAll(".pcard[data-id]:not([data-vw])").forEach(function (c) { c.dataset.vw = "1"; vio.observe(c); });
+    }).observe($("feed"), { childList: true });
+  }
   $("more").addEventListener("click", function () { load(true); });
   // Kusang mag-load pa pag malapit na sa dulo
   if ("IntersectionObserver" in window) {

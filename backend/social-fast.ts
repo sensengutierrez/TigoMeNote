@@ -87,16 +87,17 @@ async function profile(p: any, me: any) {
   q = p.user_id ? q.eq("id", String(p.user_id)) : q.ilike("username", String(p.username || "").replace(/[%_]/g, ""));
   const { data: u } = await q.maybeSingle();
   if (!u) return fail("User not found.", 404);
-  const [posts, followers, following, fme, fback] = await Promise.all([
+  const [posts, followers, following, fme, fback, likes] = await Promise.all([
     db.from("posts").select("id", { count: "exact", head: true }).eq("user_id", u.id).is("deleted_at", null).lte("publish_at", nowIso())
       .in("visibility", u.id === me.id ? ["public", "followers", "private"] : ["public", "followers"]),
     db.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", u.id),
     db.from("follows").select("following_id", { count: "exact", head: true }).eq("follower_id", u.id),
     db.from("follows").select("follower_id").eq("follower_id", me.id).eq("following_id", u.id).maybeSingle(),
     db.from("follows").select("follower_id").eq("follower_id", u.id).eq("following_id", me.id).maybeSingle(),
+    db.from("post_reactions").select("post_id, posts!inner(user_id)", { count: "exact", head: true }).eq("posts.user_id", u.id),
   ]);
   return reply({ ok: true, user: { ...u, me: u.id === me.id, following: !!fme.data, follows_you: !!fback.data },
-    counts: { posts: posts.count ?? 0, followers: followers.count ?? 0, following: following.count ?? 0 } });
+    counts: { posts: posts.count ?? 0, followers: followers.count ?? 0, following: following.count ?? 0, likes: likes.count ?? 0 } });
 }
 
 // Listahan ng followers / following ng isang user

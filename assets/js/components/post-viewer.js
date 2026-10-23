@@ -20,6 +20,14 @@
     return new Date(iso).toLocaleDateString(window.TMN_I18N ? TMN_I18N.locale : undefined, { month: "short", day: "numeric" });
   }
 
+  // 1200 → 1.2K
+  function num(n) {
+    n = Number(n) || 0;
+    if (n < 1000) return String(n);
+    if (n < 1e6) return (n / 1000).toFixed(n < 1e4 ? 1 : 0).replace(/\.0$/, "") + "K";
+    return (n / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+  }
+  // opts: showVis, showAuthor, pins (ipakita ang "Pinned")
   function tiles(posts, opts) {
     opts = opts || {};
     return posts.map(function (p, i) {
@@ -28,15 +36,36 @@
         : m.kind === "video" ? '<video src="' + esc(m.url) + '#t=0.1" muted playsinline preload="metadata"></video>'
         : '<img alt="" loading="lazy" src="' + esc(m.url) + '">';
       var badges = "";
+      if (opts.pins !== false && p.pinned) badges += '<span class="pt-badge pin">Pinned</span>';
       if (p.scheduled) badges += '<span class="pt-badge sched">' + I("clock", "ic-sm") + short(p.publish_at) + "</span>";
       if (opts.showVis && p.visibility !== "public") badges += '<span class="pt-badge">' + I(VIS[p.visibility][0], "ic-sm") + "</span>";
       var corner = (p.media.length > 1 ? '<span class="pt-corner">' + I("album", "ic-sm") + p.media.length + "</span>" : "") +
-        (m.kind === "video" ? '<span class="pt-corner">' + I("play", "ic-sm") + "</span>" : "");
+        (m.kind === "video" ? '<span class="pt-corner">' + I("video", "ic-sm") + "</span>" : "");
+      var st = p.stats || {};
+      var stats = p.scheduled ? "" : '<span class="pt-stats" translate="no">' +
+        '<span title="Views">' + I("play", "ic-sm") + num(st.views) + "</span>" +
+        '<span title="Reactions">' + I("heart", "ic-sm") + num(st.reactions) + "</span></span>";
       return '<button type="button" class="pt' + (p.scheduled ? " is-sched" : "") + '" data-pi="' + i + '" aria-label="Open post">' + inner +
-        '<span class="pt-top">' + corner + "</span>" + (badges ? '<span class="pt-badges">' + badges + "</span>" : "") +
+        '<span class="pt-top">' + corner + "</span>" + (badges ? '<span class="pt-badges">' + badges + "</span>" : "") + stats +
         (opts.showAuthor && p.author ? '<span class="pt-author">@' + esc(p.author.username) + "</span>" : "") + "</button>";
     }).join("");
   }
+
+  // Bilang ng views: ipunin at ipadala nang sabay (posts-fast "view"). Isang beses lang bawat post bawat page.
+  var seen = {}, pending = [], timer = null;
+  function markViewed(id) {
+    if (!id || seen[id] || !window.TMN_API) return;
+    seen[id] = 1; pending.push(id);
+    clearTimeout(timer);
+    timer = setTimeout(flushViews, 1200);
+  }
+  function flushViews() {
+    if (!pending.length || !navigator.onLine) return;
+    var ids = pending.splice(0, 30);
+    TMN_API.call("posts", "view", { ids: ids }).catch(function () {});
+    if (pending.length) flushViews();
+  }
+  window.addEventListener("pagehide", flushViews);
 
   function open(posts, index, o) {
     o = o || {};
@@ -73,10 +102,14 @@
       var v = VIS[p.visibility] || VIS.public;
       root.querySelector(".pv-badges").innerHTML =
         (p.mine ? '<span class="badge">' + I(v[0], "ic-sm") + v[1] + "</span>" : "") +
-        (p.scheduled ? '<span class="badge badge-accent">' + I("clock", "ic-sm") + "Appears " + when(p.publish_at) + "</span>" : "");
+        (p.pinned ? '<span class="badge badge-pin">' + I("pin", "ic-sm") + "Pinned</span>" : "") +
+        (p.scheduled ? '<span class="badge badge-accent">' + I("clock", "ic-sm") + "Appears " + when(p.publish_at) + "</span>" : "") +
+        (p.stats && !p.scheduled ? '<span class="badge" title="Views">' + I("play", "ic-sm") + '<span translate="no">' + num(p.stats.views) + "</span> views</span>" : "");
+      if (!p.mine && !p.scheduled) markViewed(p.id);
       root.querySelector(".pv-cap").textContent = p.caption || "";
       root.querySelector(".pv-actions").innerHTML = p.mine
-        ? '<button type="button" class="btn btn-ghost btn-sm" data-a="edit">' + I("edit", "ic-sm") + "Edit</button>" +
+        ? (p.scheduled ? "" : '<button type="button" class="btn btn-ghost btn-sm' + (p.pinned ? " is-on" : "") + '" data-a="pin">' + I("pin", "ic-sm") + (p.pinned ? "Unpin" : "Pin") + "</button>") +
+          '<button type="button" class="btn btn-ghost btn-sm" data-a="edit">' + I("edit", "ic-sm") + "Edit</button>" +
           '<button type="button" class="btn btn-danger btn-sm" data-a="delete">' + I("trash", "ic-sm") + "Delete</button>"
         : "";
       // Reactions, comments, share, bookmark (kapag naka-load ang post-card.js)
@@ -116,6 +149,15 @@
           if (!posts.length) { modal.close(); return; }
           idx = Math.min(idx, posts.length - 1); slide = 0; show();
         } catch (err) { UI.toast(err.message); }
+      }
+      if (b.dataset.a === "pin") {
+        b.disabled = true;
+        try {
+          var r = await TMN_API.call("posts", "pin", { id: p.id, on: !p.pinned });
+          posts[idx] = r.post; UI.toast(r.post.pinned ? "Pinned to your profile." : "Unpinned.");
+          if (o.onChange) o.onChange({ type: "update", post: r.post });
+          show();
+        } catch (err) { b.disabled = false; UI.toast(err.message); }
       }
       if (b.dataset.a === "edit") {
         var upd = await edit(p);
@@ -189,5 +231,5 @@
     });
   }
 
-  window.TMN_POSTS_UI = { tiles: tiles, open: open, edit: edit, ago: ago, when: when, short: short, VIS: VIS };
+  window.TMN_POSTS_UI = { tiles: tiles, num: num, markViewed: markViewed, open: open, edit: edit, ago: ago, when: when, short: short, VIS: VIS };
 })();

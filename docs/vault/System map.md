@@ -14,7 +14,7 @@ updated: 2026-10-23
 | `share.html` | app/ | Share: camera / video / files → Gallery (+ "I-post din") | oo |
 | `messages.html` | app/ | Messages (placeholder) | oo |
 | `gallery.html` | app/ | Gallery: albums, upload, edit (device lang) | oo |
-| `profile.html` | app/ | Profile: cover, photo, edit profile, naka-pilang uploads, sariling posts | oo |
+| `profile.html` | app/ | Profile: cover, photo, edit profile, naka-pilang uploads, mga tab (Posts, Private, Reposts, Saved, Liked, History) | oo |
 | `settings.html` | app/ | Theme + logout | oo |
 | (wala pa) | app/admin/ | Admin pages | Admin lang |
 
@@ -58,7 +58,7 @@ updated: 2026-10-23
 | Function | Actions | Source |
 |---|---|---|
 | `auth-fast` | register, login, verifyEmail, resendCode, forgotPassword, resetPassword, checkSession, logout | `backend/auth-fast.ts` |
-| `posts-fast` | createUpload, createPost, myPosts, userPosts, getPost, feed, updatePost, deletePost, react, reactions, comments, addComment, deleteComment, bookmark, bookmarks, share, unrepost, shares | `backend/posts-fast.ts` |
+| `posts-fast` | createUpload, createPost, myPosts, userPosts, getPost, feed, updatePost, deletePost, react, reactions, comments, addComment, deleteComment, bookmark, bookmarks, share, unrepost, shares, view, pin, liked, reposts, history | `backend/posts-fast.ts` |
 | `social-fast` | follow, unfollow, people, profile, followList, stories, storyUpload, createStory, viewStory, storyViewers, deleteStory | `backend/social-fast.ts` |
 | `profile-fast` | get, update, imageUpload, setImage, removeImage | `backend/profile-fast.ts` |
 
@@ -77,11 +77,17 @@ updated: 2026-10-23
 | `post_bookmarks` | Saved posts | `sql/017-social.sql` |
 | `post_shares` | repost o link share | `sql/017-social.sql` |
 | `stories` / `story_views` | status (24 oras) at sino ang nanood | `sql/017-social.sql` |
+| `post_views` | sino ang nakakita ng post at kailan (views + History) | `sql/020-views-pins.sql` |
+
+`posts` ay may `pinned_at` (hanggang 3) at `view_count` (sql/020). Function: `record_post_views()` (service_role lang).
 
 Storage bucket: **`post-media`** (private, 12 MB/file, jpeg/webp/webm/mp4). Signed URLs lang galing sa `posts-fast`.
 Storage bucket: **`profile-media`** (public na view, 3 MB/file, jpeg/webp). Upload ay galing lang sa `profile-fast`.
 
 `users` ay may `email` at `email_verified_at` (sql/007), at `banner_url`, `avatar_path`, `banner_path` (sql/015). Status: Unverified → Active / Pending / Inactive.
+
+## Tools
+`tools/cache-bust.py` — naglalagay ng `?v=<version>` (galing sa `config.js`) sa lahat ng sariling `.js`/`.css` sa HTML. Patakbuhin tuwing release.
 
 ## External (libre, walang key)
 Open-Meteo (forecast), BigDataCloud (reverse geocode), ipapi.co / geojs.io (IP location), Brevo (email, server-side).

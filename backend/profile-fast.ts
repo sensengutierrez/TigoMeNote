@@ -57,12 +57,13 @@ const rand = () => [...crypto.getRandomValues(new Uint8Array(6))].map((x) => x.t
 // deno-lint-ignore no-explicit-any
 async function get(_p: any, me: any) {
   const now = new Date().toISOString();
-  const [posts, followers, following] = await Promise.all([
+  const [posts, followers, following, likes] = await Promise.all([
     db.from("posts").select("id", { count: "exact", head: true }).eq("user_id", me.id).is("deleted_at", null).lte("publish_at", now),
     db.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", me.id),
     db.from("follows").select("following_id", { count: "exact", head: true }).eq("follower_id", me.id),
+    db.from("post_reactions").select("post_id, posts!inner(user_id)", { count: "exact", head: true }).eq("posts.user_id", me.id),
   ]);
-  return reply({ ok: true, user: publicUser(me), counts: { posts: posts.count ?? 0, followers: followers.count ?? 0, following: following.count ?? 0 } });
+  return reply({ ok: true, user: publicUser(me), counts: { posts: posts.count ?? 0, followers: followers.count ?? 0, following: following.count ?? 0, likes: likes.count ?? 0 } });
 }
 
 // deno-lint-ignore no-explicit-any

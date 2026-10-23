@@ -30,6 +30,9 @@ updated: 2026-10-23
 | 2026-10-23 | 6 na reaction (❤️ 😂 😮 😢 🔥 👏), isa bawat tao | Simple at mabilis bilangin |
 | 2026-10-24 | **English ang default**; Language setting: English, Arabic (RTL), Filipino | Hiling ni Bench; pang-Bahrain at Pinas |
 | 2026-10-24 | Text sa code = English; isinasalin ng `i18n.js` gamit ang dictionary (hindi ang laman ng users) | Isang source ng text, madaling magdagdag ng wika |
+| 2026-10-24 | View = ≥60% nakita nang 1.5 s o binuksan; isang beses bawat tao bawat 6 oras; hindi binibilang ang sarili | Patas na bilang, hindi madaling dayain |
+| 2026-10-24 | Pin hanggang **3** (parang TikTok) | Hiling ni Bench |
+| 2026-10-24 | Cache busting gamit ang `?v=<version>` sa HTML | Para makuha agad ng phone ang bagong code |
 | 2026-10-23 | Lipat sa **Brevo** (free 300/araw) | Ayaw tanggapin ng Gmail ang App Password; walang domain na kailangan sa Brevo. SMS ay hindi pinili kasi may bayad. |
 
 ## Bukas pa (hinihintay si Bench)
