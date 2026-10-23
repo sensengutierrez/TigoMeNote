@@ -141,6 +141,9 @@
     return t;
   }
 
+  // Email na nakalimutan ang @ (hal. "juangmail.com") → paalala bago ipadala
+  function missingAt(v) { return v.indexOf("@") === -1 && /\.(com|net|org|ph|sa|co)$/i.test(v); }
+
   // Fade-out ng card, palit ng laman, fade-in
   function swap(fn) {
     clearTimeout(swapTimer);
@@ -228,6 +231,7 @@
     if (reg && !fName.value.trim()) return invalid(fName, "Ilagay ang display name mo.");
     if (reg && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(fEmail.value.trim())) return invalid(fEmail, "Ilagay ang tamang email address.");
     if (!fUser.value) return invalid(fUser, reg ? "Ilagay ang username." : "Ilagay ang username o email.");
+    if (!reg && missingAt(fUser.value)) return invalid(fUser, "Mukhang email ito pero walang @. Halimbawa: name@gmail.com");
     if (reg && !/^[a-z0-9_.]{3,24}$/.test(fUser.value)) return invalid(fUser, "Username: 3–24 letters, numbers, _ o . lang.");
     if (!fPass.value) return invalid(fPass, "Ilagay ang password.");
     if (reg && fPass.value.length < 8) return invalid(fPass, "Password: at least 8 characters.");
@@ -384,6 +388,7 @@
     if (rBusy) return;
     var id = rId.value.trim().toLowerCase();
     if (!id) { rMsg1.show("Ilagay ang username o email mo."); rId.focus(); return; }
+    if (missingAt(id)) { rMsg1.show("Mukhang email ito pero walang @. Halimbawa: name@gmail.com"); rId.focus(); return; }
     rMsg1.hide();
     rBusy = true; busyBtn(rBtn1, true, "Send code", "Sending…");
     try {
