@@ -14,6 +14,7 @@ window.TMN_NAV = {
   // Main menu
   main: [
     { id: "home",     label: "Daily",    icon: "sun",     href: "app/home.html" },
+    { id: "gallery",  label: "Gallery",  icon: "album",   href: "app/gallery.html" },
     { id: "explore",  label: "Explore",  icon: "compass", href: "app/explore.html" },
     { id: "share",    label: "Share",    icon: "plus",    href: "app/share.html", primary: true },
     { id: "messages", label: "Messages", icon: "chat",    href: "app/messages.html" },
@@ -28,5 +29,5 @@ window.TMN_NAV = {
   ],
 
   // Alin sa main ang lalabas sa bottom tabs ng phone (max 5)
-  tabs: ["home", "explore", "share", "messages", "profile"]
+  tabs: ["home", "gallery", "share", "messages", "profile"]
 };

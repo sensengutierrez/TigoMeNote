@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>Gallery · TigoMeNote</title>
+  <script src="../assets/js/theme.js"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/auth-guard.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/tokens.css">
+  <link rel="stylesheet" href="../assets/css/base.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <link rel="stylesheet" href="../assets/css/shell.css">
+  <link rel="stylesheet" href="../assets/css/pages/gallery.css">
+</head>
+<body data-page="gallery">
+  <main id="page" class="page fill">
+    <header class="page-head gallery-head">
+      <div>
+        <div class="eyebrow"><i data-icon="phone" data-size="sm"></i> Naka-save sa device na ito</div>
+        <h1>Gallery</h1>
+        <p class="lead">Photos at videos mo, naka-organize sa albums. Hindi ina-upload sa server.</p>
+      </div>
+      <div class="head-actions">
+        <label class="btn btn-ghost cam-btn">
+          <i data-icon="camera" data-size="sm"></i>Camera
+          <input type="file" accept="image/*,video/*" capture="environment" class="sr-only" id="camInput">
+        </label>
+        <label class="btn btn-primary">
+          <i data-icon="upload" data-size="sm"></i>Upload
+          <input type="file" accept="image/*,video/*" multiple class="sr-only" id="fileInput">
+        </label>
+      </div>
+    </header>
+
+    <div class="layout aside-left gallery-layout">
+      <aside class="layout-aside">
+        <section class="card albums-card">
+          <div class="albums-head">
+            <h3>Albums</h3>
+            <button class="btn btn-ghost btn-sm" type="button" id="newAlbum"><i data-icon="plus" data-size="sm"></i>New</button>
+          </div>
+          <nav class="album-list" id="albumList" aria-label="Albums"></nav>
+        </section>
+        <section class="card card-flat storage-card">
+          <div class="storage-top"><span>Storage sa device</span><b id="storeUsed">—</b></div>
+          <div class="bar"><i id="storeBar"></i></div>
+          <p class="faint small" id="storeNote">Kapag binura ang browser data, mabubura rin ang laman nito.</p>
+        </section>
+      </aside>
+
+      <section class="card gallery-main" id="dropZone">
+        <div class="g-toolbar">
+          <div class="g-title">
+            <h2 id="gTitle">All photos &amp; videos</h2>
+            <span class="faint small" id="gCount"></span>
+          </div>
+          <div class="g-tools">
+            <div class="chips" id="typeChips" role="tablist" aria-label="Type">
+              <button class="chip active" type="button" data-type="all">All</button>
+              <button class="chip" type="button" data-type="photo">Photos</button>
+              <button class="chip" type="button" data-type="video">Videos</button>
+            </div>
+            <button class="btn btn-ghost btn-sm" type="button" id="selectBtn"><i data-icon="check" data-size="sm"></i>Select</button>
+            <button class="icon-btn hidden" type="button" id="albumMenu" aria-label="Album options"><i data-icon="more"></i></button>
+          </div>
+        </div>
+
+        <div class="sel-bar hidden" id="selBar">
+          <b id="selCount">0 selected</b>
+          <div class="sel-actions">
+            <button class="btn btn-ghost btn-sm" type="button" id="selAll">Select all</button>
+            <button class="btn btn-ghost btn-sm" type="button" id="selMove"><i data-icon="move" data-size="sm"></i>Move</button>
+            <button class="btn btn-ghost btn-sm" type="button" id="selDownload"><i data-icon="download" data-size="sm"></i>Download</button>
+            <button class="btn btn-danger btn-sm" type="button" id="selDelete"><i data-icon="trash" data-size="sm"></i>Delete</button>
+            <button class="btn btn-ghost btn-sm" type="button" id="selCancel">Cancel</button>
+          </div>
+        </div>
+
+        <div class="g-scroll">
+          <div class="g-grid" id="grid"></div>
+          <div class="empty hidden" id="gEmpty">
+            <div class="empty-art"><i data-icon="image" data-size="lg"></i></div>
+            <h3 id="gEmptyTitle">Wala pang photos o videos</h3>
+            <p>Pindutin ang Upload, o i-drag dito ang files mula sa computer mo.</p>
+          </div>
+        </div>
+        <div class="drop-hint" aria-hidden="true"><i data-icon="upload" data-size="lg"></i><b>I-drop para ma-save sa device</b></div>
+      </section>
+    </div>
+  </main>
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/nav-items.js"></script>
+  <script src="../assets/js/components/app-shell.js"></script>
+  <script src="../assets/js/components/modal.js"></script>
+  <script src="../assets/js/media-store.js"></script>
+  <script src="../assets/js/components/photo-editor.js"></script>
+  <script src="../assets/js/pages/gallery.js"></script>
+</body>
+</html>

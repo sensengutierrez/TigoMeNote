@@ -151,8 +151,6 @@
 .otp.shake { animation: shake .4s; }
 @keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
 .verify-links { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
-.link-btn { border: 0; background: none; padding: 6px 2px; font-weight: 600; font-size: 14px; color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
-.link-btn:disabled { color: var(--text-3); text-decoration: none; cursor: default; }
 @media (max-width: 380px) { .otp { gap: 6px; } .otp input { height: 50px; font-size: 22px; } }
 
 /* ---------- Forgot password ---------- */

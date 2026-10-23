@@ -28,25 +28,32 @@
     </header>
 
     <div class="layout">
+    <div class="stack">
     <div class="capture">
-      <button class="capture-tile" type="button" disabled>
+      <label class="capture-tile">
         <span class="cap-icon"><i data-icon="camera" data-size="lg"></i></span>
         <span class="cap-title">Take photo</span>
         <span class="cap-sub">Camera</span>
-        <span class="badge badge-accent">Soon</span>
-      </button>
-      <button class="capture-tile" type="button" disabled>
+        <input type="file" accept="image/*" capture="environment" class="sr-only" data-pick>
+      </label>
+      <label class="capture-tile">
         <span class="cap-icon"><i data-icon="video" data-size="lg"></i></span>
         <span class="cap-title">Record video</span>
         <span class="cap-sub">Short clip</span>
-        <span class="badge badge-accent">Soon</span>
-      </button>
-      <button class="capture-tile" type="button" disabled>
+        <input type="file" accept="video/*" capture="environment" class="sr-only" data-pick>
+      </label>
+      <label class="capture-tile">
         <span class="cap-icon"><i data-icon="image" data-size="lg"></i></span>
         <span class="cap-title">From gallery</span>
-        <span class="cap-sub">Pick a file</span>
-        <span class="badge badge-accent">Soon</span>
-      </button>
+        <span class="cap-sub">Pumili ng files</span>
+        <input type="file" accept="image/*,video/*" multiple class="sr-only" data-pick>
+      </label>
+    </div>
+    <div class="card save-to">
+      <label for="albumSel"><i data-icon="album" data-size="sm"></i>I-save sa album</label>
+      <select id="albumSel" class="input"><option value="">Walang album</option></select>
+      <a class="btn btn-ghost" href="gallery.html"><i data-icon="grid" data-size="sm"></i>Open Gallery</a>
+    </div>
     </div>
 
     <section class="card where">
@@ -73,6 +80,8 @@
   <script src="../assets/js/icons.js"></script>
   <script src="../assets/js/nav-items.js"></script>
   <script src="../assets/js/components/app-shell.js"></script>
+  <script src="../assets/js/components/modal.js"></script>
+  <script src="../assets/js/media-store.js"></script>
   <script src="../assets/js/pages/share.js"></script>
 </body>
 </html>

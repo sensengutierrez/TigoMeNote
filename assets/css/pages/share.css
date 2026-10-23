@@ -30,3 +30,11 @@
   .capture-tile .cap-icon { width: 60px; height: 60px; border-radius: 18px; }
   .capture-tile .cap-title { font-size: 19px; }
 }
+
+/* Gumagana na ang tiles (label + file input) */
+.capture-tile { cursor: pointer; }
+.capture-tile:hover { border-color: var(--text); transform: translateY(-2px); }
+.capture-tile:first-child:hover { border-color: var(--ink); }
+.save-to { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; }
+.save-to label { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+.save-to select { flex: 1; min-width: 160px; height: 42px; }

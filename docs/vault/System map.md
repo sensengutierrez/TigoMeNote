@@ -11,8 +11,9 @@ updated: 2026-10-23
 | `login.html` | ROOT | Sign in / Create account | hindi |
 | `home.html` | app/ | Daily | oo |
 | `explore.html` | app/ | Explore (placeholder) | oo |
-| `share.html` | app/ | Share (placeholder) | oo |
+| `share.html` | app/ | Share: camera / video / files → Gallery | oo |
 | `messages.html` | app/ | Messages (placeholder) | oo |
+| `gallery.html` | app/ | Gallery: albums, upload, edit (device lang) | oo |
 | `profile.html` | app/ | Profile | oo |
 | `settings.html` | app/ | Theme + logout | oo |
 | (wala pa) | app/admin/ | Admin pages | Admin lang |
@@ -26,6 +27,10 @@ updated: 2026-10-23
 | `api.js` | `TMN_API.call(fn, action, data)` — isang paraan ng pagtawag sa server |
 | `icons.js` | Lahat ng SVG icons (`TMN_ICON("sun")`) |
 | `nav-items.js` | **Ang menu** (sidebar, hamburger, bottom tabs) |
+| `media-store.js` | Photos/videos/albums sa device (IndexedDB) |
+| `components/modal.js` | Modal, confirm, prompt (iisa sa buong site) |
+| `components/photo-editor.js` | Crop, rotate, flip, adjust, filters |
+| `components/weather.js` | Weather card + auto location |
 | `components/app-shell.js` | Gumagawa ng layout ng app pages mula sa nav-items |
 | `pages/<page>.js` | Code ng isang page lang |
 
@@ -52,6 +57,9 @@ updated: 2026-10-23
 | `email_codes` | 6-digit codes (hash lang), purpose `verify` o `reset` | `sql/007-email-verify.sql` |
 
 `users` ay may `email` at `email_verified_at` (sql/007). Status: Unverified → Active / Pending / Inactive.
+
+## External (libre, walang key)
+Open-Meteo (forecast), BigDataCloud (reverse geocode), ipapi.co / geojs.io (IP location), Brevo (email, server-side).
 
 ## Paano dumadaloy ang isang private page
 1. `theme.js` → kulay agad

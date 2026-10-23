@@ -18,6 +18,8 @@ Ito ang "utak" ng project: lahat ng ginawa, paano ginawa, at bakit. Buksan ang f
 - [[Build - Login page]] — sign in / create account na may panel swap animation
 - [[Build - Email verification]] — 6-digit code sa Gmail bago makapasok
 - [[Build - Forgot password]] — reset ng password gamit ang code sa email
+- [[Build - Gallery and albums]] — photos/videos sa device, albums, editor
+- [[Build - Weather]] — weather sa Daily, auto Bahrain/Pinas
 
 ## Setup
 - [[Supabase setup]] — project, tables, secrets (walang totoong value dito)

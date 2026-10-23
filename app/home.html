@@ -46,6 +46,7 @@
      </div>
 
      <aside class="layout-aside">
+      <section class="card wx-card" id="weather" aria-label="Weather"></section>
       <section class="card">
         <h3 class="side-title">This week</h3>
         <div class="week" id="week" aria-label="This week"></div>
@@ -53,9 +54,9 @@
       <section class="card">
         <h3 class="side-title">Today</h3>
         <div class="today-stats">
-          <div><b>0</b><span>Notes</span></div>
-          <div><b>0</b><span>Photos</span></div>
-          <div><b>0</b><span>Videos</span></div>
+          <div><b id="tNotes">0</b><span>Notes</span></div>
+          <div><b id="tPhotos">0</b><span>Photos</span></div>
+          <div><b id="tVideos">0</b><span>Videos</span></div>
         </div>
       </section>
       <section class="card card-flat side-note">
@@ -69,6 +70,8 @@
   <script src="../assets/js/icons.js"></script>
   <script src="../assets/js/nav-items.js"></script>
   <script src="../assets/js/components/app-shell.js"></script>
+  <script src="../assets/js/media-store.js"></script>
+  <script src="../assets/js/components/weather.js"></script>
   <script src="../assets/js/pages/daily.js"></script>
 </body>
 </html>

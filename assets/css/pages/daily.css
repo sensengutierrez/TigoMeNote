@@ -34,3 +34,28 @@
   .layout-aside .day { padding: 8px 0 10px; }
   .layout-aside .day .d-num { font-size: 16px; }
 }
+
+/* ---------- Weather card (components/weather.js) ---------- */
+.wx { display: grid; gap: 14px; }
+.wx-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.wx-place { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; min-width: 0; }
+.wx-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wx-refresh { width: 32px; height: 32px; color: var(--text-3); }
+.wx-now { display: flex; align-items: center; gap: 14px; }
+.wx-icon { width: 60px; height: 60px; border-radius: 18px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); flex: none; }
+.wx-icon .ic { width: 32px; height: 32px; }
+.wx-temp { font-family: var(--font-display); font-size: 44px; font-weight: 800; line-height: 1; letter-spacing: -0.04em; }
+.wx-temp span { font-size: 18px; font-weight: 700; color: var(--text-3); margin-left: 2px; vertical-align: top; }
+.wx-cond { color: var(--text-2); font-size: 13.5px; margin-top: 4px; }
+.wx-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--text-2); }
+.wx-meta span { display: inline-flex; align-items: center; gap: 5px; }
+.wx-days { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.wx-day { display: grid; justify-items: center; gap: 4px; padding: 8px 0; border-radius: var(--r-md); background: var(--bg-soft); font-size: 11.5px; color: var(--text-3); font-weight: 600; }
+.wx-day .ic { width: 20px; height: 20px; color: var(--text-2); }
+.wx-day b { color: var(--text); font-size: 14px; }
+.wx-day small { font-size: 11px; }
+.wx-day.today { background: var(--ink); color: var(--ink-text); }
+.wx-day.today .ic, .wx-day.today b { color: var(--ink-text); }
+.wx-foot { font-size: 11.5px; }
+.wx-foot .link-btn { font-size: 11.5px; padding: 0; }
+.wx-err { margin: 0; }

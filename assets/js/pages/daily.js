@@ -29,4 +29,24 @@
       '<span class="d-num">' + d.getDate() + "</span><span class=\"d-dot\"></span></div>";
   }
   document.getElementById("week").innerHTML = html;
+
+  // Weather: sa phone nasa taas ng feed, sa desktop nasa side panel
+  var wx = document.getElementById("weather");
+  var stack = document.querySelector(".layout > .stack");
+  var aside = document.querySelector(".layout-aside");
+  var mq = window.matchMedia("(min-width: 900px)");
+  function placeWeather() { if (mq.matches) aside.insertBefore(wx, aside.firstChild); else stack.insertBefore(wx, stack.firstChild); }
+  placeWeather();
+  mq.addEventListener("change", placeWeather);
+  if (window.TMN_WEATHER) window.TMN_WEATHER.mount(wx);
+
+  // Bilang ng photos/videos ngayong araw (galing sa Gallery sa device)
+  async function counts() {
+    try {
+      var c = await window.TMN_MEDIA.todayCounts();
+      document.getElementById("tPhotos").textContent = c.photos;
+      document.getElementById("tVideos").textContent = c.videos;
+    } catch (e) {}
+  }
+  if (window.TMN_MEDIA) { counts(); document.addEventListener("tmn:media", counts); }
 })();
