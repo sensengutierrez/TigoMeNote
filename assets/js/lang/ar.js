@@ -665,5 +665,6 @@ TMN_I18N.register("ar", {
   "Push": "إشعار",
   "SOS alerts and account notices (like a hidden post) are always on.": "تنبيهات SOS وإشعارات الحساب (مثل منشور مخفي) مفعّلة دائماً.",
   "Push, pause all, sleep mode, and what to notify you about.": "الإشعارات، الإيقاف المؤقت، وضع النوم، وما الذي نُعلمك به.",
-  "Notifications are on for this device.": "تم تفعيل الإشعارات على هذا الجهاز."
+  "Notifications are on for this device.": "تم تفعيل الإشعارات على هذا الجهاز.",
+  "{n}% rain": "{n}% مطر"
 });

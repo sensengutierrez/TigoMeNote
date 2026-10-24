@@ -137,7 +137,7 @@
         '<div class="wx-meta">' +
           "<span>" + I("drop", "ic-sm") + cur.relative_humidity_2m + "% humidity</span>" +
           "<span>" + I("wind", "ic-sm") + Math.round(cur.wind_speed_10m) + " km/h</span>" +
-          "<span>" + I("rain", "ic-sm") + (day.precipitation_probability_max[0] != null ? day.precipitation_probability_max[0] : 0) + "% ulan</span>" +
+          "<span>" + I("rain", "ic-sm") + (day.precipitation_probability_max[0] != null ? day.precipitation_probability_max[0] : 0) + "% rain</span>" +
         "</div>" +
         '<div class="wx-days">' + days + "</div>" +
         '<div class="wx-foot faint">' +

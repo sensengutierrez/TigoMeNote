@@ -31,6 +31,8 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-10-24 · Status: natatakpan ng status viewer ang Report sheet → mas mataas ang z-index ng viewer → `body:has(.st-view) .modal-backdrop{z-index:95}` (`social.css`)
 - 2026-10-24 · Notifications: "maria, jose and 1 others" kapag 3 tao → laging "and N others" kahit isa lang ang natira → 3 tao = tatlong pangalan; "and N others" kapag 4+ (`pages/notifications.js`)
 - 2026-10-24 · Notifications sa phone: naiipit ang text ng follow request dahil sa Confirm/Delete sa gilid → ang buttons ay nasa ilalim na ng text (`pages/notifications.js`, `notifications.css`)
+- 2026-10-24 · Daily: nananatili ang "Good morning" kahit hapon na kapag bukas lang ang page → isang beses lang kinukuha ang oras pag-load → bawat minuto at pagbalik sa app tinitingnan ulit (`pages/daily.js`)
+- 2026-10-24 · Weather: "0% ulan" kahit English ang wika → Filipino na salita sa code → "% rain" + salin (`components/weather.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

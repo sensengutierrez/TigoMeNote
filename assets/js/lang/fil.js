@@ -810,5 +810,6 @@ TMN_I18N.register("fil", {
   "Push": "Push",
   "SOS alerts and account notices (like a hidden post) are always on.": "Laging naka-on ang SOS alerts at account notices (hal. naitagong post).",
   "Push, pause all, sleep mode, and what to notify you about.": "Push, i-pause lahat, sleep mode, at ano ang ino-notify sa'yo.",
-  "Notifications are on for this device.": "Naka-on na ang notifications sa device na ito."
+  "Notifications are on for this device.": "Naka-on na ang notifications sa device na ito.",
+  "{n}% rain": "{n}% ulan"
 });
