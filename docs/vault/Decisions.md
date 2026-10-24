@@ -67,6 +67,9 @@ updated: 2026-10-24
 | 2026-10-24 | Explore post: route sa `posts.activity` (jsonb, ≤800 points), kinukuwenta ulit ng server ang layo | Isang table lang (walang bagong table), mabilis i-load sa feed, hindi madadaya ang distance |
 | 2026-10-24 | Static na mapa sa feed = SVG (OSM tiles + guhit); interactive (Leaflet) lang kapag binuksan | Mabilis ang feed kahit maraming route; hindi gumagawa ng maraming Leaflet map |
 | 2026-10-24 | GPS recording sa browser: kailangang bukas ang screen (Wake Lock) | Pinapatigil ng browser ang GPS kapag naka-lock; sa APK, ang location history (Safety) ang puwedeng gamitin |
+| 2026-10-24 | Background = naka-save sa account (users.appearance + bg_desktop/bg_phone sa profile-media) | Pinili ni Bench; pareho sa lahat ng device |
+| 2026-10-24 | My music = sariling playlist sa device lang (IndexedDB), hindi ina-upload | Pinili ni Bench (ako lang); walang copyright problem |
+| 2026-10-24 | Tuloy-tuloy na music kahit lumipat ng page o naka-lock = sa APK na | Pinili ni Bench; sa web, humihinto ang audio kapag nagpalit ng page |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

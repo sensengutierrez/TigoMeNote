@@ -1,6 +1,7 @@
 // TigoMeNote · profile-fast (Supabase Edge Function, verify_jwt = off)
 // Sariling profile: pangalan, bio, profile photo (avatar) at cover (banner).
-// Actions: get, update, imageUpload, setImage, removeImage. Kailangan ng session token (x-session-token).
+// Actions: get, update, imageUpload, setImage, removeImage, look, saveLook. Kailangan ng session token (x-session-token).
+// Background ng app (look): kulay/gradient/sariling picture (desktop at phone), lakas at transparency; naka-save sa users.appearance.
 // Storage: PUBLIC bucket "profile-media" (pang-view ng lahat), pero ang upload ay signed URL galing dito lang.
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
@@ -10,11 +11,14 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const db = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 
 const BUCKET = "profile-media";
-const KINDS = ["avatar", "banner"] as const;
+const KINDS = ["avatar", "banner", "bg_desktop", "bg_phone"] as const;
 const COL: Record<string, { url: string; path: string }> = {
   avatar: { url: "avatar_url", path: "avatar_path" },
   banner: { url: "banner_url", path: "banner_path" },
+  bg_desktop: { url: "bg_desktop_url", path: "bg_desktop_path" },
+  bg_phone: { url: "bg_phone_url", path: "bg_phone_path" },
 };
+const LOOK_USES = ["none", "preset", "color", "image"];
 const MAX_BYTES = 3 * 1024 * 1024;
 const UPLOADS_PER_HOUR = 20;
 
@@ -50,6 +54,24 @@ function publicUser(u: any) {
     id: u.id, username: u.username, display_name: u.display_name, role: u.role, status: u.status,
     bio: u.bio, avatar_url: u.avatar_url, banner_url: u.banner_url ?? null,
     email: u.email, email_verified: !!u.email_verified_at, created_at: u.created_at,
+  };
+}
+// Background ng app: ang naka-save na setting + mga picture
+// deno-lint-ignore no-explicit-any
+function lookOf(u: any) {
+  const a = u.appearance && typeof u.appearance === "object" ? u.appearance : {};
+  return { use: a.use ?? "none", preset: a.preset ?? null, color: a.color ?? null, strength: a.strength ?? 60, panels: a.panels ?? 88,
+    desktop: u.bg_desktop_url ?? null, phone: u.bg_phone_url ?? null };
+}
+// deno-lint-ignore no-explicit-any
+function cleanLook(p: any) {
+  const n = (v: unknown, lo: number, hi: number, d: number) => { const x = Number(v); return Number.isFinite(x) ? Math.round(Math.min(hi, Math.max(lo, x))) : d; };
+  return {
+    use: LOOK_USES.includes(p.use) ? p.use : "none",
+    preset: /^[a-z0-9-]{1,24}$/.test(String(p.preset ?? "")) ? String(p.preset) : null,
+    color: /^#[0-9a-f]{6}$/i.test(String(p.color ?? "")) ? String(p.color).toLowerCase() : null,
+    strength: n(p.strength, 10, 100, 60),
+    panels: n(p.panels, 30, 100, 88),
   };
 }
 const publicUrl = (path: string) => `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
@@ -120,7 +142,18 @@ async function setImage(p: any, me: any) {
   }).eq("id", me.id).select("*").single();
   if (error) throw error;
   if (old && old !== path) await db.storage.from(BUCKET).remove([old]);
-  return reply({ ok: true, user: publicUser(data) });
+  return reply({ ok: true, user: publicUser(data), look: lookOf(data) });
+}
+
+// deno-lint-ignore no-explicit-any
+async function look(_p: any, me: any) {
+  return reply({ ok: true, look: lookOf(me) });
+}
+// deno-lint-ignore no-explicit-any
+async function saveLook(p: any, me: any) {
+  const { data, error } = await db.from("users").update({ appearance: cleanLook(p.look ?? {}), updated_at: new Date().toISOString() }).eq("id", me.id).select("*").single();
+  if (error) throw error;
+  return reply({ ok: true, look: lookOf(data) });
 }
 
 // deno-lint-ignore no-explicit-any
@@ -133,7 +166,7 @@ async function removeImage(p: any, me: any) {
   }).eq("id", me.id).select("*").single();
   if (error) throw error;
   if (old) await db.storage.from(BUCKET).remove([old]);
-  return reply({ ok: true, user: publicUser(data) });
+  return reply({ ok: true, user: publicUser(data), look: lookOf(data) });
 }
 
 Deno.serve(async (req) => {
@@ -149,6 +182,8 @@ Deno.serve(async (req) => {
       case "imageUpload": return await imageUpload(p, me);
       case "setImage":    return await setImage(p, me);
       case "removeImage": return await removeImage(p, me);
+      case "look":        return await look(p, me);
+      case "saveLook":    return await saveLook(p, me);
       default:            return fail("Unknown action.");
     }
   } catch (e) {

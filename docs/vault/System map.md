@@ -52,6 +52,9 @@ updated: 2026-10-24
 | `components/activity-recorder.js` | I-record ang nilakbay gamit ang GPS (`TMN_TRACK`) |
 | `components/activity-composer.js` | Explore post: route (Record/GPX/history) + photos + stats (`TMN_ACTIVITY`) |
 | `components/create-menu.js` | "Create": Status / Post / Explore (`TMN_CREATE`) |
+| `appearance.js` / `look-tigo.js` | Background ng app sa lahat ng page + sariling TigoMeNote designs (`TMN_LOOK`, `TMN_LOOK_TIGO`) |
+| `components/appearance-settings.js` | Settings → Background: presets, kulay, picture (desktop/phone), sliders (`TMN_LOOK_UI`) |
+| `music-store.js` / `components/music-player.js` | My music: playlist sa device (IndexedDB) + player sa profile (`TMN_MUSICDB`, `TMN_MUSIC`) |
 | `components/image-cropper.js` | Crop ng larawan bago i-upload (`TMN_CROPPER`) |
 | `components/profile-editor.js` | Edit profile + palit ng photo/cover (`TMN_PROFILE_EDIT`) |
 | `components/app-shell.js` | Gumagawa ng layout ng app pages mula sa nav-items |
@@ -101,7 +104,7 @@ Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast
 
 | Table | Para saan | SQL |
 |---|---|---|
-| `users` | accounts | `sql/001-users.sql` |
+| `users` | accounts (+ `appearance`, `bg_desktop_url`, `bg_phone_url` = background ng app) | `sql/001-users.sql`, `sql/048-app-background.sql` |
 | `sessions` | login tokens (hash lang) | `sql/002-sessions.sql` |
 | `write_action_dedup` | rate limit / duplicate guard | `sql/003-write-action-dedup.sql` |
 | `brain_notes` | kopya ng vault na ito sa database | `sql/004-brain-notes.sql` |

@@ -2,6 +2,9 @@
 (function () {
   var C = window.TMN_CONFIG, T = window.TMN_THEME;
 
+  // Background ng app (kulay o sariling picture)
+  if (window.TMN_LOOK_UI) TMN_LOOK_UI.mount(document.getElementById("lookMount"));
+
   var seg = document.getElementById("themeSeg");
   function paintSeg() {
     var mode = T.get();

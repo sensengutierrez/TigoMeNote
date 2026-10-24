@@ -30,3 +30,30 @@
 #filesMount .row-main { min-width: 200px; }
 #filesMount .row-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 #filesMount .row-title .ic { color: var(--text-2); }
+
+/* ---------- Background (appearance-settings.js) ---------- */
+.lk { display: grid; gap: 14px; }
+.lk-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 10px; }
+.lk-sw { display: grid; gap: 4px; justify-items: center; padding: 0; border: 0; background: none; color: var(--text-2); font: inherit; cursor: pointer; }
+.lk-sw > span { width: 100%; aspect-ratio: 4 / 3; border-radius: 12px; border: 2px solid var(--line); display: grid; place-items: center; background: var(--surface-2); transition: transform .12s, border-color .12s; }
+.lk-sw small { font-size: 12px; }
+.lk-sw:hover > span { transform: translateY(-2px); }
+.lk-sw.on > span { border-color: var(--ink); box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink); }
+.lk-sw.on small { color: var(--text); font-weight: 600; }
+.lk-photos { display: grid; gap: 10px; }
+.lk-slot { display: flex; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: var(--r-md); }
+.lk-thumb { flex: none; border-radius: 10px; background: var(--surface-2) center / cover no-repeat; border: 1px solid var(--line); }
+.lk-bg_desktop { width: 96px; height: 60px; }
+.lk-bg_phone { width: 44px; height: 78px; }
+.lk-slot-main { display: grid; gap: 2px; min-width: 0; }
+.lk-slot-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.lk-sliders { display: grid; gap: 12px; }
+.lk-sliders.off { opacity: .45; pointer-events: none; }
+.lk-slider { display: grid; gap: 4px; }
+.lk-slider > span { display: flex; justify-content: space-between; font-size: 14px; }
+.lk-slider input { width: 100%; accent-color: var(--ink); }
+.lk-status { margin: 0; }
+.set-col { flex-direction: column; align-items: stretch; }
+.set-col #lookMount { width: 100%; }
+.lk-group { margin: 2px 0 -6px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.lk-tigo .lk-sw > span { aspect-ratio: 1; }

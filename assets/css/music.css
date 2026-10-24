@@ -1,0 +1,31 @@
+/* TigoMeNote · music.css — "My music" sa profile (music-player.js) */
+.p-music { display: grid; gap: 10px; }
+.mu-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.mu-head h3 { display: flex; align-items: center; gap: 8px; margin: 0; }
+.mu-note, .mu-tip, .mu-empty { margin: 0; }
+.mu-tip { display: flex; gap: 6px; align-items: flex-start; }
+.mu-now { display: grid; gap: 8px; padding: 12px; border-radius: var(--r-lg); background: var(--surface-2); }
+.mu-now-info { display: grid; text-align: center; }
+.mu-now-info b { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mu-seek { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; }
+.mu-bar { width: 100%; accent-color: var(--ink); }
+.mu-ctrls { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.mu-ctrls .icon-btn { font-size: 18px; color: var(--text-2); position: relative; }
+.mu-ctrls .icon-btn.on { color: var(--accent); }
+.mu-repeat small { position: absolute; right: 4px; bottom: 2px; font-size: 9px; font-weight: 700; }
+.mu-play { width: 52px; height: 52px; border-radius: 50%; border: 0; display: grid; place-items: center; background: var(--ink); color: var(--ink-text); cursor: pointer; }
+.mu-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.mu-item { display: flex; align-items: center; gap: 6px; border-top: 1px solid var(--line); }
+.mu-item:first-child { border-top: 0; }
+.mu-pick { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 10px 4px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.mu-n { width: 22px; text-align: center; color: var(--text-3); font-size: 13px; }
+.mu-txt { display: grid; min-width: 0; }
+.mu-txt b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mu-item.on .mu-txt b { color: var(--accent); }
+.mu-len { flex: none; }
+.mu-eq { width: 22px; height: 16px; display: flex; align-items: flex-end; justify-content: center; gap: 2px; }
+.mu-eq i { width: 3px; background: var(--accent); animation: mu-eq 0.9s ease-in-out infinite; }
+.mu-eq i:nth-child(2) { animation-delay: .2s; } .mu-eq i:nth-child(3) { animation-delay: .4s; }
+@keyframes mu-eq { 0%, 100% { height: 4px; } 50% { height: 16px; } }
+@media (prefers-reduced-motion: reduce) { .mu-eq i { animation: none; height: 10px; } }
+.mu-menu { display: grid; gap: 8px; }

@@ -2,6 +2,8 @@
    Profile (cover, photo, edit) + "Naka-pila sa device" (offline queue) + sariling posts mula sa server. */
 (function () {
   var UI = window.TMN_UI, I = window.TMN_ICON, Q = window.TMN_POSTQ, PU = window.TMN_POSTS_UI;
+  // My music (sariling playlist, nasa device lang)
+  if (window.TMN_MUSIC && document.getElementById("pMusic")) TMN_MUSIC.mount(document.getElementById("pMusic"));
   var $ = function (id) { return document.getElementById(id); };
   var posts = [], filter = "all", loaded = false, qUrls = [];
 

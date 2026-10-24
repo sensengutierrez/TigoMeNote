@@ -232,3 +232,16 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "sa explore dapat merron akong option kung stories/post/explore, ang posting pag explore parang komoot, pwede mag lagay ng picture tapos ung map ng nilakbay… pag click ko lalaki sya para sa view tapos lagyan mo nalang ng x para close same sa video".
 - **Files:** `sql/046-explore-activity.sql`, `backend/posts-fast.ts` (v12), `assets/js/route.js` (bago), `components/media-viewer.js` (bago), `components/activity-recorder.js` (bago), `components/activity-composer.js` (bago), `components/create-menu.js` (bago), `components/post-card.js`, `components/post-viewer.js`, `components/post-composer.js`, `post-queue.js`, `pages/explore.js`, `pages/share.js`, `app/explore.html`, `app/share.html`, `app/profile.html`, `app/messages.html`, `app/notifications.html`, `assets/css/activity.css` (bago), `components.css`, `pages/explore.css`, `pages/share.css`, `lang/fil.js`, `lang/ar.js`, `config.js` (0.11.5)
 - **Paano:** Detalye sa [[Build - Explore activity]].
+
+## 2026-10-24 · #34 Background ng app (pati sariling TigoMeNote designs), My music, mas maliit na X
+- **Ano:**
+  - **Background** (Settings → Appearance → Background), lalabas sa lahat ng page:
+    - **TigoMeNote originals** (sariling gawa, walang kinopya): Tigo Notes, Tigo Journal, Tigo Dots, Tigo Waves, Tigo Pearls, Tigo Sampaguita, Tigo Confetti, Tigo Night.
+    - 12 kulay/gradient, sariling kulay (color picker), o **sariling picture**: magkahiwalay ang Desktop/laptop at Phone.
+    - **Background strength** (gaano kakita) at **Card transparency** (gaano ka-see-through ang cards).
+    - Naka-save sa account, kaya pareho sa lahat ng device.
+  - **My music** sa sariling profile: playlist galing sa phone/computer (MP3, M4A, WAV…). Ikaw lang ang nakakarinig; nasa device lang, hindi ina-upload. Play/Pause, Next/Previous, Shuffle, Repeat, seek, at controls sa lock screen. Sa website: tuloy kahit i-minimize pero humihinto kapag lumipat ng page; tuloy-tuloy kapag may APK na.
+  - Mas maliit na **X** sa buong-screen na viewer (34px; mas malaki pa rin ang tapikan).
+- **Bakit:** Ayon kay Bench: "laki ng x hahaha", "sa buong background… pwede me color background iba iba… mag upload kung para sa desktop or laptop size or phone size… ma adjust ung transparent", "mag lagay or gawa ka din ng background natin na TigoMeNote walang katulad at original", at "sa my profile… playlist using storage music… kahit mag minimize gumagana padin". Pinili ni Bench: music = ako lang; tuloy-tuloy na tugtog = sa APK na; background = sa account.
+- **Files:** `sql/048-app-background.sql`, `backend/profile-fast.ts` (v8: look, saveLook, bg_desktop/bg_phone), `assets/js/appearance.js` (bago), `assets/js/look-tigo.js` (bago), `assets/css/look.css` (bago), `components/appearance-settings.js` (bago), `assets/js/music-store.js` (bago), `components/music-player.js` (bago), `assets/css/music.css` (bago), `pages/settings.js`, `pages/profile.js`, `app/*.html` (appearance.js + look.css sa 10 page), `app/settings.html`, `app/profile.html`, `components.css` (X), `pages/settings.css`, `lang/fil.js`, `lang/ar.js`, `config.js` (0.11.6)
+- **Paano:** Detalye sa [[Build - Background and music]].

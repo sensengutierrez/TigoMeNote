@@ -1,0 +1,26 @@
+/* TigoMeNote · look.css — background ng app (appearance.js). Kapag walang napili, walang epekto ang file na ito. */
+html.has-bg body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: var(--look-layer);
+  opacity: var(--look-strength, .6);
+}
+/* Ang mga "pader" ng layout ay nagiging see-through para makita ang background */
+html.has-bg .shell-main,
+html.has-bg .sidebar { background: transparent; }
+@media (min-width: 900px) {
+  html.has-bg .sidebar { background: color-mix(in srgb, var(--bg) var(--look-panel, 88%), transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+}
+/* Cards: gaano kabuo (Card transparency sa Settings) + konting blur para mabasa pa rin */
+html.has-bg .card,
+html.has-bg .pcard {
+  background: color-mix(in srgb, var(--surface) var(--look-panel, 88%), transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+html.has-bg .segmented { background: color-mix(in srgb, var(--surface-2) var(--look-panel, 88%), transparent); }
+/* Pamagat ng page na nasa ibabaw mismo ng background: may anino para mabasa sa picture */
+html.bg-photo .page-head h1, html.bg-photo .ex-head h1 { text-shadow: 0 1px 12px color-mix(in srgb, var(--bg) 85%, transparent); }
+/* Madilim na background (hal. Tigo Night, Tigo Pearls): puti ang text na direktang nasa ibabaw nito */
+html.bg-dark .page-head h1, html.bg-dark .page-head .lead, html.bg-dark .page-head .eyebrow, html.bg-dark .ex-head h1,
+html.bg-dark .page > h1, html.bg-dark .empty h3, html.bg-dark .empty p { color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.45); }
+/* Dark mode + maliwanag na background o picture: dinidilim para mabasa pa rin ang text */
+html[data-theme="dark"].has-bg:not(.bg-dark) body::before { filter: brightness(.45) saturate(.9); }
