@@ -52,3 +52,10 @@
 .sf-pick .sf-tick { opacity: 0; color: var(--accent); }
 .sf-pick.on { background: var(--surface-2); }
 .sf-pick.on .sf-tick { opacity: 1; }
+
+/* Location history: Save copy / Delete, at ang sheet bago burahin */
+.sf-hist-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.lx { display: grid; gap: 12px; padding-bottom: 6px; }
+.lx-where { display: flex; gap: 6px; align-items: center; }
+.lx-btns { display: grid; gap: 8px; }
+.lx-btns .btn { justify-content: center; }

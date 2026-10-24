@@ -228,9 +228,15 @@
     catch (e) { sw.checked = !sw.checked; UI.toast(e.message); }
     sw.disabled = !!(data && data.me.supervised);
   });
-  $("clearBtn").addEventListener("click", async function () {
-    if (!(await TMN_MODAL.confirm("Delete all your saved locations? Your circle will see “No location yet” until the next update.", { okText: "Delete", danger: true }))) return;
-    try { await TMN_API.call("safety", "clearHistory", {}); UI.toast("Location history deleted."); load(); } catch (e) { UI.toast(e.message); }
+  // Bago burahin: puwedeng i-save muna ang kopya (.zip) sa TigoMeNote folder (components/location-export.js)
+  $("clearBtn").addEventListener("click", function () { TMN_LOC_EXPORT.clearSheet(load); });
+  $("exportBtn").addEventListener("click", async function () {
+    var b = this; b.disabled = true;
+    try {
+      var s = await TMN_LOC_EXPORT.save();
+      UI.toast(s.count ? "Saved " + s.count + " locations to " + s.where + "." : "No saved locations yet.", 4000);
+    } catch (e) { UI.toast(e.message); }
+    b.disabled = false;
   });
   if (N.isApp) $("appNote").classList.add("hidden");
 

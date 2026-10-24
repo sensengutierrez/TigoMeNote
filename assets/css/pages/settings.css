@@ -24,3 +24,9 @@
 .row-link:hover { background: var(--surface-2); }
 .row-link > .ic { color: var(--text-3); flex: none; }
 [dir="rtl"] .row-link > .ic { transform: scaleX(-1); }
+
+/* Files on this device */
+#filesMount .row { flex-wrap: wrap; }
+#filesMount .row-main { min-width: 200px; }
+#filesMount .row-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+#filesMount .row-title .ic { color: var(--text-2); }

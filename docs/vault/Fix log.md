@@ -33,6 +33,7 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-10-24 · Notifications sa phone: naiipit ang text ng follow request dahil sa Confirm/Delete sa gilid → ang buttons ay nasa ilalim na ng text (`pages/notifications.js`, `notifications.css`)
 - 2026-10-24 · Daily: nananatili ang "Good morning" kahit hapon na kapag bukas lang ang page → isang beses lang kinukuha ang oras pag-load → bawat minuto at pagbalik sa app tinitingnan ulit (`pages/daily.js`)
 - 2026-10-24 · Weather: "0% ulan" kahit English ang wika → Filipino na salita sa code → "% rain" + salin (`components/weather.js`)
+- 2026-10-24 · Profile ng ibang user (desktop): hindi buong lapad ang cover at nakapatong ang pangalan dito → `aspect-ratio` + `max-height` ay nagpapaliit din ng lapad, at `margin-top: -40px` ang buong header → fixed na lapad + taas (`clamp`), avatar lang ang nakapatong at nasa sariling linya ang pangalan (`social.css`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

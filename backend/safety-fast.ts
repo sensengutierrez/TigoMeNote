@@ -1,6 +1,6 @@
 // TigoMeNote · safety-fast (Supabase Edge Function, verify_jwt = off)
 // Safety: Family/Friends circle, Locate (location 30 araw), SOS, at push notifications.
-// Actions: circle, invite, respond, update, remove, pause, ping, history, clearHistory,
+// Actions: circle, invite, respond, update, remove, pause, ping, history, clearHistory, exportHistory,
 //          sos, sosUpdate, sosEnd, alerts, ack, pushKey, subscribe, unsubscribe, testPush
 // Kailangan ng session token (x-session-token). Files: index.ts + webpush.ts (parehong folder sa deploy).
 // Push: web push (VAPID, key ay ginagawa dito at naka-save sa app_keys). "fcm" = naka-abang para sa APK.
@@ -268,6 +268,23 @@ async function history(p: any, me: any) {
   return reply({ ok: true, points: (data ?? []).map((r) => ({ lat: r.lat, lng: r.lng, acc: r.acc, source: r.source, at: r.created_at })) });
 }
 
+// Buong sariling history (hanggang 30 araw) para sa .zip na kopya bago burahin
+// deno-lint-ignore no-explicit-any
+async function exportHistory(_p: any, me: any) {
+  // deno-lint-ignore no-explicit-any
+  const out: any[] = [];
+  let after = ago(KEEP_DAYS * 86_400_000);
+  for (let i = 0; i < 30; i++) {
+    const { data } = await db.from("location_points").select("lat, lng, acc, source, created_at").eq("user_id", me.id)
+      .gt("created_at", after).order("created_at", { ascending: true }).limit(1000);
+    if (!data || !data.length) break;
+    out.push(...data);
+    after = data[data.length - 1].created_at;
+    if (data.length < 1000) break;
+  }
+  return reply({ ok: true, points: out.map((r) => ({ lat: r.lat, lng: r.lng, acc: r.acc, source: r.source, at: r.created_at })) });
+}
+
 // deno-lint-ignore no-explicit-any
 async function clearHistory(_p: any, me: any) {
   await db.from("location_points").delete().eq("user_id", me.id);
@@ -394,6 +411,7 @@ Deno.serve(async (req) => {
       case "ping":         return await ping(p, me);
       case "history":      return await history(p, me);
       case "clearHistory": return await clearHistory(p, me);
+      case "exportHistory": return await exportHistory(p, me);
       case "sos":          return await sos(p, me);
       case "sosUpdate":    return await sosUpdate(p, me);
       case "sosEnd":       return await sosEnd(p, me);

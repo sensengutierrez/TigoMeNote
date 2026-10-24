@@ -44,6 +44,20 @@ Kapag may `window.TMN_APP` ang Android app, iyon ang gagamitin ng `TMN_NATIVE`:
 `getLocation`, `startBackgroundLocation/stopBackgroundLocation`, `alarmStart/alarmStop` (malakas kahit silent), `pushToken` (FCM, `push_subs.kind = 'fcm'`), `sendSms` (SOS kahit walang internet).
 Sa server: ang FCM sending ay idadagdag kapag may Firebase project na (`pushTo()` sa `safety-fast`).
 
+## TigoMeNote folder at kopya ng location
+- **Save copy** at **Delete** sa Location history (Safety). Bago burahin, may pagpipilian: **Save to zip, then delete**, **Delete without saving**, o Cancel.
+- Laman ng zip (`TigoMeNote-location-YYYY-MM-DD_HHMM.zip`): `location-history.csv` (Excel, may Google Maps link bawat point), `.gpx` (Google Earth / maps apps), `.json` (buong data). Hanggang 30 araw (`exportHistory` sa `safety-fast` v3).
+- Saan napupunta (`file-save.js`, Settings → **Files on this device**):
+  - **APK:** `Documents/TigoMeNote/Location/` sa phone.
+  - **Desktop (Chrome/Edge):** folder na pinili mo; gagawa ng `TigoMeNote` sa loob (hal. Documents/TigoMeNote/Location).
+  - **Iba (phone browser, Safari, Firefox):** Downloads.
+- Code: `assets/js/zip.js` (gawa ng .zip, walang library), `file-save.js` (`TMN_FILES`), `components/location-export.js` (`TMN_LOC_EXPORT`), `components/files-settings.js`.
+
+## Para sa APK: folder at pag-uninstall (gagawin sa Android app)
+- `TMN_APP.saveFile(path, base64, mime)` → isusulat sa **Documents/<path>** gamit ang MediaStore (hal. `TigoMeNote/Location/x.zip`). Naiiwan ito sa phone kahit i-uninstall ang app.
+- Sa `AndroidManifest.xml`: `<application android:hasFragileUserData="true">` → sa pag-uninstall, **tatanungin ng Android kung itatabi ang app data** (Android 10+). Ito ang "choice kung mag-stay ang data".
+- Walang paraan ang app na magpakita ng sariling tanong habang ina-uninstall (hindi pinapayagan ng Android), kaya ang dalawang ito ang gamit.
+
 ## Hindi pa na-test
 - Lahat ng tests ay naka-mock (108/108 sa safety). Hindi pa nasubukan sa totoong server: invite/accept, SOS push sa totoong phone, VAPID key creation, follow requests, usage count.
 - Ang totoong mapa (Leaflet galing cdnjs) at OpenStreetMap tiles: hindi abot ng test sandbox.

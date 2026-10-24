@@ -7,6 +7,7 @@
      TMN_APP.alarmStop()
      TMN_APP.pushToken()              → Promise<string>  (FCM token)
      TMN_APP.sendSms(numbers[], text) → SMS kahit walang internet
+     TMN_APP.saveFile(path, base64, mime) → Promise<uri>  (path = "TigoMeNote/Location/x.zip", sa Documents ng phone)
    Gamit sa page: TMN_NATIVE.getLocation(), TMN_NATIVE.alarm.start(), TMN_NATIVE.isApp, atbp.
    Ilagay pagkatapos ng config.js. */
 (function () {
@@ -106,12 +107,24 @@
     return ((window.TMN_CONFIG && TMN_CONFIG.map && TMN_CONFIG.map.directions) || "https://www.google.com/maps/dir/?api=1&destination=") + lat + "," + lng;
   }
 
+  // I-save ang file sa Documents/TigoMeNote ng phone (APK lang)
+  function saveFile(path, blob) {
+    if (!(APP && APP.saveFile)) return Promise.reject(new Error("Not available."));
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onload = function () { resolve(String(r.result).split(",")[1]); };
+      r.onerror = function () { reject(r.error); };
+      r.readAsDataURL(blob);
+    }).then(function (b64) { return APP.saveFile(path, b64, blob.type || "application/octet-stream"); });
+  }
+
   window.TMN_NATIVE = {
     isApp: !!APP,
     getLocation: getLocation, watchLocation: watchLocation, permission: permission,
     alarm: alarm, unlockAudio: unlockAudio,
     canSms: canSms, sendSms: sendSms,
     background: background,
+    saveFile: APP && APP.saveFile ? saveFile : null,
     pushToken: function () { return APP && APP.pushToken ? APP.pushToken() : Promise.resolve(null); },
     country: country, emergencyNumber: emergencyNumber, directionsUrl: directionsUrl
   };

@@ -40,6 +40,7 @@ updated: 2026-10-23
 | 2026-10-24 | Break reminder default **60 min** (adults) | Hindi nakakaistorbo pero may paalala; puwedeng palitan |
 | 2026-10-24 | Sariling Web Push code + VAPID key sa `app_keys` (hindi external service) | Libre, walang dagdag na account; FCM kapag APK na |
 | 2026-10-24 | Supervision: magulang nag-iimbita, teen nag-a-accept, laging nakikita ng teen | Walang lihim na tracking |
+| 2026-10-24 | Kopya ng data = .zip (csv + gpx + json) sa TigoMeNote folder; APK: Documents/TigoMeNote + `hasFragileUserData` | Naiiwan ang kopya kahit i-uninstall; Android mismo ang nagtatanong kung itatabi ang app data |
 | 2026-10-24 | Status ring: sariling disenyo (rounded-square, coral → amber → mint, may hati bawat status) | Hindi kopya ng Instagram; tugma sa "Note" ng TigoMeNote |
 | 2026-10-24 | Notifications: Off / In app / Push bawat uri; laging naka-on ang SOS at account notices | Kontrol sa user pero hindi nawawala ang mahalagang abiso |
 | 2026-10-24 | Push ng notifications ay sa `notify-fast` lang (tinatawag ng `notify.ts` gamit ang service key) | Isang lugar ang VAPID/web push; hindi bumabagal ang like/comment |

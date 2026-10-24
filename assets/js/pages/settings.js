@@ -43,4 +43,5 @@
   document.getElementById("sVersion").textContent = C.appName + " v" + C.version;
   // Sleep & breaks, Privacy, Parental supervision
   if (window.TMN_WB_SETTINGS) TMN_WB_SETTINGS.mount(document.getElementById("wbMount"));
+  if (window.TMN_FILES_SETTINGS) TMN_FILES_SETTINGS.mount(document.getElementById("filesMount"));
 })();

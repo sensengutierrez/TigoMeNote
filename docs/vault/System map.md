@@ -50,6 +50,9 @@ updated: 2026-10-24
 | `wellbeing.js` | Sleep, break, daily limit, birthdate prompt sa bawat page |
 | `components/sos-button.js` / `sos-overlay.js` / `map-view.js` / `wellbeing-settings.js` | SOS button, pulang alarm screen, mapa, wellbeing settings |
 | `moderation-check.js` | Rules ng text filter sa browser (`TMN_MOD`); **huwag i-edit**, gawa ng `tools/build-moderation-client.mjs` |
+| `zip.js` | Gumawa ng .zip sa browser (`TMN_ZIP`) |
+| `file-save.js` | I-save sa TigoMeNote folder: APK Documents, desktop na pinili, o Downloads (`TMN_FILES`) |
+| `components/location-export.js` / `files-settings.js` | Kopya ng location (.zip) at Delete sheet; Settings → Files on this device |
 | `notif-badge.js` | Bilang ng bagong notifications sa bell at menu, bawat page (`TMN_NOTIF_BADGE`) |
 | `components/notif-settings.js` | Notification settings: push, pause, sleep mode, Off/In app/Push (`TMN_NOTIF_SETTINGS`) |
 | `components/mod-guard.js` | Live na babala at harang bago mag-post/comment/save (`TMN_GUARD`) |
@@ -73,7 +76,7 @@ updated: 2026-10-24
 | `posts-fast` | createUpload, createPost, myPosts, userPosts, getPost, feed, updatePost, deletePost, react, reactions, comments, addComment, deleteComment, bookmark, bookmarks, share, unrepost, shares, view, pin, liked, reposts, history | `backend/posts-fast.ts` |
 | `social-fast` | follow, unfollow, people, profile, followList, requests, approveRequest, declineRequest, stories, storyUpload, createStory, viewStory, storyViewers, deleteStory | `backend/social-fast.ts` |
 | `profile-fast` | get, update, imageUpload, setImage, removeImage | `backend/profile-fast.ts` |
-| `safety-fast` | circle, invite, respond, update, remove, pause, ping, history, clearHistory, sos, sosUpdate, sosEnd, alerts, ack, pushKey, subscribe, unsubscribe, testPush | `backend/safety-fast.ts` + `webpush.ts` |
+| `safety-fast` | circle, invite, respond, update, remove, pause, ping, history, clearHistory, exportHistory, sos, sosUpdate, sosEnd, alerts, ack, pushKey, subscribe, unsubscribe, testPush | `backend/safety-fast.ts` + `webpush.ts` |
 | `wellbeing-fast` | status, setBirthdate, tick, save, guardianInvite, guardianRespond, guardianRemove | `backend/wellbeing-fast.ts` |
 | `moderation-fast` | report, queue, resolve, count | `backend/moderation-fast.ts` (+ `notify.ts`) |
 | `notify-fast` | list, count, seen, prefs, setPrefs, push (service key lang) | `backend/notify-fast.ts` (+ `webpush.ts`) |
