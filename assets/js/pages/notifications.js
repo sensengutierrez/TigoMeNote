@@ -18,7 +18,7 @@
   function name(u) { return '<b translate="no" data-uid="' + esc((u || {}).id || "") + '">' + esc((u || {}).username || "someone") + "</b>"; }
 
   // ---------- pagsasama-sama ----------
-  var GROUPED = { like: "post", repost: "post", follow: "day" };
+  var GROUPED = { like: "post", repost: "post", follow: "day", story_like: "day" };
   function build(list) {
     var out = [], index = {};
     list.forEach(function (n) {
@@ -67,6 +67,7 @@
       }
       case "comment": return who(g) + ' commented: <span class="nt-quote" translate="no">' + esc(n.body || "") + "</span>";
       case "repost": return who(g) + " reposted your post.";
+      case "story_like": return who(g) + " liked your status ❤️";
       case "follow": return who(g) + " started following you.";
       case "follow_request": return who(g) + (n.pending ? " wants to follow you." : " requested to follow you.");
       case "follow_accept": return who(g) + " accepted your follow request.";
@@ -81,7 +82,7 @@
 
   // ---------- kaliwa (avatar o icon) ----------
   var SYS = { milestone: ["trophy", "nt-sys-gold"], recap: ["chart", "nt-sys-mint"], moderation: ["shield", "nt-sys-coral"] };
-  var BADGE = { like: "heart", comment: "comment", repost: "repost", follow: "userPlus", follow_request: "userPlus", follow_accept: "check", circle_invite: "shield", circle_accept: "shield" };
+  var BADGE = { like: "heart", story_like: "heart", comment: "comment", repost: "repost", follow: "userPlus", follow_request: "userPlus", follow_accept: "check", circle_invite: "shield", circle_accept: "shield" };
   function left(g) {
     if (SYS[g.type]) return '<span class="nt-sys ' + SYS[g.type][1] + '">' + I(SYS[g.type][0]) + "</span>";
     var us = [];

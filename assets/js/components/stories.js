@@ -3,8 +3,9 @@
      TMN_STORIES.mount(el)   → bilog-bilog sa taas: "Status mo" + mga fina-follow mo na may status
      TMN_STORIES.add()       → pili ng photo/video → caption → upload
    Viewer: tap kanan = susunod, tap kaliwa = balik, pindutin nang matagal = pause, Esc / X = sara.
-   Sa sariling status: bilang ng nanood at listahan nila, at Delete.
-   Server: social-fast (stories, storyUpload, createStory, viewStory, storyViewers, deleteStory)
+   May sound (TigoMeNote Sounds, auto-pick gaya ng post) na tumutugtog habang nakikita ang status.
+   Sa status ng iba: ❤️ (o double-tap). Sa sariling status: 👁 ilan ang nanood + ❤️ ilan ang nag-like, at listahan nila; Delete.
+   Server: social-fast (stories, storyUpload, createStory, viewStory, likeStory, storyViewers, deleteStory)
    Kailangan: api.js, modal.js, post-queue.js (TMN_POSTQ.prepare para sa compression), post-card.js (avatar) */
 (function () {
   var I = function (n, c) { return window.TMN_ICON ? window.TMN_ICON(n, c) : ""; };
@@ -78,10 +79,21 @@
     root.innerHTML =
       '<div class="st-prev">' + (isVideo ? '<video src="' + url + '" autoplay muted loop playsinline></video>' : '<img alt="" src="' + url + '">') + "</div>" +
       '<input class="input" maxlength="200" placeholder="Add a caption (optional)">' +
+      (window.TMN_SOUND_PICK ? '<div class="st-sound"></div>' : "") +
       '<p class="faint small">Visible to people who follow you. Disappears after 24 hours.' + (isVideo ? " Video: first 15 seconds only." : "") + "</p>" +
       '<p class="small st-status hidden" aria-live="polite"></p>';
     var cap = root.querySelector("input"), status = root.querySelector(".st-status");
-    var busy = false;
+    var busy = false, sound = null, soundRow = null;
+    // Sound: auto-pick (parang TikTok/IG), puwedeng palitan o tanggalin
+    var sbox = root.querySelector(".st-sound");
+    if (sbox) {
+      var mountRow = function (s) {
+        sound = s;
+        soundRow = TMN_SOUND_PICK.row(sbox, { src: file, kind: isVideo ? "video" : "photo", sound: s, autoplay: !!s, onChange: function (x) { sound = x; } });
+      };
+      sbox.innerHTML = '<span class="faint small">' + I("music", "ic-sm") + " Finding a sound…</span>";
+      TMN_SOUND_PICK.auto(file, { kind: isVideo ? "video" : "photo" }).then(function (r) { if (root.isConnected) mountRow(r.sound); }, function () { if (root.isConnected) mountRow(null); });
+    }
     if (window.TMN_GUARD) TMN_GUARD.watch(cap);
     async function share(btn) {
       if (busy) return;
@@ -97,7 +109,7 @@
         var r = await fetch(up.url, { method: "PUT", headers: { "content-type": f.mime }, body: f.blob });
         if (!r.ok) throw new Error("Upload failed (" + r.status + ").");
         for (var t = 0; t < 3; t++) {
-          try { await TMN_API.call("social", "createStory", { path: up.path, kind: f.kind, mime: f.mime, w: f.w, h: f.h, duration: f.duration, caption: cap.value.trim() }); break; }
+          try { await TMN_API.call("social", "createStory", { path: up.path, kind: f.kind, mime: f.mime, w: f.w, h: f.h, duration: f.duration, caption: cap.value.trim(), sound: sound }); break; }
           catch (e) { if (e.status === 409 && t < 2) await new Promise(function (ok) { setTimeout(ok, 1200); }); else throw e; }
         }
         done = true; m.close(); UI().toast("Status shared ✓"); load();
@@ -111,7 +123,7 @@
         { label: "Cancel", cls: "btn-ghost", onClick: function () { if (!busy) m.close(); } },
         { label: I("send", "ic-sm") + "Share", cls: "btn-primary", onClick: function (api, b) { share(b); } }
       ],
-      onClose: function () { URL.revokeObjectURL(url); }
+      onClose: function () { URL.revokeObjectURL(url); if (soundRow) soundRow.destroy(); else if (window.TMN_SOUNDS) TMN_SOUNDS.stop(); }
     });
   }
 
@@ -133,7 +145,10 @@
         '<button type="button" class="st-tap prev" data-v="prev" aria-label="Previous"></button>' +
         '<button type="button" class="st-tap next" data-v="next" aria-label="Next"></button>' +
         '<div class="st-cap"></div>' +
-        '<button type="button" class="st-views hidden" data-v="views">' + I("eye", "ic-sm") + "<span></span></button>" +
+        '<div class="st-snd hidden"></div>' +
+        '<button type="button" class="st-views hidden" data-v="views"><span class="st-faces"></span>' + I("eye", "ic-sm") + '<span class="st-vn"></span><span class="st-ln"></span></button>' +
+        '<button type="button" class="st-like hidden" data-v="like" aria-label="Like" aria-pressed="false">' + I("heart") + "</button>" +
+        '<span class="st-burst" aria-hidden="true">❤️</span>' +
       "</div>";
     document.body.appendChild(ov);
     document.body.classList.add("modal-open");
@@ -158,8 +173,12 @@
     function pause(on) {
       if (on === paused) return;
       var v = media.querySelector("video");
-      if (on) { elapsed += performance.now() - started; paused = true; stopTimer(); if (v) v.pause(); }
-      else { started = performance.now(); paused = false; if (v) v.play().catch(function () {}); raf = requestAnimationFrame(tick); }
+      var S = window.TMN_SOUNDS, it = item();
+      if (on) { elapsed += performance.now() - started; paused = true; stopTimer(); if (v) v.pause(); if (S) S.stop(); }
+      else {
+        started = performance.now(); paused = false; if (v) v.play().catch(function () {}); raf = requestAnimationFrame(tick);
+        if (S && it && it.sound && S.get(it.sound.id)) S.play(it.sound.id, { vol: it.sound.vol == null ? 0.8 : it.sound.vol });
+      }
     }
     function show() {
       g = state.groups[gi];
@@ -171,13 +190,24 @@
       ov.querySelector('[data-v="report"]').classList.toggle("hidden", !!g.me || !window.TMN_SOCIAL);
       var vb = ov.querySelector(".st-views");
       vb.classList.toggle("hidden", !g.me);
-      if (g.me) vb.querySelector("span").textContent = (it.views || 0) + " views";
+      if (g.me) {
+        vb.querySelector(".st-faces").innerHTML = (it.faces || []).map(function (u) { return av(u, 22); }).join("");
+        vb.querySelector(".st-vn").textContent = (it.views || 0) + (it.views === 1 ? " view" : " views");
+        vb.querySelector(".st-ln").innerHTML = it.likes ? " · ❤️ " + it.likes : "";
+      }
+      paintLike();
+      // sound ng status
+      var sn = ov.querySelector(".st-snd"), S = window.TMN_SOUNDS, t = it.sound && S && S.get(it.sound.id);
+      sn.classList.toggle("hidden", !t);
+      sn.innerHTML = t ? '<span class="sp-eq on" aria-hidden="true"><i></i><i></i><i></i></span><span translate="no">♪ ' + esc(t.name) + "</span>" : "";
+      if (S) { if (t) S.play(t.id, { vol: it.sound.vol == null ? 0.8 : it.sound.vol }); else S.stop(); }
       var cap = ov.querySelector(".st-cap"); cap.textContent = it.caption || ""; cap.classList.toggle("hidden", !it.caption);
       stopTimer();
       if (!it.url) { media.innerHTML = '<div class="pt-missing">' + I("image", "ic-lg") + "</div>"; start(PHOTO_MS); }
       else if (it.kind === "video") {
         media.innerHTML = '<video src="' + esc(it.url) + '" playsinline autoplay></video>';
         var v = media.querySelector("video");
+        if (it.sound && it.sound.orig != null) v.volume = it.sound.orig;
         v.addEventListener("loadedmetadata", function () { start(Math.min(15.5, isFinite(v.duration) && v.duration > 0 ? v.duration : (it.duration || 10)) * 1000); });
         v.play().catch(function () { v.muted = true; v.play().catch(function () {}); });
         start((it.duration || 10) * 1000);
@@ -201,8 +231,25 @@
       else { show(); }
     }
     function firstUnseen(gr) { var k = gr.items.findIndex(function (x) { return !x.seen; }); return k < 0 ? 0 : k; }
+    // ❤️ sa status ng iba
+    function paintLike() {
+      var b = ov.querySelector(".st-like"), it = item();
+      b.classList.toggle("hidden", !!g.me || !it);
+      if (!it || g.me) return;
+      b.classList.toggle("on", !!it.liked); b.setAttribute("aria-pressed", String(!!it.liked));
+      b.setAttribute("aria-label", it.liked ? "Unlike" : "Like");
+    }
+    function like(force) {
+      var it = item(); if (!it || g.me) return;
+      var on = force === undefined ? !it.liked : force;
+      if (on) { var bu = ov.querySelector(".st-burst"); bu.classList.remove("go"); void bu.offsetWidth; bu.classList.add("go"); if (navigator.vibrate) try { navigator.vibrate(12); } catch (e) {} }
+      if (on === !!it.liked) return;
+      it.liked = on; paintLike();
+      TMN_API.call("social", "likeStory", { id: it.id, on: on }).catch(function (e) { it.liked = !on; paintLike(); UI().toast(e.message); });
+    }
     function close() {
       stopTimer(); document.removeEventListener("keydown", onKey);
+      if (window.TMN_SOUNDS) TMN_SOUNDS.stop();
       ov.classList.add("out"); setTimeout(function () { ov.remove(); }, 160);
       if (!document.querySelector(".modal-backdrop")) document.body.classList.remove("modal-open");
       render();
@@ -214,6 +261,14 @@
     }
     document.addEventListener("keydown", onKey);
 
+    // Double-tap = ❤️ (status ng iba)
+    var lastTap = 0;
+    ov.addEventListener("pointerup", function (e) {
+      if (!e.target.closest(".st-tap, .st-media") || g.me) return;
+      var now = Date.now();
+      if (now - lastTap < 300) { lastTap = 0; dbl = now; like(true); } else lastTap = now;
+    });
+    var dbl = 0;
     // Hold = pause (tap = next/prev)
     var holdT = null, held = false;
     ov.addEventListener("pointerdown", function (e) {
@@ -225,11 +280,17 @@
       var b = e.target.closest("[data-v]"); if (!b) return;
       var v = b.dataset.v;
       if ((v === "next" || v === "prev") && held) { held = false; return; }
+      if ((v === "next" || v === "prev") && !g.me) { // hintayin saglit kung double-tap (❤️)
+        var at = Date.now();
+        await new Promise(function (ok) { setTimeout(ok, 260); });
+        if (dbl >= at - 300) return;
+      }
       if (v === "close") close();
       if (v === "next") next();
       if (v === "prev") prev();
       if (v === "user" && !g.me) { close(); TMN_SOCIAL.userSheet(b.dataset.uid); }
       if (v === "views") { pause(true); await viewers(item()); pause(false); }
+      if (v === "like") like();
       if (v === "report") {
         pause(true);
         var rm = TMN_SOCIAL.reportSheet("story", item().id, "status");
@@ -257,14 +318,16 @@
       var body = document.createElement("div");
       body.className = "sx-people";
       body.innerHTML = '<p class="faint small sx-empty">Loading…</p>';
-      TMN_MODAL.open({ title: "Viewers", size: "sm", cls: "modal-sheet", body: body, onClose: resolve });
+      var vm = TMN_MODAL.open({ title: "Viewers", size: "sm", cls: "modal-sheet", body: body, onClose: resolve });
       TMN_SOCIAL.bindPeople(body);
       try {
         var r = await TMN_API.call("social", "storyViewers", { id: it.id });
+        var h = vm.el.querySelector(".modal-head h3"); if (h) h.textContent = "👁 " + (r.views != null ? r.views : r.list.length) + " · ❤️ " + (r.likes || 0);
         body.innerHTML = r.list.length ? r.list.map(function (x) {
           var u = x.user || {};
           return '<div class="sx-row"><button type="button" class="sx-user" data-sx="user" data-uid="' + esc(u.id || "") + '">' + av(u, 40) +
-            "<span><b>" + esc(u.display_name || u.username || "?") + '</b><span class="faint small">' + ago(x.at) + "</span></span></button></div>";
+            "<span><b>" + esc(u.display_name || u.username || "?") + '</b><span class="faint small">' + ago(x.at) + "</span></span></button>" +
+            (x.liked ? '<span class="st-vlike" aria-label="Liked">❤️</span>' : "") + "</div>";
         }).join("") : '<p class="faint small sx-empty">No views yet.</p>';
       } catch (e) { body.innerHTML = '<p class="faint small sx-empty">' + esc(e.message) + "</p>"; }
     });

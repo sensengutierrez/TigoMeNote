@@ -37,3 +37,4 @@
 .sp-eq.on i:nth-child(3), .playing .snd-eq i:nth-child(3) { animation-delay: .4s; }
 @keyframes sndEq { 0%, 100% { height: 4px; } 50% { height: 12px; } }
 @media (prefers-reduced-motion: reduce) { .sp-eq i, .snd-eq i { animation: none !important; height: 8px; } }
+.sp-newb { background: color-mix(in srgb, #ff5a36 16%, transparent); color: #e8481f; }

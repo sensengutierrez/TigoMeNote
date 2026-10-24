@@ -100,7 +100,7 @@ updated: 2026-10-24
 |---|---|---|
 | `auth-fast` | register, login, verifyEmail, resendCode, forgotPassword, resetPassword, checkSession, logout | `backend/auth-fast.ts` |
 | `posts-fast` | createUpload, createPost, myPosts, userPosts, getPost, feed, updatePost, deletePost, react, reactions, comments, addComment, deleteComment, bookmark, bookmarks, share, unrepost, shares, view, pin, liked, reposts, history | `backend/posts-fast.ts` |
-| `social-fast` | follow, unfollow, people, profile, followList, requests, approveRequest, declineRequest, stories, storyUpload, createStory, viewStory, storyViewers, deleteStory | `backend/social-fast.ts` |
+| `social-fast` | follow, unfollow, people, profile, followList, requests, approveRequest, declineRequest, stories, storyUpload, createStory, viewStory, likeStory, storyViewers, deleteStory, soundTrends | `backend/social-fast.ts` |
 | `profile-fast` | get, update, imageUpload, setImage, removeImage | `backend/profile-fast.ts` |
 | `safety-fast` | circle, invite, respond, update, remove, pause, ping, history, clearHistory, exportHistory, sos, sosUpdate, sosEnd, alerts, ack, pushKey, subscribe, unsubscribe, testPush | `backend/safety-fast.ts` + `webpush.ts` |
 | `daily-fast` | list, save, remove, done, snooze; due (cron bawat minuto, key `cron_daily`) | `backend/daily-fast.ts` + `webpush.ts` |
@@ -129,7 +129,7 @@ Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast
 | `post_comments` | comments (soft delete) | `sql/017-social.sql` |
 | `post_bookmarks` | Saved posts | `sql/017-social.sql` |
 | `post_shares` | repost o link share | `sql/017-social.sql` |
-| `stories` / `story_views` | status (24 oras) at sino ang nanood | `sql/017-social.sql` |
+| `stories` / `story_views` | status (24 oras, may sound) at sino ang nanood / nag-❤️ (`liked_at`) | `sql/017-social.sql`, `sql/059-story-likes-sounds.sql` |
 | `post_views` | sino ang nakakita ng post at kailan (views + History) | `sql/020-views-pins.sql` |
 | `safety_links` | Family/Friends (isang row bawat pares, may share at label bawat panig) | `sql/023-safety.sql`, `sql/043-circle-labels.sql` |
 | `location_points` | location (30 araw) | `sql/023-safety.sql` |

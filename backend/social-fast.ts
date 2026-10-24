@@ -1,8 +1,8 @@
 // TigoMeNote · social-fast (Supabase Edge Function, verify_jwt = off)
 // Follow, people (search / suggestions / profile ng ibang user), at Status/Stories (24 oras).
 // Actions: follow, unfollow, people, profile, followList, requests, approveRequest, declineRequest,
-//          stories, storyUpload, createStory, viewStory, storyViewers, deleteStory
-// Notifications (notify.ts): bagong follower, follow request, at na-approve na request.
+//          stories, storyUpload, createStory, viewStory, likeStory, storyViewers, deleteStory, soundTrends
+// Notifications (notify.ts): bagong follower, follow request, na-approve na request, at ❤️ sa status.
 // Story files: private bucket "post-media", path <user_id>/stories/<file>, signed read URL 1 oras.
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
@@ -187,12 +187,16 @@ async function stories(_p: any, me: any) {
   if (!list.length) return reply({ ok: true, groups: [] });
   const ids = list.map((s) => s.id);
   const [{ data: seen }, { data: us }, signedRes, { data: allViews }] = await Promise.all([
-    db.from("story_views").select("story_id").eq("viewer_id", me.id).in("story_id", ids),
+    db.from("story_views").select("story_id, liked_at").eq("viewer_id", me.id).in("story_id", ids),
     db.from("users").select("id, username, display_name, avatar_url").in("id", [...new Set(list.map((s) => s.user_id))]),
     db.storage.from(BUCKET).createSignedUrls(list.map((s) => s.path), READ_URL_SECONDS),
-    db.from("story_views").select("story_id").in("story_id", list.filter((s) => s.user_id === me.id).map((s) => s.id)),
+    db.from("story_views").select("story_id, viewer_id, liked_at, created_at").in("story_id", list.filter((s) => s.user_id === me.id).map((s) => s.id)).order("created_at", { ascending: false }),
   ]);
   const seenSet = new Set((seen ?? []).map((r) => r.story_id));
+  const likedSet = new Set((seen ?? []).filter((r) => r.liked_at).map((r) => r.story_id));
+  // mukha ng huling 3 nanood (para sa sariling status)
+  const faceIds = [...new Set((allViews ?? []).map((v) => v.viewer_id))].slice(0, 60);
+  const { data: faces } = faceIds.length ? await db.from("users").select("id, username, display_name, avatar_url").in("id", faceIds) : { data: [] };
   const url: Record<string, string> = {};
   (signedRes.data ?? []).forEach((s) => { if (s.path && s.signedUrl) url[s.path] = s.signedUrl; });
   const groups: Record<string, any> = {};
@@ -203,7 +207,12 @@ async function stories(_p: any, me: any) {
     g.items.push({
       id: s.id, kind: s.kind, url: url[s.path] ?? null, mime: s.mime, w: s.w, h: s.h, duration: s.duration,
       caption: s.caption, at: s.created_at, expires_at: s.expires_at, seen: seenIt,
-      views: s.user_id === me.id ? (allViews ?? []).filter((v) => v.story_id === s.id).length : undefined,
+      sound: s.sound ?? null, liked: likedSet.has(s.id),
+      ...(s.user_id === me.id ? (() => {
+        const vs = (allViews ?? []).filter((v) => v.story_id === s.id);
+        return { views: vs.length, likes: vs.filter((v) => v.liked_at).length,
+          faces: vs.slice(0, 3).map((v) => (faces ?? []).find((u) => u.id === v.viewer_id)).filter(Boolean) };
+      })() : {}),
     });
   }
   const out = Object.values(groups).sort((a, b) => (a.me ? -1 : b.me ? 1 : (b.unseen > 0 ? 1 : 0) - (a.unseen > 0 ? 1 : 0) ||
@@ -238,7 +247,7 @@ async function createStory(p: any, me: any) {
   const v = checkFor(me, p.caption);
   if (!v.ok && v.level === "block") { await logBlock(db, me.id, v, "status caption"); return fail(blockMessage(v.category), 422, { blocked: true, category: v.category }); }
   const { data, error } = await db.from("stories").insert({
-    user_id: me.id, kind, path, mime: String(p.mime || "image/jpeg"), w: Number(p.w) || null, h: Number(p.h) || null,
+    user_id: me.id, kind, path, mime: String(p.mime || "image/jpeg"), w: Number(p.w) || null, h: Number(p.h) || null, sound: cleanSound(p.sound),
     duration: Number(p.duration) || null, caption: String(p.caption ?? "").slice(0, 200),
     expires_at: new Date(Date.now() + STORY_HOURS * 3600_000).toISOString(),
   }).select("id").single();
@@ -259,14 +268,53 @@ async function viewStory(p: any, me: any) {
   await db.from("story_views").upsert({ story_id: s.id, viewer_id: me.id });
   return reply({ ok: true });
 }
+// ❤️ sa status ng iba (on = true/false). Kasama ang "view". May notification sa may-ari (isang beses lang bawat tao).
+// deno-lint-ignore no-explicit-any
+async function likeStory(p: any, me: any) {
+  const { data: s } = await db.from("stories").select("id, user_id, expires_at").eq("id", String(p.id || "")).maybeSingle();
+  if (!s || new Date(s.expires_at) <= new Date()) return fail("This status is gone.", 404);
+  if (s.user_id === me.id) return fail("You can't like your own status.", 400);
+  if (!(await followingIds(me)).includes(s.user_id)) return fail("Not found.", 404);
+  const on = p.on !== false;
+  await db.from("story_views").upsert({ story_id: s.id, viewer_id: me.id, liked_at: on ? nowIso() : null });
+  if (on) await notify(db, { to: s.user_id, actor: me.id, type: "story_like", emoji: "❤️", body: (me.display_name || "@" + me.username) + " liked your status ❤️", data: { story: s.id }, once: true });
+  else await unnotify(db, { to: s.user_id, actor: me.id, type: "story_like" });
+  return reply({ ok: true, liked: on });
+}
+// "Trending sounds": pinakaginagamit na TigoMeNote Sounds sa posts at status (huling 7 araw)
+// deno-lint-ignore no-explicit-any
+async function soundTrends(_p: any, _me: any) {
+  const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
+  const [{ data: ps }, { data: ss }] = await Promise.all([
+    db.from("posts").select("sound").not("sound", "is", null).is("deleted_at", null).gte("publish_at", since).limit(3000),
+    db.from("stories").select("sound").not("sound", "is", null).gte("created_at", since).limit(3000),
+  ]);
+  const count: Record<string, number> = {};
+  [...(ps ?? []), ...(ss ?? [])].forEach((r) => { const id = r.sound && r.sound.id; if (id) count[id] = (count[id] || 0) + 1; });
+  const list = Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id, uses]) => ({ id, uses }));
+  return reply({ ok: true, list });
+}
+// deno-lint-ignore no-explicit-any
+function cleanSound(s: any) {
+  if (!s || typeof s !== "object") return null;
+  const id = String(s.id ?? "");
+  if (!/^[a-z0-9-]{2,30}$/.test(id)) return null;
+  // deno-lint-ignore no-explicit-any
+  const n = (v: any, d: number) => { const x = Number(v); return Number.isFinite(x) ? Math.min(1, Math.max(0, Math.round(x * 100) / 100)) : d; };
+  const out: Record<string, unknown> = { id, vol: n(s.vol, 0.8) };
+  if (s.orig != null) out.orig = n(s.orig, 0.4);
+  return out;
+}
 // deno-lint-ignore no-explicit-any
 async function storyViewers(p: any, me: any) {
   const { data: s } = await db.from("stories").select("id, user_id").eq("id", String(p.id || "")).maybeSingle();
   if (!s || s.user_id !== me.id) return fail("Only you can see who viewed your status.", 403);
-  const { data } = await db.from("story_views").select("viewer_id, created_at").eq("story_id", s.id).order("created_at", { ascending: false });
+  const { data } = await db.from("story_views").select("viewer_id, created_at, liked_at").eq("story_id", s.id).order("created_at", { ascending: false });
   const ids = (data ?? []).map((r) => r.viewer_id);
   const { data: us } = ids.length ? await db.from("users").select("id, username, display_name, avatar_url").in("id", ids) : { data: [] };
-  return reply({ ok: true, list: (data ?? []).map((r) => ({ user: (us ?? []).find((u) => u.id === r.viewer_id) ?? null, at: r.created_at })) });
+  const list = (data ?? []).map((r) => ({ user: (us ?? []).find((u) => u.id === r.viewer_id) ?? null, at: r.created_at, liked: !!r.liked_at }))
+    .sort((a, b) => Number(b.liked) - Number(a.liked)); // mga nag-❤️ muna
+  return reply({ ok: true, list, views: list.length, likes: list.filter((x) => x.liked).length });
 }
 // deno-lint-ignore no-explicit-any
 async function deleteStory(p: any, me: any) {
@@ -297,6 +345,8 @@ Deno.serve(async (req) => {
       case "storyUpload":  return await storyUpload(p, me);
       case "createStory":  return await createStory(p, me);
       case "viewStory":    return await viewStory(p, me);
+      case "likeStory":    return await likeStory(p, me);
+      case "soundTrends":  return await soundTrends(p, me);
       case "storyViewers": return await storyViewers(p, me);
       case "deleteStory":  return await deleteStory(p, me);
       default:             return fail("Unknown action.");

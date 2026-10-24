@@ -1310,5 +1310,13 @@ TMN_I18N.register("fil", {
   "Open player": "Buksan ang player",
   "Video player": "Video player",
   "Sound on": "Buksan ang tunog",
-  "Sound off": "Patayin ang tunog"
+  "Sound off": "Patayin ang tunog",
+  " liked your status ❤️": " nag-❤️ sa status mo",
+  "Like": "I-like",
+  "Unlike": "Alisin ang like",
+  "🔥 Trending on TigoMeNote": "🔥 Trending sa TigoMeNote",
+  "✨ New sounds": "✨ Bagong sounds",
+  " Finding a sound…": " Naghahanap ng sound…",
+  "This status is gone.": "Wala na ang status na ito.",
+  "You can't like your own status.": "Hindi mo puwedeng i-like ang sarili mong status."
 });

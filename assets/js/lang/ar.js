@@ -1147,5 +1147,13 @@ TMN_I18N.register("ar", {
   "Open player": "فتح المشغل",
   "Video player": "مشغل الفيديو",
   "Sound on": "تشغيل الصوت",
-  "Sound off": "إيقاف الصوت"
+  "Sound off": "إيقاف الصوت",
+  " liked your status ❤️": " أعجبه حالتك ❤️",
+  "Like": "إعجاب",
+  "Unlike": "إلغاء الإعجاب",
+  "🔥 Trending on TigoMeNote": "🔥 رائج على TigoMeNote",
+  "✨ New sounds": "✨ أصوات جديدة",
+  " Finding a sound…": " جارٍ البحث عن صوت…",
+  "This status is gone.": "هذه الحالة لم تعد موجودة.",
+  "You can't like your own status.": "لا يمكنك الإعجاب بحالتك."
 });

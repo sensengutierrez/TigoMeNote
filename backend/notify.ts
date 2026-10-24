@@ -4,7 +4,7 @@
 // Settings ng user (notif_prefs): off = hindi na ise-save; app = listahan lang; push = listahan + phone.
 // Ang pag-push mismo (pause, sleep mode, web push) ay nasa notify-fast.
 
-export type NotifType = "like" | "comment" | "repost" | "follow" | "follow_request" | "follow_accept" | "milestone" | "recap" | "moderation";
+export type NotifType = "like" | "comment" | "repost" | "follow" | "follow_request" | "follow_accept" | "milestone" | "recap" | "moderation" | "story_like";
 export type Notif = {
   to: string | null | undefined;
   actor?: string | null;
@@ -22,7 +22,7 @@ export type Notif = {
 export const CATEGORY: Record<NotifType, string | null> = {
   like: "likes", comment: "comments", repost: "reposts",
   follow: "follows", follow_request: "follows", follow_accept: "follows",
-  milestone: "updates", recap: "updates", moderation: null,
+  milestone: "updates", recap: "updates", moderation: null, story_like: "likes",
 };
 
 // deno-lint-ignore no-explicit-any

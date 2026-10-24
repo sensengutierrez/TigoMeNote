@@ -1,6 +1,6 @@
 /* TigoMeNote · components/sound-picker.js — pumili ng sound para sa photo/video (parang TikTok/IG)
      TMN_SOUND_PICK.auto(src, { kind, filter })  → Promise<{ sound|null, list }>  (auto-pick, kung naka-on)
-     TMN_SOUND_PICK.open({ src, kind, filter, current, onPick(sound|null) })  → listahan: "For you" + "All sounds"
+     TMN_SOUND_PICK.open({ src, kind, filter, current, onPick(sound|null) })  → listahan: For you, 🔥 Trending, ✨ New, Local, All sounds
      TMN_SOUND_PICK.row(el, { src, kind, filter, sound, autoplay, onChange(sound|null) })  → maliit na row: ♪ pangalan · ▶ · Change · ×
      TMN_SOUND_PICK.label(sound)  → "Golden Hour"
    sound = { id, vol (0–1, lakas ng music), orig (0–1, lakas ng sariling tunog ng video) }
@@ -11,9 +11,21 @@
   function esc(s) { return window.TMN_UI ? TMN_UI.esc(s) : String(s); }
   function autoOn() { try { return localStorage.getItem("tmnAutoSound") !== "0"; } catch (e) { return true; } }
   function setAuto(v) { try { localStorage.setItem("tmnAutoSound", v ? "1" : "0"); } catch (e) {} }
+  function isNew(t) { return !!(t && t.added && Date.now() - new Date(t.added).getTime() < 45 * 86400000); }
   function label(s) { var t = s && S() && S().get(s.id); return t ? t.name : ""; }
   function make(id, base, kind) { return { id: id, vol: base && base.vol != null ? base.vol : 0.8, orig: kind === "video" ? (base && base.orig != null ? base.orig : 0.4) : undefined }; }
 
+  // 🔥 Trending: pinakaginagamit sa TigoMeNote (posts + status, 7 araw). Naka-cache nang 10 minuto.
+  var TR_KEY = "tmnSoundTrends";
+  function trends() {
+    try { var c = JSON.parse(sessionStorage.getItem(TR_KEY) || "null"); if (c && Date.now() - c.at < 600000) return Promise.resolve(c.list); } catch (e) {}
+    if (!window.TMN_API || !navigator.onLine) return Promise.resolve([]);
+    return TMN_API.call("social", "soundTrends", {}).then(function (r) {
+      var list = (r.list || []).filter(function (x) { return S().get(x.id); });
+      try { sessionStorage.setItem(TR_KEY, JSON.stringify({ at: Date.now(), list: list })); } catch (e) {}
+      return list;
+    }, function () { return []; });
+  }
   async function suggestFor(src, o) {
     var f = await S().analyze(src);
     f.kind = o.kind; f.filter = o.filter;
@@ -35,6 +47,8 @@
     root.innerHTML =
       '<p class="sp-note small faint">' + I("sparkle", "ic-sm") + "Original TigoMeNote music, made on your device. Free to use, no copyright issues.</p>" +
       '<div class="sp-sec"><h4>For you</h4><div class="sp-list sp-for"><p class="faint small">Matching your photo…</p></div></div>' +
+      '<div class="sp-sec sp-trend-sec hidden"><h4>🔥 Trending on TigoMeNote</h4><div class="sp-list sp-trend"></div></div>' +
+      '<div class="sp-sec sp-new-sec hidden"><h4>✨ New sounds</h4><div class="sp-list sp-new"></div></div>' +
       '<div class="sp-sec sp-local-sec hidden"><h4 class="sp-local-h"></h4><div class="sp-list sp-local"></div></div>' +
       '<div class="sp-sec"><h4>All sounds</h4><div class="sp-list sp-all"></div></div>' +
       '<div class="sp-mix">' +
@@ -43,18 +57,26 @@
         '<label class="sp-auto"><input type="checkbox" class="sp-auto-cb"' + (autoOn() ? " checked" : "") + "> <span>Auto-pick a sound for new photos and videos</span></label>" +
       "</div>";
 
-    function rowHtml(t, top) {
+    function rowHtml(t, top, uses) {
       var on = cur && cur.id === t.id;
       return '<div class="sp-item' + (on ? " on" : "") + '" data-id="' + t.id + '">' +
         '<button type="button" class="sp-play" data-play="' + t.id + '" aria-label="Preview ' + esc(t.name) + '">' + I(S().playing() === t.id ? "pause" : "play", "ic-sm") + "</button>" +
-        '<span class="sp-main"><b translate="no">' + esc(t.name) + "</b>" + (top ? ' <span class="sp-best">Best match</span>' : "") +
-          '<span class="faint small">' + esc(t.mood) + " · " + t.bpm + " BPM</span></span>" +
+        '<span class="sp-main"><b translate="no">' + esc(t.name) + "</b>" + (top ? ' <span class="sp-best">Best match</span>' : "") + (isNew(t) ? ' <span class="sp-best sp-newb">New</span>' : "") +
+          '<span class="faint small">' + esc(t.mood) + " · " + (uses ? uses + (uses === 1 ? " use" : " uses") + " this week" : t.bpm + " BPM") + "</span></span>" +
         '<button type="button" class="btn btn-sm ' + (on ? "btn-primary" : "btn-ghost") + '" data-use="' + t.id + '">' + (on ? I("check", "ic-sm") + "Using" : "Use") + "</button></div>";
     }
-    var forYou = [];
+    var forYou = [], trending = [];
     function paint() {
       root.querySelector(".sp-for").innerHTML = forYou.length ? forYou.slice(0, 4).map(function (t, i) { return rowHtml(t, i === 0); }).join("") : '<p class="faint small">Matching your photo…</p>';
       var shown = forYou.slice(0, 4).map(function (t) { return t.id; });
+      var tr = trending.filter(function (x) { return shown.indexOf(x.id) < 0; }).slice(0, 5);
+      root.querySelector(".sp-trend-sec").classList.toggle("hidden", !tr.length);
+      root.querySelector(".sp-trend").innerHTML = tr.map(function (x) { return rowHtml(S().get(x.id), false, x.uses); }).join("");
+      shown = shown.concat(tr.map(function (x) { return x.id; }));
+      var nw = (S().fresh ? S().fresh() : []).filter(function (t) { return shown.indexOf(t.id) < 0; });
+      root.querySelector(".sp-new-sec").classList.toggle("hidden", !nw.length);
+      root.querySelector(".sp-new").innerHTML = nw.map(function (t) { return rowHtml(t); }).join("");
+      shown = shown.concat(nw.map(function (t) { return t.id; }));
       // Local sounds (Pilipinas / Gulf) ayon sa device; kung wala, makikita pa rin sa All sounds
       var loc = S().local ? S().local().filter(function (t) { return shown.indexOf(t.id) < 0; }) : [];
       var regs = S().region ? S().region() : [];
@@ -69,6 +91,7 @@
       none.classList.toggle("btn-primary", !cur); none.classList.toggle("btn-ghost", !!cur);
     }
     suggestFor(o.src, o).then(function (l) { forYou = l; paint(); }).catch(function () { forYou = S().list.slice(); paint(); });
+    trends().then(function (l) { trending = l; paint(); });
 
     root.addEventListener("click", function (e) {
       var p = e.target.closest("[data-play]"), u = e.target.closest("[data-use]");

@@ -28,3 +28,9 @@
 @media (min-width: 1200px) {
   .ex-main { max-width: 660px; }
 }
+
+/* Desktop: hindi masyadong malaki ang post (parang Facebook/Instagram) — 560 px na feed sa gitna, at hindi lalampas sa ~3/4 ng screen ang taas ng photo */
+@media (min-width: 900px) {
+  .ex-main { width: 100%; max-width: 560px; margin-inline: auto; }
+  .ex-main .pcard-media { max-height: min(76vh, 700px); }
+}

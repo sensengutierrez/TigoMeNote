@@ -8,6 +8,7 @@
      TMN_SOUNDS.analyze(blob|canvas|video) → { brightness, saturation, warmth, contrast, hue, hour, ... }
      TMN_SOUNDS.render(id, seconds)        → Promise<AudioBuffer> (hal. para isama sa video)
      TMN_SOUNDS.local() / region()         → Local sounds (Pilipinas / Gulf) ayon sa time zone at wika ng device
+     TMN_SOUNDS.fresh()                    → mga bagong tunog ("New")
      TMN_SOUNDS.chip(sound)                → html ng "♪ Golden Hour" na button (tap = play/stop, sa kahit anong page)
    Kailangan ng tap muna ng user bago tumunog (patakaran ng browser). */
 (function () {
@@ -51,13 +52,26 @@
     { id: "boracay-sunset", name: "Boracay Sunset", mood: "Pinoy · Beach house", region: "ph", bpm: 102, root: 64, scale: "major", prog: [0, 4, 5, 3],
       drums: { k: "x...x...x...x...", p: "....x.......x...", h: "..x...x...x...x." }, bass: "..x...x...x...x.", chord: "marimba", lead: "bell", tags: { blue: 2, warm: 2, evening: 2, bright: 1, happy: 1 } },
 
+    { id: "kilig", name: "Kilig", mood: "Pinoy · Acoustic love", region: "ph", added: "2026-10-24", gain: 1.4, bpm: 90, root: 62, scale: "major", prog: [0, 4, 5, 3],
+      drums: { k: "x.......x.......", p: "....x.......x...", h: "..x...x...x...x." }, bass: "x.....x.x.......", chord: "guitar", lead: "bell", tags: { pink: 3, soft: 2, warm: 2, happy: 1, evening: 1 } },
+    { id: "habagat", name: "Habagat", mood: "Pinoy · Rainy lofi", region: "ph", added: "2026-10-24", bpm: 74, root: 57, scale: "dorian", prog: [0, 3, 4, 6],
+      drums: { k: "x.......x.x.....", s: "....x.......x...", h: "x.x.x.x.x.x.x.x." }, bass: "x.......x.......", chord: "keys", lead: "keys", swing: 0.16, rain: true, crackle: true, tags: { lowsat: 2, blue: 2, cozy: 2, calm: 2, indoor: 1 } },
+
     // ---------- Local: Gulf / Bahrain (region "gulf") ----------
     { id: "khaleeji-nights", name: "Khaleeji Nights", mood: "Gulf · Khaleeji", region: "gulf", gain: 1.25, bpm: 104, root: 57, scale: "hijaz", prog: [0, 0, 6, 0],
       drums: { d: "x.....x...x.....", t: "...x..x.x...x.x.", p: "....x.......x..." }, bass: "x.....x...x.....", chord: "drone", lead: "oud", tags: { night: 2, warm: 2, party: 1, sat: 1 } },
     { id: "desert-oud", name: "Desert Oud", mood: "Gulf · Oud", region: "gulf", gain: 1.6, bpm: 76, root: 52, scale: "hijaz", prog: [0, 0, 3, 0],
       drums: { d: "x.......x.......", t: "....x..x....x..." }, bass: "x...............", chord: "drone", lead: "oud", tags: { warm: 3, evening: 2, calm: 2, soft: 1 } },
     { id: "manama-skyline", name: "Manama Skyline", mood: "Gulf · Arabic pop", region: "gulf", bpm: 100, root: 55, scale: "hijaz", prog: [0, 6, 5, 6],
-      drums: { k: "x...x...x...x...", p: "....x.......x...", t: "..x..x....x..x.." }, bass: "x..x....x..x....", chord: "pad", lead: "oud", tags: { night: 2, sat: 2, energy: 1, contrast: 1 } }
+      drums: { k: "x...x...x...x...", p: "....x.......x...", t: "..x..x....x..x.." }, bass: "x..x....x..x....", chord: "pad", lead: "oud", tags: { night: 2, sat: 2, energy: 1, contrast: 1 } },
+    { id: "corniche-walk", name: "Corniche Walk", mood: "Gulf · Chill", region: "gulf", added: "2026-10-24", gain: 1.3, bpm: 92, root: 55, scale: "hijaz", prog: [0, 5, 6, 0],
+      drums: { k: "x.......x.......", t: "...x..x....x..x.", p: "....x.......x..." }, bass: "x.....x...x.....", chord: "pad", lead: "oud", tags: { evening: 3, blue: 2, warm: 1, calm: 1 } },
+
+    // ---------- Bago (para sa lahat) ----------
+    { id: "tigo-bounce", name: "Tigo Bounce", mood: "Cute · Kids pop", added: "2026-10-24", bpm: 118, root: 64, scale: "major", prog: [0, 3, 4, 0],
+      drums: { k: "x...x...x...x...", s: "....x.......x...", h: "..x...x...x...x." }, bass: "x..x..x.x..x..x.", chord: "pluck", lead: "marimba", tags: { happy: 3, bright: 2, sat: 2, day: 1 } },
+    { id: "glow-up", name: "Glow Up", mood: "Trend · Dance pop", added: "2026-10-24", bpm: 126, root: 57, scale: "minor", prog: [0, 5, 2, 6],
+      drums: { k: "x...x...x...x...", s: "....x.......x...", h: "..x...x...x...x.", c: "x..............." }, bass: "..x...x...x...x.", chord: "stab", lead: "arp", tags: { energy: 3, party: 2, sat: 2, contrast: 1, night: 1 } }
   ];
   var SCALES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10], dorian: [0, 2, 3, 5, 7, 9, 10], hijaz: [0, 1, 4, 5, 7, 8, 10] };
   var REGIONS = { ph: "Philippines", gulf: "Gulf" };
@@ -436,8 +450,10 @@
     document.querySelectorAll("[data-snd]").forEach(function (b) { var on = b.dataset.snd === id; b.classList.toggle("playing", on); b.setAttribute("aria-pressed", String(on)); });
   });
 
+  // Bagong tunog (≤ 45 araw mula nang idagdag) — para sa "New" sa picker
+  function fresh() { var now = Date.now(); return TRACKS.filter(function (t) { return t.added && now - new Date(t.added).getTime() < 45 * 86400000; }); }
   window.TMN_SOUNDS = {
-    chip: chip,
+    chip: chip, fresh: fresh,
     list: TRACKS, get: get, region: region, local: local, REGIONS: REGIONS, play: play, stop: stop, setVolume: setVolume,
     playing: function () { return live ? live.id : null; },
     render: render, analyze: analyze, suggest: suggest

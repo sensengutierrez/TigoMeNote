@@ -84,6 +84,9 @@ updated: 2026-10-24
 | 2026-10-24 | Sound settings ay naka-save sa device lang | Iba-iba ang gusto bawat device (phone vs laptop); walang kailangang server |
 | 2026-10-24 | Pac-Tigo at Racing: sariling disenyo (Gloomies, Tigo karts) | Hindi kopya ng Pac-Man o ibang racing game (trademark) |
 | 2026-10-24 | Feed media: hugis ayon sa photo (4:5 hanggang 1.91:1), `cover` sa loob | Parang Facebook: walang itim na gilid at walang scroll sa loob; ang sobrang tangkad/lapad ay bahagyang napuputol |
+| 2026-10-24 | Trending sounds = TigoMeNote Sounds lang (bilang sa posts + status, 7 araw), walang commercial na kanta | Ang mga kanta sa TikTok/FB/IG ay may lisensya; bawal gamitin dito nang walang kasunduan |
+| 2026-10-24 | ❤️ sa status ay naka-save sa `story_views.liked_at` (walang bagong table) | Isang row bawat nanood; kasama ang view at like |
+| 2026-10-24 | Desktop Explore: 560 px na feed | Masyadong malaki ang post sa buong lapad; parang Facebook/Instagram ang sukat |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

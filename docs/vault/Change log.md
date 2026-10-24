@@ -305,3 +305,15 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "pag click ko scroll pa ung image… sa post na me video me arrow pa… dapat click ung video me lalabas na playmode tapos pwede full or minimize… same desktop… hindi na scroll sa loob ng box".
 - **Files:** `assets/js/components/video-player.js` (bago, `TMN_PLAYER`), `components/post-card.js`, `components/post-viewer.js`, `icons.js` (mute, expand, shrink, pip), `css/social.css`, `css/posts.css`, `css/components.css`, `app/explore.html`, `home.html`, `profile.html`, `messages.html`, `notifications.html`, `share.html`, `config.js` (0.11.11), `lang/fil.js`, `lang/ar.js`
 - **Paano:** Ang hugis ay galing sa `w`/`h` ng media (server); kung wala, kinukuha pagka-load at naaalala sa device (`tmnMediaAR`).
+
+## 2026-10-24 · #40 Status: ❤️ like + views, sound sa status, Trending at New sounds; mas maliit na post sa desktop
+- **Ano:**
+  - **Desktop feed:** 560 px na lang ang lapad ng Explore (parang Facebook/Instagram) at hindi lalampas sa ~¾ ng screen ang taas ng photo/video.
+  - **❤️ sa status:** sa status ng iba may puso sa kanang-ibaba (tap) o double-tap sa photo; may notification sa may-ari ("… liked your status ❤️").
+  - **Sino ang nanood:** sa sariling status, nasa ibaba ang mukha ng huling 3 nanood + "N views · ❤️ N". Tap = listahan (nauuna ang nag-❤️, may ❤️ sa tabi ng pangalan).
+  - **Sound sa status:** kapag nag-upload ng status, kusang pumipili ng sound (gaya ng post); puwedeng palitan o tanggalin. Tumutugtog habang pinapanood, may "♪ pangalan" sa itaas.
+  - **Sound list:** bagong "🔥 Trending on TigoMeNote" (pinakaginagamit sa posts at status sa 7 araw, may bilang) at "✨ New sounds" (may "New" na tatak).
+  - **5 bagong sounds:** Kilig (Pinoy acoustic love), Habagat (Pinoy rainy lofi), Corniche Walk (Gulf chill), Tigo Bounce (cute pop), Glow Up (dance pop).
+- **Bakit:** Ayon kay Bench: "sa web desktop ang laki… bakit walang like heart sa status… makikita mo sino ng view at ilan… pag ng upload ako sa web bakit walang auto ng sounds… new sound trending sounds".
+- **Files:** `sql/059-story-likes-sounds.sql` (story_views.liked_at, stories.sound, notification `story_like`), `backend/social-fast.ts` (likeStory, soundTrends, sound sa createStory, views/likes/faces), `backend/notify.ts` (story_like), `components/stories.js`, `components/sound-picker.js`, `sounds.js`, `pages/notifications.js`, `css/social.css`, `css/sounds.css`, `css/pages/explore.css`, `css/pages/notifications.css`, `config.js` (0.11.12), `lang/fil.js`, `lang/ar.js`
+- **Paano:** Ang Trending ay bilang lang ng TigoMeNote Sounds (walang kantang may copyright gaya ng sa TikTok/FB/IG).
