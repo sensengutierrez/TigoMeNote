@@ -47,6 +47,11 @@ updated: 2026-10-24
 | `components/post-card.js` | Feed card + reactions/comment/share/bookmark (`TMN_POST_CARD`) |
 | `components/social-ui.js` | Comments, sino ang nag-react/share, follow, mini profile (`TMN_SOCIAL`) |
 | `components/stories.js` | Status / stories (`TMN_STORIES`) |
+| `components/media-viewer.js` | Buong-screen na photo/video/mapa na may X, swipe, Esc, Back (`TMN_VIEWER`) |
+| `route.js` | Route ng Explore post: stats, GPX, static na mapa (SVG), Leaflet na mapa (`TMN_ROUTE`) |
+| `components/activity-recorder.js` | I-record ang nilakbay gamit ang GPS (`TMN_TRACK`) |
+| `components/activity-composer.js` | Explore post: route (Record/GPX/history) + photos + stats (`TMN_ACTIVITY`) |
+| `components/create-menu.js` | "Create": Status / Post / Explore (`TMN_CREATE`) |
 | `components/image-cropper.js` | Crop ng larawan bago i-upload (`TMN_CROPPER`) |
 | `components/profile-editor.js` | Edit profile + palit ng photo/cover (`TMN_PROFILE_EDIT`) |
 | `components/app-shell.js` | Gumagawa ng layout ng app pages mula sa nav-items |
@@ -101,7 +106,7 @@ Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast
 | `write_action_dedup` | rate limit / duplicate guard | `sql/003-write-action-dedup.sql` |
 | `brain_notes` | kopya ng vault na ito sa database | `sql/004-brain-notes.sql` |
 | `email_codes` | 6-digit codes (hash lang), purpose `verify` o `reset` | `sql/007-email-verify.sql` |
-| `posts` | caption, visibility, `publish_at` (schedule), `client_id` (walang doble) | `sql/013-posts.sql` |
+| `posts` | caption, visibility, `publish_at` (schedule), `client_id` (walang doble), `activity` (Explore route + stats) | `sql/013-posts.sql`, `sql/046-explore-activity.sql` |
 | `post_media` | photos/videos ng post (path sa bucket) | `sql/013-posts.sql` |
 | `follows` | sino ang naka-follow kanino (para sa "Followers") | `sql/013-posts.sql` |
 | `post_reactions` | isang emoji bawat tao bawat post | `sql/017-social.sql` |

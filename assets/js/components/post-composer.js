@@ -1,6 +1,7 @@
 /* TigoMeNote · components/post-composer.js
    "Gumawa ng post" na modal. Gumagana kahit OFFLINE: sine-save sa device (TMN_POSTQ) at kusang ia-upload pag may internet.
-     TMN_COMPOSER.open(items, { onPosted })   items = mga item galing sa TMN_MEDIA (photo/video, max 10)
+     TMN_COMPOSER.open(items, { onPosted, activity })   items = mga item galing sa TMN_MEDIA (photo/video, max 10)
+       activity = Explore post (activity-composer.js): { type, title, route, stats } → puwedeng walang photo
    Pinipili dito: caption, sound (sound-picker.js; auto-pick kung wala pa), sino ang makakakita (Public / Followers / Ako lang),
    at kailan lalabas (Ngayon o I-schedule).
    Kailangan: modal.js, post-queue.js, app-shell.js */
@@ -21,7 +22,8 @@
     o = o || {};
     var UI = window.TMN_UI;
     items = (items || []).filter(function (it) { return it && it.blob && (it.type === "photo" || it.type === "video"); });
-    if (!items.length) { UI.toast("Choose a photo or video first."); return; }
+    var act = o.activity && window.TMN_ROUTE ? o.activity : null;
+    if (!items.length && !act) { UI.toast("Choose a photo or video first."); return; }
     if (items.length > MAX) { UI.toast("Up to " + MAX + " per post. The first " + MAX + " were used."); items = items.slice(0, MAX); }
 
     var urls = [];
@@ -34,17 +36,19 @@
     root.noValidate = true;
     var later = new Date(Date.now() + 60 * 60 * 1000); later.setMinutes(0, 0, 0);
     root.innerHTML =
-      '<div class="pc-strip">' + items.map(function (it, i) {
+      (act ? '<div class="pc-actbox"><div class="pc-actmap">' + TMN_ROUTE.svg(act.route, 240, 160, { attr: false }) + '</div><div><b>' + UI.esc(act.title) + '</b><div class="faint small">' +
+        TMN_ROUTE.type(act.type).label + " · " + TMN_ROUTE.fmt.dist(act.stats.dist_m) + (act.stats.dur_s ? " · " + TMN_ROUTE.fmt.time(act.stats.dur_s) : "") + "</div></div></div>" : "") +
+      (items.length ? '<div class="pc-strip">' + items.map(function (it, i) {
         var u = URL.createObjectURL(it.thumb || it.blob); urls.push(u);
         return '<div class="pc-thumb" data-i="' + i + '"><img alt="" src="' + u + '">' +
           (it.type === "video" ? '<span class="pc-dur">' + I("play", "ic-sm") + Math.min(15, Math.round(it.duration || 0)) + "s</span>" : "") +
           '<div class="pc-prog hidden"><span></span></div></div>';
-      }).join("") + "</div>" +
+      }).join("") + "</div>" : "") +
       (items.some(function (it) { return it.type === "video" && it.duration > 15.5; })
         ? '<p class="pc-warn small">' + I("clock", "ic-sm") + "Videos longer than 15 seconds will be cut to the first 15 s.</p>" : "") +
-      (window.TMN_SOUND_PICK ? '<div class="field"><span class="pe-label">Sound</span><div class="pc-soundpick"></div></div>' : "") +
+      (window.TMN_SOUND_PICK && items.length ? '<div class="field"><span class="pe-label">Sound</span><div class="pc-soundpick"></div></div>' : "") +
       '<label class="field"><span class="pe-label">Caption</span>' +
-        '<textarea class="input pc-cap" maxlength="' + CAP + '" rows="3" placeholder="What\'s the story?" data-autogrow="220"></textarea>' +
+        '<textarea class="input pc-cap" maxlength="' + CAP + '" rows="3" placeholder="' + (act ? "How was it?" : "What\'s the story?") + '" data-autogrow="220"></textarea>' +
         '<span class="pc-count faint small">' + (window.TMN_EMOJI_PICK ? '<button type="button" class="icon-btn pc-emo" aria-label="Emoji" aria-expanded="false">' + I("smile", "ic-sm") + "</button>" : "") + '<span class="pc-count-n">0 / ' + CAP + "</span></span></label>" +
       '<div class="field"><span class="pe-label">Who can see this</span>' +
         '<div class="segmented pc-vis" role="group" aria-label="Visibility">' + VIS.map(function (x) {
@@ -87,7 +91,7 @@
 
     // Sound: galing sa camera review, o auto-pick base sa unang photo/video
     var sound = null;
-    if (window.TMN_SOUND_PICK) {
+    if (window.TMN_SOUND_PICK && items.length) {
       var sbox = root.querySelector(".pc-soundpick"), first = items[0];
       var mountSound = function (s) {
         if (state.busy || closed) return;
@@ -136,7 +140,7 @@
           th.classList.remove("hidden"); th.firstChild.style.width = Math.round(pct * 100) + "%";
           status.textContent = (it.type === "video" ? "Compressing video " : "Preparing photo ") + (i + 1) + " / " + n + "…" + (it.type === "video" ? " (don't close)" : "");
         });
-        await window.TMN_POSTQ.enqueue({ files: files, caption: cap.value.trim(), visibility: state.vis, publishAt: publishAt, sound: sound });
+        await window.TMN_POSTQ.enqueue({ files: files, caption: cap.value.trim(), visibility: state.vis, publishAt: publishAt, sound: sound, activity: act });
         try { localStorage.setItem("tmnPostVis", state.vis); } catch (e) {}
         done = true; m.close(true);
         if (o.onPosted) o.onPosted();
@@ -151,7 +155,7 @@
 
     var done = false;
     var m = window.TMN_MODAL.open({
-      title: "New post", size: "md", cls: "modal-composer", body: root,
+      title: act ? "New Explore post" : "New post", size: "md", cls: "modal-composer", body: root,
       closeOnBackdrop: false,
       actions: [
         { label: "Cancel", cls: "btn-ghost", onClick: function () { if (!state.busy) m.close(); } },

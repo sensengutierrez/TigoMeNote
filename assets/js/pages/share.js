@@ -75,5 +75,10 @@
     });
   });
 
+  // Explore post (route + photos, parang Komoot)
+  document.getElementById("exploreTile").addEventListener("click", function () {
+    window.TMN_ACTIVITY.open({ onPosted: function () { setTimeout(function () { location.href = "explore.html"; }, 900); } });
+  });
+
   fillAlbums().catch(function () {});
 })();

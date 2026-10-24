@@ -32,7 +32,9 @@
     opts = opts || {};
     return posts.map(function (p, i) {
       var m = p.media[0] || {};
-      var inner = !m.url ? '<div class="pt-missing">' + I("image") + "</div>"
+      var route = !p.media.length && p.activity && p.activity.route && window.TMN_ROUTE;
+      var inner = route ? '<div class="pt-route">' + TMN_ROUTE.svg(p.activity.route, 300, 300, { attr: false }) + "</div>"
+        : !m.url ? '<div class="pt-missing">' + I("image") + "</div>"
         : m.kind === "video" ? '<video src="' + esc(m.url) + '#t=0.1" muted playsinline preload="metadata"></video>'
         : '<img alt="" loading="lazy" src="' + esc(m.url) + '">';
       var badges = "";
@@ -41,7 +43,8 @@
       if (p.scheduled) badges += '<span class="pt-badge sched">' + I("clock", "ic-sm") + short(p.publish_at) + "</span>";
       if (opts.showVis && p.visibility !== "public") badges += '<span class="pt-badge">' + I(VIS[p.visibility][0], "ic-sm") + "</span>";
       var corner = (p.media.length > 1 ? '<span class="pt-corner">' + I("album", "ic-sm") + p.media.length + "</span>" : "") +
-        (m.kind === "video" ? '<span class="pt-corner">' + I("video", "ic-sm") + "</span>" : "");
+        (m.kind === "video" ? '<span class="pt-corner">' + I("video", "ic-sm") + "</span>" : "") +
+        (p.activity ? '<span class="pt-corner">' + I("map", "ic-sm") + "</span>" : "");
       var st = p.stats || {};
       var stats = p.scheduled ? "" : '<span class="pt-stats" translate="no">' +
         '<span title="Views">' + I("play", "ic-sm") + num(st.views) + "</span>" +
@@ -79,7 +82,7 @@
         '<button type="button" class="vw-nav prev" aria-label="Previous">' + I("chevronL") + "</button>" +
         '<button type="button" class="vw-nav next" aria-label="Next">' + I("chevronR") + "</button>" +
         '<div class="pv-dots"></div></div>' +
-      '<div class="pv-info"><div class="pv-author"></div><div class="pv-sound"></div><div class="pv-badges"></div><p class="pv-cap"></p>' +
+      '<div class="pv-info"><div class="pv-author"></div><div class="pv-sound"></div><div class="pv-badges"></div><div class="pv-act"></div><p class="pv-cap"></p>' +
         '<div class="pv-social"></div><div class="pv-actions"></div></div>';
     var media = root.querySelector(".pv-media"), dots = root.querySelector(".pv-dots");
     var prev = root.querySelector(".prev"), next = root.querySelector(".next");
@@ -87,7 +90,8 @@
     function cur() { return posts[idx]; }
     function showSlide() {
       var p = cur(), m = p.media[slide] || {};
-      media.innerHTML = !m.url ? '<div class="pt-missing">' + I("image", "ic-lg") + "<span>Couldn't load. Please try again.</span></div>"
+      media.innerHTML = !p.media.length && p.activity && p.activity.route && window.TMN_ROUTE ? '<div class="pv-route">' + TMN_ROUTE.svg(p.activity.route, 800, 800) + "</div>"
+        : !m.url ? '<div class="pt-missing">' + I("image", "ic-lg") + "<span>Couldn't load. Please try again.</span></div>"
         : m.kind === "video" ? '<video src="' + esc(m.url) + '" controls playsinline autoplay></video>'
         : '<img alt="" src="' + esc(m.url) + '">';
       // May sound ang post: hinaan ang sariling tunog ng video ayon sa pinili ng nag-post
@@ -112,6 +116,12 @@
         (p.stats && !p.scheduled ? '<span class="badge" title="Views">' + I("play", "ic-sm") + '<span translate="no">' + num(p.stats.views) + "</span> views</span>" : "");
       if (!p.mine && !p.scheduled) markViewed(p.id);
       root.querySelector(".pv-cap").textContent = p.caption || "";
+      // Explore activity: pamagat, stats at maliit na mapa (tap = buong mapa)
+      var act = root.querySelector(".pv-act"), A = p.activity, R = window.TMN_ROUTE;
+      act.innerHTML = A && R ? (A.title ? "<h3>" + esc(A.title) + "</h3>" : "") +
+        '<div class="pc-act-stats">' + [["Time", R.fmt.time(A.stats && A.stats.dur_s)], ["Distance", R.fmt.dist(A.stats && A.stats.dist_m)], ["Speed", R.fmt.speed(A.stats && A.stats.dist_m, A.stats && A.stats.dur_s)], ["Elevation", R.fmt.elev(A.stats && A.stats.up_m)]]
+          .filter(function (c) { return c[1] !== "—"; }).map(function (c) { return '<div><span class="faint small">' + c[0] + '</span><b translate="no">' + c[1] + "</b></div>"; }).join("") + "</div>" +
+        (p.media.length ? '<button type="button" class="pv-route-btn" data-a="route" aria-label="Open map">' + R.svg(A.route, 480, 220) + "</button>" : "") : "";
       // Sound: tumutugtog agad pagbukas (tap sa ♪ para itigil)
       var S = window.TMN_SOUNDS, sb = root.querySelector(".pv-sound");
       sb.innerHTML = p.sound && S ? S.chip(p.sound) : "";
@@ -138,6 +148,15 @@
       else { var n = idx + d; if (n < 0 || n >= posts.length) return; idx = n; slide = d > 0 ? 0 : posts[n].media.length - 1; show(); return; }
       showSlide();
     }
+    // Tap sa photo/video/mapa = buong-screen (TMN_VIEWER)
+    media.addEventListener("click", function (e) {
+      if (e.target.closest("button") || !window.TMN_VIEWER) return;
+      if (e.target.closest("video") && e.offsetY > e.target.clientHeight - 48) return; // controls ng video
+      TMN_VIEWER.open(TMN_VIEWER.itemsOf(cur()), cur().media.length ? slide : 0);
+    });
+    root.querySelector(".pv-act").addEventListener("click", function (e) {
+      if (e.target.closest('[data-a="route"]') && window.TMN_VIEWER) TMN_VIEWER.open(TMN_VIEWER.itemsOf(cur()), cur().media.length);
+    });
     prev.addEventListener("click", function () { go(-1); });
     next.addEventListener("click", function () { go(1); });
     function onKey(e) { if (e.target.closest && e.target.closest("textarea, input")) return; if (e.key === "ArrowLeft") go(-1); if (e.key === "ArrowRight") go(1); }

@@ -222,3 +222,13 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench (may screenshot): "ng scroll padin ako dapat pag ganyan kalake same size nalang wala ng scroll sa picture at video".
 - **Files:** `assets/css/social.css`, `assets/js/components/post-card.js` (wala nang aspect-ratio bawat post), `config.js` (0.11.4)
 - **Na-test (mock):** 1366×768 → post 670px; 1280×720 → 622px; phone 390×844 → 682px (lahat kasya).
+
+## 2026-10-24 · #33 Explore post (parang Komoot) + buong-screen na photo/video na may X
+- **Ano:**
+  - **Create** button sa Explore: **Status**, **Post** o **Explore**. May "Explore" tile din sa Share.
+  - **Explore post:** ang daan mo sa mapa (Start → Finish), may photos/videos at stats (Time, Distance, Speed, Elevation), parang Komoot. Saan galing ang route: **Record now** (GPS habang naglalakad/tumatakbo/nagba-bike; naka-save sa device habang nagre-record), **Import GPX** (Komoot, Strava, Garmin, Google), o **From my location history** (Safety, 30 araw). Uri: Hike, Walk, Run, Bike ride, Drive, Trip. Puwedeng walang photo (mapa lang).
+  - Sa feed: "Maria went for a hike", pamagat, stats, photos, at maliit na mapa sa sulok; mapa lang kung walang photo.
+  - **Buong-screen na tingin:** tap sa photo o video (feed, profile, post viewer) = lumalaki sa buong screen, buo at tamang laki, may **X** sa itaas para isara. Swipe o ← → para sa susunod; Esc o Back ng phone = sara. Tap sa maliit na mapa = buong mapa (zoom/drag).
+- **Bakit:** Ayon kay Bench: "sa explore dapat merron akong option kung stories/post/explore, ang posting pag explore parang komoot, pwede mag lagay ng picture tapos ung map ng nilakbay… pag click ko lalaki sya para sa view tapos lagyan mo nalang ng x para close same sa video".
+- **Files:** `sql/046-explore-activity.sql`, `backend/posts-fast.ts` (v12), `assets/js/route.js` (bago), `components/media-viewer.js` (bago), `components/activity-recorder.js` (bago), `components/activity-composer.js` (bago), `components/create-menu.js` (bago), `components/post-card.js`, `components/post-viewer.js`, `components/post-composer.js`, `post-queue.js`, `pages/explore.js`, `pages/share.js`, `app/explore.html`, `app/share.html`, `app/profile.html`, `app/messages.html`, `app/notifications.html`, `assets/css/activity.css` (bago), `components.css`, `pages/explore.css`, `pages/share.css`, `lang/fil.js`, `lang/ar.js`, `config.js` (0.11.5)
+- **Paano:** Detalye sa [[Build - Explore activity]].

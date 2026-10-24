@@ -1,10 +1,10 @@
 /* TigoMeNote · pages/share.css (app/share.html) */
 
-.capture { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.capture { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
 .capture-tile {
   position: relative; display: grid; justify-items: start; gap: 2px; text-align: left;
   padding: 16px; min-height: 150px; border-radius: var(--r-lg);
-  border: 1px solid var(--line); background: var(--surface); transition: border-color .15s, transform .15s var(--ease);
+  border: 1px solid var(--line); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; transition: border-color .15s, transform .15s var(--ease);
 }
 .capture-tile:not(:disabled):hover { border-color: var(--text); transform: translateY(-2px); }
 .capture-tile:disabled { cursor: default; }
@@ -20,13 +20,12 @@
 .where-ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--bg-soft); flex: none; }
 
 @media (max-width: 520px) {
-  .capture { grid-template-columns: 1fr 1fr; }
-  .capture-tile:first-child { grid-column: 1 / -1; min-height: 130px; }
+  .capture-tile { min-height: 130px; }
 }
 
 @media (min-width: 900px) {
   .capture { margin-bottom: 0; }
-  .capture-tile { min-height: 260px; padding: 22px; }
+  .capture-tile { min-height: 200px; padding: 22px; }
   .capture-tile .cap-icon { width: 60px; height: 60px; border-radius: 18px; }
   .capture-tile .cap-title { font-size: 19px; }
 }

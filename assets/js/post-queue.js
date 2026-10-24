@@ -5,7 +5,8 @@
      3) ang server ang magpapalabas sa naka-schedule na oras (publish_at)
    Gamit:
      await TMN_POSTQ.prepare(items, onProgress)   → compressed files (photo ≤1600px JPEG, video 720p, max 15 s)
-     await TMN_POSTQ.enqueue({ files, caption, visibility, publishAt, sound })   sound = { id, vol, orig } o null
+     await TMN_POSTQ.enqueue({ files, caption, visibility, publishAt, sound, activity })   sound = { id, vol, orig } o null
+       activity = Explore post (route + stats); puwedeng walang files kapag may activity
      TMN_POSTQ.list() / retry(id) / cancel(id) / process()
    Event: "tmn:queue" sa document. Kailangan: config.js, api.js (TMN_API). */
 (function () {
@@ -156,7 +157,7 @@
   async function enqueue(o) {
     var e = {
       id: uid(), status: "queued", caption: o.caption || "", visibility: o.visibility || "public",
-      publishAt: o.publishAt || null, sound: o.sound || null, files: o.files, createdAt: Date.now(), attempts: 0,
+      publishAt: o.publishAt || null, sound: o.sound || null, activity: o.activity || null, files: o.files, createdAt: Date.now(), attempts: 0,
       error: null, postId: null, progress: { done: 0, total: o.files.length },
       cover: o.files[0] ? (o.files[0].thumb || (o.files[0].kind === "photo" ? o.files[0].blob : null)) : null
     };
@@ -188,8 +189,9 @@
         if (e.status === "done" || e.status === "blocked" || !backoffOk(e) || !navigator.onLine) continue;
         try {
           e.status = "uploading"; e.error = null; e.lastTry = Date.now(); await put(e); emit();
-          var up = await TMN_API.call("posts", "createUpload", {
-            client_id: e.id, caption: e.caption,
+          // Walang photo (Explore post na mapa lang): diretso sa createPost
+          var up = !e.files.length ? { uploads: [] } : await TMN_API.call("posts", "createUpload", {
+            client_id: e.id, caption: e.caption + (e.activity ? " " + e.activity.title : ""),
             files: e.files.map(function (f) { return { kind: f.kind, mime: f.mime, size: f.size, duration: f.duration }; })
           });
           if (!up.already) {
@@ -203,7 +205,7 @@
             try {
               res = await TMN_API.call("posts", "createPost", {
                 client_id: e.id, caption: e.caption, visibility: e.visibility,
-                publish_at: e.publishAt || null, sound: e.sound || null, taken_at: e.files[0] && e.files[0].takenAt ? new Date(e.files[0].takenAt).toISOString() : null,
+                publish_at: e.publishAt || null, sound: e.sound || null, activity: e.activity || null, taken_at: e.files[0] && e.files[0].takenAt ? new Date(e.files[0].takenAt).toISOString() : null,
                 media: e.files.map(function (f, n) { return { path: up.uploads ? up.uploads[n].path : null, kind: f.kind, mime: f.mime, w: f.w, h: f.h, duration: f.duration, size: f.size }; })
               });
               break;

@@ -6,6 +6,7 @@
 //          view, pin, liked, reposts, history
 // Moderation: caption at comment ay dumadaan sa moderation.ts (block o flag). Nakatago (hidden_at) = may-ari lang ang nakakakita.
 // Notifications: reaction, comment, repost at milestone (ilang post na) ay dumadaan sa notify.ts.
+// Explore activity (parang Komoot): posts.activity = { type, title, route [[lat,lng,ele]], stats, start_at }; puwedeng walang photo.
 // Storage: private bucket "post-media" — signed upload URL (pang-upload) at signed read URL (1 oras).
 // Secrets: AUTH_PEPPER (hindi ginagamit dito), SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY (automatic).
 
@@ -134,7 +135,7 @@ async function hydrate(posts: any[], me: any) {
       id: p.id, client_id: p.client_id, caption: p.caption, visibility: p.visibility,
       publish_at: p.publish_at, created_at: p.created_at, mine: p.user_id === me.id,
       scheduled: new Date(p.publish_at).getTime() > now,
-      pinned: !!p.pinned_at, pinned_at: p.pinned_at ?? null, sound: p.sound ?? null,
+      pinned: !!p.pinned_at, pinned_at: p.pinned_at ?? null, sound: p.sound ?? null, activity: p.activity ?? null,
       hidden: !!p.hidden_at, hidden_reason: p.hidden_at ? p.hidden_reason ?? null : null,
       author: byId[p.user_id] ? { ...byId[p.user_id], following: following.has(p.user_id) } : null,
       media: (media ?? []).filter((m) => m.post_id === p.id).map((m) => ({
@@ -211,6 +212,39 @@ function cleanSound(s: any) {
   return out;
 }
 
+// Explore activity: nililinis at kinukuwenta ulit ang layo (distance) dito sa server
+const ACT_TYPES = ["hike", "walk", "run", "bike", "drive", "other"];
+const MAX_ROUTE_POINTS = 1000;
+function haversine(a: number[], b: number[]) {
+  const r = Math.PI / 180, dLat = (b[0] - a[0]) * r, dLng = (b[1] - a[1]) * r;
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6371008.8 * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+// deno-lint-ignore no-explicit-any
+function cleanActivity(a: any): Record<string, unknown> | null {
+  if (!a || typeof a !== "object" || !Array.isArray(a.route)) return null;
+  const pts: (number | null)[][] = [];
+  for (const r of a.route.slice(0, MAX_ROUTE_POINTS)) {
+    if (!Array.isArray(r)) continue;
+    const lat = Number(r[0]), lng = Number(r[1]), e = r[2] == null ? NaN : Number(r[2]);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) continue;
+    pts.push([Math.round(lat * 1e5) / 1e5, Math.round(lng * 1e5) / 1e5, Number.isFinite(e) ? Math.round(Math.max(-500, Math.min(9000, e))) : null]);
+  }
+  if (pts.length < 2) return null;
+  let d = 0;
+  for (let i = 1; i < pts.length; i++) d += haversine(pts[i - 1] as number[], pts[i] as number[]);
+  const s = a.stats && typeof a.stats === "object" ? a.stats : {};
+  const n = (v: unknown, max: number) => { const x = Number(v); return v != null && Number.isFinite(x) && x > 0 ? Math.min(max, Math.round(x)) : null; };
+  const start = a.start_at ? new Date(String(a.start_at)) : null;
+  return {
+    type: ACT_TYPES.includes(a.type) ? a.type : "other",
+    title: String(a.title ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 80),
+    route: pts,
+    stats: { dist_m: Math.round(Math.max(d, n(s.dist_m, 5_000_000) ?? 0)), dur_s: n(s.dur_s, 30 * 86400), up_m: n(s.up_m, 30000), down_m: n(s.down_m, 30000) },
+    start_at: start && !isNaN(start.getTime()) ? start.toISOString() : null,
+  };
+}
+
 // deno-lint-ignore no-explicit-any
 async function createPost(p: any, me: any) {
   const clientId = cleanId(p.client_id);
@@ -219,18 +253,20 @@ async function createPost(p: any, me: any) {
   if (existing) return reply({ ok: true, already: true, post: (await hydrate([existing], me))[0] });
 
   const caption = String(p.caption ?? "").slice(0, 1000);
-  const v = checkFor(me, caption);
+  const activity = p.activity ? cleanActivity(p.activity) : null;
+  if (p.activity && !activity) return fail("The route is invalid. Please choose it again.");
+  const v = checkFor(me, activity ? caption + "\n" + String(activity.title) : caption);
   if (!v.ok && v.level === "block") { await logBlock(db, me.id, v, "caption"); return fail(blockMessage(v.category), 422, { blocked: true, category: v.category }); }
   const visibility = ["public", "followers", "private"].includes(p.visibility) ? p.visibility : "public";
   const publishAt = parsePublishAt(p.publish_at);
   if (!publishAt) return fail("Invalid schedule date/time.");
   const media = Array.isArray(p.media) ? p.media.slice(0, MAX_MEDIA_PER_POST) : [];
-  if (!media.length) return fail("No photo or video.");
+  if (!media.length && !activity) return fail("No photo or video.");
   const sound = cleanSound(p.sound);
 
   // Siguraduhing sa user na ito ang mga path at nandoon talaga ang files
   const prefix = `${me.id}/${clientId}/`;
-  const { data: listed } = await db.storage.from(BUCKET).list(`${me.id}/${clientId}`, { limit: 50 });
+  const { data: listed } = media.length ? await db.storage.from(BUCKET).list(`${me.id}/${clientId}`, { limit: 50 }) : { data: [] };
   const present = new Set((listed ?? []).map((o) => prefix + o.name));
   const sizes = Object.fromEntries((listed ?? []).map((o) => [prefix + o.name, (o.metadata && o.metadata.size) || 0]));
   for (const m of media) {
@@ -241,7 +277,7 @@ async function createPost(p: any, me: any) {
   const { data: post, error } = await db.from("posts").insert({
     user_id: me.id, client_id: clientId, caption, visibility,
     publish_at: publishAt.toISOString(), taken_at: p.taken_at ? new Date(p.taken_at).toISOString() : null,
-    media_count: media.length, sound,
+    media_count: media.length, sound, activity,
   }).select("*").single();
   if (error) {
     if (error.code === "23505") { // sabay na retry
@@ -255,7 +291,7 @@ async function createPost(p: any, me: any) {
     mime: String(m.mime || "image/jpeg"), size: sizes[m.path as string] || Number(m.size) || 0,
     w: Number(m.w) || null, h: Number(m.h) || null, duration: Number(m.duration) || null, position: i,
   }));
-  const { error: mErr } = await db.from("post_media").insert(rows);
+  const { error: mErr } = rows.length ? await db.from("post_media").insert(rows) : { error: null };
   if (mErr) { await db.from("posts").delete().eq("id", post.id); throw mErr; }
   if (!v.ok) await autoFlag(db, { type: "post", id: post.id, owner: me.id }, v);
   await milestone(me);

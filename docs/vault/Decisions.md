@@ -64,6 +64,9 @@ updated: 2026-10-24
 | 2026-10-24 | Policies sa English; batas = Kingdom of Bahrain; contact = Report button hangga't walang email | Ipa-review sa abogado bago mag-Play Store |
 | 2026-10-23 | Lipat sa **Brevo** (free 300/araw) | Ayaw tanggapin ng Gmail ang App Password; walang domain na kailangan sa Brevo. SMS ay hindi pinili kasi may bayad. |
 | 2026-10-24 | Label sa circle ("Sino siya sa iyo") ay pribado: bawat panig may sariling label | Iba ang tawag ng anak sa magulang at ng magulang sa anak; walang ibang nakakakita |
+| 2026-10-24 | Explore post: route sa `posts.activity` (jsonb, ≤800 points), kinukuwenta ulit ng server ang layo | Isang table lang (walang bagong table), mabilis i-load sa feed, hindi madadaya ang distance |
+| 2026-10-24 | Static na mapa sa feed = SVG (OSM tiles + guhit); interactive (Leaflet) lang kapag binuksan | Mabilis ang feed kahit maraming route; hindi gumagawa ng maraming Leaflet map |
+| 2026-10-24 | GPS recording sa browser: kailangang bukas ang screen (Wake Lock) | Pinapatigil ng browser ang GPS kapag naka-lock; sa APK, ang location history (Safety) ang puwedeng gamitin |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

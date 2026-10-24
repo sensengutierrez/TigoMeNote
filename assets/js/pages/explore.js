@@ -138,6 +138,9 @@
     TMN_MODAL.open({ title: "Search people", size: "sm", cls: "modal-sheet", body: body });
   });
 
+  // ---------- Create: Status / Post / Explore (route) ----------
+  $("createBtn").addEventListener("click", function () { window.TMN_CREATE.open({ onPosted: function () { UI.toast("Posting… it will show here once uploaded."); } }); });
+
   // ---------- ?post=<id> ----------
   async function openFromLink() {
     var id = new URLSearchParams(location.search).get("post"); if (!id) return;

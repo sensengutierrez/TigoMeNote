@@ -16,8 +16,20 @@
       (u.avatar_url ? '<img alt="" src="' + esc(u.avatar_url) + '">' : esc(window.TMN_UI.initials(u.display_name || u.username || "?"))) + "</span>";
   }
 
+  // Explore activity (parang Komoot): mapa ng nilakbay. Walang photo = mapa ang buong media; may photo = maliit na mapa sa sulok.
+  function routeSvg(p, w, h) { return p.activity && p.activity.route && window.TMN_ROUTE ? TMN_ROUTE.svg(p.activity.route, w, h) : ""; }
+  function activityHead(p) {
+    var a = p.activity, R = window.TMN_ROUTE; if (!a || !R) return "";
+    var s = a.stats || {};
+    var cells = [["Time", R.fmt.time(s.dur_s)], ["Distance", R.fmt.dist(s.dist_m)], ["Speed", R.fmt.speed(s.dist_m, s.dur_s)], ["Elevation", R.fmt.elev(s.up_m)]]
+      .filter(function (c) { return c[1] !== "—"; });
+    return (a.title ? '<h3 class="pc-act-title">' + esc(a.title) + "</h3>" : "") +
+      (p.caption ? '<p class="pc-act-cap">' + esc(p.caption) + "</p>" : "") +
+      (cells.length ? '<div class="pc-act-stats">' + cells.map(function (c) { return '<div><span class="faint small">' + c[0] + '</span><b translate="no">' + c[1] + "</b></div>"; }).join("") + "</div>" : "");
+  }
   function mediaHtml(p) {
-    if (!p.media.length) return "";
+    var hasRoute = !!(p.activity && p.activity.route && window.TMN_ROUTE);
+    if (!p.media.length) return hasRoute ? '<div class="pcard-media pc-route-only"><button type="button" class="pc-route-full" data-act="route" aria-label="Open map">' + routeSvg(p, 640, 460) + "</button></div>" : "";
     var slides = p.media.map(function (m, i) {
       var inner = !m.url ? '<div class="pt-missing">' + I("image") + "</div>"
         : m.kind === "video" ? '<video src="' + esc(m.url) + '" playsinline muted loop preload="metadata"' + (i === 0 ? "" : "") + "></video>"
@@ -28,6 +40,7 @@
       '<div class="pc-track" data-act="track">' + slides + "</div>" +
       (p.media.length > 1 ? '<span class="pc-count-badge">1/' + p.media.length + '</span><div class="pc-dots">' +
         p.media.map(function (_, i) { return '<span class="' + (i ? "" : "on") + '"></span>'; }).join("") + "</div>" : "") +
+      (hasRoute ? '<button type="button" class="pc-route-inset" data-act="route" aria-label="Open map">' + routeSvg(p, 240, 240) + "</button>" : "") +
       '<span class="pc-burst" aria-hidden="true"></span></div>';
   }
 
@@ -61,15 +74,16 @@
       (p.repost_by ? '<div class="pc-repost">' + I("repost", "ic-sm") + '<button type="button" data-act="user" data-uid="' + esc(p.repost_by.id) + '">' + esc(p.repost_by.display_name || p.repost_by.username) + "</button> reposted</div>" : "") +
       '<header class="pcard-head">' +
         '<button type="button" class="pc-author" data-act="user" data-uid="' + esc(a.id || "") + '">' + avatar(a, 38) +
-          '<span class="pc-who"><b>' + esc(a.display_name || a.username || "") + '</b><span class="faint small">@' + esc(a.username || "") + " · " + ago(p.publish_at) +
+          '<span class="pc-who"><b>' + esc(a.display_name || a.username || "") + (p.activity && window.TMN_ROUTE ? ' <span class="pc-did">' + TMN_ROUTE.type(p.activity.type).verb + "</span>" : "") + '</b><span class="faint small">@' + esc(a.username || "") + " · " + ago(p.publish_at) +
           (p.visibility !== "public" ? " · " + I(window.TMN_POSTS_UI.VIS[p.visibility][0], "ic-sm") : "") + "</span></span></button>" +
         (showFollow ? '<button type="button" class="btn btn-ghost btn-sm pc-follow" data-act="follow" data-uid="' + esc(a.id) + '">Follow</button>' : "") +
         '<button type="button" class="icon-btn" data-act="more" aria-label="More">' + I("more") + "</button>" +
       "</header>" +
       (p.sound && window.TMN_SOUNDS ? '<div class="pc-music">' + TMN_SOUNDS.chip(p.sound) + "</div>" : "") +
+      activityHead(p) +
       mediaHtml(p) +
       actionsHtml(p) +
-      (p.caption ? '<p class="pc-caption"><b data-act="user" data-uid="' + esc(a.id || "") + '">' + esc(a.username || "") + "</b> " + esc(p.caption) + "</p>" : "") +
+      (p.caption && !p.activity ? '<p class="pc-caption"><b data-act="user" data-uid="' + esc(a.id || "") + '">' + esc(a.username || "") + "</b> " + esc(p.caption) + "</p>" : "") +
       (p.stats && p.stats.comments ? '<button type="button" class="pc-more-comments" data-act="comments">' + (p.stats.comments === 1 ? "View 1 comment" : "View all " + n(p.stats.comments) + " comments") + "</button>" : "") +
       '<div class="pc-time faint small">' + new Date(p.publish_at).toLocaleDateString(window.TMN_I18N ? TMN_I18N.locale : undefined, { month: "long", day: "numeric" }) + "</div>" +
     "</article>";
@@ -114,10 +128,20 @@
       b.textContent = emoji || "❤️"; b.classList.remove("go"); void b.offsetWidth; b.classList.add("go");
     }
 
+    // Tap sa photo/video = buong-screen na tingin (TMN_VIEWER). Hinihintay saglit para hindi masalo ang double-tap ❤️
+    var openT = null, dblAt = 0;
+    function viewer(p, i) { if (window.TMN_VIEWER) TMN_VIEWER.open(TMN_VIEWER.itemsOf(p), i); }
+    root.addEventListener("click", function (e) {
+      var sl = e.target.closest(".pc-slide"); if (!sl || e.target.closest("button") || !root.contains(sl)) return;
+      var p = post(sl); if (!p || Date.now() - dblAt < 450) return;
+      var i = [].indexOf.call(sl.parentNode.children, sl);
+      clearTimeout(openT); openT = setTimeout(function () { viewer(p, i); }, 280);
+    });
     root.addEventListener("click", async function (e) {
       var t = e.target.closest("[data-act]"); if (!t || !root.contains(t)) return;
       var act = t.dataset.act, p = post(t);
       if (act === "user") { e.preventDefault(); if (t.dataset.uid) S().userSheet(t.dataset.uid); return; }
+      if (act === "track") return;
       if (!p) return;
       var cd = card(t);
       if (act === "react") { if (press && press.fired) { press = null; return; } if (!p.stats.my_reaction) burst(cd, "❤️"); react(p); }
@@ -139,6 +163,7 @@
         else t.disabled = false;
       }
       if (act === "more") S().postMenu(p, api);
+      if (act === "route") viewer(p, p.media.length);
       if (act === "sound") { var v = t.parentNode.querySelector("video"); if (v) { v.muted = !v.muted; if (v.paused) v.play(); t.classList.toggle("on", !v.muted); } }
     });
     // Double-tap sa photo = ❤️ (parang Instagram)
@@ -146,7 +171,7 @@
     root.addEventListener("pointerup", function (e) {
       var m = e.target.closest(".pcard-media"); if (!m || e.target.closest("button")) return;
       var now = Date.now();
-      if (now - lastTap < 300) { var p = post(m); if (p && p.stats.my_reaction !== "❤️") { react(p, "❤️"); } burst(card(m), "❤️"); lastTap = 0; }
+      if (now - lastTap < 300) { clearTimeout(openT); dblAt = now; var p = post(m); if (p && p.stats.my_reaction !== "❤️") { react(p, "❤️"); } burst(card(m), "❤️"); lastTap = 0; }
       else lastTap = now;
     });
     // Pindutin nang matagal (o hover sa desktop) ang puso = pumili ng emoji

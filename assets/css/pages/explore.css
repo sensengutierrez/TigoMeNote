@@ -4,6 +4,7 @@
 .ex-main { width: 100%; max-width: 640px; justify-self: center; display: grid; gap: 14px; align-content: start; }
 .ex-head { display: flex; align-items: center; justify-content: space-between; }
 .ex-head h1 { font-size: 28px; }
+.ex-head-btns { display: flex; align-items: center; gap: 6px; }
 .ex-tabs { display: flex; width: 100%; }
 .ex-tabs button { flex: 1; justify-content: center; }
 .more-wrap { display: flex; justify-content: center; padding: 6px 0 18px; }

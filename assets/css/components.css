@@ -287,3 +287,26 @@ body.modal-open { overflow: hidden; }
 textarea[data-autogrow] { resize: none; overflow-y: hidden; scrollbar-width: thin; }
 .ch-input { scrollbar-width: none; }
 .ch-input::-webkit-scrollbar { display: none; }
+
+/* ---------- Media viewer (media-viewer.js): buong-screen na photo/video/mapa na may X ---------- */
+html.mv-open, html.mv-open body { overflow: hidden; }
+.mv { position: fixed; inset: 0; z-index: 105; background: #000; color: #fff; display: grid; grid-template-rows: auto 1fr; animation: mv-in .15s ease-out; }
+@keyframes mv-in { from { opacity: 0; } }
+.mv-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: max(10px, env(safe-area-inset-top)) 12px 6px 18px; position: relative; z-index: 2; }
+.mv-count { font-size: 14px; font-weight: 600; opacity: .85; }
+.mv-x { width: 46px; height: 46px; border-radius: 50%; border: 0; display: grid; place-items: center; background: rgba(255,255,255,.14); color: #fff; cursor: pointer; }
+.mv-x:hover { background: rgba(255,255,255,.24); }
+.mv-x svg { width: 24px; height: 24px; }
+.mv-track { display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; min-height: 0; overscroll-behavior: contain; }
+.mv-track::-webkit-scrollbar { display: none; }
+.mv-slide { flex: 0 0 100%; min-width: 0; height: 100%; scroll-snap-align: center; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0 0 max(12px, env(safe-area-inset-bottom)); }
+.mv-slide img, .mv-slide video { width: 100%; height: 100%; min-height: 0; object-fit: contain; display: block; touch-action: pan-x pinch-zoom; user-select: none; }
+.mv-slide video { background: #000; }
+.mv-slide.is-map { padding: 0 12px max(12px, env(safe-area-inset-bottom)); }
+.mv-map { width: 100%; height: 100%; border-radius: 14px; overflow: hidden; background: #e8eef0; position: relative; }
+.mv-map .rt-svg { width: 100%; height: 100%; display: block; }
+.mv-map.leaflet-container .rt-svg { display: none; }
+.mv-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 48px; height: 48px; border-radius: 50%; border: 0; display: grid; place-items: center; background: rgba(255,255,255,.14); color: #fff; cursor: pointer; }
+.mv-nav.prev { left: 14px; } .mv-nav.next { right: 14px; }
+.mv-nav:disabled { opacity: 0; pointer-events: none; }
+@media (hover: none) { .mv-nav { display: none; } }
