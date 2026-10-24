@@ -27,6 +27,9 @@ updated: 2026-10-24
 |---|---|---|
 | `auth-fast` | off | `backend/auth-fast.ts` |
 
+## Keep warm (pg_cron)
+Job `tmn-keep-warm` (sql/041): bawat 3 min, POST `{"action":"warm"}` sa auth, notify, wellbeing, safety, messages, posts, social, profile. Patayin: `select cron.unschedule('tmn-keep-warm');`
+
 ## Rules
 - Bawat bagong table: `enable row level security` + `grant select, insert, update, delete ... to service_role`.
 - Bawat SQL na pinatakbo ay may file sa `sql/` (naka-number).

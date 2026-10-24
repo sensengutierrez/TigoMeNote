@@ -3,10 +3,10 @@
 // Actions (kailangan ng session token): trending, search  ·  data: { type: "gifs"|"stickers", q, page }
 // Secret: KLIPY_API_KEY (Supabase → Edge Functions → Secrets). Kung wala pa: { ok: false, setup: true }.
 // Kaligtasan: teen (13–17) = rating "g"; iba = "pg-13". Hindi ipinapadala sa KLIPY ang user id (hash lang).
+// Bilis: WebP at maliliit na bersyon muna; 5 minutong cache.
 // Ibinabalik: { items: [{ id, title, preview: {url,w,h}, full: {url,w,h} }], more }  (KLIPY lang na link)
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import { isTeen } from "./moderation.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 const KEY = Deno.env.get("KLIPY_API_KEY") ?? "";
@@ -40,6 +40,15 @@ async function sessionUser(token: string): Promise<any | null> {
   return u && u.status === "Active" ? u : null;
 }
 
+// Teen ba (13–17)? Kapareho ng isTeen sa moderation.ts (kinopya para isang file lang ang function)
+function isTeen(birth: string | null | undefined, now = new Date()): boolean {
+  if (!birth) return false;
+  const b = new Date(birth + "T00:00:00Z");
+  let a = now.getUTCFullYear() - b.getUTCFullYear();
+  if (now.getUTCMonth() < b.getUTCMonth() || (now.getUTCMonth() === b.getUTCMonth() && now.getUTCDate() < b.getUTCDate())) a--;
+  return a >= 13 && a < 18;
+}
+
 // KLIPY lang na link (iwas ibang site sa chat)
 const okUrl = (u: unknown) => typeof u === "string" && u.length < 600 && /^https:\/\/([a-z0-9-]+\.)*klipy\.com\//i.test(u);
 
@@ -57,8 +66,9 @@ function shape(list: any[]) {
   return list.map((it) => {
     const file = it?.file ?? it?.files;
     if (!file || it?.type === "ad") return null; // ads at walang file: hindi ipinapakita
-    const preview = pick(file, ["sm", "xs", "md"], ["webp", "gif", "jpg"]);
-    const full = pick(file, ["md", "sm", "hd"], ["gif", "webp"]);
+    // WebP muna (mas maliit at mas mabilis kaysa GIF)
+    const preview = pick(file, ["sm", "xs", "md"], ["webp", "jpg", "gif"]);
+    const full = pick(file, ["sm", "md", "hd"], ["webp", "gif"]);
     if (!preview || !full) return null;
     return { id: String(it.slug ?? it.id ?? ""), title: String(it.title ?? "").slice(0, 80), preview, full };
   }).filter(Boolean);

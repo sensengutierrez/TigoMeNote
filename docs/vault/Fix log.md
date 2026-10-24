@@ -42,6 +42,7 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-10-24 · Safety: "hindi lumalabas" ang in-add na Family/Friend → pending pa (hindi pa tinatanggap) at nasa maliit na "Waiting…" sa ilalim ng "No Family yet"; walang notification ang inimbitahan (push lang, kung naka-on) → pending ay nasa listahan na mismo + bilang, listahan bago ang mapa, at notification na may Accept/Decline (`safety.js`, `safety.html`, `safety-fast.ts`, `notifications.js`, sql/037)
 - 2026-10-24 · Emoji na "kahon" (hal. 🫩, 🩷 sa Windows) → walang ganoong emoji ang font ng device → Noto Color Emoji (Google Fonts) sa bawat page at sa `--font-body`; ang preview ng message ay pinuputol na nang hindi nahahati ang emoji (`tokens.css`, `messages-fast.ts`)
 - 2026-10-24 · Sound picker: humahaba ang "Best match" sa buong lapad → `justify-self: start` (`sounds.css`)
+- 2026-10-24 · Mabagal ang loading → (1) cold start ng edge functions (2–3 s kapag ilang minutong walang gumagamit), (2) CORS preflight (OPTIONS) bago ang bawat POST dahil sa `x-session-token` header at JSON content-type → token sa body + text/plain (walang preflight), keep-warm bawat 3 min (sql/041), at cache ng badge (`api.js`, `auth-guard.js`, `notif-badge.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

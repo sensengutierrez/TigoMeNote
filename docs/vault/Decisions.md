@@ -50,6 +50,8 @@ updated: 2026-10-24
 | 2026-10-24 | Iisang rules sa server at browser: `tools/build-moderation-client.mjs` ang gumagawa ng `moderation-check.js` | Live na babala habang nagta-type, pero ang server pa rin ang huling bantay |
 | 2026-10-24 | Baliktad na buong text: block rules lang; baliktad na bawat salita: pati flag | Iwas mali-maling flag sa normal na text |
 | 2026-10-24 | Teen: bawal ang phone, email, address at ibang chat app sa post/comment/bio | Proteksyon laban sa grooming at pribadong usapan sa labas ng app |
+| 2026-10-24 | Keep-warm (pg_cron bawat 3 min) sa 8 function na gamit sa bawat page | Iwas 2–3 s na cold start; ~115k invocations/buwan (free: 500k). Tanggalin kapag marami nang users |
+| 2026-10-24 | Token sa body at `text/plain` sa lahat ng tawag (walang custom header) | Walang CORS preflight = kalahati ng biyahe bawat tawag |
 | 2026-10-24 | GIFs = **KLIPY** (libre) sa pamamagitan ng `gifs-fast`; hiwalay na key para sa TigoMeNote | Hindi nakikita ang key sa browser; hiwalay na limit at settings sa ibang web app; mahigpit na rating para sa teen |
 | 2026-10-24 | Stickers = sariling "Tigo" stickers na gawa sa SVG sa code (walang character ng iba) | Libre, walang copyright, maliit (id lang ang naka-save) |
 | 2026-10-24 | Emoji font: Noto Color Emoji (Google Fonts) bilang fallback | Pareho at kumpleto ang emoji kahit lumang Windows; dina-download lang ang emoji na ginamit |

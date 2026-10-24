@@ -52,7 +52,7 @@
       try {
         await fetch(C.fn.auth, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "text/plain;charset=UTF-8" },
           body: JSON.stringify({ action: "logout", token: token })
         });
       } catch (e) {}
@@ -71,7 +71,7 @@
 
   fetch(C.fn.auth, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "text/plain;charset=UTF-8" },
     body: JSON.stringify({ action: "checkSession", token: token })
   })
     .then(function (r) { return r.json().then(function (j) { return { status: r.status, j: j }; }); })

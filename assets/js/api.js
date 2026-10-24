@@ -17,8 +17,10 @@
     opts = opts || {};
     var body = Object.assign({ action: action }, data || {});
     if (window.TMN_I18N && body.lang === undefined) body.lang = TMN_I18N.lang; // para sa email (code) sa tamang wika
-    var headers = { "Content-Type": "application/json" };
-    if (window.TMN_TOKEN) headers["x-session-token"] = window.TMN_TOKEN;
+    // "Simple request" (text/plain, token sa body): walang CORS preflight (OPTIONS) bago ang bawat tawag,
+    // kaya isang biyahe lang papunta sa server imbes na dalawa. Ang functions ay nagbabasa ng p.token.
+    var headers = { "Content-Type": "text/plain;charset=UTF-8" };
+    if (window.TMN_TOKEN && body.token === undefined) body.token = window.TMN_TOKEN;
 
     var ctrl = new AbortController();
     var timer = setTimeout(function () { ctrl.abort(); }, opts.timeout || 20000);

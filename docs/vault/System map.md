@@ -28,7 +28,7 @@ updated: 2026-10-24
 | `i18n.js` | Wika ng site (`TMN_I18N`), auto-translate; dictionaries sa `lang/<code>.js` |
 | `theme.js` | Light / Dark / Auto; nilalagay sa `<head>` para walang flash |
 | `auth-guard.js` | Bantay ng private pages; redirect sa login kung walang session |
-| `api.js` | `TMN_API.call(fn, action, data)` — isang paraan ng pagtawag sa server |
+| `api.js` | `TMN_API.call(fn, action, data)` — isang paraan ng pagtawag sa server (token sa body, `text/plain`: walang preflight) |
 | `icons.js` | Lahat ng SVG icons (`TMN_ICON("sun")`) |
 | `nav-items.js` | **Ang menu** (sidebar, hamburger, bottom tabs) |
 | `media-store.js` | Photos/videos/albums sa device (IndexedDB) |

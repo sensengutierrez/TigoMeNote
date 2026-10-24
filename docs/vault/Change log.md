@@ -195,3 +195,13 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Files:** `backend/gifs-fast.ts` (bago, v1), `backend/messages-fast.ts` (v3, kind `gif`), `sql/039-chat-gifs.sql`, `assets/js/components/emoji-picker.js`, `components/chat-view.js`, `config.js` (0.11.1, `gifs`), `assets/css/components.css`, `pages/messages.css`, `lang/fil.js`, `lang/ar.js`
 - **Paano:** Ang browser → `gifs-fast` → KLIPY (`api.klipy.com/api/v1/<key>/gifs|stickers/trending|search`). Ang key ay nasa Supabase secret `KLIPY_API_KEY` lang. Detalye: [[Build - Messenger]].
 - **Na-test:** 2026-10-24, gumagana sa totoong server (nailagay ni Bench ang `KLIPY_API_KEY`; test key = 100 requests/oras).
+
+## 2026-10-24 · #30 Mas mabilis na loading
+- **Ano:**
+  - **Walang "preflight":** ang bawat tawag sa server ay isang biyahe na lang (dati: OPTIONS muna, tapos POST). Ang session token ay nasa body na, hindi sa header.
+  - **Keep warm:** bawat 3 minuto, may maliit na tawag sa 8 function na gamit sa bawat page para hindi "malamig" (cold start = 2–3 s ang unang tawag).
+  - **Badges:** hindi na tumatawag ulit sa server ang bilang ng notifications/messages kapag lumipat ng page sa loob ng 30 s.
+  - **GIFs:** WebP at mas maliit na bersyon muna (mas magaan kaysa GIF).
+- **Bakit:** Tanong ni Bench: "bakit ang bagal ng loading". Sa logs: 0.35–0.45 s ang bawat tawag kapag mainit, pero 2–3.3 s kapag cold start, at may OPTIONS na 2–2.6 s bago ang POST.
+- **Files:** `assets/js/api.js`, `assets/js/auth-guard.js`, `assets/js/notif-badge.js`, `backend/gifs-fast.ts` (v4, walang `moderation.ts` na), `sql/041-keep-warm.sql` (pg_cron + pg_net), `config.js` (0.11.2)
+- **Paano:** `Content-Type: text/plain` + `token` sa body = "simple request" (walang CORS preflight). Patayin ang keep-warm: `select cron.unschedule('tmn-keep-warm');`

@@ -3,7 +3,7 @@
    - Ang notifications page ang nagsasabing "nakita na" (TMN_NOTIF_BADGE.set(0)).
    TMN_NOTIF_BADGE.refresh() · TMN_NOTIF_BADGE.set(n) */
 (function () {
-  var POLL = 60000, KEY = "tmnNotifCount";
+  var POLL = 60000, KEY = "tmnNotifCount", KEY_M = "tmnMsgCount", KEY_AT = "tmnBadgeAt", FRESH = 30000;
   var busy = false, timer = null;
 
   function set(n) {
@@ -19,18 +19,25 @@
     }
     // Messages: bilang ng chats na may bago + message requests (sa messages page, ang page na ang nagse-set)
     if (document.body.dataset.page !== "messages" && TMN_CONFIG.fn.messages) {
-      try { var m = await TMN_API.call("messages", "unread", {}, { timeout: 12000 }); if (window.TMN_UI) TMN_UI.setBadge("messages", (m.unread || 0) + (m.requests || 0)); } catch (e) {}
+      try {
+        var m = await TMN_API.call("messages", "unread", {}, { timeout: 12000 }), mc = (m.unread || 0) + (m.requests || 0);
+        if (window.TMN_UI) TMN_UI.setBadge("messages", mc);
+        try { sessionStorage.setItem(KEY_M, String(mc)); } catch (e) {}
+      } catch (e) {}
     }
+    try { sessionStorage.setItem(KEY_AT, String(Date.now())); } catch (e) {}
     busy = false;
   }
-  function loop() {
+  function loop(first) {
     clearTimeout(timer);
-    if (document.visibilityState === "visible") refresh();
+    // Paglipat ng page: kung bago pa (< 30 s) ang bilang, huwag nang tumawag ulit sa server
+    var at = 0; try { at = +sessionStorage.getItem(KEY_AT) || 0; } catch (e) {}
+    if (document.visibilityState === "visible" && !(first && Date.now() - at < FRESH)) refresh();
     timer = setTimeout(loop, POLL);
   }
 
   // Ipakita agad ang huling bilang (walang kurap habang naglo-load)
-  try { var last = +sessionStorage.getItem(KEY); if (last) set(last); } catch (e) {}
+  try { var last = +sessionStorage.getItem(KEY); if (last) set(last); var lm = +sessionStorage.getItem(KEY_M); if (lm && window.TMN_UI) TMN_UI.setBadge("messages", lm); } catch (e) {}
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") refresh(); });
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.addEventListener("message", function (e) {
@@ -38,5 +45,5 @@
     });
   }
   window.TMN_NOTIF_BADGE = { refresh: refresh, set: set };
-  loop();
+  loop(true);
 })();
