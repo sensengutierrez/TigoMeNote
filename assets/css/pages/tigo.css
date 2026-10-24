@@ -1,4 +1,4 @@
-/* TigoMeNote · pages/tigo.css (app/tigo.html) — si Tigo: malaking 3D na stage + alaga + kaibigang malapit */
+/* TigoMeNote · pages/tigo.css (app/tigo.html) — si Tigo: 3D na stage (lakad, joystick, full screen) + alaga + closet + laro + journey + kaibigang malapit */
 .tg-layout { display: grid; gap: 16px; }
 @media (min-width: 1000px) { .tg-layout { grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); align-items: start; } .tg-side { position: sticky; top: 24px; } }
 
@@ -13,12 +13,16 @@
   radial-gradient(1.5px 1.5px at 20% 20%, #fff 50%, transparent 51%), radial-gradient(1.5px 1.5px at 70% 12%, #fff 50%, transparent 51%),
   radial-gradient(1px 1px at 40% 35%, #fff 50%, transparent 51%), radial-gradient(1.5px 1.5px at 85% 30%, #fff 50%, transparent 51%),
   radial-gradient(1px 1px at 10% 45%, #fff 50%, transparent 51%); opacity: .8; }
-.tg-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: manipulation; cursor: pointer; }
+.tg-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: pointer; }
 .tg-fallback { position: absolute; inset: 0; display: grid; place-items: center; cursor: pointer; }
 .tg-top { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; pointer-events: none; }
-.tg-name, .tg-mood { pointer-events: auto; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; border: 0;
+.tg-top-r { display: inline-flex; gap: 8px; align-items: center; }
+.tg-name, .tg-mood, .tg-pill { pointer-events: auto; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; border: 0;
   background: rgba(255,255,255,.82); color: #1b1b1f; font: inherit; font-weight: 600; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 2px 10px rgba(0,0,0,.08); }
-.tg-name { cursor: pointer; }
+.tg-name, .tg-pill { cursor: pointer; }
+.tg-name, .tg-mood, .tg-pill { white-space: nowrap; }
+@media (max-width: 480px) { .tg-mood-t { display: none; } .tg-name, .tg-mood, .tg-pill { padding: 7px 11px; } }
+.tg-pill b { font-variant-numeric: tabular-nums; }
 .tg-name b { font-family: var(--font-display); font-size: 17px; }
 .tg-lvl { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #ff5a36; color: #fff; }
 .tg-xp { position: absolute; top: 62px; left: 18px; width: 150px; height: 6px; border-radius: 6px; background: rgba(255,255,255,.55); overflow: hidden; }
@@ -30,6 +34,7 @@
 
 /* ---------- stats + actions ---------- */
 .tg-side { display: grid; gap: 14px; }
+.tg-side > [hidden] { display: none !important; }
 .tg-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
 .tg-stat { display: grid; gap: 6px; font-size: 13.5px; font-weight: 600; }
 .tg-bar { height: 10px; border-radius: 10px; background: var(--surface-2); overflow: hidden; }
@@ -39,7 +44,10 @@
 .tg-stat[data-s="clean"] .tg-bar i { background: linear-gradient(90deg, #7cc4ff, #4a9fe8); }
 .tg-stat.low .tg-bar i { background: linear-gradient(90deg, #ff7a59, #e8264f); animation: tg-low 1.2s ease-in-out infinite; }
 @keyframes tg-low { 50% { opacity: .55; } }
-.tg-actions { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.tg-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.tg-more { grid-template-columns: repeat(3, 1fr); }
+.tg-more .tg-act { grid-auto-flow: column; justify-content: center; align-items: center; gap: 8px; padding: 10px 6px; font-size: 13.5px; }
+.tg-more .tg-act span { font-size: 22px; }
 .tg-act { display: grid; justify-items: center; gap: 4px; padding: 12px 4px 10px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface);
   color: var(--text); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: transform .12s, box-shadow .12s; }
 .tg-act span { font-size: 26px; line-height: 1; }
@@ -72,9 +80,99 @@ html.has-bg .tg-act { background: color-mix(in srgb, var(--surface) var(--look-p
 .tg-gear { display: flex; flex-wrap: wrap; gap: 6px; }
 .tg-gear .chip:disabled { opacity: .5; }
 
+/* ---------- kontrol: joystick, jump, full screen ---------- */
+.tg-pad, .tg-jump { position: absolute; bottom: 18px; display: none; z-index: 2; touch-action: none; user-select: none; -webkit-user-select: none; }
+.tg-pad { left: 18px; width: 112px; height: 112px; border-radius: 50%; background: rgba(255,255,255,.35); border: 2px solid rgba(255,255,255,.7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); place-items: center; }
+.tg-pad .knob { width: 48px; height: 48px; border-radius: 50%; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.18); transition: transform .06s; }
+.tg-jump { right: 18px; width: 72px; height: 72px; border-radius: 50%; border: 0; background: #ff5a36; color: #fff; font-size: 30px; font-weight: 800; box-shadow: 0 6px 16px rgba(255,90,54,.45); cursor: pointer; }
+.tg-jump:active { transform: scale(.92); }
+@media (pointer: coarse) { .tg-stage.live .tg-pad { display: grid; } .tg-stage.live .tg-jump { display: block; } .tg-stage.live .tg-toast { bottom: 140px; } }
+.tg-full { position: absolute; right: 14px; top: 62px; width: 40px; height: 40px; border-radius: 12px; border: 0; background: rgba(255,255,255,.82); color: #1b1b1f; font-size: 20px; cursor: pointer; z-index: 2; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+.tg-stage:not(.live) .tg-full { display: none; }
+.tg-stage.full { position: fixed; inset: 0; z-index: 1000; height: auto; min-height: 0; border-radius: 0; }
+body.tg-full { overflow: hidden; }
+.tg-stage.full .tg-pad, .tg-stage.full .tg-jump { bottom: max(18px, env(safe-area-inset-bottom)); }
+.tg-stage.full .tg-top { top: max(14px, env(safe-area-inset-top)); left: max(14px, env(safe-area-inset-left)); right: max(14px, env(safe-area-inset-right)); }
+
+/* ---------- sabay na galaw (kasama ang kaibigan) ---------- */
+.tg-together { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; gap: 6px; padding: 6px; border-radius: 20px; z-index: 2;
+  background: rgba(255,255,255,.78); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+.tg-together button { display: grid; justify-items: center; gap: 1px; min-width: 52px; padding: 6px 4px; border: 0; border-radius: 14px; background: transparent; color: #1b1b1f; font: inherit; font-size: 22px; line-height: 1.1; cursor: pointer; }
+.tg-together button small { font-size: 10.5px; font-weight: 700; }
+.tg-together button:hover, .tg-together button.on { background: #ffe3d9; }
+.tg-together button:disabled { opacity: .45; }
+.tg-stage:has(.tg-together:not(.hidden)) .tg-toast { bottom: 96px; }
+.tg-stage.playing .tg-together { display: none; }
+@media (pointer: coarse) {
+  .tg-together { bottom: 136px; } .tg-together button { min-width: 44px; font-size: 20px; }
+  .tg-stage.live:has(.tg-together:not(.hidden)) .tg-toast { bottom: 214px; }
+}
+
+/* ---------- Coin Rush ---------- */
+.tg-hud { position: absolute; top: 62px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 3; }
+.tg-hud span { padding: 8px 14px; border-radius: 999px; background: rgba(20,20,24,.78); color: #fff; font-weight: 800; font-variant-numeric: tabular-nums; font-size: 16px; }
+.tg-count { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; z-index: 3; font: 800 72px/1 var(--font-display); color: #fff; text-shadow: 0 4px 20px rgba(0,0,0,.35); }
+.tg-count.pop { animation: tg-pop .6s ease; }
+@keyframes tg-pop { 0% { transform: scale(.4); opacity: 0; } 50% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); } }
+.tg-stage.playing .tg-xp, .tg-stage.playing .tg-mood { visibility: hidden; }
+.tg-games { display: grid; gap: 10px; }
+.tg-game { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.tg-game:disabled { opacity: .55; cursor: default; }
+.tg-game > span:nth-child(2) { flex: 1; display: grid; gap: 2px; }
+.tg-game small { color: var(--text-2, var(--muted)); font-size: 12.5px; }
+.tg-game .tg-ic { font-size: 30px; }
+.tg-go, .tg-soon { padding: 6px 12px; border-radius: 999px; font-weight: 700; font-size: 13px; background: #ff5a36; color: #fff; }
+.tg-soon { background: var(--surface-2); color: var(--text); }
+
+/* ---------- closet ---------- */
+.tg-closet { display: grid; gap: 12px; }
+.tg-cl-head { display: flex; align-items: center; gap: 10px; }
+.tg-cl-head h3 { margin: 0; flex: 1; font-size: 18px; }
+.tg-coins { font-weight: 700; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, #ffc83d 25%, transparent); }
+.tg-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.tg-tabs::-webkit-scrollbar { display: none; }
+.tg-tabs button { flex: none; display: grid; justify-items: center; gap: 2px; min-width: 58px; padding: 8px 6px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
+.tg-tabs button span { font-size: 22px; line-height: 1; }
+.tg-tabs button small { font-size: 11px; font-weight: 600; }
+.tg-tabs button[aria-selected="true"] { background: #ff5a36; border-color: #ff5a36; color: #fff; }
+.tg-cl-body { max-height: min(52vh, 460px); overflow: auto; }
+.tg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.tg-item { position: relative; display: grid; justify-items: center; gap: 3px; padding: 12px 6px 10px; border-radius: 16px; border: 2px solid transparent; background: var(--surface-2); color: var(--text); font: inherit; cursor: pointer; }
+.tg-item .tg-ic { font-size: 30px; line-height: 1.1; }
+.tg-item b { font-size: 12.5px; text-align: center; line-height: 1.2; }
+.tg-item small { font-size: 11.5px; font-weight: 700; color: #b7791f; }
+.tg-item.have small { color: var(--muted, #888); }
+.tg-item.on { border-color: #ff5a36; background: color-mix(in srgb, #ff5a36 12%, var(--surface)); }
+.tg-item.on small { color: #ff5a36; }
+.tg-item.lock { opacity: .5; }
+.tg-cl-name { margin: 0 0 12px; }
+.tg-cl-buy { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border-radius: 14px; background: var(--surface-2); }
+.tg-cl-buy > span { flex: 1; font-weight: 600; font-size: 14px; }
+.tg-cl-buy p { flex-basis: 100%; margin: 0; }
+
+/* ---------- journey ---------- */
+.tg-journey { display: grid; gap: 14px; }
+.tg-jr-now { display: grid; gap: 4px; padding: 12px 14px; border-radius: 16px; background: linear-gradient(135deg, #fff1e6, #ffe0f0); color: #1b1b1f; }
+.tg-jr-now b { font: 800 20px var(--font-display); }
+.tg-xp-line { height: 8px; border-radius: 8px; background: rgba(0,0,0,.08); overflow: hidden; }
+.tg-xp-line i { display: block; height: 100%; background: linear-gradient(90deg, #ffc04d, #ff5a36); }
+.tg-path { list-style: none; margin: 0; padding: 0; position: relative; display: grid; gap: 6px; }
+.tg-path::before { content: ""; position: absolute; left: 50%; top: 20px; bottom: 20px; border-left: 3px dashed color-mix(in srgb, #ff5a36 45%, transparent); transform: translateX(-50%); }
+.tg-step { position: relative; display: grid; grid-template-columns: 1fr 46px 1fr; align-items: center; gap: 10px; }
+.tg-node { grid-column: 2; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; font-weight: 800; background: var(--surface-2); border: 3px solid var(--line); z-index: 1; }
+.tg-step.done .tg-node { background: #3dd6c0; border-color: #14b8a6; color: #fff; }
+.tg-step.now .tg-node { background: #ffc04d; border-color: #ff5a36; box-shadow: 0 0 0 6px color-mix(in srgb, #ff5a36 22%, transparent); }
+.tg-step-txt { display: grid; gap: 1px; padding: 8px 10px; border-radius: 12px; background: var(--surface-2); }
+.tg-step.l .tg-step-txt { grid-column: 1; grid-row: 1; text-align: right; }
+.tg-step.r .tg-step-txt { grid-column: 3; grid-row: 1; }
+.tg-step-txt small { font-size: 11px; font-weight: 700; color: #ff5a36; }
+.tg-step-txt b { font-size: 14px; }
+.tg-step-txt span { font-size: 12px; color: var(--muted, #777); }
+.tg-step.next .tg-step-txt { opacity: .65; }
+
 @media (max-width: 640px) {
   .tg-page { padding-top: 8px; }
   .tg-stage { height: 52vh; min-height: 320px; border-radius: 22px; }
   .tg-act span { font-size: 22px; }
 }
-@media (prefers-reduced-motion: reduce) { .tg-stat.low .tg-bar i { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .tg-stat.low .tg-bar i, .tg-count.pop { animation: none; } }

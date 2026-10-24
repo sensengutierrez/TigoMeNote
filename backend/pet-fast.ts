@@ -1,6 +1,7 @@
 // TigoMeNote · pet-fast (Supabase Edge Function, verify_jwt = off) — si "Tigo", ang virtual pet ng bawat user
 // Isang trabaho lang: alagaan si Tigo (stats na bumababa habang lumilipas ang oras) at ang "Gather" ng magkakalapit na kaibigan.
-// Actions (session token): get, act { do: feed|play|clean|pet|sleep|wake|daily }, style { name, color, gear },
+// Actions (session token): get, act { do: feed|play|clean|pet|sleep|wake|daily }, style { name, color },
+//                          wear { outfit }, buy { id }, game { score, ms } (Coin Rush),
 //                          nearby { on, lat, lng }, gather { user_id }, visits
 // Kaligtasan: ang "nearby" ay para lang sa magkaibigan (mutual follow o Family/Friends circle), kapag NAKA-ON sa dalawa,
 //             distansya lang ang ibinabalik (hindi ang lokasyon), at nawawala pagkalipas ng 20 minuto.
@@ -13,7 +14,21 @@ const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SE
 
 const COLORS = ["coral", "amber", "mint", "sky", "pink", "lilac", "lime", "ink"];
 const GEAR: Record<string, number> = { none: 1, sprout: 2, bow: 3, cap: 4, headphones: 5, crown: 7 }; // level na kailangan
-const NEAR_MINUTES = 20, NEAR_METERS = 600;
+const NEAR_MINUTES = 20, NEAR_METERS = 200; // dapat talagang magkalapit (≈ isang block)
+// Closet/shop — kapareho ng assets/js/tigo/catalog.js (dito ang tunay na check). id: [slot, presyo, level]
+const ITEMS: Record<string, [string, number, number]> = {
+  sprout: ["hat", 0, 2], bow: ["hat", 0, 3], cap: ["hat", 0, 4], headphones: ["hat", 0, 5], crown: ["hat", 0, 7],
+  beanie: ["hat", 40, 1], party: ["hat", 30, 1], bunny: ["hat", 60, 2], sampaguita: ["hat", 80, 3], salakot: ["hat", 90, 4], chef: ["hat", 70, 3], halo: ["hat", 150, 6],
+  shades: ["face", 40, 1], round: ["face", 30, 1], hearts: ["face", 60, 2], stars: ["face", 60, 2], goggles: ["face", 80, 3], mustache: ["face", 50, 2], mask: ["face", 90, 4],
+  scarf: ["body", 40, 1], bowtie: ["body", 30, 1], hoodie: ["body", 90, 2], cape: ["body", 120, 4], backpack: ["body", 70, 3], lei: ["body", 60, 2], medal: ["body", 200, 6],
+  icecream: ["hand", 25, 1], balloon: ["hand", 25, 1], "flag-ph": ["hand", 20, 1], "flag-bh": ["hand", 20, 1], umbrella: ["hand", 60, 2], guitar: ["hand", 120, 4], wand: ["hand", 150, 5],
+  puppy: ["buddy", 100, 2], kitty: ["buddy", 100, 2], birdie: ["buddy", 80, 1], bunbun: ["buddy", 120, 3], turtle: ["buddy", 150, 4], chick: ["buddy", 60, 1],
+  island: ["backdrop", 0, 1], beach: ["backdrop", 80, 2], coral: ["backdrop", 120, 3], snow: ["backdrop", 120, 3], clouds: ["backdrop", 150, 4], desert: ["backdrop", 150, 4], moon: ["backdrop", 250, 6],
+};
+const SLOTS = ["hat", "face", "body", "hand", "buddy", "backdrop"];
+// Coins bawat bagong level (+ dagdag sa Lv8 at Lv9). Lv10 = golden glow.
+const levelCoins = (l: number) => 20 + (l === 8 ? 100 : l === 9 ? 150 : 0);
+const GAME = { perDay: 10, maxCoins: 30, minGapMs: 20_000 };
 // Bawat oras: gaano bumababa (gising / tulog)
 const RATE = { hunger: [6, 3], joy: [4, 2], energy: [5, -14], clean: [3, 1] };
 
@@ -70,9 +85,15 @@ function moodOf(p: any) {
   return avg < 35 ? "sad" : avg < 65 ? "ok" : "happy";
 }
 // deno-lint-ignore no-explicit-any
+function has(p: any, id: string) {
+  const it = ITEMS[id];
+  return !!it && levelOf(p.xp) >= it[2] && (it[1] === 0 || (p.owned ?? []).includes(id));
+}
+// deno-lint-ignore no-explicit-any
 function shape(p: any) {
   const lvl = levelOf(p.xp);
   return {
+    coins: p.coins ?? 0, owned: p.owned ?? [], outfit: p.outfit ?? {}, glow: lvl >= 10,
     name: p.name, color: p.color, gear: p.gear, hunger: p.hunger, joy: p.joy, energy: p.energy, clean: p.clean,
     xp: p.xp, level: lvl, next: xpFor(lvl + 1), prev: xpFor(lvl), asleep: p.asleep, mood: moodOf(p),
     stats_at: p.stats_at, born_at: p.born_at, near_on: !!p.near_on && !!p.near_at && Date.now() - new Date(p.near_at).getTime() < NEAR_MINUTES * 60_000,
@@ -88,8 +109,14 @@ async function load(uid: string): Promise<any> {
 }
 // deno-lint-ignore no-explicit-any
 async function store(p: any) {
-  const { user_id, name, color, gear, hunger, joy, energy, clean, xp, asleep, stats_at, counters } = p;
-  const { data, error } = await db.from("pets").update({ name, color, gear, hunger, joy, energy, clean, xp, asleep, stats_at, counters, updated_at: nowIso() })
+  // bagong level → coins (isang beses lang bawat level)
+  const lvl = levelOf(p.xp);
+  if (lvl > (p.rewarded_level ?? 1)) {
+    for (let l = (p.rewarded_level ?? 1) + 1; l <= lvl; l++) p.coins = (p.coins ?? 0) + levelCoins(l);
+    p.rewarded_level = lvl;
+  }
+  const { user_id, name, color, gear, hunger, joy, energy, clean, xp, asleep, stats_at, counters, coins, owned, outfit, rewarded_level } = p;
+  const { data, error } = await db.from("pets").update({ name, color, gear, hunger, joy, energy, clean, xp, asleep, stats_at, counters, coins, owned, outfit, rewarded_level, updated_at: nowIso() })
     .eq("user_id", user_id).select("*").single();
   if (error) throw error;
   return data;
@@ -148,6 +175,59 @@ async function act(p: any, me: any) {
   return reply({ ok: true, pet: saved, levelUp: saved.level > before ? saved.level : null, msg });
 }
 
+// Closet: isuot ang mga item (dapat pag-aari o libre na sa level mo)
+// deno-lint-ignore no-explicit-any
+async function wear(p: any, me: any) {
+  const pet = decay(await load(me.id));
+  const o = p.outfit && typeof p.outfit === "object" ? p.outfit : {};
+  const next: Record<string, string> = {};
+  for (const slot of SLOTS) {
+    const id = o[slot];
+    if (id === undefined || id === null || id === "" || id === "none") continue;
+    const it = ITEMS[String(id)];
+    if (!it || it[0] !== slot) return fail("Unknown item.");
+    if (!has(pet, String(id))) return fail(levelOf(pet.xp) < it[2] ? `Unlocks at level ${it[2]}.` : "Buy this item first.", 403);
+    next[slot] = String(id);
+  }
+  pet.outfit = next;
+  pet.gear = next.hat && ["sprout", "bow", "cap", "headphones", "crown"].includes(next.hat) ? next.hat : "none";
+  return reply({ ok: true, pet: shape(await store(pet)) });
+}
+
+// Shop: bumili gamit ang coins
+// deno-lint-ignore no-explicit-any
+async function buy(p: any, me: any) {
+  const id = String(p.id || ""), it = ITEMS[id];
+  if (!it) return fail("Unknown item.");
+  const pet = decay(await load(me.id));
+  if (levelOf(pet.xp) < it[2]) return fail(`Unlocks at level ${it[2]}.`, 403);
+  if (has(pet, id)) return reply({ ok: true, pet: shape(await store(pet)), already: true });
+  if ((pet.coins ?? 0) < it[1]) return fail("Not enough coins. Play Coin Rush to earn more!", 402);
+  pet.coins -= it[1]; pet.owned = [...(pet.owned ?? []), id];
+  return reply({ ok: true, pet: shape(await store(pet)) });
+}
+
+// Coin Rush: may limit bawat araw at bawat laro (hindi puwedeng dayain ang dami)
+// deno-lint-ignore no-explicit-any
+async function game(p: any, me: any) {
+  const pet = decay(await load(me.id));
+  if (pet.asleep) return fail("Shh… Tigo is sleeping.", 409);
+  if (pet.energy < 12) return fail("Tigo is too tired to play. Let Tigo sleep.", 409);
+  const c = pet.counters && pet.counters.day === today() ? pet.counters : {};
+  if (c.lastGame && Date.now() - c.lastGame < GAME.minGapMs) return fail("Wait a moment before the next run.", 429);
+  const score = Math.max(0, Math.floor(Number(p.score) || 0)), ms = Math.max(0, Number(p.ms) || 0);
+  const fair = Math.min(score, GAME.maxCoins, Math.ceil((ms / 1000) * 1.6));
+  const okRun = count(pet, "game", GAME.perDay);
+  pet.counters.lastGame = Date.now();
+  const before = levelOf(pet.xp);
+  const won = okRun ? fair : 0;
+  pet.coins = (pet.coins ?? 0) + won;
+  pet.joy = clamp(pet.joy + 10); pet.energy = clamp(pet.energy - 8); pet.hunger = clamp(pet.hunger - 5);
+  if (okRun && score > 0) pet.xp += 4;
+  const saved = shape(await store(pet));
+  return reply({ ok: true, pet: saved, coins: won, capped: !okRun, levelUp: saved.level > before ? saved.level : null });
+}
+
 // deno-lint-ignore no-explicit-any
 async function style(p: any, me: any) {
   const pet = decay(await load(me.id));
@@ -160,7 +240,7 @@ async function style(p: any, me: any) {
   if (p.gear !== undefined) {
     if (!(p.gear in GEAR)) return fail("Unknown item.");
     if (GEAR[p.gear] > levelOf(pet.xp)) return fail(`Unlocks at level ${GEAR[p.gear]}.`, 403);
-    pet.gear = p.gear;
+    pet.gear = p.gear; pet.outfit = { ...(pet.outfit ?? {}), hat: p.gear === "none" ? undefined : p.gear };
   }
   return reply({ ok: true, pet: shape(await store(pet)) });
 }
@@ -202,8 +282,8 @@ async function nearList(me: any, pet: any) {
     const d = decay(r);
     return {
       user: (users ?? []).find((u) => u.id === r.user_id) ?? null,
-      pet: { name: r.name, color: r.color, gear: r.gear, level: levelOf(r.xp), mood: moodOf(d) },
-      dist: m < 120 ? "very close" : "nearby", met_today: metSet.has(r.user_id),
+      pet: { name: r.name, color: r.color, gear: r.gear, outfit: r.outfit ?? {}, glow: levelOf(r.xp) >= 10, level: levelOf(r.xp), mood: moodOf(d) },
+      dist: m < 40 ? "right here" : m < 100 ? "very close" : "nearby", met_today: metSet.has(r.user_id),
     };
   });
 }
@@ -216,8 +296,10 @@ async function nearby(p: any, me: any) {
   }
   const lat = Number(p.lat), lng = Number(p.lng);
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return fail("Invalid location.");
-  // ~100 m na katumpakan lang ang naka-save
-  const ch = { near_on: true, near_lat: Math.round(lat * 1000) / 1000, near_lng: Math.round(lng * 1000) / 1000, near_at: nowIso() };
+  // ~10 m na katumpakan (para tama ang "magkalapit"); hindi ibinabalik kanino man, nabubura pagkalipas ng 20 min
+  const acc = Number(p.acc);
+  if (Number.isFinite(acc) && acc > 150) return fail("Your GPS is not accurate yet. Go outside or turn on precise location.", 422, { acc });
+  const ch = { near_on: true, near_lat: Math.round(lat * 10000) / 10000, near_lng: Math.round(lng * 10000) / 10000, near_at: nowIso() };
   await db.from("pets").update(ch).eq("user_id", me.id);
   return reply({ ok: true, on: true, list: await nearList(me, { ...pet, ...ch }) });
 }
@@ -261,12 +343,12 @@ async function visits(_p: any, me: any) {
   const { data } = await db.from("pet_meets").select("*").or(`a_id.eq.${me.id},b_id.eq.${me.id}`).gte("day", since).order("created_at", { ascending: false }).limit(30);
   const ids = [...new Set((data ?? []).map((m) => (m.a_id === me.id ? m.b_id : m.a_id)))];
   const [{ data: users }, { data: pets }] = ids.length
-    ? await Promise.all([db.from("users").select("id, username, display_name, avatar_url").in("id", ids), db.from("pets").select("user_id, name, color, gear, xp").in("user_id", ids)])
+    ? await Promise.all([db.from("users").select("id, username, display_name, avatar_url").in("id", ids), db.from("pets").select("user_id, name, color, gear, outfit, xp").in("user_id", ids)])
     : [{ data: [] }, { data: [] }];
   return reply({ ok: true, list: (data ?? []).map((m) => {
     const o = m.a_id === me.id ? m.b_id : m.a_id, pt = (pets ?? []).find((x) => x.user_id === o);
     return { at: m.created_at, day: m.day, by_me: m.by_id === me.id, user: (users ?? []).find((u) => u.id === o) ?? null,
-      pet: pt ? { name: pt.name, color: pt.color, gear: pt.gear, level: levelOf(pt.xp) } : null };
+      pet: pt ? { name: pt.name, color: pt.color, gear: pt.gear, outfit: pt.outfit ?? {}, level: levelOf(pt.xp) } : null };
   }) });
 }
 
@@ -287,6 +369,9 @@ Deno.serve(async (req) => {
       case "get":    return await get(p, me);
       case "act":    return await act(p, me);
       case "style":  return await style(p, me);
+      case "wear":   return await wear(p, me);
+      case "buy":    return await buy(p, me);
+      case "game":   return await game(p, me);
       case "nearby": return await nearby(p, me);
       case "gather": return await gather(p, me);
       case "visits": return await visits(p, me);

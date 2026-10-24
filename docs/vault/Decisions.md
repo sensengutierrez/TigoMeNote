@@ -76,6 +76,10 @@ updated: 2026-10-24
 | 2026-10-24 | 3D gamit ang three.js r170 na naka-vendor sa `assets/vendor/three` (hindi CDN) | Gumagana sa APK at offline na cache; na-test dito; ini-load lang sa Tigo page |
 | 2026-10-24 | Gather: magkaibigan lang (mutual follow o Family/Friends), naka-on sa dalawa, distansya lang (hindi lokasyon), ~100 m na katumpakan, 20 min | Kaligtasan, lalo na sa mga bata/teen |
 | 2026-10-24 | Hindi namamatay si Tigo | Hindi nakaka-stress; nalulungkot lang kapag napabayaan |
+| 2026-10-24 | Tigo v2: ang presyo/level ng shop ay nasa server (`pet-fast` ITEMS) at kinokopya lang sa `catalog.js` | Hindi madadaya ang coins o items sa browser |
+| 2026-10-24 | Coin Rush: max 30 coins bawat laro, 10 laro bawat araw, 20 s pagitan, at sinusuri ang tagal ng laro | Hindi ma-spam ang coins |
+| 2026-10-24 | Meet nearby: ≤200 m, ~10 m na katumpakan, tinatanggihan ang GPS na >150 m ang lapad | Ayon kay Bench "dapat magkalapit sila ng GPS"; distansya lang pa rin ang nakikita ng kaibigan |
+| 2026-10-24 | Sayaw/Hi-5/Habulan/Ikot ay sa screen mo lang (hindi live na sabay sa phone ng kaibigan) | Walang realtime na koneksyon ang Tigo; puwedeng idagdag sa susunod |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

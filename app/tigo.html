@@ -7,23 +7,23 @@
   <title>Tigo · TigoMeNote</title>
   <link rel="manifest" href="../manifest.webmanifest">
   <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
-  <script src="../assets/js/theme.js?v=0.11.8"></script>
-  <script src="../assets/js/look-tigo.js?v=0.11.8"></script>
-  <script src="../assets/js/appearance.js?v=0.11.8"></script>
-  <script src="../assets/js/config.js?v=0.11.8"></script>
-  <script src="../assets/js/i18n.js?v=0.11.8"></script>
-  <script src="../assets/js/auth-guard.js?v=0.11.8"></script>
+  <script src="../assets/js/theme.js?v=0.11.9"></script>
+  <script src="../assets/js/look-tigo.js?v=0.11.9"></script>
+  <script src="../assets/js/appearance.js?v=0.11.9"></script>
+  <script src="../assets/js/config.js?v=0.11.9"></script>
+  <script src="../assets/js/i18n.js?v=0.11.9"></script>
+  <script src="../assets/js/auth-guard.js?v=0.11.9"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="../assets/css/tokens.css?v=0.11.8">
-  <link rel="stylesheet" href="../assets/css/base.css?v=0.11.8">
-  <link rel="stylesheet" href="../assets/css/components.css?v=0.11.8">
-  <link rel="stylesheet" href="../assets/css/shell.css?v=0.11.8">
-  <link rel="stylesheet" href="../assets/css/look.css?v=0.11.8">
-  <link rel="stylesheet" href="../assets/css/safety.css?v=0.11.8">
-  <link rel="stylesheet" href="../assets/css/pages/tigo.css?v=0.11.8">
+  <link rel="stylesheet" href="../assets/css/tokens.css?v=0.11.9">
+  <link rel="stylesheet" href="../assets/css/base.css?v=0.11.9">
+  <link rel="stylesheet" href="../assets/css/components.css?v=0.11.9">
+  <link rel="stylesheet" href="../assets/css/shell.css?v=0.11.9">
+  <link rel="stylesheet" href="../assets/css/look.css?v=0.11.9">
+  <link rel="stylesheet" href="../assets/css/safety.css?v=0.11.9">
+  <link rel="stylesheet" href="../assets/css/pages/tigo.css?v=0.11.9">
 </head>
 <body data-page="tigo" data-title="Tigo">
   <main id="page" class="page tg-page">
@@ -32,14 +32,27 @@
         <canvas class="tg-canvas" id="tgCanvas" aria-hidden="true"></canvas>
         <div class="tg-fallback hidden" id="tgFallback"></div>
         <div class="tg-top">
-          <button type="button" class="tg-name" id="tgName" aria-label="Customize Tigo"><b id="tgNameTxt">Tigo</b><span class="tg-lvl" id="tgLvl">Lv 1</span></button>
-          <span class="tg-mood" id="tgMood"></span>
+          <button type="button" class="tg-name" id="tgName" aria-label="Open closet"><b id="tgNameTxt">Tigo</b><span class="tg-lvl" id="tgLvl">Lv 1</span></button>
+          <span class="tg-top-r">
+            <button type="button" class="tg-pill" id="tgCoinsBtn" aria-label="Coins — play games to earn more">🪙 <b id="tgCoins">0</b></button>
+            <span class="tg-mood" id="tgMood"></span>
+          </span>
         </div>
         <div class="tg-xp" aria-label="Level progress"><span id="tgXp"></span></div>
+        <button type="button" class="tg-full" id="tgFull" aria-pressed="false" aria-label="Full screen (landscape)">⛶</button>
+        <div class="tg-pad" id="tgPad" aria-hidden="true"><span class="knob"></span></div>
+        <button type="button" class="tg-jump" id="tgJump" aria-label="Jump">⤒</button>
+        <div class="tg-together hidden" id="tgTogether" role="group" aria-label="Play together">
+          <button type="button" data-t="dance" title="Dance">💃<small>Dance</small></button>
+          <button type="button" data-t="highfive" title="High five">🙌<small>Hi-5</small></button>
+          <button type="button" data-t="chase" title="Habulan (tag)">🏃<small>Habulan</small></button>
+          <button type="button" data-t="spin" title="Ikot (spin together)">🔄<small>Ikot</small></button>
+          <button type="button" data-t="bow" title="Bow">🙇<small>Bow</small></button>
+        </div>
         <div class="tg-toast" id="tgToast" aria-live="polite"></div>
       </section>
 
-      <div class="tg-side">
+      <div class="tg-side" id="tgSide">
         <section class="card tg-stats" aria-label="Tigo's needs">
           <div class="tg-stat" data-s="hunger"><span>🍙 Food</span><div class="tg-bar"><i></i></div></div>
           <div class="tg-stat" data-s="joy"><span>🎈 Fun</span><div class="tg-bar"><i></i></div></div>
@@ -51,7 +64,11 @@
           <button type="button" class="tg-act" data-a="play"><span>⚽</span>Play</button>
           <button type="button" class="tg-act" data-a="clean"><span>🛁</span>Clean</button>
           <button type="button" class="tg-act" data-a="sleep" id="sleepBtn"><span>🌙</span>Sleep</button>
-          <button type="button" class="tg-act" data-a="style"><span>🎨</span>Style</button>
+        </section>
+        <section class="tg-actions tg-more" aria-label="More">
+          <button type="button" class="tg-act" data-a="closet"><span>👗</span>Closet</button>
+          <button type="button" class="tg-act" data-a="games"><span>🎮</span>Games</button>
+          <button type="button" class="tg-act" data-a="journey"><span>🗺️</span>Journey</button>
         </section>
 
         <section class="card tg-near">
@@ -70,22 +87,22 @@
       </div>
     </div>
   </main>
-  <script src="../assets/js/icons.js?v=0.11.8"></script>
-  <script src="../assets/js/nav-items.js?v=0.11.8"></script>
-  <script src="../assets/js/components/app-shell.js?v=0.11.8"></script>
-  <script src="../assets/js/api.js?v=0.11.8"></script>
-  <script src="../assets/js/moderation-check.js?v=0.11.8"></script>
-  <script src="../assets/js/components/mod-guard.js?v=0.11.8"></script>
-  <script src="../assets/js/components/modal.js?v=0.11.8"></script>
-  <script src="../assets/js/post-queue.js?v=0.11.8"></script>
-  <script src="../assets/js/native-bridge.js?v=0.11.8"></script>
-  <script src="../assets/js/push-setup.js?v=0.11.8"></script>
-  <script src="../assets/js/components/sos-overlay.js?v=0.11.8"></script>
-  <script src="../assets/js/safety-watch.js?v=0.11.8"></script>
-  <script src="../assets/js/location-share.js?v=0.11.8"></script>
-  <script src="../assets/js/wellbeing.js?v=0.11.8"></script>
-  <script src="../assets/js/notif-badge.js?v=0.11.8"></script>
-  <script src="../assets/js/stickers.js?v=0.11.8"></script>
-  <script src="../assets/js/pages/tigo.js?v=0.11.8"></script>
+  <script src="../assets/js/icons.js?v=0.11.9"></script>
+  <script src="../assets/js/nav-items.js?v=0.11.9"></script>
+  <script src="../assets/js/components/app-shell.js?v=0.11.9"></script>
+  <script src="../assets/js/api.js?v=0.11.9"></script>
+  <script src="../assets/js/moderation-check.js?v=0.11.9"></script>
+  <script src="../assets/js/components/mod-guard.js?v=0.11.9"></script>
+  <script src="../assets/js/components/modal.js?v=0.11.9"></script>
+  <script src="../assets/js/post-queue.js?v=0.11.9"></script>
+  <script src="../assets/js/native-bridge.js?v=0.11.9"></script>
+  <script src="../assets/js/push-setup.js?v=0.11.9"></script>
+  <script src="../assets/js/components/sos-overlay.js?v=0.11.9"></script>
+  <script src="../assets/js/safety-watch.js?v=0.11.9"></script>
+  <script src="../assets/js/location-share.js?v=0.11.9"></script>
+  <script src="../assets/js/wellbeing.js?v=0.11.9"></script>
+  <script src="../assets/js/notif-badge.js?v=0.11.9"></script>
+  <script src="../assets/js/stickers.js?v=0.11.9"></script>
+  <script src="../assets/js/pages/tigo.js?v=0.11.9"></script>
 </body>
 </html>

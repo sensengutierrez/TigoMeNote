@@ -271,3 +271,18 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "alam mo ba ung larong tamagotchi… sige simulan natin, tapos pag me friend or classmate pwede silang mag gather pumasyal basta magkalapit sila… mas latest na 3D… i-ready to apps sya".
 - **Files:** `sql/052-tigo-pets.sql` (pets, pet_meets), `sql/053-keep-warm-pet.sql`, `backend/pet-fast.ts` (bago, v1) + `webpush.ts`, `assets/vendor/three/` (three.js r170, MIT), `assets/js/tigo/pet-model.js` (bago), `assets/js/tigo/pet-scene.js` (bago), `assets/js/pages/tigo.js` (bago), `app/tigo.html` (bago), `assets/css/pages/tigo.css` (bago), `nav-items.js`, `icons.js` (tigo), `daily-store.js` (event `tmn:daily-add`), `pages/daily.js`, `app/home.html`, `pages/daily.css`, `config.js` (0.11.8, `pet`), `lang/fil.js`, `lang/ar.js`
 - **Paano:** Detalye sa [[Build - Tigo]].
+
+## 2026-10-24 · #37 Tigo v2: lakad gamit ang keyboard/joystick, closet at shop, coins, bahay kubo, Coin Rush, Growth journey, sayaw kasama ang kaibigan
+- **Ano:**
+  - **Lakad:** W A S D / arrow keys + **Space** (talon) sa desktop; sa phone **joystick + jump button** o **swipe**; **⛶ full screen** (landscape kapag kaya ng phone). Gumagalaw ang paa at kamay habang naglalakad; sinusundan ng camera.
+  - **Closet** (sa side panel, kita pa rin si Tigo): Tigo (pangalan + kulay), Sets, Hats, Face, Clothes, Hand, **Buddies** (aso, pusa, maya, kuneho, pawikan, sisiw na sumusunod), **Places** (Island, Beach, Coral reef, Snowland, Cloud land, Desert oasis, Moon base). Try-on muna bago bilhin.
+  - **Coins 🪙**: 50 sa simula; galing sa **Coin Rush** (30 s, max 30 coins bawat laro, 10 laro bawat araw) at sa bawat bagong level (+20; Lv8 +100, Lv9 +150). Lv10 = golden glow.
+  - **Bahay kubo** sa bawat lugar: kapag Sleep, lalakad si Tigo papasok, iilaw ang bintana, Zzz sa bubong.
+  - **Growth journey**: daan mula Lv1 hanggang Lv10 na may ✓, ngayon, at 🔒.
+  - **Meet nearby**: mas mahigpit na — ≤200 m, ~10 m na katumpakan, hindi tatanggapin kapag malabo ang GPS (>150 m).
+  - **Sabay na galaw kasama ang kaibigan** (pagkatapos ng Gather): 💃 Dance, 🙌 Hi-5, 🏃 Habulan, 🔄 Ikot, 🙇 Bow. Sumusunod din ang Tigo ng kaibigan habang naglalakad ka.
+  - Pac-Tigo at Racing: "Soon" muna sa Games.
+- **Bakit:** Ayon kay Bench: "dapat me ganto (closet)… meet nearby friends dapat magkalapit ng GPS… keyboard awsd at space para sa jump, kasama ang paa… phone swipe or landscape… games… pets… house pag matutulog… adding journey… lagyan mo din ng movement pag magkasama para maka pag dance sila".
+- **Files:** `sql/055-tigo-closet.sql` (coins, owned, outfit, rewarded_level), `backend/pet-fast.ts` (v2: wear, buy, game), `assets/js/tigo/catalog.js`, `outfit.js`, `backdrops.js`, `buddies.js`, `controls.js`, `coin-game.js`, `closet-ui.js`, `games-ui.js`, `journey-ui.js` (bago lahat), `pet-model.js`, `pet-scene.js`, `pages/tigo.js`, `app/tigo.html`, `pages/tigo.css`, `config.js` (0.11.9), `lang/fil.js`, `lang/ar.js`
+- **Paano:** Detalye sa [[Build - Tigo]].
+

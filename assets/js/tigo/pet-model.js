@@ -5,10 +5,14 @@
      t.update(dt, time)       → tawagin bawat frame (hinga, kurap, galaw)
      t.setMood("happy"|"ok"|"sad"|"sleepy"|"sick")   t.sleep(true|false)
      t.jump() · t.eat() · t.spin() · t.wiggle() · t.lookAt(x, y)  (x,y = -1..1)
-     t.setColor(id) · t.setGear(id) · t.dispose()
+     t.setColor(id) · t.setGear(id) · t.wear(slot, id) · t.setGlow(on) · t.dispose()
+     t.move("dance"|"highfive"|"cheer"|"bow", sec) → sayaw/galaw kasama ang kaibigan
+     t.walk(speed 0..1, heading rad)  → lakad (gumagalaw ang paa at kamay); heading = saan nakaharap
+   Mga isusuot (wear): outfit.js. Ang hat na sprout/bow/cap/headphones/crown ay nandito (setGear).
    Sariling disenyo (gawa sa code), walang kinopyang character. */
 import * as THREE from "../../vendor/three/three.module.min.js";
 import { RoundedBoxGeometry } from "../../vendor/three/RoundedBoxGeometry.js";
+import { buildWear } from "./outfit.js";
 
 export const COLORS = {
   coral: ["#ff7a59", "#e85d3c"], amber: ["#ffc04d", "#e9a21f"], mint: ["#3dd6c0", "#14b8a6"], sky: ["#7cc4ff", "#4a9fe8"],
@@ -19,8 +23,9 @@ const INK = 0x2b1d1a;
 
 export function createTigo(opts = {}) {
   const group = new THREE.Group();          // posisyon sa mundo
-  const body = new THREE.Group();           // tumatalon / humihinga
-  group.add(body);
+  const rig = new THREE.Group();            // tumatalon (kasama ang paa)
+  const body = new THREE.Group();           // humihinga
+  group.add(rig); rig.add(body);
   const disposables = [];
   const mat = (o) => { const m = new THREE.MeshStandardMaterial(o); disposables.push(m); return m; };
   const geo = (g) => { disposables.push(g); return g; };
@@ -78,7 +83,7 @@ export function createTigo(opts = {}) {
   });
   const feet = [-0.32, 0.32].map((x) => {
     const f = new THREE.Mesh(geo(new THREE.SphereGeometry(0.17, 18, 12)), fold);
-    f.scale.set(1, 0.55, 1.25); f.position.set(x, 0.1, 0.12); f.castShadow = true; group.add(f); return f;
+    f.scale.set(1, 0.55, 1.25); f.position.set(x, 0.1, 0.12); f.castShadow = true; rig.add(f); return f;
   });
 
   // ---------- gamit (unlock ayon sa level) ----------
@@ -121,13 +126,37 @@ export function createTigo(opts = {}) {
     }
   }
 
+  // ---------- mga isinusuot (outfit.js) ----------
+  const LEGACY = ["sprout", "bow", "cap", "headphones", "crown"];
+  const anchors = {
+    hat: new THREE.Group(), face: new THREE.Group(), body: new THREE.Group(), hand: new THREE.Group(),
+  };
+  anchors.hat.position.y = 1.72; body.add(anchors.hat);
+  face.add(anchors.face);
+  anchors.body.position.set(0, 0.72, 0.41); body.add(anchors.body);
+  anchors.hand.position.set(0.9, 0.66, 0.16); body.add(anchors.hand);
+  const worn = {};
+  function wear(slot, id) {
+    if (slot === "hat") {
+      anchors.hat.clear();
+      if (LEGACY.includes(id)) { setGear(id); worn.hat = id; return; }
+      setGear("none");
+    } else if (anchors[slot]) anchors[slot].clear(); else return;
+    worn[slot] = id || null;
+    if (!id) return;
+    const w = buildWear(id); if (!w) return;
+    w.group.traverse((o) => { if (o.geometry) disposables.push(o.geometry); if (o.material) disposables.push(o.material); });
+    anchors[slot === "hat" ? "hat" : w.anchor].add(w.group);
+  }
+  function setGlow(on) { skin.emissive = new THREE.Color(on ? 0xffb300 : 0x000000); skin.emissiveIntensity = on ? 0.35 : 0; }
+
   // ---------- Zzz (tulog) ----------
   const zzz = new THREE.Group(); zzz.position.set(0.6, 1.9, 0); zzz.visible = false; group.add(zzz);
   const zMat = mat({ color: 0xffffff, emissive: 0x9bb6ff, emissiveIntensity: 0.5, transparent: true, opacity: 0.9 });
   [0, 1, 2].forEach((i) => { const z = new THREE.Mesh(geo(new THREE.TorusGeometry(0.06 + i * 0.02, 0.012, 6, 4)), zMat); z.position.set(i * 0.12, i * 0.22, 0); zzz.add(z); });
 
   // ---------- estado at galaw ----------
-  const st = { mood: "happy", asleep: false, blinkT: 2 + Math.random() * 3, blink: 0, jump: 0, eat: 0, spin: 0, wiggle: 0, look: new THREE.Vector2(), lookNow: new THREE.Vector2(), phase: Math.random() * 10 };
+  const st = { move: null, moveT: 0, walk: 0, walkT: 0, heading: null, mood: "happy", asleep: false, blinkT: 2 + Math.random() * 3, blink: 0, jump: 0, eat: 0, spin: 0, wiggle: 0, look: new THREE.Vector2(), lookNow: new THREE.Vector2(), phase: Math.random() * 10 };
   function setColor(id) {
     const c = COLORS[id] || COLORS.coral;
     skin.color.set(c[0]); skin.sheenColor = new THREE.Color(c[0]).offsetHSL(0, 0, 0.15); fold.color.set(c[1]);
@@ -157,17 +186,44 @@ export function createTigo(opts = {}) {
     if (st.jump > 0) { st.jump = Math.max(0, st.jump - dt); const k = 1 - st.jump / 0.7; y = Math.sin(k * Math.PI) * 0.75; body.scale.y *= 1 + Math.sin(k * Math.PI) * 0.06; }
     if (st.wiggle > 0) { st.wiggle = Math.max(0, st.wiggle - dt); body.rotation.z = Math.sin(st.wiggle * 28) * 0.12 * (st.wiggle / 0.8); } else body.rotation.z *= 0.85;
     if (st.eat > 0) st.eat = Math.max(0, st.eat - dt);
-    body.position.y = y;
-    // ikot
-    if (st.spin > 0) { st.spin = Math.max(0, st.spin - dt); group.rotation.y = (1 - st.spin / 0.9) * Math.PI * 2; } else group.rotation.y += (st.look.x * 0.35 - group.rotation.y) * 0.08;
+    // sayaw at iba pang galaw (kasama ang kaibigan)
+    let mv = null;
+    if (st.move) { st.moveT -= dt; if (st.moveT <= 0) st.move = null; else mv = st.move; }
+    const beat = t * 7.5;
+    if (mv === "dance") { y += Math.abs(Math.sin(beat)) * 0.16; body.rotation.z = Math.sin(beat) * 0.2; }
+    if (mv === "cheer") y += Math.max(0, Math.sin(t * 9)) * 0.3;
+    rig.position.y = y;
+    // lakad: salitan ang paa (taas + abante), kumekembot nang kaunti ang katawan
+    st.walkT += dt * (6 + st.walk * 8) * (st.walk > 0.05 ? 1 : 0);
+    feet.forEach((f, i) => {
+      const ph = st.walkT + i * Math.PI, w = st.walk > 0.05 && y < 0.05 ? 1 : 0;
+      f.position.y = 0.1 + Math.max(0, Math.sin(ph)) * 0.16 * w;
+      f.position.z = 0.12 + Math.cos(ph) * 0.18 * w;
+      f.rotation.x = -Math.sin(ph) * 0.4 * w;
+    });
+    if (st.walk > 0.05 && y < 0.05) { body.position.y = Math.abs(Math.sin(st.walkT)) * 0.06; body.rotation.y = Math.sin(st.walkT) * 0.06; }
+    else { body.position.y *= 0.8; body.rotation.y *= 0.8; }
+    // ikot / harap
+    if (st.spin > 0) { st.spin = Math.max(0, st.spin - dt); group.rotation.y = (st.heading || 0) + (1 - st.spin / 0.9) * Math.PI * 2; }
+    else if (st.heading !== null) {
+      let d = st.heading - group.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); group.rotation.y += d * Math.min(1, dt * 10);
+    } else group.rotation.y += (st.look.x * 0.35 - group.rotation.y) * 0.08;
     // tingin
     st.lookNow.lerp(st.look, 0.1);
     face.position.x = st.lookNow.x * 0.07; face.position.y = 1.08 + st.lookNow.y * 0.05;
     // kamay (kaway kapag masaya)
-    limbs[0].rotation.z = -0.5 + (st.mood === "happy" && !st.asleep ? Math.sin(t * 3) * 0.15 : 0);
-    limbs[1].rotation.z = 0.5 - (st.jump > 0 ? 0.9 : st.mood === "happy" && !st.asleep ? Math.sin(t * 3 + 1) * 0.15 : 0);
+    const swing = st.walk > 0.05 ? Math.sin(st.walkT) * 0.5 : 0;
+    limbs[0].rotation.z = -0.5 + (st.mood === "happy" && !st.asleep && !swing ? Math.sin(t * 3) * 0.15 : 0);
+    limbs[0].rotation.x = swing;
+    limbs[1].rotation.z = 0.5 - (st.jump > 0 ? 0.9 : worn.hand ? 0.25 : st.mood === "happy" && !st.asleep ? Math.sin(t * 3 + 1) * 0.15 : 0);
+    limbs[1].rotation.x = worn.hand ? 0 : -swing;
+    if (mv === "dance") {
+      limbs[0].rotation.z = -1.3 + Math.sin(beat) * 0.9; limbs[1].rotation.z = 1.3 + Math.sin(beat) * 0.9; limbs[0].rotation.x = limbs[1].rotation.x = 0;
+      feet.forEach((f, i) => { f.position.y = 0.1 + Math.max(0, Math.sin(beat + i * Math.PI)) * 0.12; });
+    } else if (mv === "highfive") { limbs[1].rotation.z = 2.7; limbs[1].rotation.x = -0.3; }
+    else if (mv === "cheer") { limbs[0].rotation.z = -2.6 + Math.sin(t * 9) * 0.2; limbs[1].rotation.z = 2.6 - Math.sin(t * 9) * 0.2; }
     // malungkot = medyo nakayuko
-    body.rotation.x += ((st.mood === "sad" || st.mood === "sick" || st.asleep ? 0.12 : 0) - body.rotation.x) * 0.05;
+    body.rotation.x += ((mv === "bow" ? 0.55 : st.mood === "sad" || st.mood === "sick" || st.asleep ? 0.12 : 0) - body.rotation.x) * (mv === "bow" ? 0.15 : 0.05);
     // Zzz
     if (zzz.visible) zzz.children.forEach((z, i) => { z.position.y = ((t * 0.4 + i * 0.33) % 1) * 0.7; z.material.opacity = 1 - ((t * 0.4 + i * 0.33) % 1); });
     paintFace();
@@ -176,9 +232,13 @@ export function createTigo(opts = {}) {
   return {
     group, update,
     setMood(m) { st.mood = m; }, sleep(on) { st.asleep = !!on; },
-    jump() { st.jump = 0.7; }, eat() { st.eat = 1.2; st.wiggle = 0.6; }, spin() { st.spin = 0.9; }, wiggle() { st.wiggle = 0.8; },
+    jump() { if (st.jump < 0.15) st.jump = 0.7; }, height() { return rig.position.y; }, jumping() { return st.jump > 0; }, eat() { st.eat = 1.2; st.wiggle = 0.6; }, spin() { st.spin = 0.9; }, wiggle() { st.wiggle = 0.8; },
     lookAt(x, y) { st.look.set(Math.max(-1, Math.min(1, x)), Math.max(-1, Math.min(1, y))); },
-    setColor, setGear,
+    setColor, setGear, wear, setGlow, worn,
+    walk(speed, heading) { st.walk = Math.max(0, Math.min(1, speed || 0)); if (heading !== undefined) st.heading = heading; },
+    face(heading) { st.heading = heading; },
+    move(kind, sec) { st.move = kind || null; st.moveT = sec || 2; },
+    moving() { return st.move; },
     dispose() { disposables.forEach((d) => d.dispose && d.dispose()); },
   };
 }
