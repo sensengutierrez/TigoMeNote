@@ -1,6 +1,6 @@
 ---
 tags: [decision]
-updated: 2026-10-23
+updated: 2026-10-24
 ---
 # Decisions
 
@@ -50,6 +50,8 @@ updated: 2026-10-23
 | 2026-10-24 | Iisang rules sa server at browser: `tools/build-moderation-client.mjs` ang gumagawa ng `moderation-check.js` | Live na babala habang nagta-type, pero ang server pa rin ang huling bantay |
 | 2026-10-24 | Baliktad na buong text: block rules lang; baliktad na bawat salita: pati flag | Iwas mali-maling flag sa normal na text |
 | 2026-10-24 | Teen: bawal ang phone, email, address at ibang chat app sa post/comment/bio | Proteksyon laban sa grooming at pribadong usapan sa labas ng app |
+| 2026-10-24 | Sounds = **sariling music na ginagawa sa device** (Web Audio), hindi sikat na kanta | Libre, offline, walang copyright; ang hit songs ay kailangan ng bayad na lisensya |
+| 2026-10-24 | Filters ay naka-"bake" sa file; ang sound ay `id` lang sa post (tinutugtog habang pinapanood) | Pareho ang itsura kahit saan; walang dagdag na upload |
 | 2026-10-24 | Text filter: **block** (malinaw na bawal) o **flag** (ipa-review sa admin) | Iwas mali-maling harang sa normal na usapan |
 | 2026-10-24 | Kusang itago kapag 3+ report o may child-safety report | Mabilis na proteksyon habang hinihintay ang admin |
 | 2026-10-24 | Photos/videos: Report + admin review muna (walang image AI) | Walang libreng paraan para sa violence/baril sa larawan; pipili mamaya |

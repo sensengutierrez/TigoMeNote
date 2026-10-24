@@ -79,7 +79,7 @@
         '<button type="button" class="vw-nav prev" aria-label="Previous">' + I("chevronL") + "</button>" +
         '<button type="button" class="vw-nav next" aria-label="Next">' + I("chevronR") + "</button>" +
         '<div class="pv-dots"></div></div>' +
-      '<div class="pv-info"><div class="pv-author"></div><div class="pv-badges"></div><p class="pv-cap"></p>' +
+      '<div class="pv-info"><div class="pv-author"></div><div class="pv-sound"></div><div class="pv-badges"></div><p class="pv-cap"></p>' +
         '<div class="pv-social"></div><div class="pv-actions"></div></div>';
     var media = root.querySelector(".pv-media"), dots = root.querySelector(".pv-dots");
     var prev = root.querySelector(".prev"), next = root.querySelector(".next");
@@ -90,6 +90,9 @@
       media.innerHTML = !m.url ? '<div class="pt-missing">' + I("image", "ic-lg") + "<span>Couldn't load. Please try again.</span></div>"
         : m.kind === "video" ? '<video src="' + esc(m.url) + '" controls playsinline autoplay></video>'
         : '<img alt="" src="' + esc(m.url) + '">';
+      // May sound ang post: hinaan ang sariling tunog ng video ayon sa pinili ng nag-post
+      var vid = media.querySelector("video");
+      if (vid && p.sound) vid.volume = p.sound.orig != null ? p.sound.orig : 0.4;
       dots.innerHTML = p.media.length > 1 ? p.media.map(function (_, i) { return '<span class="' + (i === slide ? "on" : "") + '"></span>'; }).join("") : "";
       var hasPrev = slide > 0 || idx > 0, hasNext = slide < p.media.length - 1 || idx < posts.length - 1;
       prev.disabled = !hasPrev; next.disabled = !hasNext;
@@ -109,6 +112,10 @@
         (p.stats && !p.scheduled ? '<span class="badge" title="Views">' + I("play", "ic-sm") + '<span translate="no">' + num(p.stats.views) + "</span> views</span>" : "");
       if (!p.mine && !p.scheduled) markViewed(p.id);
       root.querySelector(".pv-cap").textContent = p.caption || "";
+      // Sound: tumutugtog agad pagbukas (tap sa ♪ para itigil)
+      var S = window.TMN_SOUNDS, sb = root.querySelector(".pv-sound");
+      sb.innerHTML = p.sound && S ? S.chip(p.sound) : "";
+      if (S) { if (p.sound && S.get(p.sound.id)) { if (S.playing() !== p.sound.id) S.play(p.sound.id, { vol: p.sound.vol }); } else S.stop(); }
       root.querySelector(".pv-actions").innerHTML = p.mine
         ? (p.scheduled ? "" : '<button type="button" class="btn btn-ghost btn-sm' + (p.pinned ? " is-on" : "") + '" data-a="pin">' + I("pin", "ic-sm") + (p.pinned ? "Unpin" : "Pin") + "</button>") +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="edit">' + I("edit", "ic-sm") + "Edit</button>" +
@@ -176,7 +183,7 @@
     }
     modal = MODAL.open({
       title: "", size: "full", cls: "modal-viewer modal-post", body: root,
-      onClose: function () { document.removeEventListener("keydown", onKey); }
+      onClose: function () { document.removeEventListener("keydown", onKey); if (window.TMN_SOUNDS) TMN_SOUNDS.stop(); }
     });
     show();
   }

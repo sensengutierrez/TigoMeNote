@@ -6,13 +6,12 @@
 (function () {
   var I = function (n, c) { return window.TMN_ICON(n, c); };
 
-  var PRESETS = [
+  // Iisang listahan ng filters (filters.js); may maliit na kopya kung hindi naka-load
+  var PRESETS = window.TMN_FILTERS ? TMN_FILTERS.list : [
     { id: "none",  label: "Original", ops: [] },
     { id: "vivid", label: "Vivid", ops: [["saturate", 1.35], ["contrast", 1.1]] },
     { id: "warm",  label: "Warm",  ops: [["sepia", 0.25], ["saturate", 1.15], ["brightness", 1.03]] },
-    { id: "cool",  label: "Cool",  ops: [["hue-rotate", 12], ["saturate", 1.05], ["brightness", 1.02]] },
-    { id: "mono",  label: "Mono",  ops: [["grayscale", 1], ["contrast", 1.12]] },
-    { id: "fade",  label: "Fade",  ops: [["contrast", 0.85], ["brightness", 1.08], ["saturate", 0.8]] }
+    { id: "mono",  label: "Mono",  ops: [["grayscale", 1], ["contrast", 1.12]] }
   ];
   var ASPECTS = [["free", "Free", 0], ["1:1", "1:1", 1], ["4:5", "4:5", 4 / 5], ["16:9", "16:9", 16 / 9], ["9:16", "9:16", 9 / 16]];
 

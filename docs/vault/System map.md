@@ -11,7 +11,7 @@ updated: 2026-10-24
 | `login.html` | ROOT | Sign in / Create account | hindi |
 | `home.html` | app/ | Daily | oo |
 | `explore.html` | app/ | Explore: status, feed na may reactions/comments/share, hanap ng tao | oo |
-| `share.html` | app/ | Share: camera / video / files → Gallery (+ "I-post din") | oo |
+| `share.html` | app/ | Share: sariling camera na may filters + auto sound → Gallery (+ Save & post) | oo |
 | `messages.html` | app/ | Tigo Messenger: chats, groups, requests (sa APK: bubuksan ang hiwalay na app) | oo |
 | `gallery.html` | app/ | Gallery: albums, upload, edit (device lang) | oo |
 | `profile.html` | app/ | Profile: cover, photo, edit profile, naka-pilang uploads, mga tab (Posts, Private, Reposts, Saved, Liked, History) | oo |
@@ -34,6 +34,10 @@ updated: 2026-10-24
 | `media-store.js` | Photos/videos/albums sa device (IndexedDB) |
 | `components/modal.js` | Modal, confirm, prompt (iisa sa buong site) |
 | `components/photo-editor.js` | Crop, rotate, flip, adjust, filters |
+| `filters.js` | Iisang listahan ng 13 libreng filters + `draw()` (`TMN_FILTERS`) |
+| `components/camera.js` | Sariling camera: live filters, photo, video ≤15 s (`TMN_CAMERA`) |
+| `sounds.js` | TigoMeNote Sounds: music na gawa sa device, auto-pick, ♪ chip (`TMN_SOUNDS`) |
+| `components/sound-picker.js` / `capture-review.js` | Pumili ng sound + Sound row (`TMN_SOUND_PICK`); review pagkakuha (`TMN_REVIEW`) |
 | `components/weather.js` | Weather card + auto location |
 | `post-queue.js` | Offline outbox ng posts: compress + kusang upload (`TMN_POSTQ`) |
 | `components/post-composer.js` | "Bagong post" modal: caption, visibility, schedule |
@@ -66,7 +70,8 @@ updated: 2026-10-24
 | `tokens.css` | **Lahat ng kulay, font, radius, shadow** (light + dark) |
 | `base.css` | Reset at typography |
 | `components.css` | Buttons, inputs, cards, badges, toast, segmented |
-| `posts.css` | Composer, post tiles, post viewer, queue list |
+| `posts.css` | Composer, post tiles, post viewer, queue list, ♪ chip |
+| `camera.css` / `sounds.css` | Camera + review; sound picker at Sound row |
 | `social.css` | Feed cards, status, comments at social sheets |
 | `shell.css` | Layout: sidebar, topbar, drawer, tabs |
 | `pages/<page>.css` | Style ng isang page lang |
@@ -118,7 +123,7 @@ Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast
 | `messages` / `message_reactions` | messages (text, photo, location, system) at reactions | `sql/033-messages.sql` |
 | `notif_prefs` | settings ng notifications (pause, sleep, Off/In app/Push) | `sql/029-notifications.sql` |
 
-`posts` ay may `pinned_at` (hanggang 3) at `view_count` (sql/020). Function: `record_post_views()` (service_role lang).
+`posts` ay may `pinned_at` (hanggang 3) at `view_count` (sql/020), at `sound` (sql/035). Function: `record_post_views()` (service_role lang).
 
 Storage bucket: **`post-media`** (private, 12 MB/file, jpeg/webp/webm/mp4). Signed URLs lang galing sa `posts-fast`.
 Storage bucket: **`profile-media`** (public na view, 3 MB/file, jpeg/webp). Upload ay galing lang sa `profile-fast`.

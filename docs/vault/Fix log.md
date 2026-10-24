@@ -35,6 +35,9 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-10-24 · Weather: "0% ulan" kahit English ang wika → Filipino na salita sa code → "% rain" + salin (`components/weather.js`)
 - 2026-10-24 · Profile ng ibang user (desktop): hindi buong lapad ang cover at nakapatong ang pangalan dito → `aspect-ratio` + `max-height` ay nagpapaliit din ng lapad, at `margin-top: -40px` ang buong header → fixed na lapad + taas (`clamp`), avatar lang ang nakapatong at nasa sariling linya ang pangalan (`social.css`)
 - 2026-10-24 · Messenger (test): hindi mapindot ang Send kapag may babala ng text filter → ang babala ay nakapatong sa Send button → nasa itaas na ng composer ang babala (`messages.css`)
+- 2026-10-24 · Share camera (test): walang lumalabas na Sound row sa composer → pinapalitan ng `row()` ang buong `className` ng container → `classList.add/toggle` na lang (`sound-picker.js`)
+- 2026-10-24 · ♪ chip sa post card (test): napunta sa sulok ng screen → may lumang `.pc-sound` (mute button ng video, `position:absolute`) → bagong pangalan `.pc-music` at `.pc-soundpick` (`post-card.js`, `post-composer.js`, `posts.css`)
+- 2026-10-24 · TigoMeNote Sounds (test): umaabot sa 1.9 ang lakas (nagka-crack) → idinagdag ang limiter at hininaan ang master (`sounds.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

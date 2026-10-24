@@ -1,7 +1,8 @@
 /* TigoMeNote · components/post-composer.js
    "Gumawa ng post" na modal. Gumagana kahit OFFLINE: sine-save sa device (TMN_POSTQ) at kusang ia-upload pag may internet.
      TMN_COMPOSER.open(items, { onPosted })   items = mga item galing sa TMN_MEDIA (photo/video, max 10)
-   Pinipili dito: caption, sino ang makakakita (Public / Followers / Ako lang), at kailan lalabas (Ngayon o I-schedule).
+   Pinipili dito: caption, sound (sound-picker.js; auto-pick kung wala pa), sino ang makakakita (Public / Followers / Ako lang),
+   at kailan lalabas (Ngayon o I-schedule).
    Kailangan: modal.js, post-queue.js, app-shell.js */
 (function () {
   var I = function (n, c) { return window.TMN_ICON ? window.TMN_ICON(n, c) : ""; };
@@ -41,6 +42,7 @@
       }).join("") + "</div>" +
       (items.some(function (it) { return it.type === "video" && it.duration > 15.5; })
         ? '<p class="pc-warn small">' + I("clock", "ic-sm") + "Videos longer than 15 seconds will be cut to the first 15 s.</p>" : "") +
+      (window.TMN_SOUND_PICK ? '<div class="field"><span class="pe-label">Sound</span><div class="pc-soundpick"></div></div>' : "") +
       '<label class="field"><span class="pe-label">Caption</span>' +
         '<textarea class="input pc-cap" maxlength="' + CAP + '" rows="3" placeholder="What\'s the story?"></textarea>' +
         '<span class="pc-count faint small">0 / ' + CAP + "</span></label>" +
@@ -82,6 +84,23 @@
       paintWhen();
     }
     paintVis(); paintNet();
+
+    // Sound: galing sa camera review, o auto-pick base sa unang photo/video
+    var sound = null;
+    if (window.TMN_SOUND_PICK) {
+      var sbox = root.querySelector(".pc-soundpick"), first = items[0];
+      var mountSound = function (s) {
+        if (state.busy || closed) return;
+        sound = s;
+        soundRow = TMN_SOUND_PICK.row(sbox, { src: first.blob, kind: first.type, sound: s, onChange: function (x) { sound = x; } });
+      };
+      var soundRow = null, closed = false;
+      if (first.sound) mountSound(first.sound);
+      else {
+        sbox.innerHTML = '<span class="faint small">' + I("music", "ic-sm") + " Finding a sound…</span>";
+        TMN_SOUND_PICK.auto(first.blob, { kind: first.type }).then(function (r) { mountSound(r.sound); }, function () { mountSound(null); });
+      }
+    }
     window.addEventListener("online", paintNet); window.addEventListener("offline", paintNet);
 
     cap.addEventListener("input", function () { count.textContent = cap.value.length + " / " + CAP; });
@@ -116,7 +135,7 @@
           th.classList.remove("hidden"); th.firstChild.style.width = Math.round(pct * 100) + "%";
           status.textContent = (it.type === "video" ? "Compressing video " : "Preparing photo ") + (i + 1) + " / " + n + "…" + (it.type === "video" ? " (don't close)" : "");
         });
-        await window.TMN_POSTQ.enqueue({ files: files, caption: cap.value.trim(), visibility: state.vis, publishAt: publishAt });
+        await window.TMN_POSTQ.enqueue({ files: files, caption: cap.value.trim(), visibility: state.vis, publishAt: publishAt, sound: sound });
         try { localStorage.setItem("tmnPostVis", state.vis); } catch (e) {}
         done = true; m.close(true);
         if (o.onPosted) o.onPosted();
@@ -138,6 +157,8 @@
         { label: I("send", "ic-sm") + "Post", cls: "btn-primary pc-submit", onClick: submit }
       ],
       onClose: function () {
+        closed = true;
+        if (soundRow) soundRow.destroy();
         window.removeEventListener("online", paintNet); window.removeEventListener("offline", paintNet);
         urls.forEach(function (u) { URL.revokeObjectURL(u); });
       }

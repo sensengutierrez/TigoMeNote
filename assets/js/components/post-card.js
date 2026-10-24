@@ -67,6 +67,7 @@
         (showFollow ? '<button type="button" class="btn btn-ghost btn-sm pc-follow" data-act="follow" data-uid="' + esc(a.id) + '">Follow</button>' : "") +
         '<button type="button" class="icon-btn" data-act="more" aria-label="More">' + I("more") + "</button>" +
       "</header>" +
+      (p.sound && window.TMN_SOUNDS ? '<div class="pc-music">' + TMN_SOUNDS.chip(p.sound) + "</div>" : "") +
       mediaHtml(p) +
       actionsHtml(p) +
       (p.caption ? '<p class="pc-caption"><b data-act="user" data-uid="' + esc(a.id || "") + '">' + esc(a.username || "") + "</b> " + esc(p.caption) + "</p>" : "") +

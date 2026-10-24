@@ -134,7 +134,7 @@ async function hydrate(posts: any[], me: any) {
       id: p.id, client_id: p.client_id, caption: p.caption, visibility: p.visibility,
       publish_at: p.publish_at, created_at: p.created_at, mine: p.user_id === me.id,
       scheduled: new Date(p.publish_at).getTime() > now,
-      pinned: !!p.pinned_at, pinned_at: p.pinned_at ?? null,
+      pinned: !!p.pinned_at, pinned_at: p.pinned_at ?? null, sound: p.sound ?? null,
       hidden: !!p.hidden_at, hidden_reason: p.hidden_at ? p.hidden_reason ?? null : null,
       author: byId[p.user_id] ? { ...byId[p.user_id], following: following.has(p.user_id) } : null,
       media: (media ?? []).filter((m) => m.post_id === p.id).map((m) => ({
@@ -199,6 +199,18 @@ async function createUpload(p: any, me: any) {
   return reply({ ok: true, uploads });
 }
 
+// Sound (TigoMeNote Sounds, gawa sa device): id lang at lakas, walang file
+// deno-lint-ignore no-explicit-any
+function cleanSound(s: any) {
+  if (!s || typeof s !== "object") return null;
+  const id = String(s.id ?? "");
+  if (!/^[a-z0-9-]{2,30}$/.test(id)) return null;
+  const n = (v: any, d: number) => { const x = Number(v); return Number.isFinite(x) ? Math.min(1, Math.max(0, Math.round(x * 100) / 100)) : d; };
+  const out: Record<string, unknown> = { id, vol: n(s.vol, 0.8) };
+  if (s.orig != null) out.orig = n(s.orig, 0.4);
+  return out;
+}
+
 // deno-lint-ignore no-explicit-any
 async function createPost(p: any, me: any) {
   const clientId = cleanId(p.client_id);
@@ -214,6 +226,7 @@ async function createPost(p: any, me: any) {
   if (!publishAt) return fail("Invalid schedule date/time.");
   const media = Array.isArray(p.media) ? p.media.slice(0, MAX_MEDIA_PER_POST) : [];
   if (!media.length) return fail("No photo or video.");
+  const sound = cleanSound(p.sound);
 
   // Siguraduhing sa user na ito ang mga path at nandoon talaga ang files
   const prefix = `${me.id}/${clientId}/`;
@@ -228,7 +241,7 @@ async function createPost(p: any, me: any) {
   const { data: post, error } = await db.from("posts").insert({
     user_id: me.id, client_id: clientId, caption, visibility,
     publish_at: publishAt.toISOString(), taken_at: p.taken_at ? new Date(p.taken_at).toISOString() : null,
-    media_count: media.length,
+    media_count: media.length, sound,
   }).select("*").single();
   if (error) {
     if (error.code === "23505") { // sabay na retry

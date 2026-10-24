@@ -28,6 +28,7 @@ Ito ang "utak" ng project: lahat ng ginawa, paano ginawa, at bakit. Buksan ang f
 - [[Build - Safety and wellbeing]] — Family/Friends, Locate, SOS + push, 13+, parental, sleep, break
 - [[Build - Moderation and policies]] — Terms, Privacy, Guidelines, Copyright, Third-party; text filter, Report, admin Reports
 - [[Build - Notifications]] — activity list, push, notification settings, TigoMeNote ring sa Status
+- [[Build - Share camera and sounds]] — sariling camera, 13 libreng filters, auto sound (TigoMeNote Sounds), ♪ sa posts
 - [[Build - Messenger]] — Tigo Messenger: chats, groups, photo, location + pin, reactions, Seen, requests; hiwalay na app sa APK
 
 ## Plans
