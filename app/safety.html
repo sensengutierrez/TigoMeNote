@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>Safety · TigoMeNote</title>
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <script src="../assets/js/theme.js?v=0.6.0"></script>
+  <script src="../assets/js/config.js?v=0.6.0"></script>
+  <script src="../assets/js/i18n.js?v=0.6.0"></script>
+  <script src="../assets/js/auth-guard.js?v=0.6.0"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/tokens.css?v=0.6.0">
+  <link rel="stylesheet" href="../assets/css/base.css?v=0.6.0">
+  <link rel="stylesheet" href="../assets/css/components.css?v=0.6.0">
+  <link rel="stylesheet" href="../assets/css/shell.css?v=0.6.0">
+  <link rel="stylesheet" href="../assets/css/social.css?v=0.6.0">
+  <link rel="stylesheet" href="../assets/css/safety.css?v=0.6.0">
+  <link rel="stylesheet" href="../assets/css/pages/safety.css?v=0.6.0">
+</head>
+<body data-page="safety" data-title="Safety">
+  <main id="page" class="page">
+    <header class="page-head">
+      <div>
+        <h1>Safety</h1>
+        <p class="muted">Your Family &amp; Friends, their location, and SOS.</p>
+      </div>
+      <button class="btn btn-primary" type="button" id="inviteBtn"><i data-icon="userPlus" data-size="sm"></i>Add people</button>
+    </header>
+
+    <div class="sf-grid">
+      <div class="sf-side">
+        <!-- SOS -->
+        <section class="card sf-sos" id="sosCard">
+          <div id="sosMount" class="sf-sos-btn"></div>
+          <div class="sf-sos-txt">
+            <h3>Emergency SOS</h3>
+            <p class="muted small">Hold for 3 seconds. Your Family &amp; Friends get an alarm with your location. You can cancel during the 5-second countdown.</p>
+            <a class="btn btn-ghost btn-sm" id="callBtn" href="tel:999"><i data-icon="phone" data-size="sm"></i><span id="callTxt">Call 999</span></a>
+          </div>
+        </section>
+
+        <!-- Sarili mong active SOS -->
+        <section class="card sf-active hidden" id="myActive">
+          <div class="sf-active-head"><i data-icon="sos"></i><b>Your SOS is on</b></div>
+          <p class="small" id="myActiveTxt">Your circle can see your location.</p>
+          <div class="sf-active-acks small" id="myAcks"></div>
+          <div class="sf-active-btns">
+            <button class="btn btn-primary" type="button" id="safeBtn"><i data-icon="check" data-size="sm"></i>I'm safe</button>
+            <button class="btn btn-ghost" type="button" id="cancelSosBtn">Sent by mistake</button>
+          </div>
+        </section>
+
+        <!-- Alerts at location sa device na ito -->
+        <section class="card sf-phone">
+          <h3 class="set-title">This phone</h3>
+          <div class="rows">
+            <div class="row">
+              <div class="row-main"><div class="row-title">SOS alerts</div><div class="row-sub" id="pushSub">Checking…</div></div>
+              <button class="btn btn-primary btn-sm" type="button" id="pushBtn">Turn on</button>
+            </div>
+            <div class="row">
+              <div class="row-main"><div class="row-title">My location</div><div class="row-sub" id="locSub">Checking…</div></div>
+              <button class="btn btn-ghost btn-sm" type="button" id="locBtn">Turn on</button>
+            </div>
+            <div class="row">
+              <div class="row-main"><div class="row-title">Pause sharing</div><div class="row-sub" id="pauseSub">Nobody can locate you while paused. SOS still works.</div></div>
+              <label class="switch"><input type="checkbox" id="pauseSw" aria-label="Pause sharing"><span></span></label>
+            </div>
+            <div class="row">
+              <div class="row-main"><div class="row-title">Location history</div><div class="row-sub">Kept for 30 days, then deleted automatically.</div></div>
+              <button class="btn btn-ghost btn-sm" type="button" id="clearBtn"><i data-icon="trash" data-size="sm"></i>Delete</button>
+            </div>
+          </div>
+          <p class="faint small sf-app-note" id="appNote">In the Android app (coming soon): loud alarm even on silent, location while the app is closed, and SMS when there's no internet.</p>
+        </section>
+      </div>
+
+      <div class="sf-main">
+        <section class="card sf-map-card">
+          <div class="sf-map" id="map" aria-label="Map"></div>
+          <div class="sf-map-empty hidden" id="mapEmpty"><i data-icon="map" data-size="lg"></i><span>No locations yet.</span></div>
+        </section>
+
+        <!-- Invites -->
+        <section class="card hidden" id="invitesCard">
+          <h3 class="set-title">Invites</h3>
+          <div class="sf-list" id="invites"></div>
+        </section>
+
+        <section class="card sf-circle">
+          <div class="sf-tabs segmented" role="tablist" aria-label="Circle" id="circleTabs">
+            <button type="button" role="tab" data-k="family" aria-pressed="true"><i data-icon="home" data-size="sm"></i>Family <span class="sf-n" id="nFamily">0</span></button>
+            <button type="button" role="tab" data-k="friend" aria-pressed="false"><i data-icon="users" data-size="sm"></i>Friends <span class="sf-n" id="nFriend">0</span></button>
+          </div>
+          <div class="sf-list" id="members"></div>
+          <div class="empty sf-empty hidden" id="membersEmpty">
+            <div class="empty-art"><i data-icon="users" data-size="lg"></i></div>
+            <h3 id="emptyTitle">No Family yet</h3>
+            <p id="emptyText">Add the people you trust. They'll get your SOS and, if you allow, see where you are.</p>
+            <button class="btn btn-primary" type="button" id="emptyInvite"><i data-icon="userPlus" data-size="sm"></i>Add people</button>
+          </div>
+          <div class="sf-out hidden" id="outWrap"><h4 class="faint small">Waiting for them to accept</h4><div class="sf-list" id="outgoing"></div></div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <script src="../assets/js/icons.js?v=0.6.0"></script>
+  <script src="../assets/js/nav-items.js?v=0.6.0"></script>
+  <script src="../assets/js/components/app-shell.js?v=0.6.0"></script>
+  <script src="../assets/js/api.js?v=0.6.0"></script>
+  <script src="../assets/js/components/modal.js?v=0.6.0"></script>
+  <script src="../assets/js/post-queue.js?v=0.6.0"></script>
+  <script src="../assets/js/native-bridge.js?v=0.6.0"></script>
+  <script src="../assets/js/push-setup.js?v=0.6.0"></script>
+  <script src="../assets/js/components/sos-overlay.js?v=0.6.0"></script>
+  <script src="../assets/js/safety-watch.js?v=0.6.0"></script>
+  <script src="../assets/js/location-share.js?v=0.6.0"></script>
+  <script src="../assets/js/wellbeing.js?v=0.6.0"></script>
+  <script src="../assets/js/components/map-view.js?v=0.6.0"></script>
+  <script src="../assets/js/components/sos-button.js?v=0.6.0"></script>
+  <script src="../assets/js/pages/safety.js?v=0.6.0"></script>
+</body>
+</html>

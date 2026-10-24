@@ -160,3 +160,5 @@
 [dir="rtl"] .st-tap.prev { left: auto; right: 0; } [dir="rtl"] .st-tap.next { right: auto; left: 0; }
 [dir="rtl"] .pc-act[data-act="who-react"] { margin-left: 0; margin-right: -4px; padding: 0 0 0 4px; }
 [dir="rtl"] .pcard-head { padding: 10px 12px 10px 8px; }
+.sx-private { display: grid; justify-items: center; gap: 6px; padding: 28px 12px; text-align: center; color: var(--text-2); }
+.sx-private .ic { width: 28px; height: 28px; }

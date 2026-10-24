@@ -129,3 +129,9 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench, safety ang pundasyon ng app, at kailangang nasa vault para magamit sa instructions ng APK.
 - **Files:** `docs/vault/Plan - Safety, family and wellbeing.md`, `00 Home.md`, `Decisions.md`
 - **Paano:** Wala pang code. Detalye: [[Plan - Safety, family and wellbeing]].
+
+## 2026-10-24 · #20 Safety + wellbeing (web), naka-abang para sa APK
+- **Ano:** Bagong **Safety** page: Family/Friends circle (invite + accept), Locate sa map (30 araw na history, Pause, Clear), SOS (hold 3 s + countdown) na may pulang screen, alarm at push sa buong circle, Call 999. Birthdate sa Create account (13+), Teen = private account, parental supervision, follow requests, sleep timer, give a break (60 min) at daily limit. Family & Safety card sa Profile; Wellbeing sa Settings.
+- **Bakit:** Hiling ni Bench: safety ang pundasyon ng app; "gawin na natin pero naka-abang na para sa APK".
+- **Files:** `sql/023-safety.sql`, `sql/024-wellbeing.sql`, `backend/safety-fast.ts` + `webpush.ts`, `backend/wellbeing-fast.ts`, `backend/auth-fast.ts`, `social-fast.ts`, `posts-fast.ts`, `app/safety.html`, `sw.js`, `manifest.webmanifest`, `assets/js/native-bridge.js`, `push-setup.js`, `safety-watch.js`, `location-share.js`, `wellbeing.js`, `components/sos-button.js`, `sos-overlay.js`, `map-view.js`, `wellbeing-settings.js`, `pages/safety.js`, `assets/css/safety.css`, `pages/safety.css`, `tools/make-icons.py`, `assets/img/*`, `login.html`, `profile.html`, `settings.html`, `nav-items.js`, `config.js` (0.6.0), `lang/ar.js`, `lang/fil.js`, `i18n.js`, `icons.js`, `social-ui.js`
+- **Paano:** Detalye: [[Build - Safety and wellbeing]].

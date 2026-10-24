@@ -21,6 +21,8 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-10-23 · Phone: lumiit/lumapad ang buong Gallery page at kalahating screen lang ang viewer → ang mahabang albums row ay nagpapalapad sa grid column (`min-width: auto`) → `minmax(0, 1fr)` sa `.layout` at `.layout-aside`; full screen ang viewer sa phone (`shell.css`, `components.css`)
 - 2026-10-24 · Settings sa phone: walang Language buttons → lumang `settings.js` pa ang naka-cache sa phone (bago ang Language) → `?v=<version>` sa lahat ng sariling `.js`/`.css` sa HTML (`tools/cache-bust.py`), version 0.5.0
 - 2026-10-24 · Viewer sa phone (Arabic): naputol ang Delete button → hindi nagwa-wrap ang `.pv-actions` → `flex-wrap` + mas maikling "Pin" (`posts.css`)
+- 2026-10-24 · Test ng verify email: "list index out of range" → kailangan na ng birthdate sa Create account kaya hindi naipadala ang register → idinagdag ang birthdate sa test (`test_verify.py`)
+- 2026-10-24 · SOS overlay: pagpindot ng "Silence alarm" ay hindi naitatala → `hide()` ay binubura ang `current` bago ang callback → itinabi muna ang `current` (`sos-overlay.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

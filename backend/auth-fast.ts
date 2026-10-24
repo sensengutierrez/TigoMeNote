@@ -36,6 +36,7 @@ const CODES_PER_HOUR = 5;         // max codes bawat user bawat oras
 const VERIFY_FAILS_PER_IP_10MIN = 30;
 const UNVERIFIED_TTL_HOURS = 24;  // binubura ang hindi na-verify na account pagkatapos nito
 const FORGOT_PER_IP_PER_HOUR = 10; // max forgot-password requests bawat IP
+const MIN_AGE = 13;               // pinakabatang edad na puwedeng gumawa ng account
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -100,7 +101,7 @@ function publicUser(u: Record<string, unknown>) {
     id: u.id, username: u.username, display_name: u.display_name,
     role: u.role, status: u.status, bio: u.bio, avatar_url: u.avatar_url,
     email: u.email, email_verified: !!u.email_verified_at,
-    created_at: u.created_at,
+    created_at: u.created_at, birthdate: u.birthdate ?? null, private_account: !!u.private_account,
   };
 }
 
@@ -267,6 +268,16 @@ async function register(p: Record<string, string>, req: Request) {
     return fail("Username: 3–24 letters, numbers, _ or . only.");
   if (password.length < 8 || password.length > 72)
     return fail("Password: 8–72 characters.");
+  // Edad: 13+ lang. 13–17 = Teen (private account muna)
+  const birth = String(p.birthdate ?? "");
+  const bd = new Date(birth + "T00:00:00Z");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birth) || isNaN(bd.getTime()) || bd > new Date())
+    return fail("Enter your birthdate.", 400, { field: "birthdate" });
+  const now = new Date();
+  let age = now.getUTCFullYear() - bd.getUTCFullYear();
+  if (now.getUTCMonth() < bd.getUTCMonth() || (now.getUTCMonth() === bd.getUTCMonth() && now.getUTCDate() < bd.getUTCDate())) age--;
+  if (age > 120) return fail("Enter your birthdate.", 400, { field: "birthdate" });
+  if (age < MIN_AGE) return fail(`TigoMeNote is for ages ${MIN_AGE} and up.`, 403, { field: "birthdate" });
   if (!canMail) return fail("The server's email isn't set up yet.", 500);
 
   const ipKey = "reg:" + clientIp(req);
@@ -283,6 +294,8 @@ async function register(p: Record<string, string>, req: Request) {
     password_salt: salt, password_hash: await hashPassword(password, salt),
     role: first ? "Admin" : "User",
     status: "Unverified",
+    birthdate: birth,
+    private_account: age < 18,
   };
   const { data: user, error } = await db.from("users").insert(row).select("*").single();
   if (error) {

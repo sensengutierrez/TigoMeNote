@@ -36,10 +36,13 @@ updated: 2026-10-23
 | 2026-10-24 | **Safety ang pundasyon ng app**: Family/Friends circle, Locate, SOS | Hiling ni Bench. Detalye: [[Plan - Safety, family and wellbeing]] |
 | 2026-10-24 | Location history **30 araw**; Friends na pinili puwedeng mag-Locate; laging invite + accept | Pinili ni Bench |
 | 2026-10-24 | May **age limit**, **parental**, **auto sleep**, **give a break** | Hiling ni Bench; SOS laging gumagana |
+| 2026-10-24 | Minimum age **13+**; Teen 13–17 = private account + sleep naka-on | Ok kay Bench ("tama ung analyse mo") |
+| 2026-10-24 | Break reminder default **60 min** (adults) | Hindi nakakaistorbo pero may paalala; puwedeng palitan |
+| 2026-10-24 | Sariling Web Push code + VAPID key sa `app_keys` (hindi external service) | Libre, walang dagdag na account; FCM kapag APK na |
+| 2026-10-24 | Supervision: magulang nag-iimbita, teen nag-a-accept, laging nakikita ng teen | Walang lihim na tracking |
 | 2026-10-23 | Lipat sa **Brevo** (free 300/araw) | Ayaw tanggapin ng Gmail ang App Password; walang domain na kailangan sa Brevo. SMS ay hindi pinili kasi may bayad. |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)
-- **Minimum age** (mungkahi 13+) at default ng **break reminder** para sa adults.
 
 Tingnan din: [[Build - Foundation]]

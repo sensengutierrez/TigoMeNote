@@ -23,21 +23,35 @@
     return '<div class="sx-row"><button type="button" class="sx-user" data-sx="user" data-uid="' + esc(u.id || "") + '">' + av(u, 40) +
       '<span><b>' + esc(u.display_name || u.username || "?") + '</b><span class="faint small">@' + esc(u.username || "") + "</span></span></button>" + (right || "") + "</div>";
   }
+  // Estado ng follow: true (Following), false (Follow), "requested" (private account, naghihintay ng approval)
+  function stateOf(u) {
+    if (followState[u.id] !== undefined) return followState[u.id];
+    return u.following ? true : u.requested ? "requested" : false;
+  }
+  function paintFollow(x, st) {
+    x.dataset.on = String(st);
+    x.textContent = st === true ? "Following" : st === "requested" ? "Requested" : "Follow";
+    x.classList.toggle("btn-primary", st === false); x.classList.toggle("btn-ghost", st !== false);
+  }
   function followBtn(u) {
     var me = (window.TMN_USER || {}).id;
     if (!u || !u.id || u.id === me) return "";
-    var on = followState[u.id] !== undefined ? followState[u.id] : !!u.following;
-    return '<button type="button" class="btn btn-sm ' + (on ? "btn-ghost" : "btn-primary") + ' sx-follow" data-sx="follow" data-uid="' + esc(u.id) + '" data-on="' + on + '">' + (on ? "Following" : "Follow") + "</button>";
+    var st = stateOf(u);
+    return '<button type="button" class="btn btn-sm ' + (st !== false ? "btn-ghost" : "btn-primary") + ' sx-follow" data-sx="follow" data-uid="' + esc(u.id) + '" data-on="' + st + '">' +
+      (st === true ? "Following" : st === "requested" ? "Requested" : "Follow") + "</button>";
   }
 
+  // Ibinabalik: true / "requested" / false kapag nag-follow; false kapag nag-unfollow; null kapag may error
   async function follow(uid, on) {
-    if (!navigator.onLine) { UI().toast("You need internet."); return false; }
+    if (!navigator.onLine) { UI().toast("You need internet."); return null; }
     try {
-      await TMN_API.call("social", on ? "follow" : "unfollow", { user_id: uid });
-      followState[uid] = on;
-      document.dispatchEvent(new CustomEvent("tmn:follow", { detail: { id: uid, on: on } }));
-      return true;
-    } catch (e) { UI().toast(e.message); return false; }
+      var r = await TMN_API.call("social", on ? "follow" : "unfollow", { user_id: uid });
+      var st = on ? (r.requested ? "requested" : true) : false;
+      followState[uid] = st;
+      if (st === "requested") UI().toast("Follow request sent.");
+      document.dispatchEvent(new CustomEvent("tmn:follow", { detail: { id: uid, on: st === true, requested: st === "requested" } }));
+      return st === false ? false : st;
+    } catch (e) { UI().toast(e.message); return null; }
   }
   // Isang listener para sa follow/user buttons sa loob ng isang element
   function bindPeople(el) {
@@ -45,15 +59,11 @@
       var b = e.target.closest("[data-sx]"); if (!b) return;
       if (b.dataset.sx === "user") { userSheet(b.dataset.uid); return; }
       if (b.dataset.sx === "follow") {
-        var on = b.dataset.on !== "true";
-        if (!on && !(await TMN_MODAL.confirm("Unfollow?", { okText: "Unfollow", danger: true }))) return;
+        var on = b.dataset.on === "false";
+        if (b.dataset.on === "true" && !(await TMN_MODAL.confirm("Unfollow?", { okText: "Unfollow", danger: true }))) return;
         b.disabled = true;
-        if (await follow(b.dataset.uid, on)) {
-          document.querySelectorAll('.sx-follow[data-uid="' + b.dataset.uid + '"]').forEach(function (x) {
-            x.dataset.on = String(on); x.textContent = on ? "Following" : "Follow";
-            x.classList.toggle("btn-primary", !on); x.classList.toggle("btn-ghost", on);
-          });
-        }
+        var st = await follow(b.dataset.uid, on);
+        if (st !== null) document.querySelectorAll('.sx-follow[data-uid="' + b.dataset.uid + '"]').forEach(function (x) { paintFollow(x, st); });
         b.disabled = false;
       }
     });
@@ -262,7 +272,7 @@
       root.innerHTML =
         '<div class="sx-cover">' + (u.banner_url ? '<img alt="" src="' + esc(u.banner_url) + '">' : "") + "</div>" +
         '<div class="sx-phead">' + av(u, 88) +
-          '<div class="sx-pname"><h3>' + esc(u.display_name) + '</h3><span class="faint">@' + esc(u.username) + (u.follows_you ? ' · <span class="badge">Follows you</span>' : "") + "</span></div>" +
+          '<div class="sx-pname"><h3>' + esc(u.display_name) + (u.private_account ? " " + I("lock", "ic-sm") : "") + '</h3><span class="faint">@' + esc(u.username) + (u.follows_you ? ' · <span class="badge">Follows you</span>' : "") + "</span></div>" +
           (u.me ? '<a class="btn btn-ghost btn-sm" href="profile.html">' + I("user", "ic-sm") + "My profile</a>" : followBtn(u)) + "</div>" +
         (u.bio ? '<p class="sx-bio">' + esc(u.bio) + "</p>" : "") +
         '<div class="sx-stats"><span><b>' + c.posts + "</b> posts</span>" +
@@ -277,7 +287,9 @@
       var pr = await TMN_API.call("posts", "userPosts", { user_id: u.id, limit: 30 });
       var grid = root.querySelector(".sx-grid"), posts = pr.posts || [];
       grid.innerHTML = posts.length ? TMN_POSTS_UI.tiles(posts, {}) : "";
-      if (!posts.length) grid.outerHTML = '<p class="faint small sx-empty">' + (u.following || u.me ? "No posts yet." : "No public posts yet. Follow to see followers-only posts.") + "</p>";
+      if (!posts.length) grid.outerHTML = pr.private
+        ? '<div class="sx-private">' + I("lock") + "<b>This account is private</b><span class=\"faint small\">Follow to see their posts.</span></div>"
+        : '<p class="faint small sx-empty">' + (u.following || u.me ? "No posts yet." : "No public posts yet. Follow to see followers-only posts.") + "</p>";
       else grid.addEventListener("click", function (e) { var t = e.target.closest("[data-pi]"); if (t) TMN_POSTS_UI.open(posts, Number(t.dataset.pi), {}); });
     } catch (e) { root.innerHTML = '<p class="faint small sx-empty">' + esc(e.message) + "</p>"; }
     return m;

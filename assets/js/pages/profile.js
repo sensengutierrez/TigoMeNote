@@ -230,7 +230,25 @@
   });
   window.addEventListener("online", function () { loadPosts(); if (ACTION[tab]) loadTab(tab); });
 
+  // ---------- Family & Safety ----------
+  if (window.TMN_SOS) TMN_SOS.mount($("pSosMount"), { onChange: loadSafety });
+  async function loadSafety() {
+    if (!navigator.onLine) return;
+    try {
+      var r = await TMN_API.call("safety", "circle", {});
+      var fam = r.members.filter(function (m) { return m.kind === "family"; }).length, fr = r.members.length - fam;
+      $("pSafetyTxt").textContent = r.members.length
+        ? fam + " Family · " + fr + " Friends" + (r.incoming.length ? " · " + r.incoming.length + " invite" + (r.incoming.length > 1 ? "s" : "") : "")
+        : "Add your Family & Friends. Hold SOS for 3 seconds to alert them with your location.";
+      $("pSafetyPeople").innerHTML = r.members.slice(0, 8).map(function (m) {
+        var u = m.user;
+        return '<span class="avatar" style="--size:32px" title="' + UI.esc(u.display_name || u.username) + '">' + (u.avatar_url ? '<img alt="" src="' + UI.esc(u.avatar_url) + '">' : UI.esc(UI.initials(u.display_name || u.username))) + "</span>";
+      }).join("");
+    } catch (e) {}
+  }
+
   renderQueue();
   loadPosts();
   loadProfile();
+  loadSafety();
 })();

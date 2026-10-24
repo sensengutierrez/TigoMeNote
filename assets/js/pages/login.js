@@ -9,7 +9,7 @@
   var VERIFY_KEY = "tmnVerify"; // naaalala ang verify screen kahit i-refresh
 
   var form = $("authForm"), btn = $("authBtn"), msg = $("authMsg");
-  var fName = $("fName"), fEmail = $("fEmail"), fUser = $("fUser"), fPass = $("fPass"), fRemember = $("fRemember");
+  var fName = $("fName"), fEmail = $("fEmail"), fBirth = $("fBirth"), fUser = $("fUser"), fPass = $("fPass"), fRemember = $("fRemember");
   var params = new URLSearchParams(location.search);
   var mode = params.get("mode") === "register" ? "register" : "login";
   var busy = false;
@@ -224,13 +224,20 @@
     if (clean !== fUser.value) fUser.value = clean;
   });
 
+  function age(iso) {
+    var b = new Date(iso + "T00:00:00"), n = new Date(), a = n.getFullYear() - b.getFullYear();
+    if (n.getMonth() < b.getMonth() || (n.getMonth() === b.getMonth() && n.getDate() < b.getDate())) a--;
+    return a;
+  }
   function invalid(el, text) { el.setAttribute("aria-invalid", "true"); el.focus(); main.show(text); return false; }
 
   function validate() {
-    [fName, fEmail, fUser, fPass].forEach(function (el) { el.removeAttribute("aria-invalid"); });
+    [fName, fEmail, fBirth, fUser, fPass].forEach(function (el) { el.removeAttribute("aria-invalid"); });
     var reg = mode === "register";
     if (reg && !fName.value.trim()) return invalid(fName, "Enter your display name.");
     if (reg && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(fEmail.value.trim())) return invalid(fEmail, "Enter a valid email address.");
+    if (reg && !fBirth.value) return invalid(fBirth, "Enter your birthdate.");
+    if (reg && age(fBirth.value) < 13) return invalid(fBirth, "TigoMeNote is for ages 13 and up.");
     if (!fUser.value) return invalid(fUser, reg ? "Enter a username." : "Enter your username or email.");
     if (!reg && missingAt(fUser.value)) return invalid(fUser, "This looks like an email but has no @. Example: name@gmail.com");
     if (reg && !/^[a-z0-9_.]{3,24}$/.test(fUser.value)) return invalid(fUser, "Username: 3–24 letters, numbers, _ or . only.");
@@ -251,7 +258,7 @@
     setBusy(true);
     try {
       var payload = { username: fUser.value.trim(), password: fPass.value };
-      if (mode === "register") { payload.display_name = fName.value.trim(); payload.email = fEmail.value.trim(); }
+      if (mode === "register") { payload.display_name = fName.value.trim(); payload.email = fEmail.value.trim(); payload.birthdate = fBirth.value; }
       var res = await window.TMN_API.call("auth", mode, payload);
       setBusy(false);
       if (res.verify) { openVerify(res); return; }
@@ -262,6 +269,7 @@
       setBusy(false);
       main.show(errText(err));
       if (err.status === 409) (err.data.field === "email" ? fEmail : fUser).setAttribute("aria-invalid", "true");
+      if (err.data && err.data.field === "birthdate") fBirth.setAttribute("aria-invalid", "true");
     }
   });
 

@@ -17,6 +17,7 @@ window.TMN_NAV = {
     { id: "gallery",  label: "Gallery",  icon: "album",   href: "app/gallery.html" },
     { id: "explore",  label: "Explore",  icon: "compass", href: "app/explore.html" },
     { id: "share",    label: "Share",    icon: "plus",    href: "app/share.html", primary: true },
+    { id: "safety",   label: "Safety",   icon: "shield",  href: "app/safety.html" },
     { id: "messages", label: "Messages", icon: "chat",    href: "app/messages.html" },
     { id: "profile",  label: "Profile",  icon: "user",    href: "app/profile.html" }
   ],
@@ -29,5 +30,5 @@ window.TMN_NAV = {
   ],
 
   // Alin sa main ang lalabas sa bottom tabs ng phone (max 5)
-  tabs: ["home", "gallery", "share", "messages", "profile"]
+  tabs: ["home", "gallery", "share", "safety", "profile"]
 };

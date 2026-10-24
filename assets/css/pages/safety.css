@@ -1,0 +1,54 @@
+/* TigoMeNote · pages/safety.css — layout ng Safety page */
+.sf-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.sf-grid > * { min-width: 0; }
+.sf-side, .sf-main { display: grid; gap: 16px; align-content: start; min-width: 0; }
+@media (min-width: 1000px) {
+  .sf-grid { grid-template-columns: 380px minmax(0, 1fr); gap: 24px; align-items: start; }
+  .sf-side { position: sticky; top: 16px; }
+}
+/* Phone: SOS → mapa → invites → circle → settings ng phone */
+@media (max-width: 999px) {
+  .sf-grid { display: flex; flex-direction: column; }
+  .sf-side, .sf-main { display: contents; }
+  #sosCard { order: 0; } #myActive { order: 1; } .sf-map-card { order: 2; } #invitesCard { order: 3; } .sf-circle { order: 4; } .sf-phone { order: 5; }
+}
+
+/* SOS card */
+.sf-sos { display: flex; align-items: center; gap: 22px; padding: 22px; }
+.sf-sos.is-on { border-color: var(--sos); box-shadow: 0 0 0 3px var(--sos-soft); }
+.sf-sos-txt { display: grid; gap: 8px; justify-items: start; }
+.sf-sos-txt h3 { font-size: 18px; }
+@media (max-width: 420px) { .sf-sos { flex-direction: column; text-align: center; } .sf-sos-txt { justify-items: center; } }
+
+.sf-active { border-color: var(--sos); background: var(--sos-soft); color: var(--sos-dark); display: grid; gap: 10px; }
+[data-theme="dark"] .sf-active { background: rgba(225,29,72,.15); color: #fecdd3; }
+.sf-active-head { display: flex; align-items: center; gap: 8px; font-size: 17px; }
+.sf-active-acks { display: flex; flex-wrap: wrap; gap: 6px; }
+.sf-active-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.sf-active-btns .btn-primary { background: var(--sos); border-color: var(--sos); }
+.badge-ok { background: #dcfce7; color: #166534; }
+.sf-app-note { margin-top: 10px; }
+
+/* Map */
+.sf-map-card { padding: 0; overflow: hidden; position: relative; }
+.sf-map { height: 360px; width: 100%; background: var(--surface-2); z-index: 0; }
+@media (min-width: 1000px) { .sf-map { height: 460px; } }
+.sf-map-empty { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 8px; color: var(--text-3); background: var(--surface-2); text-align: center; padding: 20px; }
+
+/* Tabs */
+.sf-tabs { width: 100%; margin-bottom: 6px; }
+.sf-tabs button { flex: 1; justify-content: center; }
+.sf-n { font-size: 12px; color: var(--text-3); font-weight: 600; }
+.sf-out { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+.sf-empty { padding: 28px 12px; }
+
+/* Invite sheet */
+.sf-inv { display: grid; gap: 12px; }
+.sf-inv-kind { width: 100%; }
+.sf-inv-kind button { flex: 1; justify-content: center; }
+.sf-inv-list { max-height: 260px; overflow-y: auto; }
+.sf-pick { width: 100%; background: none; border: 0; border-top: 1px solid var(--line); font: inherit; color: inherit; cursor: pointer; padding: 10px 6px; border-radius: 10px; }
+.sf-pick:disabled { opacity: .55; cursor: default; }
+.sf-pick .sf-tick { opacity: 0; color: var(--accent); }
+.sf-pick.on { background: var(--surface-2); }
+.sf-pick.on .sf-tick { opacity: 1; }

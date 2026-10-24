@@ -1,0 +1,111 @@
+/* TigoMeNote · safety.css — SOS sa lahat ng app pages: pulang screen, bar sa itaas, SOS button, map pins, wellbeing screens.
+   Kulay ng emergency: --sos (pula). */
+:root { --sos: #e11d48; --sos-dark: #9f1239; --sos-soft: #ffe4e6; }
+
+/* ---------- Pulang screen (may SOS ang Family/Friend) ---------- */
+.sos-ov { position: fixed; inset: 0; z-index: 200; background: radial-gradient(circle at 50% 30%, #f43f5e, var(--sos) 45%, var(--sos-dark)); color: #fff;
+  display: grid; place-items: center; padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)); overflow-y: auto; animation: sosFlash 1.2s ease-in-out infinite alternate; }
+@keyframes sosFlash { from { filter: brightness(1); } to { filter: brightness(1.12); } }
+@media (prefers-reduced-motion: reduce) { .sos-ov { animation: none; } }
+.sos-ov-in { width: min(440px, 100%); display: grid; gap: 14px; justify-items: center; text-align: center; }
+.sos-ov-top { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: .12em; background: rgba(0,0,0,.18); padding: 6px 16px; border-radius: 99px; }
+.sos-ov-top .ic { width: 22px; height: 22px; }
+.sos-ov-who { display: grid; justify-items: center; gap: 6px; }
+.sos-ov-who .avatar { border: 4px solid rgba(255,255,255,.9); box-shadow: 0 0 0 10px rgba(255,255,255,.18); }
+.sos-ov-who h2 { font-size: clamp(26px, 7vw, 36px); line-height: 1.1; }
+.sos-ov-who p { font-size: 18px; font-weight: 600; opacity: .95; }
+.sos-ov-note { font-size: 16px; background: rgba(0,0,0,.18); padding: 10px 14px; border-radius: 14px; unicode-bidi: plaintext; }
+.sos-ov-meta, .sos-ov-acks { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; font-size: 14px; opacity: .95; }
+.sos-ov-btns { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+.sos-b { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 14px; border-radius: 16px; border: 2px solid rgba(255,255,255,.75);
+  background: transparent; color: #fff; font: inherit; font-weight: 700; font-size: 15px; text-decoration: none; cursor: pointer; }
+.sos-b-main { grid-column: 1 / -1; background: #fff; color: var(--sos); border-color: #fff; font-size: 17px; min-height: 58px; }
+.sos-b:disabled { opacity: .85; cursor: default; }
+.sos-ov-silence { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; color: #fff; opacity: .85; font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer; padding: 8px; }
+.sos-ov-sound { font-size: 13px; background: rgba(0,0,0,.25); padding: 6px 12px; border-radius: 99px; }
+html.sos-open { overflow: hidden; }
+
+/* ---------- Bar sa itaas ---------- */
+.sos-bar { position: fixed; left: 0; right: 0; top: 0; z-index: 90; display: grid; padding-top: env(safe-area-inset-top); }
+.sos-bar-row { display: flex; align-items: center; gap: 8px; padding: 9px 16px; background: var(--sos); color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; }
+.sos-bar-row span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sos-bar-row b { background: #fff; color: var(--sos); padding: 3px 10px; border-radius: 99px; font-size: 13px; }
+.sos-bar-row.mine { background: var(--sos-dark); }
+html.sos-bar-on body { padding-top: 40px; }
+
+/* ---------- SOS button (pindutin nang matagal) ---------- */
+.sos-hold { --p: 0; position: relative; width: 132px; height: 132px; border-radius: 50%; border: 0; padding: 0; cursor: pointer; flex: none;
+  background: radial-gradient(circle at 50% 35%, #fb7185, var(--sos) 60%, var(--sos-dark)); color: #fff;
+  box-shadow: 0 10px 30px rgba(225,29,72,.35), inset 0 -6px 14px rgba(0,0,0,.18); touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  transition: transform .15s; }
+.sos-hold.holding { transform: scale(.96); }
+.sos-hold:focus-visible { outline: 3px solid var(--sos); outline-offset: 4px; }
+.sos-ring { position: absolute; inset: -8px; width: calc(100% + 16px); height: calc(100% + 16px); transform: rotate(-90deg); pointer-events: none; }
+.sos-ring circle { fill: none; stroke: var(--sos); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 339.3; stroke-dashoffset: calc(339.3 * (1 - var(--p))); opacity: calc(var(--p) * 4); }
+.sos-hold-in { position: relative; display: grid; place-items: center; gap: 2px; }
+.sos-hold-in b { font-family: var(--font-display); font-size: 34px; font-weight: 800; letter-spacing: .06em; }
+.sos-hold-in small { font-size: 12px; font-weight: 600; opacity: .9; }
+.modal-sos .sos-count { display: grid; gap: 12px; justify-items: center; text-align: center; }
+.modal-sos .sos-count .field { width: 100%; text-align: start; display: grid; gap: 6px; }
+.sos-count-n { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; background: var(--sos); color: #fff; font-family: var(--font-display); font-size: 40px; font-weight: 800; }
+
+/* ---------- Map pins (Leaflet) ---------- */
+.mv-pin { position: relative; }
+.mv-av { position: absolute; inset: 2px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: #111; color: #fff; font: 700 14px/1 var(--font-body, Inter, sans-serif);
+  border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.35); z-index: 1; }
+.mv-av img { width: 100%; height: 100%; object-fit: cover; }
+.mv-pin.is-me .mv-av { border-color: #3b82f6; }
+.mv-pin.is-sos .mv-av { border-color: var(--sos); }
+.mv-pulse { position: absolute; inset: -6px; border-radius: 50%; background: rgba(225,29,72,.35); animation: mvPulse 1.4s ease-out infinite; }
+@keyframes mvPulse { from { transform: scale(.6); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+
+/* ---------- Wellbeing screens (sleep, daily limit, birthdate) ---------- */
+.wb-ov { position: fixed; inset: 0; z-index: 150; background: var(--bg, #fff); color: var(--text); display: grid; place-items: center; padding: 24px; overflow-y: auto; }
+.wb-ov.night { background: linear-gradient(180deg, #0b1026, #1e1b4b); color: #e0e7ff; }
+.wb-in { width: min(420px, 100%); display: grid; gap: 14px; justify-items: center; text-align: center; }
+.wb-art { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); }
+.wb-ov.night .wb-art { background: rgba(255,255,255,.08); }
+.wb-art .ic { width: 40px; height: 40px; }
+.wb-in h2 { font-size: 26px; }
+.wb-in p { color: var(--text-2); }
+.wb-ov.night .wb-in p { color: #c7d2fe; }
+.wb-btns { display: grid; gap: 10px; width: 100%; }
+.wb-sos { background: var(--sos) !important; border-color: var(--sos) !important; color: #fff !important; }
+.wb-in .field { width: 100%; text-align: start; display: grid; gap: 6px; }
+.wb-in .err { color: var(--sos); font-size: 14px; }
+html.wb-open { overflow: hidden; }
+
+/* ---------- Mga listahan ng tao (Safety, Settings) ---------- */
+.sf-list { display: grid; }
+.sf-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); min-width: 0; text-align: start; }
+.sf-list .sf-row:first-child { border-top: 0; }
+.sf-row-main { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.sf-who { display: flex; align-items: baseline; gap: 6px; min-width: 0; flex-wrap: wrap; }
+.sf-who b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; unicode-bidi: plaintext; }
+.sf-sub { display: inline-flex; align-items: center; gap: 5px; color: var(--text-2); flex-wrap: wrap; }
+.sf-tags { display: flex; gap: 6px; }
+.sf-row-act { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.sf-share { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.sf-share .small { color: var(--text-2); }
+@media (max-width: 640px) {
+  .sf-row { flex-wrap: wrap; }
+  .sf-row-act { width: 100%; justify-content: flex-start; gap: 10px; padding-inline-start: 56px; flex-wrap: nowrap; }
+  .sf-row-act .sf-share { margin-inline-start: auto; }
+  .sf-locate span { display: none; }
+  .sf-locate { padding: 0 10px; }
+}
+.sf-check { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+
+/* Wellbeing settings */
+.wb-times { display: flex; gap: 10px; width: 100%; flex-wrap: wrap; }
+.wb-times label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); }
+.wb-times .input { width: auto; height: 36px; }
+.wb-sel { width: auto; height: 36px; padding: 0 30px 0 10px; }
+.row-title .ic { vertical-align: -3px; margin-inline-end: 4px; }
+.wb-note { display: flex; gap: 8px; align-items: center; background: var(--surface-2); padding: 8px 12px; border-radius: 12px; margin-bottom: 8px; }
+.wb-intro { margin-bottom: 12px; }
+.wb-add { display: flex; gap: 8px; margin-bottom: 8px; }
+.wb-add .input { flex: 1; min-width: 0; }
+.wb-ward { border: 1px solid var(--line); border-radius: 16px; padding: 4px 14px; margin-top: 12px; }
+.wb-ward .rows .row:first-child { border-top: 1px solid var(--line); }
+.sos-b[href^="tel"] { grid-column: 1 / -1; }

@@ -77,12 +77,12 @@ async function canSee(post: any, me: any) {
   if (!post || post.deleted_at) return false;
   if (post.user_id === me.id) return true;
   if (new Date(post.publish_at) > new Date()) return false;
-  if (post.visibility === "public") return true;
-  if (post.visibility === "followers") {
-    const { data } = await db.from("follows").select("follower_id").eq("follower_id", me.id).eq("following_id", post.user_id).maybeSingle();
-    return !!data;
-  }
-  return false;
+  if (post.visibility === "private") return false;
+  // Private account (hal. Teen): followers lang ang nakakakita, kahit "public" ang post
+  const { data: author } = await db.from("users").select("private_account").eq("id", post.user_id).maybeSingle();
+  if (post.visibility === "public" && !author?.private_account) return true;
+  const { data } = await db.from("follows").select("follower_id").eq("follower_id", me.id).eq("following_id", post.user_id).maybeSingle();
+  return !!data;
 }
 // deno-lint-ignore no-explicit-any
 async function visiblePost(id: unknown, me: any) {
@@ -276,6 +276,13 @@ async function feed(p: any, me: any) {
       if (post && !items.some((i) => i.post.id === post.id)) items.push({ post, at: r.created_at, by: r.user_id });
     }
   }
+  // Tanggalin ang posts ng private accounts na hindi mo fina-follow
+  const authorIds = [...new Set(items.map((i) => i.post.user_id))].filter((id) => !circle.includes(id));
+  if (authorIds.length) {
+    const { data: priv } = await db.from("users").select("id").in("id", authorIds).eq("private_account", true);
+    const hide = new Set((priv ?? []).map((u) => u.id));
+    for (let i = items.length - 1; i >= 0; i--) if (hide.has(items[i].post.user_id)) items.splice(i, 1);
+  }
   items.sort((a, b) => (a.at < b.at ? 1 : -1));
   const page = items.slice(0, limit);
   const hyd = await hydrate(page.map((i) => i.post), me);
@@ -292,6 +299,10 @@ async function userPosts(p: any, me: any) {
   let vis = ["public"];
   if (isMe) vis = ["public", "followers", "private"];
   else if ((await followingIds(me)).includes(uid)) vis = ["public", "followers"];
+  else {
+    const { data: owner } = await db.from("users").select("private_account").eq("id", uid).maybeSingle();
+    if (owner?.private_account) return reply({ ok: true, posts: [], private: true });
+  }
   let q = db.from("posts").select("*").eq("user_id", uid).is("deleted_at", null).in("visibility", vis)
     .order("publish_at", { ascending: false }).limit(limit);
   if (!isMe) q = q.lte("publish_at", nowIso());
@@ -462,6 +473,8 @@ async function share(p: any, me: any) {
   if (kind === "repost") {
     if (post.visibility !== "public") return fail("Only public posts can be reposted.", 403);
     if (post.user_id === me.id) return fail("This is your own post.");
+    const { data: author } = await db.from("users").select("private_account").eq("id", post.user_id).maybeSingle();
+    if (author?.private_account) return fail("Posts from private accounts can't be reposted.", 403);
     const { error } = await db.from("post_shares").insert({ post_id: post.id, user_id: me.id, kind });
     if (error && error.code !== "23505") throw error;
   } else {

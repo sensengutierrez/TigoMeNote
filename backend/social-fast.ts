@@ -1,6 +1,6 @@
 // TigoMeNote · social-fast (Supabase Edge Function, verify_jwt = off)
 // Follow, people (search / suggestions / profile ng ibang user), at Status/Stories (24 oras).
-// Actions: follow, unfollow, people, profile, followList,
+// Actions: follow, unfollow, people, profile, followList, requests, approveRequest, declineRequest,
 //          stories, storyUpload, createStory, viewStory, storyViewers, deleteStory
 // Story files: private bucket "post-media", path <user_id>/stories/<file>, signed read URL 1 oras.
 
@@ -42,7 +42,7 @@ async function sessionUser(token: string): Promise<any | null> {
   const u = (data as any).users;
   return u && u.status === "Active" ? u : null;
 }
-const PUB = "id, username, display_name, avatar_url, banner_url, bio, created_at";
+const PUB = "id, username, display_name, avatar_url, banner_url, bio, created_at, private_account";
 // deno-lint-ignore no-explicit-any
 async function followingIds(me: any): Promise<string[]> {
   const { data } = await db.from("follows").select("following_id").eq("follower_id", me.id);
@@ -51,31 +51,79 @@ async function followingIds(me: any): Promise<string[]> {
 const rand = () => [...crypto.getRandomValues(new Uint8Array(6))].map((x) => x.toString(16).padStart(2, "0")).join("");
 
 // ---------- follow ----------
+// Private account (default sa Teen): magiging "follow request" muna, kailangang i-approve.
 // deno-lint-ignore no-explicit-any
 async function follow(p: any, me: any) {
   const id = String(p.user_id || "");
   if (!id || id === me.id) return fail("You can't follow yourself.");
-  const { data: u } = await db.from("users").select("id").eq("id", id).eq("status", "Active").maybeSingle();
+  const { data: u } = await db.from("users").select("id, private_account").eq("id", id).eq("status", "Active").maybeSingle();
   if (!u) return fail("User not found.", 404);
+  const { data: already } = await db.from("follows").select("follower_id").eq("follower_id", me.id).eq("following_id", id).maybeSingle();
+  if (already) return reply({ ok: true, following: true });
+  if (u.private_account) {
+    await db.from("follow_requests").upsert({ follower_id: me.id, following_id: id }, { onConflict: "follower_id,following_id", ignoreDuplicates: true });
+    return reply({ ok: true, following: false, requested: true });
+  }
   const { error } = await db.from("follows").insert({ follower_id: me.id, following_id: id });
   if (error && error.code !== "23505") throw error;
   return reply({ ok: true, following: true });
 }
 // deno-lint-ignore no-explicit-any
 async function unfollow(p: any, me: any) {
-  await db.from("follows").delete().eq("follower_id", me.id).eq("following_id", String(p.user_id || ""));
-  return reply({ ok: true, following: false });
+  const id = String(p.user_id || "");
+  await db.from("follows").delete().eq("follower_id", me.id).eq("following_id", id);
+  await db.from("follow_requests").delete().eq("follower_id", me.id).eq("following_id", id);
+  return reply({ ok: true, following: false, requested: false });
+}
+// Para kanino ang requests: sarili, o ang teen na binabantayan (p.for)
+// deno-lint-ignore no-explicit-any
+async function requestOwner(p: any, me: any): Promise<string | null> {
+  if (!p.for || p.for === me.id) return me.id;
+  const { data } = await db.from("guardian_links").select("teen_id").eq("guardian_id", me.id).eq("teen_id", String(p.for)).eq("status", "accepted").maybeSingle();
+  return data ? data.teen_id : null;
+}
+// deno-lint-ignore no-explicit-any
+async function requests(p: any, me: any) {
+  const owner = await requestOwner(p, me);
+  if (!owner) return fail("You don't supervise this account.", 403);
+  const { data } = await db.from("follow_requests").select("follower_id, created_at").eq("following_id", owner).order("created_at", { ascending: false }).limit(200);
+  const ids = (data ?? []).map((r) => r.follower_id);
+  const { data: us } = ids.length ? await db.from("users").select(PUB).in("id", ids) : { data: [] };
+  return reply({ ok: true, list: ids.map((id) => (us ?? []).find((u) => u.id === id)).filter(Boolean) });
+}
+// deno-lint-ignore no-explicit-any
+async function approveRequest(p: any, me: any) {
+  const owner = await requestOwner(p, me);
+  if (!owner) return fail("You don't supervise this account.", 403);
+  const fid = String(p.user_id || "");
+  const { data: r } = await db.from("follow_requests").select("follower_id").eq("follower_id", fid).eq("following_id", owner).maybeSingle();
+  if (!r) return fail("Request not found.", 404);
+  const { error } = await db.from("follows").insert({ follower_id: fid, following_id: owner });
+  if (error && error.code !== "23505") throw error;
+  await db.from("follow_requests").delete().eq("follower_id", fid).eq("following_id", owner);
+  return reply({ ok: true });
+}
+// deno-lint-ignore no-explicit-any
+async function declineRequest(p: any, me: any) {
+  const owner = await requestOwner(p, me);
+  if (!owner) return fail("You don't supervise this account.", 403);
+  await db.from("follow_requests").delete().eq("follower_id", String(p.user_id || "")).eq("following_id", owner);
+  return reply({ ok: true });
+}
+async function requestedIds(me: string): Promise<Set<string>> {
+  const { data } = await db.from("follow_requests").select("following_id").eq("follower_id", me);
+  return new Set((data ?? []).map((r) => r.following_id));
 }
 
 // People: search (q) o suggestions (mga hindi mo pa fina-follow)
 // deno-lint-ignore no-explicit-any
 async function people(p: any, me: any) {
-  const fol = new Set(await followingIds(me));
+  const [fol, req] = [new Set(await followingIds(me)), await requestedIds(me.id)];
   const term = String(p.q ?? "").trim().replace(/[%,()]/g, "").slice(0, 40);
   let q = db.from("users").select(PUB).eq("status", "Active").neq("id", me.id).order("created_at", { ascending: false }).limit(30);
   if (term) q = q.or(`username.ilike.%${term}%,display_name.ilike.%${term}%`);
   const { data } = await q;
-  let list = (data ?? []).map((u) => ({ ...u, following: fol.has(u.id) }));
+  let list = (data ?? []).map((u) => ({ ...u, following: fol.has(u.id), requested: req.has(u.id) }));
   if (!term) list = list.filter((u) => !u.following).slice(0, 10);
   return reply({ ok: true, list });
 }
@@ -87,7 +135,7 @@ async function profile(p: any, me: any) {
   q = p.user_id ? q.eq("id", String(p.user_id)) : q.ilike("username", String(p.username || "").replace(/[%_]/g, ""));
   const { data: u } = await q.maybeSingle();
   if (!u) return fail("User not found.", 404);
-  const [posts, followers, following, fme, fback, likes] = await Promise.all([
+  const [posts, followers, following, fme, fback, likes, reqd, incoming] = await Promise.all([
     db.from("posts").select("id", { count: "exact", head: true }).eq("user_id", u.id).is("deleted_at", null).lte("publish_at", nowIso())
       .in("visibility", u.id === me.id ? ["public", "followers", "private"] : ["public", "followers"]),
     db.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", u.id),
@@ -95,9 +143,11 @@ async function profile(p: any, me: any) {
     db.from("follows").select("follower_id").eq("follower_id", me.id).eq("following_id", u.id).maybeSingle(),
     db.from("follows").select("follower_id").eq("follower_id", u.id).eq("following_id", me.id).maybeSingle(),
     db.from("post_reactions").select("post_id, posts!inner(user_id)", { count: "exact", head: true }).eq("posts.user_id", u.id),
+    db.from("follow_requests").select("follower_id").eq("follower_id", me.id).eq("following_id", u.id).maybeSingle(),
+    db.from("follow_requests").select("follower_id", { count: "exact", head: true }).eq("following_id", u.id),
   ]);
-  return reply({ ok: true, user: { ...u, me: u.id === me.id, following: !!fme.data, follows_you: !!fback.data },
-    counts: { posts: posts.count ?? 0, followers: followers.count ?? 0, following: following.count ?? 0, likes: likes.count ?? 0 } });
+  return reply({ ok: true, user: { ...u, me: u.id === me.id, following: !!fme.data, follows_you: !!fback.data, requested: !!reqd.data },
+    counts: { posts: posts.count ?? 0, followers: followers.count ?? 0, following: following.count ?? 0, likes: likes.count ?? 0, requests: u.id === me.id ? incoming.count ?? 0 : 0 } });
 }
 
 // Listahan ng followers / following ng isang user
@@ -227,6 +277,9 @@ Deno.serve(async (req) => {
       case "people":       return await people(p, me);
       case "profile":      return await profile(p, me);
       case "followList":   return await followList(p, me);
+      case "requests":     return await requests(p, me);
+      case "approveRequest": return await approveRequest(p, me);
+      case "declineRequest": return await declineRequest(p, me);
       case "stories":      return await stories(p, me);
       case "storyUpload":  return await storyUpload(p, me);
       case "createStory":  return await createStory(p, me);

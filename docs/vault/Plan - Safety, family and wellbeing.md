@@ -4,7 +4,7 @@ updated: 2026-10-24
 ---
 # Plan - Safety, family and wellbeing
 
-**Status:** PLANO pa lang (wala pang code). Pinag-usapan nina Bench at Claude noong 2026-10-24.
+**Status:** GINAWA NA ang web version (2026-10-24): [[Build - Safety and wellbeing]]. Ang APK part ay naka-abang pa.
 **Bakit mahalaga:** Ayon kay Bench, ang **safety ang pinaka-pundasyon ng app**. Ang note na ito rin ang magiging basehan ng **guidelines at instructions** na ipapakita sa APK (onboarding, Help, Play Store listing).
 
 ## Mga napagdesisyunan
@@ -14,10 +14,10 @@ updated: 2026-10-24
 | Friends sa Locate | Oo, **pinipili** kung sinong Friends ang "Can locate me" |
 | Family vs Friends | Hiwalay na circle. Family = Locate + SOS. Friends = SOS, at Locate kung pinili |
 | Pahintulot | Laging **invite + accept**. Walang naa-add o nalo-locate nang hindi pumapayag |
-| Age limit | May age limit (mungkahi: **13+**, hinihintay ang final ni Bench) |
+| Age limit | **13+** (ok kay Bench) |
 | Parental | Oo, may parental supervision para sa Teen (13–17) |
 | Sleep timer | Oo, auto sleep (hal. 10pm–6am) |
-| Give a break | Oo, paalala kapag sobra na ang gamit (default na minuto: hinihintay kay Bench) |
+| Give a break | Oo, default **60 min** para sa adults (puwedeng palitan o i-off) |
 
 ## 1. Family / Friends circle (sa My Profile)
 - Mag-invite → tanggapin ng tao → kasali na sa circle.
@@ -81,8 +81,5 @@ Ilalagay sa onboarding, Settings → Help, at Play Store listing:
 3. **Parental:** link, sleep timer, break, daily limit.
 4. **APK:** alarm, background location, SMS fallback, guidelines screens.
 
-## Bukas pa (hinihintay si Bench)
-- Final na **minimum age** (mungkahi 13+).
-- Default ng **break reminder** para sa adults (30 / 60 min / off).
 
 Tingnan din: [[Decisions]], [[Build - Social feed]], [[System map]]

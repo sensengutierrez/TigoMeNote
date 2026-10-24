@@ -25,9 +25,10 @@ Ito ang "utak" ng project: lahat ng ginawa, paano ginawa, at bakit. Buksan ang f
 - [[Build - Social feed]] — reactions, comments, share, bookmark, follow, status
 - [[Build - Language (i18n)]] — English default, Arabic (RTL), Filipino
 - [[Build - Profile tabs and pins]] — TikTok-style tabs, views at ❤️, Pin (3)
+- [[Build - Safety and wellbeing]] — Family/Friends, Locate, SOS + push, 13+, parental, sleep, break
 
-## Plans (wala pang code)
-- [[Plan - Safety, family and wellbeing]] — Family/Friends, Locate, SOS, age limit, parental, sleep, break + guidelines ng APK
+## Plans
+- [[Plan - Safety, family and wellbeing]] — plano + guidelines ng APK (web version: tapos na)
 
 ## Setup
 - [[Supabase setup]] — project, tables, secrets (walang totoong value dito)

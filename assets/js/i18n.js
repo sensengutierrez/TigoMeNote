@@ -54,7 +54,8 @@
       var p = patterns[i], r = core.match(p.re);
       if (r) {
         var out = p.out;
-        p.names.forEach(function (n, k) { out = out.split("{" + n + "}").join(exact[r[k + 1]] !== undefined ? exact[r[k + 1]] : r[k + 1]); });
+        // Ang laman ng {pangalan} ay isinasalin din (hal. "Seen {t}" + "5 min ago"); ang {n} {m} {a} {b} ay numero lang
+        p.names.forEach(function (n, k) { var c = r[k + 1]; out = out.split("{" + n + "}").join(/^[nmab]$/.test(n) ? c : t(c)); });
         return m[1] + out + m[3];
       }
     }

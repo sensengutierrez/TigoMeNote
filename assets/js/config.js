@@ -11,7 +11,7 @@
 
   window.TMN_CONFIG = Object.freeze({
     appName: "TigoMeNote",
-    version: "0.5.0",
+    version: "0.6.0",
     root: root,
     supabaseUrl: SUPABASE_URL,
     // Public key lang ito (ligtas sa browser). Gagamitin sa Realtime ng messenger.
@@ -21,10 +21,24 @@
       auth: SUPABASE_URL + "/functions/v1/auth-fast",
       posts: SUPABASE_URL + "/functions/v1/posts-fast",
       profile: SUPABASE_URL + "/functions/v1/profile-fast",
-      social: SUPABASE_URL + "/functions/v1/social-fast"
+      social: SUPABASE_URL + "/functions/v1/social-fast",
+      safety: SUPABASE_URL + "/functions/v1/safety-fast",
+      wellbeing: SUPABASE_URL + "/functions/v1/wellbeing-fast"
       // brain: SUPABASE_URL + "/functions/v1/brain-fast",
       // chat:  SUPABASE_URL + "/functions/v1/chat",
     }),
+    // Map (Locate / SOS): Leaflet + OpenStreetMap (libre, walang key)
+    map: Object.freeze({
+      css: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css",
+      js: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js",
+      tiles: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      attribution: "&copy; OpenStreetMap contributors",
+      directions: "https://www.google.com/maps/dir/?api=1&destination="
+    }),
+    // Emergency hotlines na lumalabas sa SOS (country code → numero)
+    emergency: Object.freeze({ BH: "999", PH: "911", default: "112" }),
+    // Service worker (push notifications) — nasa root ng site
+    serviceWorker: root + "sw.js",
     storageKeys: Object.freeze({
       token: "tmnToken",
       user: "tmnUser",

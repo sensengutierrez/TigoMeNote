@@ -15,7 +15,8 @@ updated: 2026-10-23
 | `messages.html` | app/ | Messages (placeholder) | oo |
 | `gallery.html` | app/ | Gallery: albums, upload, edit (device lang) | oo |
 | `profile.html` | app/ | Profile: cover, photo, edit profile, naka-pilang uploads, mga tab (Posts, Private, Reposts, Saved, Liked, History) | oo |
-| `settings.html` | app/ | Theme + logout | oo |
+| `safety.html` | app/ | Safety: SOS, map, Family/Friends, invites, parental | oo |
+| `settings.html` | app/ | Theme, language, wellbeing, logout | oo |
 | (wala pa) | app/admin/ | Admin pages | Admin lang |
 
 ## Shared code — `assets/js/`
@@ -41,6 +42,11 @@ updated: 2026-10-23
 | `components/image-cropper.js` | Crop ng larawan bago i-upload (`TMN_CROPPER`) |
 | `components/profile-editor.js` | Edit profile + palit ng photo/cover (`TMN_PROFILE_EDIT`) |
 | `components/app-shell.js` | Gumagawa ng layout ng app pages mula sa nav-items |
+| `native-bridge.js` | Phone features (GPS, alarm, push); sa APK: `window.TMN_APP` (`TMN_NATIVE`) |
+| `push-setup.js` / `sw.js` | Push notifications (`TMN_PUSH`) + service worker |
+| `safety-watch.js` / `location-share.js` | Bantay ng SOS at pagpapadala ng location sa bawat page |
+| `wellbeing.js` | Sleep, break, daily limit, birthdate prompt sa bawat page |
+| `components/sos-button.js` / `sos-overlay.js` / `map-view.js` / `wellbeing-settings.js` | SOS button, pulang alarm screen, mapa, wellbeing settings |
 | `pages/<page>.js` | Code ng isang page lang |
 
 ## Styles — `assets/css/`
@@ -59,8 +65,10 @@ updated: 2026-10-23
 |---|---|---|
 | `auth-fast` | register, login, verifyEmail, resendCode, forgotPassword, resetPassword, checkSession, logout | `backend/auth-fast.ts` |
 | `posts-fast` | createUpload, createPost, myPosts, userPosts, getPost, feed, updatePost, deletePost, react, reactions, comments, addComment, deleteComment, bookmark, bookmarks, share, unrepost, shares, view, pin, liked, reposts, history | `backend/posts-fast.ts` |
-| `social-fast` | follow, unfollow, people, profile, followList, stories, storyUpload, createStory, viewStory, storyViewers, deleteStory | `backend/social-fast.ts` |
+| `social-fast` | follow, unfollow, people, profile, followList, requests, approveRequest, declineRequest, stories, storyUpload, createStory, viewStory, storyViewers, deleteStory | `backend/social-fast.ts` |
 | `profile-fast` | get, update, imageUpload, setImage, removeImage | `backend/profile-fast.ts` |
+| `safety-fast` | circle, invite, respond, update, remove, pause, ping, history, clearHistory, sos, sosUpdate, sosEnd, alerts, ack, pushKey, subscribe, unsubscribe, testPush | `backend/safety-fast.ts` + `webpush.ts` |
+| `wellbeing-fast` | status, setBirthdate, tick, save, guardianInvite, guardianRespond, guardianRemove | `backend/wellbeing-fast.ts` |
 
 | Table | Para saan | SQL |
 |---|---|---|
@@ -78,19 +86,29 @@ updated: 2026-10-23
 | `post_shares` | repost o link share | `sql/017-social.sql` |
 | `stories` / `story_views` | status (24 oras) at sino ang nanood | `sql/017-social.sql` |
 | `post_views` | sino ang nakakita ng post at kailan (views + History) | `sql/020-views-pins.sql` |
+| `safety_links` | Family/Friends (isang row bawat pares, may share bawat panig) | `sql/023-safety.sql` |
+| `location_points` | location (30 araw) | `sql/023-safety.sql` |
+| `sos_alerts` / `sos_acks` | SOS at sino ang tumutugon | `sql/023-safety.sql` |
+| `push_subs` | push subscriptions (webpush ngayon, fcm sa APK) | `sql/023-safety.sql` |
+| `app_keys` | server keys (VAPID) | `sql/023-safety.sql` |
+| `guardian_links` | magulang ↔ teen | `sql/024-wellbeing.sql` |
+| `follow_requests` | follow requests sa private account | `sql/024-wellbeing.sql` |
+| `wellbeing` | sleep, break, daily limit, timezone | `sql/024-wellbeing.sql` |
+| `usage_days` | oras ng gamit bawat araw | `sql/024-wellbeing.sql` |
 
 `posts` ay may `pinned_at` (hanggang 3) at `view_count` (sql/020). Function: `record_post_views()` (service_role lang).
 
 Storage bucket: **`post-media`** (private, 12 MB/file, jpeg/webp/webm/mp4). Signed URLs lang galing sa `posts-fast`.
 Storage bucket: **`profile-media`** (public na view, 3 MB/file, jpeg/webp). Upload ay galing lang sa `profile-fast`.
 
-`users` ay may `email` at `email_verified_at` (sql/007), at `banner_url`, `avatar_path`, `banner_path` (sql/015). Status: Unverified → Active / Pending / Inactive.
+`users` ay may `email` at `email_verified_at` (sql/007), `banner_url`, `avatar_path`, `banner_path` (sql/015), `loc_paused` (sql/023), `birthdate`, `private_account` (sql/024). Status: Unverified → Active / Pending / Inactive.
 
 ## Tools
 `tools/cache-bust.py` — naglalagay ng `?v=<version>` (galing sa `config.js`) sa lahat ng sariling `.js`/`.css` sa HTML. Patakbuhin tuwing release.
+`tools/make-icons.py` — gumagawa ng app icons sa `assets/img/`.
 
 ## External (libre, walang key)
-Open-Meteo (forecast), BigDataCloud (reverse geocode), ipapi.co / geojs.io (IP location), Brevo (email, server-side).
+Open-Meteo (forecast), BigDataCloud (reverse geocode), ipapi.co / geojs.io (IP location), Brevo (email, server-side), Leaflet (cdnjs) + OpenStreetMap tiles (mapa).
 
 ## Paano dumadaloy ang isang private page
 1. `theme.js` → kulay agad
