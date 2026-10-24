@@ -25,6 +25,10 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-10-24 · SOS overlay: pagpindot ng "Silence alarm" ay hindi naitatala → `hide()` ay binubura ang `current` bago ang callback → itinabi muna ang `current` (`sos-overlay.js`)
 - 2026-10-24 · Admin Reports: hindi gumagana ang Dismiss/Delete (test) → ang `action` ng desisyon ay pumapalit sa `action` ng API call (`resolve`) → pinalitan ng `decision` (`admin-reports.js`, `moderation-fast.ts`)
 - 2026-10-24 · Text filter: hindi nahuli ang "سأقتلك" at "xxx" → hinihiwalay ng NFKD ang hamza; at ginagawang "xx" ang "xxx" → tinanggal ang lahat ng `\p{M}` (pati sa patterns), at hiwalay na bersyon ang pag-ikli ng paulit-ulit na letra (`moderation.ts`)
+- 2026-10-24 · Text filter: hindi nahuli ang "420" at "ak47" → ginagawang letra ng leetspeak ang numero ("42o", "ak4t") → dagdag na bersyon na walang leetspeak (`moderation.ts`)
+- 2026-10-24 · Text filter: hindi nahuli ang "hithit tayo ng marijuana" → isang salita lang ang pinapayagan sa pagitan → hanggang 2 filler words (`FILL` sa `moderation.ts`)
+- 2026-10-24 · Text filter: mali-maling flag sa "coke", "hash browns", "I'll find you a seat", "beat your record", "signal", "damo para sa kambing" → masyadong malawak ang salita → tinanggal o ginawang flag lang (`moderation.ts`)
+- 2026-10-24 · Status: natatakpan ng status viewer ang Report sheet → mas mataas ang z-index ng viewer → `body:has(.st-view) .modal-backdrop{z-index:95}` (`social.css`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

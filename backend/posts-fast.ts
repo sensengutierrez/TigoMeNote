@@ -9,7 +9,7 @@
 // Secrets: AUTH_PEPPER (hindi ginagamit dito), SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY (automatic).
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import { checkText, blockMessage, logBlock, autoFlag } from "./moderation.ts";
+import { checkText, checkFor, blockMessage, logBlock, autoFlag } from "./moderation.ts";
 
 const db = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -160,7 +160,7 @@ async function createUpload(p: any, me: any) {
   const files = Array.isArray(p.files) ? p.files : [];
   if (!files.length || files.length > MAX_MEDIA_PER_POST) return fail(`1 to ${MAX_MEDIA_PER_POST} photos/videos per post.`);
   // Caption check bago pa mag-upload ng files
-  const v = checkText(p.caption);
+  const v = checkFor(me, p.caption);
   if (!v.ok && v.level === "block") { await logBlock(db, me.id, v, "caption"); return fail(blockMessage(v.category), 422, { blocked: true, category: v.category }); }
 
   // Kung na-post na ito dati (retry), huwag nang ulitin
@@ -204,7 +204,7 @@ async function createPost(p: any, me: any) {
   if (existing) return reply({ ok: true, already: true, post: (await hydrate([existing], me))[0] });
 
   const caption = String(p.caption ?? "").slice(0, 1000);
-  const v = checkText(caption);
+  const v = checkFor(me, caption);
   if (!v.ok && v.level === "block") { await logBlock(db, me.id, v, "caption"); return fail(blockMessage(v.category), 422, { blocked: true, category: v.category }); }
   const visibility = ["public", "followers", "private"].includes(p.visibility) ? p.visibility : "public";
   const publishAt = parsePublishAt(p.publish_at);
@@ -437,7 +437,7 @@ async function addComment(p: any, me: any) {
   if (!post) return fail("Post not found.", 404);
   const body = String(p.body ?? "").trim().replace(/\n{3,}/g, "\n\n");
   if (!body || body.length > 500) return fail("Comment: 1–500 characters.");
-  const v = checkText(body);
+  const v = checkFor(me, body);
   if (!v.ok && v.level === "block") { await logBlock(db, me.id, v, "comment"); return fail(blockMessage(v.category), 422, { blocked: true, category: v.category }); }
   const since = new Date(Date.now() - 60_000).toISOString();
   const { count } = await db.from("post_comments").select("id", { count: "exact", head: true }).eq("user_id", me.id).gte("created_at", since);
@@ -510,7 +510,7 @@ async function updatePost(p: any, me: any) {
   let v: ReturnType<typeof checkText> = { ok: true };
   if (p.caption !== undefined) {
     ch.caption = String(p.caption).slice(0, 1000);
-    v = checkText(ch.caption as string);
+    v = checkFor(me, ch.caption as string);
     if (!v.ok && v.level === "block") { await logBlock(db, me.id, v, "caption"); return fail(blockMessage(v.category), 422, { blocked: true, category: v.category }); }
   }
   if (p.visibility !== undefined) {

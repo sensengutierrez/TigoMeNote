@@ -113,7 +113,7 @@
         ? (p.scheduled ? "" : '<button type="button" class="btn btn-ghost btn-sm' + (p.pinned ? " is-on" : "") + '" data-a="pin">' + I("pin", "ic-sm") + (p.pinned ? "Unpin" : "Pin") + "</button>") +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="edit">' + I("edit", "ic-sm") + "Edit</button>" +
           '<button type="button" class="btn btn-danger btn-sm" data-a="delete">' + I("trash", "ic-sm") + "Delete</button>"
-        : "";
+        : (p.author && window.TMN_SOCIAL ? '<button type="button" class="btn btn-ghost btn-sm pv-report" data-a="report">' + I("flag", "ic-sm") + "Report</button>" : "");
       // Reactions, comments, share, bookmark (kapag naka-load ang post-card.js)
       var soc = root.querySelector(".pv-social");
       if (window.TMN_POST_CARD && p.stats && !p.scheduled) {
@@ -152,6 +152,7 @@
           idx = Math.min(idx, posts.length - 1); slide = 0; show();
         } catch (err) { UI.toast(err.message); }
       }
+      if (b.dataset.a === "report") { TMN_SOCIAL.reportSheet("post", p.id, "post"); return; }
       if (b.dataset.a === "pin") {
         b.disabled = true;
         try {
@@ -200,6 +201,7 @@
               '<input class="input pc-date" type="datetime-local" value="' + localInput(d) + '"></div>'
           : "");
       var ta = f.querySelector("textarea"); ta.value = p.caption || "";
+      if (window.TMN_GUARD) TMN_GUARD.watch(ta);
       var date = f.querySelector(".pc-date");
       f.addEventListener("click", function (e) {
         var b = e.target.closest(".segmented button"); if (!b) return;
@@ -209,6 +211,7 @@
         if (g === "when") { sched = b.dataset.v === "later"; date.classList.toggle("hidden", !sched); }
       });
       async function save(m, btn) {
+        if (window.TMN_GUARD && !TMN_GUARD.ok(ta.value)) { ta.focus(); return; }
         var body = { id: p.id, caption: ta.value.trim(), visibility: vis };
         if (p.scheduled) {
           if (sched) {

@@ -101,6 +101,7 @@
         list.scrollTop = list.scrollHeight;
       } catch (e) { list.innerHTML = '<p class="faint small sx-empty">' + esc(e.message) + "</p>"; }
     }
+    if (window.TMN_GUARD) TMN_GUARD.watch(ta);
     ta.addEventListener("input", function () {
       send.disabled = !ta.value.trim();
       ta.style.height = "auto"; ta.style.height = Math.min(120, ta.scrollHeight) + "px";
@@ -109,6 +110,7 @@
     root.querySelector("form").addEventListener("submit", async function (e) {
       e.preventDefault();
       var body = ta.value.trim(); if (!body) return;
+      if (window.TMN_GUARD && !TMN_GUARD.ok(body)) { ta.focus(); return; }
       if (!navigator.onLine) { UI().toast("Offline: the comment can't be sent."); return; }
       send.disabled = true;
       try {

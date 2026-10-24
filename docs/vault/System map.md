@@ -1,6 +1,6 @@
 ---
 tags: [system]
-updated: 2026-10-23
+updated: 2026-10-24
 ---
 # System map
 
@@ -48,6 +48,8 @@ updated: 2026-10-23
 | `safety-watch.js` / `location-share.js` | Bantay ng SOS at pagpapadala ng location sa bawat page |
 | `wellbeing.js` | Sleep, break, daily limit, birthdate prompt sa bawat page |
 | `components/sos-button.js` / `sos-overlay.js` / `map-view.js` / `wellbeing-settings.js` | SOS button, pulang alarm screen, mapa, wellbeing settings |
+| `moderation-check.js` | Rules ng text filter sa browser (`TMN_MOD`); **huwag i-edit**, gawa ng `tools/build-moderation-client.mjs` |
+| `components/mod-guard.js` | Live na babala at harang bago mag-post/comment/save (`TMN_GUARD`) |
 | `pages/<page>.js` | Code ng isang page lang |
 
 ## Styles — `assets/css/`
@@ -112,6 +114,7 @@ Storage bucket: **`profile-media`** (public na view, 3 MB/file, jpeg/webp). Uplo
 ## Tools
 `tools/cache-bust.py` — naglalagay ng `?v=<version>` (galing sa `config.js`) sa lahat ng sariling `.js`/`.css` sa HTML. Patakbuhin tuwing release.
 `tools/make-icons.py` — gumagawa ng app icons sa `assets/img/`.
+`tools/build-moderation-client.mjs` — kinokopya ang CORE ng `backend/moderation.ts` papuntang `assets/js/moderation-check.js`. Patakbuhin (`node tools/build-moderation-client.mjs`) tuwing babaguhin ang rules.
 
 ## External (libre, walang key)
 Open-Meteo (forecast), BigDataCloud (reverse geocode), ipapi.co / geojs.io (IP location), Brevo (email, server-side), Leaflet (cdnjs) + OpenStreetMap tiles (mapa).

@@ -740,5 +740,8 @@ TMN_I18N.register("fil", {
   "Terms": "Terms",
   "Privacy": "Privacy",
   "Last updated: {when}": "Huling update: {when}",
-  "About TigoMeNote": "Tungkol sa TigoMeNote"
+  "About TigoMeNote": "Tungkol sa TigoMeNote",
+  "For your safety, teen accounts can't share phone numbers, emails, addresses or other chat apps.": "Para sa kaligtasan mo, bawal sa teen account ang magbigay ng phone number, email, address o ibang chat app.",
+  "personal contact details": "personal na contact details",
+  "Learn more": "Alamin pa"
 });

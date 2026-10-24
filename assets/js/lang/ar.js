@@ -601,5 +601,8 @@ TMN_I18N.register("ar", {
   "Terms": "الشروط",
   "Privacy": "الخصوصية",
   "Last updated: {when}": "آخر تحديث: {when}",
-  "About TigoMeNote": "حول TigoMeNote"
+  "About TigoMeNote": "حول TigoMeNote",
+  "For your safety, teen accounts can't share phone numbers, emails, addresses or other chat apps.": "حفاظاً على سلامتك، لا يمكن لحسابات المراهقين مشاركة أرقام الهاتف أو البريد الإلكتروني أو العناوين أو تطبيقات الدردشة الأخرى.",
+  "personal contact details": "بيانات اتصال شخصية",
+  "Learn more": "اعرف المزيد"
 });

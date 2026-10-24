@@ -93,9 +93,11 @@
     });
     date.addEventListener("input", paintWhen);
     root.addEventListener("submit", function (e) { e.preventDefault(); submit(); });
+    if (window.TMN_GUARD) TMN_GUARD.watch(cap); // babala habang nagta-type
 
     async function submit() {
       if (state.busy) return;
+      if (window.TMN_GUARD && !TMN_GUARD.ok(cap.value)) { cap.focus(); return; }
       var publishAt = null;
       if (state.when === "later") {
         var d = new Date(date.value);

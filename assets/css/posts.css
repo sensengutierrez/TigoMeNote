@@ -117,3 +117,4 @@
 .pt-badge.review { background: #b45309; color: #fff; }
 .badge-review { background: color-mix(in srgb, #b45309 14%, transparent); color: #b45309; }
 .q-state.err { color: var(--danger); }
+.pv-actions .pv-report { flex: 0 0 auto; color: var(--text-2); }

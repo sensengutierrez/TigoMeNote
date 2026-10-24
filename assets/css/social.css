@@ -172,3 +172,7 @@
 .rp-form textarea { width: 100%; resize: vertical; padding: 10px 12px; font: inherit; }
 .sx-report { color: var(--text-3); }
 .sx-report:hover { color: var(--danger); }
+.sx-write { flex-wrap: wrap; }
+.sx-write .mod-hint { order: 10; flex-basis: 100%; margin-top: 0; }
+/* Modal (Report, Delete) sa ibabaw ng status viewer */
+body:has(.st-view) .modal-backdrop { z-index: 95; }

@@ -77,8 +77,11 @@
       '<p class="small st-status hidden" aria-live="polite"></p>';
     var cap = root.querySelector("input"), status = root.querySelector(".st-status");
     var busy = false;
+    if (window.TMN_GUARD) TMN_GUARD.watch(cap);
     async function share(btn) {
-      if (busy) return; busy = true; btn.disabled = true;
+      if (busy) return;
+      if (window.TMN_GUARD && !TMN_GUARD.ok(cap.value)) { cap.focus(); return; }
+      busy = true; btn.disabled = true;
       status.classList.remove("hidden");
       try {
         var item = { id: "st", type: isVideo ? "video" : "photo", blob: file, createdAt: Date.now() };
@@ -119,6 +122,7 @@
         '<div class="st-bars"></div>' +
         '<div class="st-top"><button type="button" class="st-who" data-v="user"></button><span class="st-acts">' +
           '<button type="button" class="st-btn hidden" data-v="del" aria-label="Delete">' + I("trash") + "</button>" +
+          '<button type="button" class="st-btn hidden" data-v="report" aria-label="Report">' + I("flag") + "</button>" +
           '<button type="button" class="st-btn" data-v="close" aria-label="Close">' + I("x") + "</button></span></div>" +
         '<div class="st-media"></div>' +
         '<button type="button" class="st-tap prev" data-v="prev" aria-label="Previous"></button>' +
@@ -159,6 +163,7 @@
       ov.querySelector(".st-who").innerHTML = av(g.user, 34) + "<b>" + esc(g.me ? "Your status" : g.user.username) + '</b><span class="st-time">' + ago(it.at) + "</span>";
       ov.querySelector(".st-who").dataset.uid = g.user.id;
       ov.querySelector('[data-v="del"]').classList.toggle("hidden", !g.me);
+      ov.querySelector('[data-v="report"]').classList.toggle("hidden", !!g.me || !window.TMN_SOCIAL);
       var vb = ov.querySelector(".st-views");
       vb.classList.toggle("hidden", !g.me);
       if (g.me) vb.querySelector("span").textContent = (it.views || 0) + " views";
@@ -220,6 +225,12 @@
       if (v === "prev") prev();
       if (v === "user" && !g.me) { close(); TMN_SOCIAL.userSheet(b.dataset.uid); }
       if (v === "views") { pause(true); await viewers(item()); pause(false); }
+      if (v === "report") {
+        pause(true);
+        var rm = TMN_SOCIAL.reportSheet("story", item().id, "status");
+        var obs = new MutationObserver(function () { if (!document.body.contains(rm.el)) { obs.disconnect(); pause(false); } });
+        obs.observe(document.body, { childList: true, subtree: true });
+      }
       if (v === "del") {
         pause(true);
         if (await TMN_MODAL.confirm("Delete this status?", { okText: "Delete", danger: true })) {

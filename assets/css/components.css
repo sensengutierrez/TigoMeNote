@@ -243,3 +243,8 @@ body.modal-open { overflow: hidden; }
 .switch input:disabled + span { opacity: .55; }
 [dir="rtl"] .switch span::after { left: auto; right: 3px; }
 [dir="rtl"] .switch input:checked + span::after { transform: translateX(-18px); }
+
+/* Babala ng Community Guidelines habang nagta-type (components/mod-guard.js) */
+.mod-hint { margin-top: 6px; padding: 8px 10px; border-radius: var(--r-md); background: var(--danger-soft); color: var(--danger); font-size: 13px; line-height: 1.4; }
+.mod-hint a { color: inherit; font-weight: 600; }
+[aria-invalid="true"].input, textarea[aria-invalid="true"] { border-color: var(--danger); }

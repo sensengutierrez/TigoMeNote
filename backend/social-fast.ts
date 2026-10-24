@@ -5,7 +5,7 @@
 // Story files: private bucket "post-media", path <user_id>/stories/<file>, signed read URL 1 oras.
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import { checkText, blockMessage, logBlock, autoFlag } from "./moderation.ts";
+import { checkText, checkFor, blockMessage, logBlock, autoFlag } from "./moderation.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 
@@ -226,7 +226,7 @@ async function createStory(p: any, me: any) {
   const { data: listed } = await db.storage.from(BUCKET).list(`${me.id}/stories`, { search: name, limit: 5 });
   if (!(listed ?? []).some((o) => o.name === name)) return fail("The upload hasn't finished.", 409, { retry: true });
   const kind = p.kind === "video" ? "video" : "photo";
-  const v = checkText(p.caption);
+  const v = checkFor(me, p.caption);
   if (!v.ok && v.level === "block") { await logBlock(db, me.id, v, "status caption"); return fail(blockMessage(v.category), 422, { blocked: true, category: v.category }); }
   const { data, error } = await db.from("stories").insert({
     user_id: me.id, kind, path, mime: String(p.mime || "image/jpeg"), w: Number(p.w) || null, h: Number(p.h) || null,

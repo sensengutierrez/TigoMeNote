@@ -40,6 +40,9 @@ updated: 2026-10-23
 | 2026-10-24 | Break reminder default **60 min** (adults) | Hindi nakakaistorbo pero may paalala; puwedeng palitan |
 | 2026-10-24 | Sariling Web Push code + VAPID key sa `app_keys` (hindi external service) | Libre, walang dagdag na account; FCM kapag APK na |
 | 2026-10-24 | Supervision: magulang nag-iimbita, teen nag-a-accept, laging nakikita ng teen | Walang lihim na tracking |
+| 2026-10-24 | Iisang rules sa server at browser: `tools/build-moderation-client.mjs` ang gumagawa ng `moderation-check.js` | Live na babala habang nagta-type, pero ang server pa rin ang huling bantay |
+| 2026-10-24 | Baliktad na buong text: block rules lang; baliktad na bawat salita: pati flag | Iwas mali-maling flag sa normal na text |
+| 2026-10-24 | Teen: bawal ang phone, email, address at ibang chat app sa post/comment/bio | Proteksyon laban sa grooming at pribadong usapan sa labas ng app |
 | 2026-10-24 | Text filter: **block** (malinaw na bawal) o **flag** (ipa-review sa admin) | Iwas mali-maling harang sa normal na usapan |
 | 2026-10-24 | Kusang itago kapag 3+ report o may child-safety report | Mabilis na proteksyon habang hinihintay ang admin |
 | 2026-10-24 | Photos/videos: Report + admin review muna (walang image AI) | Walang libreng paraan para sa violence/baril sa larawan; pipili mamaya |

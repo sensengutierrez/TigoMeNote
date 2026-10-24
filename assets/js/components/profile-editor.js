@@ -105,9 +105,11 @@
       b.disabled = false; paintPics();
     });
 
+    if (window.TMN_GUARD) { TMN_GUARD.watch(name); TMN_GUARD.watch(bio); }
     async function save(m, btn) {
       var d = name.value.trim().replace(/\s+/g, " ");
       if (!d) { name.setAttribute("aria-invalid", "true"); name.focus(); return; }
+      if (window.TMN_GUARD && !TMN_GUARD.ok(d, bio.value)) return;
       if (!needOnline()) return;
       btn.disabled = true;
       try {
