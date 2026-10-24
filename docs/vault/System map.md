@@ -12,7 +12,7 @@ updated: 2026-10-24
 | `home.html` | app/ | Daily | oo |
 | `explore.html` | app/ | Explore: status, feed na may reactions/comments/share, hanap ng tao | oo |
 | `share.html` | app/ | Share: camera / video / files → Gallery (+ "I-post din") | oo |
-| `messages.html` | app/ | Messages (placeholder) | oo |
+| `messages.html` | app/ | Tigo Messenger: chats, groups, requests (sa APK: bubuksan ang hiwalay na app) | oo |
 | `gallery.html` | app/ | Gallery: albums, upload, edit (device lang) | oo |
 | `profile.html` | app/ | Profile: cover, photo, edit profile, naka-pilang uploads, mga tab (Posts, Private, Reposts, Saved, Liked, History) | oo |
 | `safety.html` | app/ | Safety: SOS, map, Family/Friends, invites, parental | oo |
@@ -50,6 +50,8 @@ updated: 2026-10-24
 | `wellbeing.js` | Sleep, break, daily limit, birthdate prompt sa bawat page |
 | `components/sos-button.js` / `sos-overlay.js` / `map-view.js` / `wellbeing-settings.js` | SOS button, pulang alarm screen, mapa, wellbeing settings |
 | `moderation-check.js` | Rules ng text filter sa browser (`TMN_MOD`); **huwag i-edit**, gawa ng `tools/build-moderation-client.mjs` |
+| `realtime.js` | Live "ping" ng chat gamit ang Supabase Realtime (`TMN_RT`) |
+| `components/chat-view.js` / `chat-new.js` | Isang chat (`TMN_CHAT`); bagong chat/group at pumili ng tao (`TMN_CHAT_NEW`) |
 | `zip.js` | Gumawa ng .zip sa browser (`TMN_ZIP`) |
 | `file-save.js` | I-save sa TigoMeNote folder: APK Documents, desktop na pinili, o Downloads (`TMN_FILES`) |
 | `components/location-export.js` / `files-settings.js` | Kopya ng location (.zip) at Delete sheet; Settings → Files on this device |
@@ -79,7 +81,8 @@ updated: 2026-10-24
 | `safety-fast` | circle, invite, respond, update, remove, pause, ping, history, clearHistory, exportHistory, sos, sosUpdate, sosEnd, alerts, ack, pushKey, subscribe, unsubscribe, testPush | `backend/safety-fast.ts` + `webpush.ts` |
 | `wellbeing-fast` | status, setBirthdate, tick, save, guardianInvite, guardianRespond, guardianRemove | `backend/wellbeing-fast.ts` |
 | `moderation-fast` | report, queue, resolve, count | `backend/moderation-fast.ts` (+ `notify.ts`) |
-| `notify-fast` | list, count, seen, prefs, setPrefs, push (service key lang) | `backend/notify-fast.ts` (+ `webpush.ts`) |
+| `messages-fast` | inbox, unread, open, start, group, send, upload, react, pin, read, accept, decline, unsend, rename, addMembers, removeMember, leave, mute | `backend/messages-fast.ts` (+ `moderation.ts`) |
+| `notify-fast` | list, count, seen, prefs, setPrefs, push at pushRaw (service key lang) | `backend/notify-fast.ts` (+ `webpush.ts`) |
 
 Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast, profile-fast at auth-fast. Ang `notify.ts` ay kasama sa deploy ng posts-fast, social-fast at moderation-fast.
 
@@ -111,6 +114,8 @@ Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast
 | `reports` | report ng users at automatic na flag | `sql/026-moderation.sql` |
 | `moderation_log` | log ng admin at automatic na block/flag | `sql/026-moderation.sql` |
 | `notifications` | activity ng bawat user (reaction, comment, follow, milestone, recap, notice) | `sql/029-notifications.sql` |
+| `conversations` / `conversation_members` | chats, members, requests, Seen (`last_read_at`) | `sql/033-messages.sql` |
+| `messages` / `message_reactions` | messages (text, photo, location, system) at reactions | `sql/033-messages.sql` |
 | `notif_prefs` | settings ng notifications (pause, sleep, Off/In app/Push) | `sql/029-notifications.sql` |
 
 `posts` ay may `pinned_at` (hanggang 3) at `view_count` (sql/020). Function: `record_post_views()` (service_role lang).

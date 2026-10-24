@@ -1,7 +1,7 @@
 // TigoMeNote · moderation-fast (Supabase Edge Function, verify_jwt = off)
 // Reports ng users at review ng admin. Files: index.ts + notify.ts (sinasabihan ang may-ari kapag itinago, tinanggal o binigyan ng strike).
 // Actions:
-//   report  (lahat ng user)  → mag-report ng post / comment / user / story
+//   report  (lahat ng user)  → mag-report ng post / comment / user / story / message
 //   queue, resolve, count    → Admin lang
 // Patakaran:
 //   - Isang report bawat tao bawat target; hanggang 30 report bawat araw.
@@ -15,7 +15,7 @@ const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SE
 
 const BUCKET = "post-media";
 const REASONS = ["violence", "nudity", "crime", "firearms", "harassment", "hate", "child_safety", "self_harm", "spam", "other"];
-const TYPES = ["post", "comment", "user", "story"];
+const TYPES = ["post", "comment", "user", "story", "message"];
 const AUTO_HIDE_REPORTS = 3;
 const REPORTS_PER_DAY = 30;
 
@@ -47,7 +47,7 @@ async function sessionUser(token: string): Promise<any | null> {
 }
 const PUB = "id, username, display_name, avatar_url";
 const isUuid = (s: string) => /^[0-9a-f-]{36}$/.test(s);
-const TABLE: Record<string, string> = { post: "posts", comment: "post_comments", story: "stories" };
+const TABLE: Record<string, string> = { post: "posts", comment: "post_comments", story: "stories", message: "messages" };
 
 // Sino ang may-ari ng target (null kung wala na)
 async function ownerOf(type: string, id: string): Promise<string | null> {
@@ -62,7 +62,7 @@ async function log(actor: string | null, action: string, type: string, id: strin
   await db.from("moderation_log").insert({ actor_id: actor, action, target_type: type, target_id: id, user_id: userId, reason: reason ?? null, note: note ?? null });
 }
 // Sabihan ang may-ari ng desisyon (laging naka-on; hindi ito mapapatay sa settings)
-const WHAT: Record<string, string> = { post: "post", comment: "comment", story: "status", user: "account" };
+const WHAT: Record<string, string> = { post: "post", comment: "comment", story: "status", user: "account", message: "message" };
 const WHY: Record<string, string> = {
   violence: "violence", nudity: "nudity", crime: "drugs or crime", firearms: "illegal firearms", harassment: "harassment",
   hate: "hate speech", child_safety: "child safety", self_harm: "self-harm", spam: "spam", other: "other", admin: "review",
@@ -171,6 +171,12 @@ async function signed(paths: string[]) {
   (data ?? []).forEach((s) => { if (s.path && s.signedUrl) out[s.path] = s.signedUrl; });
   return out;
 }
+async function signedChat(paths: string[]) {
+  const { data } = await db.storage.from("chat-media").createSignedUrls(paths, 3600);
+  const out: Record<string, string> = {};
+  (data ?? []).forEach((s) => { if (s.path && s.signedUrl) out[s.path] = s.signedUrl; });
+  return out;
+}
 async function preview(type: string, id: string) {
   if (type === "post") {
     const { data: post } = await db.from("posts").select("id, caption, visibility, hidden_at, hidden_reason, publish_at, deleted_at").eq("id", id).maybeSingle();
@@ -182,6 +188,12 @@ async function preview(type: string, id: string) {
   if (type === "comment") {
     const { data: c } = await db.from("post_comments").select("id, body, post_id, hidden_at, deleted_at").eq("id", id).maybeSingle();
     return c ? { ...c, hidden: !!c.hidden_at, gone: !!c.deleted_at } : { gone: true };
+  }
+  if (type === "message") {
+    const { data: m } = await db.from("messages").select("id, kind, body, media_path, lat, lng, hidden_at, deleted_at").eq("id", id).maybeSingle();
+    if (!m) return { gone: true };
+    const urls = m.media_path ? await signedChat([m.media_path]) : {};
+    return { id: m.id, body: m.body, kind: m.kind, hidden: !!m.hidden_at, gone: !!m.deleted_at, url: m.media_path ? urls[m.media_path] ?? null : null, lat: m.lat, lng: m.lng };
   }
   if (type === "story") {
     const { data: s } = await db.from("stories").select("id, kind, path, caption, hidden_at, expires_at").eq("id", id).maybeSingle();
@@ -225,6 +237,10 @@ async function resolve(p: any, me: any) {
         await db.from("posts").delete().eq("id", id);
       } else if (type === "comment") {
         await db.from("post_comments").update({ deleted_at: nowIso() }).eq("id", id);
+      } else if (type === "message") {
+        const { data: m } = await db.from("messages").select("media_path").eq("id", id).maybeSingle();
+        if (m?.media_path) await db.storage.from("chat-media").remove([m.media_path]);
+        await db.from("messages").update({ deleted_at: nowIso(), body: null, media_path: null, lat: null, lng: null }).eq("id", id);
       } else if (type === "story") {
         const { data: s } = await db.from("stories").select("path").eq("id", id).maybeSingle();
         if (s) await db.storage.from(BUCKET).remove([s.path]);

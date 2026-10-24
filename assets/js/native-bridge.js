@@ -8,6 +8,9 @@
      TMN_APP.pushToken()              → Promise<string>  (FCM token)
      TMN_APP.sendSms(numbers[], text) → SMS kahit walang internet
      TMN_APP.saveFile(path, base64, mime) → Promise<uri>  (path = "TigoMeNote/Location/x.zip", sa Documents ng phone)
+     TMN_APP.appName                  → "tigomenote" o "messenger" (aling APK ang nagbukas ng page)
+     TMN_APP.hasApp("messenger")      → Promise<boolean>  (naka-install ba ang Tigo Messenger)
+     TMN_APP.openApp("messenger", path) / TMN_APP.installApp("messenger")  (Play Store)
    Gamit sa page: TMN_NATIVE.getLocation(), TMN_NATIVE.alarm.start(), TMN_NATIVE.isApp, atbp.
    Ilagay pagkatapos ng config.js. */
 (function () {
@@ -118,8 +121,17 @@
     }).then(function (b64) { return APP.saveFile(path, b64, blob.type || "application/octet-stream"); });
   }
 
+  // Tigo Messenger: hiwalay na APK. Sa TigoMeNote APK, doon binubuksan ang Messages.
+  var messenger = {
+    installed: function () { return APP && APP.hasApp ? Promise.resolve(APP.hasApp("messenger")) : Promise.resolve(false); },
+    open: function (path) { return APP && APP.openApp ? APP.openApp("messenger", path || "") : false; },
+    install: function () { return APP && APP.installApp ? APP.installApp("messenger") : false; }
+  };
+
   window.TMN_NATIVE = {
     isApp: !!APP,
+    appName: APP ? (APP.appName || "tigomenote") : "web",
+    messenger: messenger,
     getLocation: getLocation, watchLocation: watchLocation, permission: permission,
     alarm: alarm, unlockAudio: unlockAudio,
     canSms: canSms, sendSms: sendSms,

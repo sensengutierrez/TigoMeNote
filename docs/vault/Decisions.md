@@ -40,6 +40,9 @@ updated: 2026-10-23
 | 2026-10-24 | Break reminder default **60 min** (adults) | Hindi nakakaistorbo pero may paalala; puwedeng palitan |
 | 2026-10-24 | Sariling Web Push code + VAPID key sa `app_keys` (hindi external service) | Libre, walang dagdag na account; FCM kapag APK na |
 | 2026-10-24 | Supervision: magulang nag-iimbita, teen nag-a-accept, laging nakikita ng teen | Walang lihim na tracking |
+| 2026-10-24 | Messenger: sa web, nasa loob ng TigoMeNote; sa APK, hiwalay na **Tigo Messenger** app (parehong code at account) | Hiling ni Bench; magaan ang main app at may sariling notifications ang chat |
+| 2026-10-24 | Message requests kung hindi ka fina-follow; teen = mutual followers at Family/Friends lang | Iwas spam at proteksyon ng bata |
+| 2026-10-24 | Real-time = Realtime broadcast "ping" sa lihim na channel + poll bilang backup | Custom login (walang Supabase Auth), kaya walang laman ng message na dumadaan sa Realtime |
 | 2026-10-24 | Kopya ng data = .zip (csv + gpx + json) sa TigoMeNote folder; APK: Documents/TigoMeNote + `hasFragileUserData` | Naiiwan ang kopya kahit i-uninstall; Android mismo ang nagtatanong kung itatabi ang app data |
 | 2026-10-24 | Status ring: sariling disenyo (rounded-square, coral → amber → mint, may hati bawat status) | Hindi kopya ng Instagram; tugma sa "Note" ng TigoMeNote |
 | 2026-10-24 | Notifications: Off / In app / Push bawat uri; laging naka-on ang SOS at account notices | Kontrol sa user pero hindi nawawala ang mahalagang abiso |

@@ -3,7 +3,8 @@
 // Actions (kailangan ng session token):
 //   list, count, seen, prefs, setPrefs
 // Action na pang-server lang (x-internal-key = service role key, galing sa notify.ts):
-//   push  → ipadala sa phone ang isang notification, kung pinapayagan ng settings (pause, sleep mode, kategorya)
+//   push     → ipadala sa phone ang isang notification, kung pinapayagan ng settings (pause, sleep mode, kategorya)
+//   pushRaw  → push na hindi naka-save sa listahan (hal. bagong message galing messages-fast), sinusunod din ang settings
 // Ang mga notification ay ginagawa ng posts-fast, social-fast at moderation-fast gamit ang notify.ts.
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
@@ -17,13 +18,13 @@ const BUCKET = "post-media";
 const LIST_LIMIT = 150;
 const KEEP_DAYS = 90;
 const RECAP_DAYS = 7;
-const CATS = ["likes", "comments", "reposts", "follows", "updates"] as const;
+const CATS = ["likes", "comments", "reposts", "follows", "updates", "messages"] as const;
 const CATEGORY: Record<string, string | null> = {
   like: "likes", comment: "comments", repost: "reposts",
   follow: "follows", follow_request: "follows", follow_accept: "follows",
   milestone: "updates", recap: "updates", moderation: null,
 };
-const DEFAULT_PREFS = { paused_until: null, sleep_mute: true, likes: "push", comments: "push", reposts: "push", follows: "push", updates: "push" };
+const DEFAULT_PREFS = { paused_until: null, sleep_mute: true, likes: "push", comments: "push", reposts: "push", follows: "push", updates: "push", messages: "push" };
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -110,6 +111,26 @@ function pushText(n: any, actor: any): string {
     case "follow_accept": return `${who} accepted your follow request`;
     default: return n.body ?? "You have a new notification.";
   }
+}
+// Puwede bang i-push ngayon sa user na ito? (kategorya, pause, sleep mode)
+async function allowed(userId: string, cat: string | null) {
+  const pr = await prefsOf(userId);
+  if (cat && pr[cat as keyof typeof pr] !== "push") return false;
+  if (pr.paused_until && new Date(pr.paused_until) > new Date()) return false;
+  if (pr.sleep_mute) {
+    const { data: wb } = await db.from("wellbeing").select("sleep_on, sleep_start, sleep_end, tz").eq("user_id", userId).maybeSingle();
+    if (wb?.sleep_on && inWindow(hhmm(wb.tz), wb.sleep_start, wb.sleep_end)) return false;
+  }
+  return true;
+}
+// Push na hindi naka-save sa Notifications (hal. messages). p.to = mga user id, p.category, p.data
+// deno-lint-ignore no-explicit-any
+async function pushRaw(p: any) {
+  const to = (Array.isArray(p.to) ? p.to : []).map(String).slice(0, 100);
+  const cat = CATS.includes(p.category) ? String(p.category) : null;
+  let sent = 0;
+  for (const uid of to) if (await allowed(uid, cat)) sent += await pushTo(uid, { ...(p.data ?? {}) });
+  return reply({ ok: true, sent });
 }
 // deno-lint-ignore no-explicit-any
 async function push(p: any) {
@@ -237,9 +258,9 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return fail("POST only.", 405);
   try {
     const p = await req.json().catch(() => ({}));
-    if (p.action === "push") {
+    if (p.action === "push" || p.action === "pushRaw") {
       if (!SERVICE_KEY || req.headers.get("x-internal-key") !== SERVICE_KEY) return fail("Not allowed.", 403);
-      return await push(p);
+      return p.action === "push" ? await push(p) : await pushRaw(p);
     }
     const me = await sessionUser(String(p.token ?? req.headers.get("x-session-token") ?? ""));
     if (!me) return fail("Session expired. Please sign in again.", 401);

@@ -11,6 +11,7 @@
     { k: "comments", icon: "comment", title: "Comments", sub: "When someone comments on your post." },
     { k: "reposts", icon: "repost", title: "Reposts", sub: "When someone reposts your post." },
     { k: "follows", icon: "userPlus", title: "Followers and requests", sub: "New followers, follow requests and accepted requests." },
+    { k: "messages", icon: "chat", title: "Messages", sub: "New messages and message requests in Tigo Messenger." },
     { k: "updates", icon: "trophy", title: "From TigoMeNote", sub: "Milestones and your weekly recap." }
   ];
   var state = null;

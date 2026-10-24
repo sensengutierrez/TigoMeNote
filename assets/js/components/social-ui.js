@@ -321,6 +321,7 @@
         '<div class="sx-phead">' + av(u, 88) +
           '<div class="sx-pname"><h3>' + esc(u.display_name) + (u.private_account ? " " + I("lock", "ic-sm") : "") + '</h3><span class="faint">@' + esc(u.username) + (u.follows_you ? ' · <span class="badge">Follows you</span>' : "") + "</span></div>" +
           (u.me ? '<a class="btn btn-ghost btn-sm" href="profile.html">' + I("user", "ic-sm") + "My profile</a>" : followBtn(u) +
+            '<a class="btn btn-ghost btn-sm sx-msg" href="' + TMN_CONFIG.root + "app/messages.html?to=" + encodeURIComponent(u.id) + '">' + I("chat", "ic-sm") + "Message</a>" +
             '<button type="button" class="icon-btn sx-report" data-report-user aria-label="Report account" title="Report account">' + I("flag") + "</button>") + "</div>" +
         (u.bio ? '<p class="sx-bio">' + esc(u.bio) + "</p>" : "") +
         '<div class="sx-stats"><span><b>' + c.posts + "</b> posts</span>" +

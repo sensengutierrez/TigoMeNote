@@ -172,7 +172,7 @@ export async function logBlock(db: DB, userId: string, v: { category: Category; 
   await db.from("moderation_log").insert({ actor_id: null, action: "auto_block", user_id: userId, reason: v.category, note: `${field}: ${v.term}` });
 }
 // Automatic na report para sa "flag" (tatanggapin ang content pero titingnan ng admin)
-export async function autoFlag(db: DB, t: { type: "post" | "comment" | "user" | "story"; id: string; owner: string }, v: { category: Category; term: string }) {
+export async function autoFlag(db: DB, t: { type: "post" | "comment" | "user" | "story" | "message"; id: string; owner: string }, v: { category: Category; term: string }) {
   const reason = v.category === "personal" ? "other" : v.category;
   await db.from("reports").insert({ reporter_id: null, auto: true, target_type: t.type, target_id: t.id, owner_id: t.owner, reason, note: "Auto: " + v.term });
   await db.from("moderation_log").insert({ actor_id: null, action: "auto_flag", target_type: t.type, target_id: t.id, user_id: t.owner, reason: v.category, note: v.term });

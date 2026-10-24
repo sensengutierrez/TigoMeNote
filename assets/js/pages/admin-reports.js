@@ -11,7 +11,7 @@
     violence: "Violence", nudity: "Nudity", crime: "Drugs / crime", firearms: "Illegal firearms", harassment: "Harassment",
     hate: "Hate speech", child_safety: "Child safety", self_harm: "Self-harm", spam: "Spam", other: "Other"
   };
-  var TYPE = { post: "Post", comment: "Comment", user: "Account", story: "Status" };
+  var TYPE = { post: "Post", comment: "Comment", user: "Account", story: "Status", message: "Message" };
 
   function since(iso) {
     var s = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -39,6 +39,8 @@
           : '<a class="ar-thumb" href="' + esc(m.url) + '" target="_blank" rel="noopener"><img alt="" src="' + esc(m.url) + '"></a>';
       }).join("") + "</div>" + (p.caption ? '<p class="ar-text" translate="no">' + esc(p.caption) + "</p>" : "");
     }
+    if (g.target_type === "message") return (p.url ? '<div class="ar-media"><a class="ar-thumb" href="' + esc(p.url) + '" target="_blank" rel="noopener"><img alt="" src="' + esc(p.url) + '"></a></div>' : "") +
+      (p.body ? '<p class="ar-text" translate="no">' + esc(p.body) + "</p>" : "") + (p.lat != null ? '<p class="faint small">📍 ' + p.lat.toFixed(4) + ", " + p.lng.toFixed(4) + "</p>" : "");
     if (g.target_type === "comment") return '<p class="ar-text" translate="no">' + esc(p.body || "") + "</p>";
     if (g.target_type === "story") {
       return '<div class="ar-media">' + (p.url ? (p.kind === "video" ? '<video class="ar-thumb" src="' + esc(p.url) + '" muted playsinline controls></video>' : '<a class="ar-thumb" href="' + esc(p.url) + '" target="_blank" rel="noopener"><img alt="" src="' + esc(p.url) + '"></a>') : "") + "</div>" +

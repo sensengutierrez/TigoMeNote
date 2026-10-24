@@ -20,12 +20,12 @@ self.addEventListener("push", function (e) {
     vibrate: sos ? [800, 300, 800, 300, 800, 300, 800] : [200],
     data: { url: d.url || "app/home.html", type: d.type, id: d.id }
   };
-  e.waitUntil(Promise.all([
-    self.registration.showNotification(d.title || "TigoMeNote", opts),
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
-      list.forEach(function (c) { c.postMessage({ type: "tmn-push", data: d }); });
-    })
-  ]));
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+    list.forEach(function (c) { c.postMessage({ type: "tmn-push", data: d }); });
+    // Message: huwag nang ipakita kung bukas at nakikita mo na ang chat na iyon
+    var open = d.type === "message" && list.some(function (c) { return c.focused && c.url.indexOf("messages.html") > -1 && c.url.indexOf("c=" + d.id) > -1; });
+    if (!open) return self.registration.showNotification(d.title || "TigoMeNote", opts);
+  }));
 });
 
 self.addEventListener("notificationclick", function (e) {
