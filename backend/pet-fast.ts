@@ -2,7 +2,8 @@
 // Isang trabaho lang: alagaan si Tigo (stats na bumababa habang lumilipas ang oras) at ang "Gather" ng magkakalapit na kaibigan.
 // Actions (session token): get, act { do: feed|play|clean|pet|sleep|wake|daily }, style { name, color },
 //                          wear { outfit }, buy { id }, game { kind: coins|pac|race, score, ms },
-//                          nearby { on, lat, lng }, gather { user_id }, visits
+//                          nearby { on, lat, lng }, gather { user_id }, visits,
+//                          room { room: { wall, floor, items: [{ id, x, z, r }] } } → ayos ng loob ng bahay (gamit na pag-aari lang)
 // Kaligtasan: ang "nearby" ay para lang sa magkaibigan (mutual follow o Family/Friends circle), kapag NAKA-ON sa dalawa,
 //             distansya lang ang ibinabalik (hindi ang lokasyon), at nawawala pagkalipas ng 20 minuto.
 // Files: index.ts + webpush.ts (para sa push ng "bumisita ang Tigo ni …").
@@ -23,6 +24,14 @@ const ITEMS: Record<string, [string, number, number]> = {
   scarf: ["body", 40, 1], bowtie: ["body", 30, 1], hoodie: ["body", 90, 2], cape: ["body", 120, 4], backpack: ["body", 70, 3], lei: ["body", 60, 2], medal: ["body", 200, 6],
   icecream: ["hand", 25, 1], balloon: ["hand", 25, 1], "flag-ph": ["hand", 20, 1], "flag-bh": ["hand", 20, 1], umbrella: ["hand", 60, 2], guitar: ["hand", 120, 4], wand: ["hand", 150, 5],
   puppy: ["buddy", 100, 2], kitty: ["buddy", 100, 2], birdie: ["buddy", 80, 1], bunbun: ["buddy", 120, 3], turtle: ["buddy", 150, 4], chick: ["buddy", 60, 1],
+  // Bahay (room): gamit, dingding, sahig
+  bed: ["furn", 0, 1], rug: ["furn", 0, 1], plant: ["furn", 0, 1], lamp: ["furn", 0, 1], chair: ["furn", 25, 1], table: ["furn", 40, 1], banig: ["furn", 30, 1],
+  cactus: ["furn", 30, 1], toybox: ["furn", 40, 1], beanbag: ["furn", 50, 2], fan: ["furn", 60, 2], bookshelf: ["furn", 70, 2], sofa: ["furn", 90, 2],
+  desk: ["furn", 80, 3], majlis: ["furn", 100, 3], fridge: ["furn", 110, 3], tv: ["furn", 120, 3], aquarium: ["furn", 150, 4], piano: ["furn", 200, 5],
+  painting: ["furn", 40, 1], clock: ["furn", 35, 1], shelf: ["furn", 30, 1], "banner-ph": ["furn", 20, 1], "banner-bh": ["furn", 20, 1], mirror: ["furn", 60, 2], garland: ["furn", 80, 2],
+  "wall-cream": ["wall", 0, 1], "wall-sky": ["wall", 30, 1], "wall-mint": ["wall", 30, 1], "wall-blush": ["wall", 30, 1], "wall-lilac": ["wall", 40, 2],
+  "wall-sawali": ["wall", 60, 2], "wall-stripes": ["wall", 60, 2], "wall-wood": ["wall", 70, 3], "wall-stars": ["wall", 80, 3],
+  "floor-planks": ["floor", 0, 1], "floor-tiles": ["floor", 40, 1], "floor-carpet": ["floor", 50, 2], "floor-bamboo": ["floor", 60, 2], "floor-grass": ["floor", 70, 3], "floor-marble": ["floor", 90, 4],
   island: ["backdrop", 0, 1], beach: ["backdrop", 80, 2], coral: ["backdrop", 120, 3], snow: ["backdrop", 120, 3], clouds: ["backdrop", 150, 4], desert: ["backdrop", 150, 4], moon: ["backdrop", 250, 6],
 };
 const SLOTS = ["hat", "face", "body", "hand", "buddy", "backdrop"];
@@ -93,7 +102,7 @@ function has(p: any, id: string) {
 function shape(p: any) {
   const lvl = levelOf(p.xp);
   return {
-    coins: p.coins ?? 0, owned: p.owned ?? [], outfit: p.outfit ?? {}, glow: lvl >= 10,
+    coins: p.coins ?? 0, owned: p.owned ?? [], outfit: p.outfit ?? {}, glow: lvl >= 10, room: p.room ?? null,
     name: p.name, color: p.color, gear: p.gear, hunger: p.hunger, joy: p.joy, energy: p.energy, clean: p.clean,
     xp: p.xp, level: lvl, next: xpFor(lvl + 1), prev: xpFor(lvl), asleep: p.asleep, mood: moodOf(p),
     stats_at: p.stats_at, born_at: p.born_at, near_on: !!p.near_on && !!p.near_at && Date.now() - new Date(p.near_at).getTime() < NEAR_MINUTES * 60_000,
@@ -205,6 +214,38 @@ async function buy(p: any, me: any) {
   if ((pet.coins ?? 0) < it[1]) return fail("Not enough coins. Play Coin Rush to earn more!", 402);
   pet.coins -= it[1]; pet.owned = [...(pet.owned ?? []), id];
   return reply({ ok: true, pet: shape(await store(pet)) });
+}
+
+// Bahay: i-save ang ayos ng kwarto. Gamit na pag-aari lang (o libre sa level), hanggang 40, nasa loob ng kwarto.
+const ROOM_W = 3, ROOM_D = 2.5, ROOM_MAX = 40, ROOM_COPIES = 4;
+// deno-lint-ignore no-explicit-any
+async function room(p: any, me: any) {
+  const r = p.room && typeof p.room === "object" ? p.room : null;
+  if (!r) return fail("Missing room.");
+  const pet = decay(await load(me.id));
+  const pick = (id: unknown, slot: string, def: string): { id?: string; bad?: string } => {
+    const k = String(id ?? def);
+    if (!ITEMS[k] || ITEMS[k][0] !== slot) return { bad: "Unknown item." };
+    if (!has(pet, k)) return { bad: levelOf(pet.xp) < ITEMS[k][2] ? `Unlocks at level ${ITEMS[k][2]}.` : "Buy this item first." };
+    return { id: k };
+  };
+  const w = pick(r.wall, "wall", "wall-cream"), f = pick(r.floor, "floor", "floor-planks");
+  if (w.bad) return fail(w.bad, 403); if (f.bad) return fail(f.bad, 403);
+  const list = Array.isArray(r.items) ? r.items : [];
+  if (list.length > ROOM_MAX) return fail(`Up to ${ROOM_MAX} things in the house.`);
+  const per: Record<string, number> = {};
+  const items = [];
+  const n = (v: unknown, lim: number) => { const x = Number(v); return Number.isFinite(x) ? Math.round(Math.max(-lim, Math.min(lim, x)) * 100) / 100 : 0; };
+  for (const it of list) {
+    const k = pick(it && it.id, "furn", "");
+    if (k.bad) return fail(k.bad, 403);
+    per[k.id!] = (per[k.id!] || 0) + 1;
+    if (per[k.id!] > ROOM_COPIES) return fail(`Up to ${ROOM_COPIES} of each item.`);
+    items.push({ id: k.id, x: n(it.x, ROOM_W), z: n(it.z, ROOM_D), r: n(it.r, 7) });
+  }
+  const { data, error } = await db.from("pets").update({ room: { wall: w.id, floor: f.id, items }, updated_at: nowIso() }).eq("user_id", me.id).select("*").single();
+  if (error) throw error;
+  return reply({ ok: true, pet: shape(decay(data)) });
 }
 
 // Mga laro (Coin Rush, Pac-Tigo, Racing): may limit bawat araw at bawat laro (hindi puwedeng dayain ang dami)
@@ -376,6 +417,7 @@ Deno.serve(async (req) => {
       case "nearby": return await nearby(p, me);
       case "gather": return await gather(p, me);
       case "visits": return await visits(p, me);
+      case "room":   return await room(p, me);
       default:       return fail("Unknown action.");
     }
   } catch (e) {

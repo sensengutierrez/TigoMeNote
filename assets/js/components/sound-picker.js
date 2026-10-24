@@ -1,10 +1,10 @@
 /* TigoMeNote · components/sound-picker.js — pumili ng sound para sa photo/video (parang TikTok/IG)
      TMN_SOUND_PICK.auto(src, { kind, filter })  → Promise<{ sound|null, list }>  (auto-pick, kung naka-on)
-     TMN_SOUND_PICK.open({ src, kind, filter, current, onPick(sound|null) })  → listahan: For you, 🔥 Trending, ✨ New, Local, All sounds
+     TMN_SOUND_PICK.open({ src, kind, filter, current, onPick(sound|null) })  → listahan: For you, 🎛️ My sounds (Sound Maker), 🔥 Trending, ✨ New, Local, All sounds
      TMN_SOUND_PICK.row(el, { src, kind, filter, sound, autoplay, onChange(sound|null) })  → maliit na row: ♪ pangalan · ▶ · Change · ×
      TMN_SOUND_PICK.label(sound)  → "Golden Hour"
-   sound = { id, vol (0–1, lakas ng music), orig (0–1, lakas ng sariling tunog ng video) }
-   Kailangan: sounds.js, modal.js, icons.js */
+   sound = { id, vol (0–1, lakas ng music), orig (0–1, lakas ng sariling tunog ng video), recipe? (sariling gawa, "u-…") }
+   Kailangan: sounds.js, modal.js, icons.js. Para sa My sounds / ＋ Make a sound: sound-maker.js (kung naka-load). */
 (function () {
   var I = function (n, c) { return window.TMN_ICON ? window.TMN_ICON(n, c) : ""; };
   function S() { return window.TMN_SOUNDS; }
@@ -12,8 +12,15 @@
   function autoOn() { try { return localStorage.getItem("tmnAutoSound") !== "0"; } catch (e) { return true; } }
   function setAuto(v) { try { localStorage.setItem("tmnAutoSound", v ? "1" : "0"); } catch (e) {} }
   function isNew(t) { return !!(t && t.added && Date.now() - new Date(t.added).getTime() < 45 * 86400000); }
-  function label(s) { var t = s && S() && S().get(s.id); return t ? t.name : ""; }
-  function make(id, base, kind) { return { id: id, vol: base && base.vol != null ? base.vol : 0.8, orig: kind === "video" ? (base && base.orig != null ? base.orig : 0.4) : undefined }; }
+  function label(s) { var t = s && S() && S().ensure(s); return t ? t.name : ""; }
+  var RFIELDS = ["name", "bpm", "root", "scale", "prog", "drums", "bass", "chord", "lead", "swing", "rain", "crackle", "seed", "by", "mood"];
+  function make(id, base, kind) {
+    var o = { id: id, vol: base && base.vol != null ? base.vol : 0.8, orig: kind === "video" ? (base && base.orig != null ? base.orig : 0.4) : undefined };
+    var t = S().get(id);
+    if (t && t.custom && /^u-/.test(id)) { o.recipe = {}; RFIELDS.forEach(function (k) { if (t[k] != null) o.recipe[k] = t[k]; }); }
+    return o;
+  }
+  function maker() { return window.TMN_SOUND_MAKER; }
 
   // 🔥 Trending: pinakaginagamit sa TigoMeNote (posts + status, 7 araw). Naka-cache nang 10 minuto.
   var TR_KEY = "tmnSoundTrends";
@@ -21,7 +28,7 @@
     try { var c = JSON.parse(sessionStorage.getItem(TR_KEY) || "null"); if (c && Date.now() - c.at < 600000) return Promise.resolve(c.list); } catch (e) {}
     if (!window.TMN_API || !navigator.onLine) return Promise.resolve([]);
     return TMN_API.call("social", "soundTrends", {}).then(function (r) {
-      var list = (r.list || []).filter(function (x) { return S().get(x.id); });
+      var list = (r.list || []).filter(function (x) { return S().ensure(x); });
       try { sessionStorage.setItem(TR_KEY, JSON.stringify({ at: Date.now(), list: list })); } catch (e) {}
       return list;
     }, function () { return []; });
@@ -47,6 +54,7 @@
     root.innerHTML =
       '<p class="sp-note small faint">' + I("sparkle", "ic-sm") + "Original TigoMeNote music, made on your device. Free to use, no copyright issues.</p>" +
       '<div class="sp-sec"><h4>For you</h4><div class="sp-list sp-for"><p class="faint small">Matching your photo…</p></div></div>' +
+      (maker() ? '<div class="sp-sec sp-mine-sec"><div class="sp-h"><h4>🎛️ My sounds</h4><button type="button" class="btn btn-ghost btn-sm" data-make>＋ Make a sound</button></div><div class="sp-list sp-mine"><p class="faint small">Make your own beat with Sound Maker.</p></div></div>' : "") +
       '<div class="sp-sec sp-trend-sec hidden"><h4>🔥 Trending on TigoMeNote</h4><div class="sp-list sp-trend"></div></div>' +
       '<div class="sp-sec sp-new-sec hidden"><h4>✨ New sounds</h4><div class="sp-list sp-new"></div></div>' +
       '<div class="sp-sec sp-local-sec hidden"><h4 class="sp-local-h"></h4><div class="sp-list sp-local"></div></div>' +
@@ -57,16 +65,19 @@
         '<label class="sp-auto"><input type="checkbox" class="sp-auto-cb"' + (autoOn() ? " checked" : "") + "> <span>Auto-pick a sound for new photos and videos</span></label>" +
       "</div>";
 
-    function rowHtml(t, top, uses) {
+    function rowHtml(t, top, uses, edit) {
       var on = cur && cur.id === t.id;
       return '<div class="sp-item' + (on ? " on" : "") + '" data-id="' + t.id + '">' +
         '<button type="button" class="sp-play" data-play="' + t.id + '" aria-label="Preview ' + esc(t.name) + '">' + I(S().playing() === t.id ? "pause" : "play", "ic-sm") + "</button>" +
         '<span class="sp-main"><b translate="no">' + esc(t.name) + "</b>" + (top ? ' <span class="sp-best">Best match</span>' : "") + (isNew(t) ? ' <span class="sp-best sp-newb">New</span>' : "") +
           '<span class="faint small">' + esc(t.mood) + " · " + (uses ? uses + (uses === 1 ? " use" : " uses") + " this week" : t.bpm + " BPM") + "</span></span>" +
+        (edit ? '<button type="button" class="icon-btn" data-edit="' + t.id + '" aria-label="Edit ' + esc(t.name) + '">' + I("edit", "ic-sm") + "</button>" : "") +
         '<button type="button" class="btn btn-sm ' + (on ? "btn-primary" : "btn-ghost") + '" data-use="' + t.id + '">' + (on ? I("check", "ic-sm") + "Using" : "Use") + "</button></div>";
     }
-    var forYou = [], trending = [];
+    var forYou = [], trending = [], mySounds = [];
     function paint() {
+      var mb = root.querySelector(".sp-mine");
+      if (mb && mySounds.length) mb.innerHTML = mySounds.map(function (x) { var t = S().get(x.id); return t ? rowHtml(t, false, 0, true) : ""; }).join("");
       root.querySelector(".sp-for").innerHTML = forYou.length ? forYou.slice(0, 4).map(function (t, i) { return rowHtml(t, i === 0); }).join("") : '<p class="faint small">Matching your photo…</p>';
       var shown = forYou.slice(0, 4).map(function (t) { return t.id; });
       var tr = trending.filter(function (x) { return shown.indexOf(x.id) < 0; }).slice(0, 5);
@@ -92,9 +103,19 @@
     }
     suggestFor(o.src, o).then(function (l) { forYou = l; paint(); }).catch(function () { forYou = S().list.slice(); paint(); });
     trends().then(function (l) { trending = l; paint(); });
+    if (maker()) maker().mine().then(function (l) { mySounds = l; paint(); });
 
     root.addEventListener("click", function (e) {
-      var p = e.target.closest("[data-play]"), u = e.target.closest("[data-use]");
+      var p = e.target.closest("[data-play]"), u = e.target.closest("[data-use]"), mk = e.target.closest("[data-make]"), ed = e.target.closest("[data-edit]");
+      if (mk || ed) {
+        S().stop();
+        var base = ed ? mySounds.filter(function (x) { return x.id === ed.dataset.edit; })[0] : null;
+        maker().open({ sound: base ? { id: base.id, recipe: base.recipe } : null, onSaved: function (snd) {
+          mySounds = [{ id: snd.id, recipe: snd.recipe }].concat(mySounds.filter(function (x) { return x.id !== snd.id; }));
+          cur = make(snd.id, cur, o.kind); S().play(cur.id, { vol: cur.vol }); paint();
+        } });
+        return;
+      }
       if (p) { if (S().playing() === p.dataset.play) S().stop(); else S().play(p.dataset.play, { vol: cur && cur.id === p.dataset.play ? cur.vol : 0.8 }); paint(); }
       if (u) { cur = make(u.dataset.use, cur, o.kind); if (S().playing() !== cur.id) S().play(cur.id, { vol: cur.vol }); paint(); }
     });
@@ -124,8 +145,9 @@
     o = o || {};
     if (!S()) { el.innerHTML = ""; return { get: function () { return null; }, destroy: function () {} }; }
     var sound = o.sound || null;
+    if (sound) S().ensure(sound);
     function paint() {
-      var t = sound && S().get(sound.id), playing = t && S().playing() === t.id;
+      var t = sound && S().ensure(sound), playing = t && S().playing() === t.id;
       el.classList.add("sp-row"); el.classList.toggle("has", !!t);
       el.innerHTML = t
         ? '<button type="button" class="sp-row-play" data-r="play" aria-label="' + (playing ? "Pause" : "Play") + '">' + I(playing ? "pause" : "play", "ic-sm") + "</button>" +

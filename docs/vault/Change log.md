@@ -333,3 +333,25 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "bakit kaya medyo mabagal… sa phone" at "sa free muna tayo". Mga 7,750 function calls sa 24 oras na may 4 users lang; 500k/buwan ang limit.
 - **Files:** `assets/js/config.js` (REGION, 0.11.14), `sw.js`, `auth-guard.js`, `notif-badge.js`, `safety-watch.js`, `wellbeing.js`, `pages/messages.js`, `components/chat-view.js`, `post-queue.js`, `components/post-card.js`, `components/post-viewer.js`, `backend/posts-fast.ts` (thumb_path), `sql/062-cron-savings.sql`, `sql/063-post-thumbs.sql`
 - **Paano:** Function `posts-fast` v13. Ang preview ay ginagawa sa phone (canvas), walang server na nagre-resize.
+
+## 2026-10-24 · #43 Tigo: camera 360° (pangalawang joystick), 3 view, zoom, at loob ng bahay na naaayos
+- **Ano:**
+  - **Camera:** sa phone, kaliwang joystick = lakad, **kanang joystick = camera** (ikot 360°, taas = tumingala sa langit, baba = tingin mula sa itaas). Sa gilid nito: ⤒ Jump, 🎥 View (Follow → Top view → Close-up) at 🔍 Zoom (normal → malayo, maliit si Tigo → malapit). Dalawang daliri sa screen = pinch zoom. Desktop: hila ng mouse = ikot, wheel = zoom, Q/E = ikot.
+  - **Lakad ayon sa camera:** taas ng joystick / W = palayo sa camera, kahit saan nakaharap.
+  - **3D na langit:** may ulap at araw sa araw, buwan at kumikislap na bituin sa gabi (makikita kapag tumingala).
+  - **Loob ng bahay:** lumakad sa pinto ng bahay kubo (o 🏠 House / 🏠 Go inside) → kwarto na may kama, alpombra, halaman, lampara, bintana at pinto. Ang dingding na nakaharang sa camera ay bumababa (parang dollhouse). 🚪 Go outside o lumakad sa pinto para lumabas.
+  - **🛠 Decorate:** 26 na gamit (kama, sofa, mesa, electric fan na umiikot, aquarium na may isda, TV, majlis, banig, piano, wall clock na totoong oras, painting, salamin, star lights, PH/BH banner, atbp.), 9 na dingding (Cream, Sky, Sawali, Starry night…) at 6 na sahig (tabla, tiles, kawayan, marmol…). Tap = ilagay; hilahin para ilipat; ⟳ ikot; 🗑 itabi. Kusang nase-save. May libre (kama, alpombra, halaman, lampara, cream, tabla), ang iba ay may coins/level.
+  - **Gabi:** papasok si Tigo sa bahay, hihiga sa kama (bukas ang lampara at star lights).
+- **Bakit:** Ayon kay Bench: "touch ko padin ung screen pag titingnan ko ung langit at na 360… tatlong focus… top view tapos zoom… mapasok ung loob ng bahay, pwede mo design ung loob" at "sa kabila… gawin mong parang joystick me dalawa or tatlong button sa gilid".
+- **Files:** `tigo/camera-rig.js`, `tigo/sky-dome.js`, `tigo/room.js`, `tigo/furniture.js`, `tigo/room-ui.js` (bago), `tigo/pet-scene.js`, `tigo/controls.js` (2 joystick, walang swipe-lakad), `tigo/catalog.js` (HOME_ITEMS), `tigo/talk.js`, `pages/tigo.js`, `app/tigo.html`, `css/pages/tigo.css`, `backend/pet-fast.ts` (room, v4), `sql/065-tigo-room.sql`, `lang/fil.js`, `lang/ar.js`
+- **Paano:** `pets.room` = { wall, floor, items[{ id, x, z, r }] }; pet-fast "room" ay tumatanggap lang ng pag-aari (o libre sa level), hanggang 40 gamit at 4 bawat uri.
+
+## 2026-10-24 · #44 Sound Maker: gumawa ng sariling tunog
+- **Ano:**
+  - **Bagong page (Menu → Sound Maker):** grid na 16 hakbang: 🥁 Kick, 👏 Snare, ✨ Hi-hat, 🙌 Clap, 🪘 Doum, 🥢 Tak at 🎸 Bass. Tap = on/off habang tumutugtog, may gumagalaw na playhead. Sa phone, hati sa 1–8 at 9–16 para malaki ang kahon.
+  - **Mabilis na simula:** Pop, Lofi, Pinoy acoustic, Khaleeji, Trap, House, Calm. **Music:** Masaya/Malungkot/Chill/Arabic, key, chords (7 instrument), himig (8 + wala), ayos ng chords, swing, ulan, plaka. 🎲 Bagong himig at 🎲 Random beat.
+  - **Save** (hanggang 30 bawat user), **Edit**, **Delete** (dalawang tap), **⬇ WAV** (16 segundo).
+  - **Sa posts at status:** sa Sounds picker may "🎛️ My sounds" at "＋ Make a sound" (bubukas ang Sound Maker sa loob mismo, hindi nawawala ang ginagawang post). Ang tunog ay tumutugtog sa phone ng ibang tao rin; lalabas din sa 🔥 Trending kapag maraming gumamit.
+- **Bakit:** Ayon kay Bench: "merron ba tayo sariling sound invented" → "sunod muna ung sound maker".
+- **Files:** `components/sound-maker.js`, `pages/sound-maker.js`, `app/sound-maker.html`, `css/sound-maker.css` (bago), `sounds.js` (ensure, fromRecipe, preview, position), `components/sound-picker.js`, `components/stories.js`, `nav-items.js`, `config.js` (fn sounds, 0.11.15), `app/explore.html`, `gallery.html`, `home.html`, `share.html`, `backend/sounds-fast.ts` (bago, v1), `backend/sound-recipe.ts` (bago), `backend/posts-fast.ts` (v14), `backend/social-fast.ts` (v11), `sql/066-user-sounds.sql`, `lang/fil.js`, `lang/ar.js`
+- **Paano:** Recipe lang ang naka-save (walang audio file, tipid sa Free plan). Kapag ginamit sa post/status, kinukuha ng server ang recipe sa `user_sounds` at kinokopya sa `sound` ng post, kaya tumutugtog pa rin kahit burahin ang tunog.

@@ -12,6 +12,7 @@ updated: 2026-10-24
 | `home.html` | app/ | Daily | oo |
 | `explore.html` | app/ | Explore: status, feed na may reactions/comments/share, hanap ng tao | oo |
 | `share.html` | app/ | Share: sariling camera na may filters + auto sound → Gallery (+ Save & post) | oo |
+| `sound-maker.html` | app/ | Sound Maker: gumawa ng sariling beat/tunog, listahan ng My sounds | oo |
 | `messages.html` | app/ | Tigo Messenger: chats, groups, requests (sa APK: bubuksan ang hiwalay na app) | oo |
 | `gallery.html` | app/ | Gallery: albums, upload, edit (device lang) | oo |
 | `profile.html` | app/ | Profile: cover, photo, edit profile, naka-pilang uploads, mga tab (Posts, Private, Reposts, Saved, Liked, History) | oo |
@@ -39,7 +40,8 @@ updated: 2026-10-24
 | `sounds.js` | TigoMeNote Sounds: music na gawa sa device, auto-pick, ♪ chip (`TMN_SOUNDS`) |
 | `emoji-data.js` / `components/emoji-picker.js` | Listahan ng emoji (pati pinakabago) at emoji picker + Stickers tab (`TMN_EMOJI_DATA`, `TMN_EMOJI_PICK`) |
 | `stickers.js` | 20 sariling TigoMeNote stickers na SVG (`TMN_STICKERS`) |
-| `components/sound-picker.js` / `capture-review.js` | Pumili ng sound + Sound row (`TMN_SOUND_PICK`); review pagkakuha (`TMN_REVIEW`) |
+| `components/sound-picker.js` / `capture-review.js` | Pumili ng sound + Sound row (`TMN_SOUND_PICK`, may My sounds); review pagkakuha (`TMN_REVIEW`) |
+| `components/sound-maker.js` | Sound Maker editor (`TMN_SOUND_MAKER`: mount, open, mine) |
 | `components/weather.js` | Weather card + auto location |
 | `post-queue.js` | Offline outbox ng posts: compress + kusang upload (`TMN_POSTQ`) |
 | `components/post-composer.js` | "Bagong post" modal: caption, visibility, schedule |
@@ -56,7 +58,9 @@ updated: 2026-10-24
 | `components/appearance-settings.js` | Settings → Background: presets, kulay, picture (desktop/phone), sliders (`TMN_LOOK_UI`) |
 | `tigo/pet-model.js` / `tigo/pet-scene.js` | 3D na si Tigo (lakad, talon, sayaw) at ang mundo (camera, bisita, sabay na galaw) — ES modules, three.js |
 | `tigo/catalog.js` / `outfit.js` / `backdrops.js` / `buddies.js` | Closet items, isinusuot sa 3D, mga lugar + bahay kubo, maliliit na alaga |
-| `tigo/controls.js` / `coin-game.js` / `pac-game.js` / `race-game.js` | WASD/arrows + Space, joystick, swipe · Coin Rush · Pac-Tigo · Tigo Racing |
+| `tigo/controls.js` / `coin-game.js` / `pac-game.js` / `race-game.js` | WASD/arrows + Space, 2 joystick (lakad + camera) · Coin Rush · Pac-Tigo · Tigo Racing |
+| `tigo/camera-rig.js` / `sky-dome.js` | Camera: 360°, tingala, Follow/Top/Close-up, zoom · 3D na langit (ulap, araw, buwan, bituin) |
+| `tigo/room.js` / `furniture.js` / `room-ui.js` | Loob ng bahay (dingding, sahig, banggaan) · mga gamit sa 3D · Decorate panel |
 | `tigo/voice.js` / `talk.js` | Boses-baby ni Tigo (synth o speech), game sounds, speech bubble, Sound settings |
 | `tigo/closet-ui.js` / `games-ui.js` / `journey-ui.js` | Closet panel, listahan ng laro + HUD, Growth journey |
 | `pages/tigo.js` | Tigo page: alaga, closet, laro, journey, full screen, nearby/gather, sabay na galaw, visits |
@@ -104,21 +108,23 @@ updated: 2026-10-24
 | `profile-fast` | get, update, imageUpload, setImage, removeImage | `backend/profile-fast.ts` |
 | `safety-fast` | circle, invite, respond, update, remove, pause, ping, history, clearHistory, exportHistory, sos, sosUpdate, sosEnd, alerts, ack, pushKey, subscribe, unsubscribe, testPush | `backend/safety-fast.ts` + `webpush.ts` |
 | `daily-fast` | list, save, remove, done, snooze; due (cron bawat minuto, key `cron_daily`) | `backend/daily-fast.ts` + `webpush.ts` |
-| `pet-fast` | get, act (feed/play/clean/pet/sleep/wake/daily), style, wear, buy, game (coins/pac/race), nearby, gather, visits | `backend/pet-fast.ts` + `webpush.ts` |
+| `pet-fast` | get, act (feed/play/clean/pet/sleep/wake/daily), style, wear, buy, game (coins/pac/race), nearby, gather, visits, room | `backend/pet-fast.ts` + `webpush.ts` |
+| `sounds-fast` | mine, save, remove (Sound Maker) | `backend/sounds-fast.ts` + `moderation.ts` + `sound-recipe.ts` |
 | `wellbeing-fast` | status, setBirthdate, tick, save, guardianInvite, guardianRespond, guardianRemove | `backend/wellbeing-fast.ts` |
 | `moderation-fast` | report, queue, resolve, count | `backend/moderation-fast.ts` (+ `notify.ts`) |
 | `messages-fast` | inbox, unread, open, start, group, send, upload, react, pin, read, accept, decline, unsend, rename, addMembers, removeMember, leave, mute | `backend/messages-fast.ts` (+ `moderation.ts`) |
 | `gifs-fast` | trending, search (GIFs/stickers ng KLIPY; secret `KLIPY_API_KEY`) | `backend/gifs-fast.ts` (+ `moderation.ts` para sa edad) |
 | `notify-fast` | list, count, seen, prefs, setPrefs, push at pushRaw (service key lang) | `backend/notify-fast.ts` (+ `webpush.ts`) |
 
-Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast, profile-fast at auth-fast. Ang `notify.ts` ay kasama sa deploy ng posts-fast, social-fast at moderation-fast.
+Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast, profile-fast at auth-fast. Ang `notify.ts` ay kasama sa deploy ng posts-fast, social-fast at moderation-fast. Ang `sound-recipe.ts` ay kasama sa posts-fast, social-fast at sounds-fast.
 
 | Table | Para saan | SQL |
 |---|---|---|
 | `users` | accounts (+ `appearance`, `bg_desktop_url`, `bg_phone_url` = background ng app) | `sql/001-users.sql`, `sql/048-app-background.sql` |
 | `sessions` | login tokens (hash lang) | `sql/002-sessions.sql` |
 | `reminders` | Daily reminders at alarms (oras, ulit, sent/done) | `sql/050-daily-reminders.sql` |
-| `pets` / `pet_meets` | si Tigo ng bawat user (stats, XP, style, coins, owned, outfit, near_*) at ang mga Gather | `sql/052-tigo-pets.sql`, `sql/055-tigo-closet.sql` |
+| `pets` / `pet_meets` | si Tigo ng bawat user (stats, XP, style, coins, owned, outfit, room, near_*) at ang mga Gather | `sql/052-tigo-pets.sql`, `sql/055-tigo-closet.sql`, `sql/065-tigo-room.sql` |
+| `user_sounds` | Sound Maker: recipe ng sariling tunog (hanggang 30 bawat user) | `sql/066-user-sounds.sql` |
 | `write_action_dedup` | rate limit / duplicate guard | `sql/003-write-action-dedup.sql` |
 | `brain_notes` | kopya ng vault na ito sa database | `sql/004-brain-notes.sql` |
 | `email_codes` | 6-digit codes (hash lang), purpose `verify` o `reset` | `sql/007-email-verify.sql` |

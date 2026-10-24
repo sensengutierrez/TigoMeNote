@@ -45,8 +45,9 @@
 .tg-stat.low .tg-bar i { background: linear-gradient(90deg, #ff7a59, #e8264f); animation: tg-low 1.2s ease-in-out infinite; }
 @keyframes tg-low { 50% { opacity: .55; } }
 .tg-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.tg-more { grid-template-columns: repeat(3, 1fr); }
-.tg-more .tg-act { grid-auto-flow: column; justify-content: center; align-items: center; gap: 8px; padding: 10px 6px; font-size: 13.5px; }
+.tg-more { grid-template-columns: repeat(4, 1fr); }
+.tg-more .tg-act { grid-auto-flow: column; justify-content: center; align-items: center; gap: 6px; padding: 10px 4px; font-size: 13px; }
+@media (max-width: 420px) { .tg-more .tg-act { grid-auto-flow: row; gap: 2px; } }
 .tg-more .tg-act span { font-size: 22px; }
 .tg-act { display: grid; justify-items: center; gap: 4px; padding: 12px 4px 10px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface);
   color: var(--text); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: transform .12s, box-shadow .12s; }
@@ -81,17 +82,52 @@ html.has-bg .tg-act { background: color-mix(in srgb, var(--surface) var(--look-p
 .tg-gear .chip:disabled { opacity: .5; }
 
 /* ---------- kontrol: joystick, jump, full screen ---------- */
-.tg-pad, .tg-jump { position: absolute; bottom: 18px; display: none; z-index: 2; touch-action: none; user-select: none; -webkit-user-select: none; }
+/* kaliwa = lakad; kanan = camera (ikot 360° / tingala) + Jump, View, Zoom sa gilid */
+.tg-pad { position: absolute; bottom: 18px; display: none; z-index: 2; touch-action: none; user-select: none; -webkit-user-select: none; }
 .tg-pad { left: 18px; width: 112px; height: 112px; border-radius: 50%; background: rgba(255,255,255,.35); border: 2px solid rgba(255,255,255,.7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); place-items: center; }
-.tg-pad .knob { width: 48px; height: 48px; border-radius: 50%; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.18); transition: transform .06s; }
-.tg-jump { right: 18px; width: 72px; height: 72px; border-radius: 50%; border: 0; background: #ff5a36; color: #fff; font-size: 30px; font-weight: 800; box-shadow: 0 6px 16px rgba(255,90,54,.45); cursor: pointer; }
-.tg-jump:active { transform: scale(.92); }
-@media (pointer: coarse) { .tg-stage.live .tg-pad { display: grid; } .tg-stage.live .tg-jump { display: block; } .tg-stage.live .tg-toast { bottom: 140px; } }
+.tg-pad .knob { width: 48px; height: 48px; border-radius: 50%; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.18); transition: transform .06s; display: grid; place-items: center; font-size: 20px; }
+.tg-pad.tg-look { left: auto; right: 18px; width: 104px; height: 104px; background: rgba(124,196,255,.28); border-color: rgba(255,255,255,.6); }
+.tg-pad.tg-look .knob { width: 44px; height: 44px; }
+.tg-btns { position: absolute; right: 18px; bottom: 18px; z-index: 2; display: none; align-items: center; gap: 8px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.tg-stage.live .tg-btns { display: flex; }
+.tg-cbtn { width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255,255,255,.88); color: #1b1b1f; font-size: 20px; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+.tg-cbtn:active, .tg-jump:active { transform: scale(.92); }
+.tg-jump { width: 56px; height: 56px; border-radius: 50%; border: 0; background: #ff5a36; color: #fff; font-size: 26px; font-weight: 800; box-shadow: 0 6px 16px rgba(255,90,54,.45); cursor: pointer; }
+@media (pointer: coarse) {
+  .tg-stage.live .tg-pad { display: grid; }
+  .tg-stage.live .tg-toast { bottom: 140px; }
+  /* sa gilid ng camera joystick: Jump sa kaliwa nito, View at Zoom sa itaas nito (malapit sa hinlalaki) */
+  .tg-stage.live .tg-btns { display: contents; }
+  .tg-btns > * { position: absolute; z-index: 2; }
+  .tg-btns .tg-jump { right: 134px; bottom: 22px; width: 60px; height: 60px; }
+  #tgZoom { right: 26px; bottom: 132px; } #tgView { right: 26px; bottom: 180px; }
+  .tg-cbtn { width: 42px; height: 42px; font-size: 18px; }
+}
+@media (pointer: coarse) and (max-width: 420px) { .tg-btns .tg-jump { right: 124px; } .tg-pad { width: 100px; height: 100px; } .tg-pad.tg-look { width: 96px; height: 96px; } #tgZoom { right: 24px; bottom: 124px; } #tgView { right: 24px; bottom: 170px; } }
+.tg-stage.playing .tg-look, .tg-stage.playing #tgView, .tg-stage.playing #tgZoom, .tg-stage.playing .tg-doorbar { display: none !important; }
+@media (pointer: coarse) { .tg-stage.playing .tg-btns .tg-jump { right: 18px; bottom: 18px; } }
+
+/* ---------- bahay: pasok/labas + Decorate ---------- */
+.tg-doorbar { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); z-index: 3; display: flex; gap: 6px; }
+.tg-doorbar button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; border: 0; background: rgba(255,255,255,.9); color: #1b1b1f; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.14); white-space: nowrap; }
+.tg-doorbar button.go { background: #ff5a36; color: #fff; }
+.tg-room-bar { position: absolute; left: 50%; bottom: 140px; transform: translateX(-50%); z-index: 3; display: flex; align-items: center; gap: 4px; padding: 6px 6px 6px 14px; border-radius: 20px;
+  background: rgba(255,255,255,.92); box-shadow: 0 6px 18px rgba(0,0,0,.16); color: #1b1b1f; }
+@media (pointer: fine) { .tg-room-bar { bottom: 18px; } }
+.tg-room-bar b { font-size: 13.5px; margin-right: 6px; white-space: nowrap; }
+.tg-room-bar button { display: grid; justify-items: center; min-width: 50px; padding: 4px 6px; border: 0; border-radius: 12px; background: transparent; color: inherit; font: inherit; font-size: 20px; line-height: 1.1; cursor: pointer; }
+.tg-room-bar button small { font-size: 10.5px; font-weight: 700; }
+.tg-room-bar button:hover { background: #ffe3d9; }
+.tg-decor-tip { margin: -4px 0 0; }
+.tg-save { margin-left: auto; white-space: nowrap; font-size: 12px; }
+.tg-decor .tg-coins { white-space: nowrap; }
+.tg-decor .tg-cl-head h3 { flex: none; }
+.tg-item.tg-swatch .tg-ic { width: 40px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--sw); font-size: 20px; box-shadow: inset 0 -3px 0 rgba(0,0,0,.1); }
 .tg-full { position: absolute; right: 14px; top: 62px; width: 40px; height: 40px; border-radius: 12px; border: 0; background: rgba(255,255,255,.82); color: #1b1b1f; font-size: 20px; cursor: pointer; z-index: 2; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
 .tg-stage:not(.live) .tg-full { display: none; }
 .tg-stage.full { position: fixed; inset: 0; z-index: 1000; height: auto; min-height: 0; border-radius: 0; }
 body.tg-full { overflow: hidden; }
-.tg-stage.full .tg-pad, .tg-stage.full .tg-jump { bottom: max(18px, env(safe-area-inset-bottom)); }
+.tg-stage.full .tg-pad { bottom: max(18px, env(safe-area-inset-bottom)); }
 .tg-stage.full .tg-top { top: max(14px, env(safe-area-inset-top)); left: max(14px, env(safe-area-inset-left)); right: max(14px, env(safe-area-inset-right)); }
 
 /* ---------- sabay na galaw (kasama ang kaibigan) ---------- */

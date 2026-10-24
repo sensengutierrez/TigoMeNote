@@ -6,7 +6,13 @@
      sc.jump()                   → talon
      sc.setBackdrop(id)          → palit ng lugar (backdrops.js); ibinabalik ang CSS na langit (SKY)
      sc.setBuddy(id|null)        → alagang hayop na sumusunod (buddies.js)
-     sc.night(on, animate)       → gabi: lalakad si Tigo papasok sa bahay kubo at matutulog
+     sc.night(on, animate)       → gabi: papasok si Tigo sa bahay at matutulog sa kama
+     sc.enterRoom() / sc.leaveRoom() / sc.inRoom() → loob ng bahay (room.js); sc.room() = ang kwarto (para sa room-ui.js)
+     sc.setRoom({ wall, floor, items }) → ayos ng kwarto (galing sa server)
+     sc.rig                      → camera (camera-rig.js): next() view, zoomStep(), yaw()
+     sc.setLook(fn)              → fn() = { x, y } galing sa kanang joystick (camera)
+     sc.ray(x, y) → Raycaster    · sc.setClaim(fn) → kung may ibang gagamit ng hila sa screen (paglipat ng gamit)
+     opts.onDoor(state)          → "near" (malapit sa pinto sa labas) | "room" (nasa loob) | null
      sc.add(opts) / remove(t)    → bisita (Tigo ng kaibigan); sumusunod siya kay Tigo habang naglalakad
      sc.together(kind) → sec     → sabay na galaw: "dance" | "highfive" | "chase" (habulan) | "spin" (ikot) | "bow"
      sc.hasFriends()
@@ -20,6 +26,9 @@ import * as THREE from "../../vendor/three/three.module.min.js";
 import { createTigo } from "./pet-model.js";
 import { buildBackdrop, RADIUS, HOUSE, SKY } from "./backdrops.js";
 import { createBuddy } from "./buddies.js";
+import { createCameraRig } from "./camera-rig.js";
+import { createSky, skyColors } from "./sky-dome.js";
+import { buildRoom, ROOM } from "./room.js";
 
 export function createScene(canvas, opts = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "low-power" });
@@ -31,6 +40,9 @@ export function createScene(canvas, opts = {}) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
   const camBase = { y: 2.7, z: 8.2 };
+  let look2 = () => null, claim = () => false;
+  const rig = createCameraRig({ camera, el: opts.el || canvas, blocked: () => !!game, claim: (e) => claim(e), stick: () => look2() });
+  const sky = createSky(scene);
 
   // ---------- ilaw ----------
   const hemi = new THREE.HemisphereLight(0xfff4e8, 0x6b8f71, 1.1); scene.add(hemi);
@@ -46,7 +58,8 @@ export function createScene(canvas, opts = {}) {
     if (id === placeId && place) return SKY[placeId];
     if (place) { scene.remove(place.group); place.dispose(); }
     placeId = SKY[id] ? id : "island"; place = buildBackdrop(placeId); scene.add(place.group);
-    place.night(isNight);
+    place.night(isNight); place.group.visible = !inRoom && !game;
+    sky.set(skyColors(SKY[placeId]), isNight);
     return SKY[placeId];
   }
 
@@ -83,7 +96,7 @@ export function createScene(canvas, opts = {}) {
   function moveFriends(dt) {
     friends.forEach((f, i) => {
       if (show) return; // kontrolado ng together()
-      if (inside) { steer(f, HOUSE.door.x + f.side * 0.9, HOUSE.door.z + 1.0, dt, 1.6, 0); return; }
+      if (inRoom) return; // naghihintay sa labas
       const gx = me.x + f.side * 1.25, gz = me.z - 0.25 - f.row * 0.7;
       const far = Math.hypot(gx - f.x, gz - f.z) > 0.5;
       steer(f, far ? gx : f.x, far ? gz : f.z, dt, 2.2, headTo(f, me));
@@ -94,7 +107,7 @@ export function createScene(canvas, opts = {}) {
   let show = null; // { kind, t, dur, ... }
   const DUR = { dance: 4.6, highfive: 2.6, chase: 6.5, spin: 3.6, bow: 2.2 };
   function together(kind) {
-    if (!friends.length || inside || !DUR[kind]) return 0;
+    if (!friends.length || inRoom || !DUR[kind]) return 0;
     auto = null;
     show = { kind, t: 0, dur: DUR[kind], cx: me.x, cz: me.z, fired: {} };
     if (kind === "spin" || kind === "chase") { // gitna ng isla para may lugar
@@ -155,8 +168,10 @@ export function createScene(canvas, opts = {}) {
   // ---------- galaw ----------
   let input = () => ({ x: 0, z: 0 });
   let auto = null; // { x, z, done } — kusang lakad (papunta sa bahay)
-  let isNight = false, inside = false;
+  let isNight = false, inside = false; // inside = tulog sa kama (hindi gumagalaw)
+  let inRoom = false, room = null, roomData = null, doorState = null;
   function collide(x, z) {
+    if (inRoom) return room.collide(x, z);
     // bawal lumabas sa isla at bawal tumagos sa bahay
     const d = Math.hypot(x, z); if (d > RADIUS) { x *= RADIUS / d; z *= RADIUS / d; }
     const hx = x - HOUSE.x, hz = z - HOUSE.z, hd = Math.hypot(hx, hz);
@@ -178,7 +193,11 @@ export function createScene(canvas, opts = {}) {
       const dx = auto.x - me.x, dz = auto.z - me.z, d = Math.hypot(dx, dz);
       if (d < 0.08) { const cb = auto.done; auto = null; cb && cb(); return; }
       ix = dx / d; iz = dz / d; if (d < 0.4) { ix *= d / 0.4 + 0.3; iz *= d / 0.4 + 0.3; }
-    } else if (!isNight) { const i = input(); ix = i.x; iz = i.z; }
+    } else if (!isNight) {
+      // direksyon ayon sa camera: taas ng joystick = palayo sa camera
+      const i = input(), y = rig.yaw(), c = Math.cos(y), s_ = Math.sin(y);
+      ix = i.x * c + i.z * s_; iz = -i.x * s_ + i.z * c;
+    }
     const speed = 2.1;
     me.vx += (ix * speed - me.vx) * Math.min(1, dt * 10); me.vz += (iz * speed - me.vz) * Math.min(1, dt * 10);
     const v = Math.hypot(me.vx, me.vz);
@@ -190,8 +209,73 @@ export function createScene(canvas, opts = {}) {
       if (me.idle > 4 && me.idle < 4.1) main.face(0); // humarap ulit sa camera
     }
     main.group.position.x = me.x; main.group.position.z = me.z;
+    doorCheck(ix, iz);
   }
   function walkTo(x, z, done) { auto = { x, z, done }; }
+
+  // ---------- pinto: pasok / labas ng bahay ----------
+  function setDoor(st) { if (st !== doorState) { doorState = st; if (opts.onDoor) opts.onDoor(st); } }
+  function doorCheck(ix, iz) {
+    if (auto || show || game) return;
+    if (inRoom) {
+      setDoor("room");
+      // lumakad palabas sa pinto (harap ng kwarto)
+      if (!isNight && Math.abs(me.x - ROOM.door.x) < 0.5 && me.z > ROOM.d / 2 - 0.6 && iz > 0.5) leaveRoom();
+      return;
+    }
+    const d = Math.hypot(me.x - HOUSE.door.x, me.z - HOUSE.door.z);
+    setDoor(d < 0.75 ? "near" : null);
+    // lumakad papunta sa pinto = pasok
+    if (d < 0.32 && !isNight) { const hx = HOUSE.x - me.x, hz = HOUSE.z - me.z, hl = Math.hypot(hx, hz) || 1; if ((ix * hx + iz * hz) / hl > 0.5) enterRoom(); }
+  }
+  function ensureRoom() {
+    if (!room) { room = buildRoom(); room.group.visible = false; scene.add(room.group); }
+    const r = roomData || {};
+    room.setStyle(r.wall, r.floor);
+    room.setItems(r.items && r.items.length ? r.items : [{ id: "bed", x: -1.9, z: -1.4, r: 0 }, { id: "rug", x: 0.3, z: 0.2, r: 0 }, { id: "plant", x: 2.4, z: -1.9, r: 0 }, { id: "lamp", x: -0.7, z: -1.9, r: 0 }]);
+    return room;
+  }
+  function enterRoom(instant) {
+    if (inRoom || game) return;
+    if (!instant && !auto && Math.hypot(me.x - HOUSE.door.x, me.z - HOUSE.door.z) > 0.4) { walkTo(HOUSE.door.x, HOUSE.door.z, () => enterRoom(true)); return; }
+    if (!room) ensureRoom();
+    inRoom = true; auto = null; show = null;
+    if (place) place.group.visible = false;
+    friends.forEach((f) => { f.t.group.visible = false; });
+    room.group.visible = true;
+    me.x = ROOM.door.x; me.z = ROOM.door.z - 0.1; me.vx = me.vz = 0; main.group.position.set(me.x, 0, me.z); main.face(Math.PI);
+    if (buddy) buddy.group.position.set(me.x + 0.6, 0, me.z);
+    if (!isNight) walkTo(ROOM.door.x, ROOM.door.z - 0.9, () => { main.face(0); });
+    setDoor("room");
+    if (opts.onRoom) opts.onRoom(true);
+  }
+  function leaveRoom(instant) {
+    if (!inRoom) return;
+    inRoom = false; inside = false; auto = null;
+    room.group.visible = false; room.select(null);
+    if (place) place.group.visible = true;
+    friends.forEach((f) => { f.t.group.visible = true; });
+    standUp();
+    me.x = HOUSE.door.x; me.z = HOUSE.door.z + 0.15; me.vx = me.vz = 0; main.group.position.set(me.x, 0, me.z);
+    if (buddy) buddy.group.position.set(me.x + 0.5, 0, me.z + 0.3);
+    if (!instant) walkTo(HOUSE.door.x - 0.3, HOUSE.door.z + 0.95, () => { main.face(0); main.jump(); });
+    setDoor(null);
+    if (opts.onRoom) opts.onRoom(false);
+  }
+  // higa sa kama / bangon
+  function lieDown() {
+    const b = room && room.bedSpot();
+    inside = true; me.vx = me.vz = 0; main.walk(0);
+    main.group.rotation.order = "YXZ";
+    if (b) { me.x = b.x; me.z = b.z; main.group.position.set(b.x, b.y, b.z); main.face(b.face); main.group.rotation.y = b.face; }
+    else { main.face(0); main.group.position.y = 0.12; }
+    main.group.rotation.x = -1.45; main.group.scale.setScalar(0.78); // nakahiga, ulo sa unan (medyo maliit para kasya sa kama)
+  }
+  function standUp() {
+    if (main.group.rotation.x === 0 && main.group.position.y === 0) return;
+    main.group.rotation.x = 0; main.group.rotation.z = 0; main.group.position.y = 0; main.group.scale.setScalar(1);
+    const b = room && room.bedSpot(); if (b && inRoom) { me.x = b.beside.x; me.z = b.beside.z; main.group.position.set(me.x, 0, me.z); }
+  }
 
   // ---------- gabi: pasok sa bahay kubo ----------
   const zzz = new THREE.Group(); zzz.visible = false; scene.add(zzz);
@@ -203,13 +287,20 @@ export function createScene(canvas, opts = {}) {
     hemi.intensity = on ? 0.35 : 1.1; sun.intensity = on ? 0.5 : 2.2; sun.color.set(on ? 0x9bb6ff : 0xffffff);
     rim.color.set(on ? 0x6b7bff : 0xff9a6b);
     if (place) place.night(on);
+    sky.set(skyColors(SKY[placeId]), on);
+    if (game) return;
     if (on && !inside) {
-      const go = () => { inside = true; main.group.visible = false; zzz.visible = true; zzz.position.set(HOUSE.x, 2.05, HOUSE.z); };
-      if (!animate) { me.x = HOUSE.door.x; me.z = HOUSE.door.z; go(); } else walkTo(HOUSE.door.x, HOUSE.door.z, go);
+      // papasok sa bahay → lalakad sa kama → hihiga
+      const toBed = () => {
+        const b = room.bedSpot();
+        if (!animate || !b) { lieDown(); return; }
+        walkTo(b.beside.x, b.beside.z, lieDown);
+      };
+      if (inRoom) toBed();
+      else if (!animate) { enterRoom(true); lieDown(); }
+      else walkTo(HOUSE.door.x, HOUSE.door.z, () => { enterRoom(true); toBed(); });
     } else if (!on && inside) {
-      inside = false; main.group.visible = true; zzz.visible = false;
-      me.x = HOUSE.door.x; me.z = HOUSE.door.z + 0.1; main.group.position.set(me.x, 0, me.z);
-      walkTo(HOUSE.door.x - 0.4, HOUSE.door.z + 0.9, () => { main.face(0); main.jump(); });
+      inside = false; standUp(); main.jump();
     }
   }
 
@@ -283,15 +374,18 @@ export function createScene(canvas, opts = {}) {
   let game = null;
   const hidden = [];
   function beginGame(g) {
-    game = g; show = null; auto = null; main.walk(0); main.move(null);
-    [place && place.group, buddy && buddy.group, zzz].concat(friends.map((f) => f.t.group)).forEach((o) => { if (o && o.visible) { o.visible = false; hidden.push(o); } });
+    if (inRoom) leaveRoom(true);
+    if (inside) { inside = false; standUp(); }
+    game = g; show = null; auto = null; main.walk(0); main.move(null); setDoor(null);
+    [place && place.group, buddy && buddy.group, zzz, sky.group].concat(friends.map((f) => f.t.group)).forEach((o) => { if (o && o.visible) { o.visible = false; hidden.push(o); } });
     main.group.visible = true;
   }
   function endGame() {
     game = null; hidden.forEach((o) => { o.visible = true; }); hidden.length = 0;
     scene.add(main.group); main.group.scale.setScalar(1); main.group.rotation.set(0, 0, 0);
     me.x = 0; me.z = 0.4; me.vx = me.vz = 0; main.group.position.set(me.x, 0, me.z); main.walk(0); main.face(0);
-    main.group.visible = !inside; zzz.visible = inside;
+    main.group.visible = true; zzz.visible = false;
+    if (place) place.group.visible = !inRoom;
     sun.position.set(3.5, 6, 4); sun.target.position.set(0, 0, 0); sun.target.updateMatrixWorld();
   }
   scene.add(sun.target);
@@ -306,17 +400,18 @@ export function createScene(canvas, opts = {}) {
     moveMain(dt, updateShow(dt, t));
     moveFriends(dt);
     pets.forEach((p) => p.update(opts.reduced ? dt * 0.4 : dt, t));
-    if (buddy) buddy.update(dt, t, inside ? { x: HOUSE.door.x + 0.3, z: HOUSE.door.z + 0.6 } : me, inside);
+    if (buddy) buddy.update(dt, t, inside && !inRoom ? { x: HOUSE.door.x + 0.3, z: HOUSE.door.z + 0.6 } : me, false);
     if (place) place.update(t);
+    sky.update(t);
+    if (inRoom) room.update(t, isNight, camera);
     ticks.forEach((fn) => fn(dt, t));
     zzz.children.forEach((z, i) => { const k = (t * 0.4 + i * 0.33) % 1; z.position.set(k * 0.3, k * 0.8, 0); z.material.opacity = 1 - k; });
     updateFx(dt);
-    // camera: sumusunod kay Tigo (malumanay)
-    // layo ng camera ayon sa hugis ng screen: patayo (phone) = mas malayo para kasya ang isla
-    const fx_ = me.x * 0.55, fz = me.z * 0.45, cz = Math.min(14, Math.max(camBase.z, 3.3 / (Math.tan((camera.fov * Math.PI) / 360) * camera.aspect)));
-    look.x += (fx_ - look.x) * 0.06; look.z += (fz - look.z) * 0.06;
-    camera.position.set(look.x, camBase.y * (cz / camBase.z), look.z + cz);
-    camera.lookAt(look.x, 0.95, look.z);
+    // camera (camera-rig.js): sumusunod kay Tigo; ikot/zoom gamit ang joystick, mouse o pinch
+    // layo ayon sa hugis ng screen: patayo (phone) = mas malayo para kasya ang isla (o ang kwarto)
+    const half = inRoom ? 3.6 : 3.3, cz = Math.min(15, Math.max(camBase.z, half / (Math.tan((camera.fov * Math.PI) / 360) * camera.aspect)));
+    look.set(me.x, inside ? 0.6 : 0.95, me.z);
+    rig.update(dt, look, Math.hypot(camBase.y * (cz / camBase.z), cz));
     renderer.render(scene, camera);
     raf = requestAnimationFrame(loop);
   }
@@ -329,7 +424,13 @@ export function createScene(canvas, opts = {}) {
   return {
     main, add, remove, effect, night, renderer, scene, setBackdrop, setBuddy,
     together, hasFriends() { return friends.length > 0; }, isShowing() { return !!show; },
-    beginGame, endGame, sun, camera, inGame() { return !!game; },
+    beginGame, endGame, sun, camera, rig, inGame() { return !!game; },
+    enterRoom() { if (!isNight) enterRoom(); }, leaveRoom() { if (!inside) leaveRoom(); }, inRoom() { return inRoom; },
+    room() { return inRoom ? room : null; },
+    setRoom(d) { roomData = d || null; if (room) ensureRoom(); },
+    setLook(fn) { look2 = fn || (() => null); },
+    setClaim(fn) { claim = fn || (() => false); },
+    ray(x, y) { const r = new THREE.Raycaster(); r.setFromCamera(new THREE.Vector2(x, y), camera); return r; },
     headScreen() {
       if (inside || !main.group.visible) return null;
       main.group.getWorldPosition(headV); const s = main.group.getWorldScale(new THREE.Vector3()).y;
@@ -350,6 +451,7 @@ export function createScene(canvas, opts = {}) {
     dispose() {
       alive = false; cancelAnimationFrame(raf); ro.disconnect(); document.removeEventListener("visibilitychange", vis);
       pets.forEach((p) => p.dispose()); if (buddy) buddy.dispose(); if (place) place.dispose();
+      rig.dispose(); sky.dispose(); if (room) room.dispose();
       disp.forEach((d) => d.dispose()); zGeo.dispose(); zMat.dispose(); renderer.dispose();
     },
   };

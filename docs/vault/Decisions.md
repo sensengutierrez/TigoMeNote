@@ -90,6 +90,11 @@ updated: 2026-10-24
 | 2026-10-24 | Functions naka-pin sa ap-south-1 (Mumbai) | Katabi ng database; mas mabilis kaysa function na malapit sa user pero malayo sa DB |
 | 2026-10-24 | Feed preview photo ginagawa sa phone (≤960 px), hindi Supabase image transform | Bayad na feature ang image transform; libre ang canvas sa phone |
 | 2026-10-24 | Keep-warm at reminders cron ay tumatakbo lang kapag kailangan | Tipid sa 500k invocations/buwan ng Free plan |
+| 2026-10-24 | Tigo camera sa phone: kanang joystick + Jump/View/Zoom; isang daliri sa screen = tap lang | Ayon kay Bench; iwas aksidenteng ikot habang naglalakad |
+| 2026-10-24 | Loob ng bahay = hiwalay na kwarto (6×5) sa parehong scene, walang kisame, bumababa ang dingding na nakaharang | Parang dollhouse; kita ang loob mula sa kahit anong anggulo |
+| 2026-10-24 | Ayos ng bahay sa `pets.room` (jsonb), walang bagong table | Isang row bawat user; validated ng pet-fast |
+| 2026-10-24 | Sound Maker = recipe (JSON) na tinutugtog ng device, hindi audio file | Walang storage/egress; pareho ang tunog sa lahat ng device |
+| 2026-10-24 | Recipe ng sariling tunog ay kinokopya sa post/status (galing sa server, hindi sa browser) | Tumutugtog kahit burahin; hindi madadaya ang pangalan/may-ari |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

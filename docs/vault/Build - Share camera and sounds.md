@@ -29,6 +29,13 @@ updated: 2026-10-24
 - Ang post ay may `sound` lang (id + lakas), hindi audio file. Sa viewer: kusang tumutugtog; sa feed: pindutin ang ♪ chip. Humihinto kapag isinara o umalis sa page.
 - Sa video na may sound: ang sariling tunog ng video ay hinihinaan ayon sa pinili (default 40%).
 
+## Sound Maker (sariling tunog)
+- Page: Menu → **Sound Maker** (`app/sound-maker.html`). Sa Sounds picker: **🎛️ My sounds** + **＋ Make a sound** (modal).
+- Grid 16 hakbang: Kick, Snare, Hi-hat, Clap, Doum, Tak, Bass (sa phone: 1–8 at 9–16). Vibes: Pop, Lofi, Pinoy acoustic, Khaleeji, Trap, House, Calm.
+- Music: Happy/Sad/Chill/Arabic (major/minor/dorian/hijaz), key, chords, himig, ayos ng chords, swing, ulan, plaka; 🎲 Bagong himig / Random beat.
+- Save (hanggang 30, `sounds-fast`), Edit, Delete, ⬇ WAV (16 s). Id = `u-xxxxxxxx`.
+- Sa post/status: `sound = { id, vol, recipe }` (kinukuha ng server ang recipe sa `user_sounds`), kaya tumutugtog sa lahat at kahit burahin.
+
 ## Hindi pa / mamaya
 - Sikat na kanta (gaya ng TikTok/IG) = kailangan ng lisensya sa record labels (bayad). Puwedeng magdagdag ng royalty-free na audio files mamaya.
 - Hindi pa naka-"mix" ang music sa mismong video file; tinutugtog ito habang pinapanood (kaya pareho sa lahat ng device). May `TMN_SOUNDS.render()` na para dito.

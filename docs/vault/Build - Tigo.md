@@ -32,8 +32,19 @@ Virtual pet ng TigoMeNote (parang Tamagotchi pero sariling character): si **Tigo
 - Baby babble: synth na pantig (triangle + formant filters), mataas kapag masaya, mababa kapag malungkot, tumataas kapag tanong. Baby words: `speechSynthesis` (depende sa boses ng device).
 - 🔊 Sound settings: Tigo talks, style, voice volume, pitch, game sounds, chatty. Naka-save sa device (`tmnTigoSound`). Nagsisimula lang ang tunog pagkatapos ng unang tap/key (patakaran ng browser).
 
+## Camera (`camera-rig.js`, `sky-dome.js`)
+- Phone: kaliwang joystick = lakad; kanang joystick = camera (ikot 360°, taas = tingala, baba = mula sa itaas). Sa gilid: ⤒ Jump, 🎥 View (Follow / Top view / Close-up), 🔍 Zoom (normal / malayo / malapit). Pinch = zoom.
+- Desktop: hila ng mouse = ikot, wheel = zoom, Q/E = ikot. Ang lakad (joystick/WASD) ay ayon sa direksyon ng camera.
+- 3D na langit: ulap at araw (araw), buwan at bituin (gabi at Moon base).
+
+## Bahay (`room.js`, `furniture.js`, `room-ui.js`)
+- Pasok: lumakad sa pinto ng bahay kubo, o 🏠 House / 🏠 Go inside. Labas: 🚪 Go outside o lumakad sa pinto ng kwarto.
+- Kwarto 6×5 na walang kisame; ang dingding na nakaharang sa camera ay bumababa. May bintana, pinto, doormat at ilaw (mas maliwanag sa gabi).
+- 🛠 Decorate: Furniture (19 sa sahig + 7 sa dingding), Walls (9), Floors (6). Tap = ilagay (hanggang 40, 4 bawat uri); hilahin = ilipat; ⟳ ikot 45°; 🗑 itabi. Ang gamit sa dingding ay dumidikit sa pinakamalapit na dingding. Kusang save (pet-fast "room").
+- Libre: Bed, Round rug, Plant, Floor lamp, Cream, Wood planks. May galaw: electric fan, isda sa aquarium, wall clock (totoong oras), TV, star lights at lampara sa gabi.
+
 ## Gabi
-- Sleep → lalakad si Tigo papasok sa bahay kubo, iilaw ang bintana, Zzz sa bubong. Wake → lalabas at tatalon.
+- Sleep → papasok si Tigo sa bahay at hihiga sa kama (kung walang kama: sa sahig). Wake → babangon sa tabi ng kama.
 
 ## Alaga at level
 - Stats 0–100: Food, Fun, Energy, Clean. Bumababa bawat oras (gising/tulog): Food 6/3, Fun 4/2, Energy 5/+14, Clean 3/1. Kusang gigising kapag puno ang Energy.
@@ -53,6 +64,7 @@ Virtual pet ng TigoMeNote (parang Tamagotchi pero sariling character): si **Tigo
 - Susunod sa APK: paalala kapag gutom/malungkot si Tigo (push), at widget sa home screen.
 
 ## Hindi pa na-test
+- Camera/bahay (test_house 32/32, mock): hindi pa nasubukan sa totoong phone ang dalawang joystick nang sabay, bilis ng 3D sa loob ng bahay na maraming gamit, at ang "room" sa totoong server.
 - Mock lang ang UI (test_tigo 41/41 + test_games: boses, sound settings, Pac-Tigo, Racing; keyboard, joystick, jump, closet/buy, journey, Coin Rush, bahay kubo, sayaw/Hi-5/Habulan/Ikot, full screen, 2D fallback). Hindi pa nasubukan: totoong server (pet-fast v2 na-deploy, wala pang totoong tawag), Gather ng dalawang totoong phone, landscape lock sa totoong phone, at bilis ng 3D sa mahinang phone.
 
 Tingnan din: [[Build - Daily]], [[Build - Safety and wellbeing]], [[System map]]

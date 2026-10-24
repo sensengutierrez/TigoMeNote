@@ -197,7 +197,7 @@
       }
       paintLike();
       // sound ng status
-      var sn = ov.querySelector(".st-snd"), S = window.TMN_SOUNDS, t = it.sound && S && S.get(it.sound.id);
+      var sn = ov.querySelector(".st-snd"), S = window.TMN_SOUNDS, t = it.sound && S && S.ensure(it.sound);
       sn.classList.toggle("hidden", !t);
       sn.innerHTML = t ? '<span class="sp-eq on" aria-hidden="true"><i></i><i></i><i></i></span><span translate="no">♪ ' + esc(t.name) + "</span>" : "";
       if (S) { if (t) S.play(t.id, { vol: it.sound.vol == null ? 0.8 : it.sound.vol }); else S.stop(); }

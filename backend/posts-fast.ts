@@ -5,6 +5,7 @@
 //          react, reactions, comments, addComment, deleteComment, bookmark, bookmarks, share, unrepost, shares,
 //          view, pin, liked, reposts, history
 // Moderation: caption at comment ay dumadaan sa moderation.ts (block o flag). Nakatago (hidden_at) = may-ari lang ang nakakakita.
+// Sound: sound-recipe.ts (TigoMeNote Sounds o sariling gawa sa Sound Maker, may kopya ng recipe).
 // Notifications: reaction, comment, repost at milestone (ilang post na) ay dumadaan sa notify.ts.
 // Explore activity (parang Komoot): posts.activity = { type, title, route [[lat,lng,ele]], stats, start_at }; puwedeng walang photo.
 // Storage: private bucket "post-media" — signed upload URL (pang-upload) at signed read URL (1 oras).
@@ -14,6 +15,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import { checkText, checkFor, blockMessage, logBlock, autoFlag } from "./moderation.ts";
 import { notify, unnotify } from "./notify.ts";
+import { resolveSound } from "./sound-recipe.ts";
 
 const db = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -209,18 +211,6 @@ async function createUpload(p: any, me: any) {
   return reply({ ok: true, uploads });
 }
 
-// Sound (TigoMeNote Sounds, gawa sa device): id lang at lakas, walang file
-// deno-lint-ignore no-explicit-any
-function cleanSound(s: any) {
-  if (!s || typeof s !== "object") return null;
-  const id = String(s.id ?? "");
-  if (!/^[a-z0-9-]{2,30}$/.test(id)) return null;
-  const n = (v: any, d: number) => { const x = Number(v); return Number.isFinite(x) ? Math.min(1, Math.max(0, Math.round(x * 100) / 100)) : d; };
-  const out: Record<string, unknown> = { id, vol: n(s.vol, 0.8) };
-  if (s.orig != null) out.orig = n(s.orig, 0.4);
-  return out;
-}
-
 // Explore activity: nililinis at kinukuwenta ulit ang layo (distance) dito sa server
 const ACT_TYPES = ["hike", "walk", "run", "bike", "drive", "other"];
 const MAX_ROUTE_POINTS = 1000;
@@ -271,7 +261,7 @@ async function createPost(p: any, me: any) {
   if (!publishAt) return fail("Invalid schedule date/time.");
   const media = Array.isArray(p.media) ? p.media.slice(0, MAX_MEDIA_PER_POST) : [];
   if (!media.length && !activity) return fail("No photo or video.");
-  const sound = cleanSound(p.sound);
+  const sound = await resolveSound(db, p.sound); // TigoMeNote Sounds o sariling gawa (Sound Maker)
 
   // Siguraduhing sa user na ito ang mga path at nandoon talaga ang files
   const prefix = `${me.id}/${clientId}/`;

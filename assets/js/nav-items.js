@@ -26,6 +26,7 @@ window.TMN_NAV = {
 
   // Ibaba ng menu (sidebar + hamburger lang, wala sa bottom tabs)
   more: [
+    { id: "sounds",   label: "Sound Maker", icon: "music", href: "app/sound-maker.html" },
     { id: "settings", label: "Settings", icon: "gear",    href: "app/settings.html" },
     { id: "reports",  label: "Reports",  icon: "flag",    href: "app/admin/reports.html", role: "Admin" },
     { id: "policies", label: "Policies", icon: "info",    href: "legal/index.html" }

@@ -75,6 +75,56 @@ export const SETS = [
   { id: "set-pinoy", name: "Pinoy pride", icon: "🇵🇭", wear: { hat: "salakot", body: "lei", hand: "flag-ph", buddy: "chick", backdrop: "island" } },
   { id: "set-gulf", name: "Gulf life", icon: "🇧🇭", wear: { face: "shades", hand: "flag-bh", buddy: "birdie", backdrop: "desert" } },
 ];
+// Bahay ni Tigo (room-ui.js): gamit, dingding at sahig. Kapareho ng ITEMS sa backend/pet-fast.ts (slot furn / wall / floor)
+export const HOME_TABS = [
+  { id: "furn", name: "Furniture", icon: "🛋️" },
+  { id: "wall", name: "Walls", icon: "🧱" },
+  { id: "floor", name: "Floors", icon: "🟫" },
+];
+export const HOME_ITEMS = [
+  { id: "bed", slot: "furn", name: "Bed", icon: "🛏️", price: 0, level: 1 },
+  { id: "rug", slot: "furn", name: "Round rug", icon: "⭕", price: 0, level: 1 },
+  { id: "plant", slot: "furn", name: "Plant", icon: "🪴", price: 0, level: 1 },
+  { id: "lamp", slot: "furn", name: "Floor lamp", icon: "💡", price: 0, level: 1 },
+  { id: "chair", slot: "furn", name: "Chair", icon: "🪑", price: 25, level: 1 },
+  { id: "table", slot: "furn", name: "Table", icon: "🍽️", price: 40, level: 1 },
+  { id: "banig", slot: "furn", name: "Banig mat", icon: "🧺", price: 30, level: 1 },
+  { id: "cactus", slot: "furn", name: "Cactus", icon: "🌵", price: 30, level: 1 },
+  { id: "toybox", slot: "furn", name: "Toy box", icon: "🧸", price: 40, level: 1 },
+  { id: "beanbag", slot: "furn", name: "Bean bag", icon: "🫘", price: 50, level: 2 },
+  { id: "fan", slot: "furn", name: "Electric fan", icon: "🌀", price: 60, level: 2 },
+  { id: "bookshelf", slot: "furn", name: "Bookshelf", icon: "📚", price: 70, level: 2 },
+  { id: "sofa", slot: "furn", name: "Sofa", icon: "🛋️", price: 90, level: 2 },
+  { id: "desk", slot: "furn", name: "Desk", icon: "🖥️", price: 80, level: 3 },
+  { id: "majlis", slot: "furn", name: "Majlis cushions", icon: "🕌", price: 100, level: 3 },
+  { id: "fridge", slot: "furn", name: "Fridge", icon: "🧊", price: 110, level: 3 },
+  { id: "tv", slot: "furn", name: "TV", icon: "📺", price: 120, level: 3 },
+  { id: "aquarium", slot: "furn", name: "Aquarium", icon: "🐠", price: 150, level: 4 },
+  { id: "piano", slot: "furn", name: "Piano", icon: "🎹", price: 200, level: 5 },
+  { id: "painting", slot: "furn", name: "Painting", icon: "🖼️", price: 40, level: 1, wall: true },
+  { id: "clock", slot: "furn", name: "Wall clock", icon: "🕰️", price: 35, level: 1, wall: true },
+  { id: "shelf", slot: "furn", name: "Wall shelf", icon: "🗄️", price: 30, level: 1, wall: true },
+  { id: "banner-ph", slot: "furn", name: "PH banner", icon: "🇵🇭", price: 20, level: 1, wall: true },
+  { id: "banner-bh", slot: "furn", name: "BH banner", icon: "🇧🇭", price: 20, level: 1, wall: true },
+  { id: "mirror", slot: "furn", name: "Mirror", icon: "🪞", price: 60, level: 2, wall: true },
+  { id: "garland", slot: "furn", name: "Star lights", icon: "✨", price: 80, level: 2, wall: true },
+  { id: "wall-cream", slot: "wall", name: "Cream", icon: "🤍", price: 0, level: 1, color: "#f6ecd9" },
+  { id: "wall-sky", slot: "wall", name: "Sky", icon: "🩵", price: 30, level: 1, color: "#cfe8ff" },
+  { id: "wall-mint", slot: "wall", name: "Mint", icon: "💚", price: 30, level: 1, color: "#cdf3e9" },
+  { id: "wall-blush", slot: "wall", name: "Blush", icon: "🩷", price: 30, level: 1, color: "#ffd9e4" },
+  { id: "wall-lilac", slot: "wall", name: "Lilac", icon: "💜", price: 40, level: 2, color: "#e5dcff" },
+  { id: "wall-sawali", slot: "wall", name: "Sawali", icon: "🎋", price: 60, level: 2, color: "#e2c48f" },
+  { id: "wall-stripes", slot: "wall", name: "Stripes", icon: "🍑", price: 60, level: 2, color: "#ffc9a8" },
+  { id: "wall-wood", slot: "wall", name: "Wood", icon: "🪵", price: 70, level: 3, color: "#c99b6d" },
+  { id: "wall-stars", slot: "wall", name: "Starry night", icon: "🌌", price: 80, level: 3, color: "#26306b" },
+  { id: "floor-planks", slot: "floor", name: "Wood planks", icon: "🪵", price: 0, level: 1, color: "#c58f5e" },
+  { id: "floor-tiles", slot: "floor", name: "Tiles", icon: "🔲", price: 40, level: 1, color: "#9ad2ff" },
+  { id: "floor-carpet", slot: "floor", name: "Carpet", icon: "🟪", price: 50, level: 2, color: "#b9a2ff" },
+  { id: "floor-bamboo", slot: "floor", name: "Bamboo", icon: "🎍", price: 60, level: 2, color: "#d8b878" },
+  { id: "floor-grass", slot: "floor", name: "Grass", icon: "🌿", price: 70, level: 3, color: "#8fd18a" },
+  { id: "floor-marble", slot: "floor", name: "Marble", icon: "🤍", price: 90, level: 4, color: "#f4f1ee" },
+];
+export const homeItem = (id) => HOME_ITEMS.find((i) => i.id === id) || null;
 export const item = (id) => ITEMS.find((i) => i.id === id) || null;
 
 // Growth journey: anong makukuha sa bawat level

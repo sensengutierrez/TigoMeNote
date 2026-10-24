@@ -1,11 +1,13 @@
 /* TigoMeNote · pages/tigo.js (app/tigo.html) — alagaan si Tigo (3D), lakad/takbo, closet, laro, journey, at kaibigang malapit
-   3D: tigo/pet-scene.js (+ pet-model, backdrops, buddies, outfit). Kontrol: tigo/controls.js (WASD/arrows + Space, joystick, swipe).
+   3D: tigo/pet-scene.js (+ pet-model, backdrops, buddies, outfit, camera-rig, sky-dome, room, furniture).
+   Kontrol: tigo/controls.js — kaliwang joystick = lakad, kanang joystick = camera (360° / tingala); 🎥 View, 🔍 Zoom, ⤒ Jump.
+   Bahay: lumakad sa pinto o pindutin ang 🏠 House → loob ng bahay; 🛠 Decorate = tigo/room-ui.js.
    UI: tigo/closet-ui.js, tigo/games-ui.js (Coin Rush, Pac-Tigo, Racing), tigo/journey-ui.js. Walang WebGL → 2D na sticker.
    Boses: tigo/voice.js + tigo/talk.js (nagsasalita parang baby; ⚙️ = Sound settings, naka-save sa device).
    Server: pet-fast (get, act, style, wear, buy, game, nearby, gather, visits). Stats: kinukuwenta rin dito para gumalaw ang bars. */
 (function () {
   var UI = window.TMN_UI, $ = function (id) { return document.getElementById(id); };
-  var pet = null, sc = null, ctl = null, busy = false, nearTimer = null, visitors = {}, firstNight = true, closet = null, playing = false, mods = {}, voice = null, talk = null, gameJump = null;
+  var pet = null, sc = null, ctl = null, decor = null, busy = false, nearTimer = null, visitors = {}, firstNight = true, closet = null, playing = false, mods = {}, voice = null, talk = null, gameJump = null;
   var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
   var SNACKS = [["🥖", "Pandesal"], ["🥭", "Mango"], ["🍚", "Rice"], ["🌴", "Dates"], ["🍧", "Halo-halo"], ["🍌", "Banana"]];
   var MOOD = { happy: ["😄", "Happy"], ok: ["🙂", "Okay"], sad: ["😢", "Sad"], sleepy: ["😴", "Sleepy"], sick: ["🤒", "Not well"] };
@@ -52,18 +54,20 @@
   async function start3d() {
     try {
       var m = await mod("pet-scene"), c = await mod("controls");
-      sc = m.createScene($("tgCanvas"), { reduced: reduced, pet: { color: pet.color }, backdrop: (pet.outfit || {}).backdrop });
+      sc = m.createScene($("tgCanvas"), { reduced: reduced, pet: { color: pet.color }, backdrop: (pet.outfit || {}).backdrop, el: $("stage"), onDoor: doorBar,
+        onRoom: function (on) { if (!on && decor) decor.close(); if (on) say("home", { still: true }); } });
+      sc.setRoom(pet.room);
       dress(pet.outfit, pet.color); paint();
       var cv = $("tgCanvas");
       ctl = c.createControls({
-        stage: $("stage"), pad: $("tgPad"), jumpBtn: $("tgJump"),
+        stage: $("stage"), pad: $("tgPad"), lookPad: $("tgLook"), jumpBtn: $("tgJump"),
         onJump: function () { if (gameJump) return gameJump(); if (!sc.isInside()) { sc.jump(); if (voice) voice.sfx("jump"); } },
         onTap: function (e) {
           var r = cv.getBoundingClientRect();
           if (!playing && sc.pick(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1))) act("pet");
         },
       });
-      sc.setInput(ctl.state);
+      sc.setInput(ctl.state); sc.setLook(ctl.look);
       cv.addEventListener("pointermove", function (e) {
         if (e.pointerType !== "mouse") return;
         var r = cv.getBoundingClientRect();
@@ -73,6 +77,51 @@
     } catch (e) { console.warn("3D off", e); fallback(); }
     startVoice();
   }
+  // ---------- camera: View at Zoom ----------
+  var VIEW = { follow: ["🎥", "Follow view"], top: ["🗺️", "Top view"], close: ["🔍", "Close-up"] };
+  $("tgView").addEventListener("click", function () {
+    if (!sc) return; var v = sc.rig.next(), x = VIEW[v];
+    this.textContent = x[0]; this.setAttribute("aria-label", "Camera view: " + x[1]); toast(x[0] + " " + x[1]);
+  });
+  $("tgZoom").addEventListener("click", function () {
+    if (!sc) return; var z = sc.rig.zoomStep();
+    toast(z === "near" ? "🔍 Zoom in" : z === "far" ? "🔭 Zoom out" : "🎯 Normal");
+  });
+  // ---------- bahay: pasok, labas, Decorate ----------
+  function doorBar(st) {
+    var bar = $("tgDoorBar");
+    if (st === "near") bar.innerHTML = '<button type="button" class="go" data-door="in">🏠 Go inside</button>';
+    else if (st === "room") bar.innerHTML = '<button type="button" data-door="out">🚪 Go outside</button><button type="button" class="go" data-door="decor">🛠 Decorate</button>';
+    bar.classList.toggle("hidden", !st || playing);
+  }
+  $("tgDoorBar").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-door]"); if (!b || !sc) return;
+    var d = b.dataset.door;
+    if (d === "in") goHome();
+    if (d === "out") { if ((live() || {}).asleep) { toast("Shh… Tigo is sleeping. Wake Tigo first."); return; } sc.leaveRoom(); }
+    if (d === "decor") openDecor();
+  });
+  function goHome() {
+    if (!sc) { toast("The house needs 3D (WebGL) on this device."); return; }
+    if (sc.inRoom()) return;
+    if ((live() || {}).asleep) { toast("Tigo is already sleeping inside 🌙"); return; }
+    sc.enterRoom();
+    if (matchMedia("(max-width: 999px)").matches) $("stage").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  async function openDecor() {
+    if (decor || !sc || !sc.inRoom()) return;
+    if (closet) closet.close();
+    var r = await mod("room-ui");
+    document.body.classList.add("tg-closet-on");
+    decor = r.openRoomEditor({
+      host: $("tgSide"), stage: $("stage"), canvas: $("tgCanvas"), sc: sc, pet: pet, esc: UI.esc,
+      call: function (a, b) { return TMN_API.call("pet", a, b); },
+      onPet: function (p) { pet = p; paint(); },
+      onClose: function () { decor = null; document.body.classList.remove("tg-closet-on"); },
+    });
+    if (matchMedia("(max-width: 999px)").matches) $("stage").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   // ---------- boses ni Tigo ----------
   async function startVoice() {
     try {
@@ -163,6 +212,7 @@
   }
   async function openCloset() {
     if (closet) return;
+    if (decor) decor.close();
     var c = await mod("closet-ui");
     document.body.classList.add("tg-closet-on");
     closet = c.openCloset({
@@ -189,6 +239,8 @@
     if (p.asleep) { toast("Shh… Tigo is sleeping."); return; }
     if (p.energy < 12) { toast("Tigo is too tired to play. Let Tigo sleep."); return; }
     playing = true;
+    if (decor) decor.close();
+    $("tgDoorBar").classList.add("hidden");
     $("stage").scrollIntoView({ behavior: "smooth", block: "center" });
     var g = await mod("games-ui");
     if (talk) talk.idle(false);
@@ -212,6 +264,7 @@
     if (a === "closet") return openCloset();
     if (a === "games") return openGames();
     if (a === "journey") return openJourney();
+    if (a === "house") return goHome();
     act(a);
   });
   $("tgName").addEventListener("click", openCloset);
@@ -268,6 +321,7 @@
       pet = r.pet; paint();
       var f = r.friend;
       if (sc) {
+        if (sc.inRoom() && !(live() || {}).asleep) sc.leaveRoom();
         if (!visitors[b.dataset.gather]) {
           var v0 = visitors[b.dataset.gather] = sc.add({ color: f.pet.color });
           var o = f.pet.outfit || (f.pet.gear && f.pet.gear !== "none" ? { hat: f.pet.gear } : {});
@@ -287,6 +341,7 @@
   var TOG = { dance: "💃 Dance party!", highfive: "🙌 High five!", chase: "🏃 Habulan! Catch them!", spin: "🔄 Ikot-ikot!", bow: "🙇 Thank you, friend!" };
   function together(kind) {
     if (!sc || playing || sc.isShowing()) return;
+    if (sc.inRoom()) { toast("Go outside to play together 🏝️"); return; }
     var sec = sc.together(kind); if (!sec) return;
     say(kind === "dance" ? "dance" : kind === "bow" ? "Thank you, friend!" : kind === "highfive" ? "High five!" : kind === "chase" ? "Catch me!" : "Wheee!");
     toast(TOG[kind] || "");
@@ -321,7 +376,7 @@
     setInterval(paint, 30000);
     var h = new Date().getHours(), touch = matchMedia("(pointer: coarse)").matches;
     setTimeout(function () { toast((h < 12 ? "Good morning" : h < 18 ? "Hi" : "Good evening") + "! " + pet.name + " missed you 💛"); }, 900);
-    if (!touch) setTimeout(function () { toast("Tip: W A S D / arrow keys to walk, Space to jump"); }, 4200);
+    setTimeout(function () { toast(touch ? "Tip: left stick = walk · right stick = look around 👀" : "Tip: W A S D to walk · drag to look around · Q / E to turn"); }, 4200);
   }
   init();
 })();

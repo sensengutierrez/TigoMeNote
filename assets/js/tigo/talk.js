@@ -23,6 +23,7 @@ const LINES = {
   sleepy: ["So sleepy…", "Can I nap?"],
   icky: ["I feel icky…", "Bath time?"],
   happy: ["La la la~", "I love you!", "Today is fun!", "Hehe!"],
+  home: ["Home sweet home!", "My bahay!", "Welcome to my house!"],
   jump: ["Hop!", "Boing!"],
 };
 const pick = (a) => a[(Math.random() * a.length) | 0];

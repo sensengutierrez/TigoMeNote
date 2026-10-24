@@ -6,10 +6,15 @@
      TMN_SOUNDS.playing()                  → id ng tumutugtog (o null)
      TMN_SOUNDS.suggest(features)          → mga track na pinakabagay, una ang pinakamahusay
      TMN_SOUNDS.analyze(blob|canvas|video) → { brightness, saturation, warmth, contrast, hue, hour, ... }
-     TMN_SOUNDS.render(id, seconds)        → Promise<AudioBuffer> (hal. para isama sa video)
+     TMN_SOUNDS.render(id|track, seconds)  → Promise<AudioBuffer> (hal. para isama sa video o i-download)
      TMN_SOUNDS.local() / region()         → Local sounds (Pilipinas / Gulf) ayon sa time zone at wika ng device
      TMN_SOUNDS.fresh()                    → mga bagong tunog ("New")
      TMN_SOUNDS.chip(sound)                → html ng "♪ Golden Hour" na button (tap = play/stop, sa kahit anong page)
+     Sound Maker (sariling gawa ng user, id "u-xxxxxxxx"): ang sound ng post ay may kasamang recipe
+     TMN_SOUNDS.ensure(sound)              → irehistro ang recipe (kung meron) bago i-play/get; ibinabalik ang track
+     TMN_SOUNDS.fromRecipe(r, id)          → track mula sa recipe · TMN_SOUNDS.preview(track) → tugtugin ang ginagawa pa lang
+     TMN_SOUNDS.position()                 → { bar, step } ng tumutugtog ngayon (para sa playhead ng Sound Maker)
+     TMN_SOUNDS.SCALES / CHORDS / LEADS     → mga pagpipilian
    Kailangan ng tap muna ng user bago tumunog (patakaran ng browser). */
 (function () {
   // ---------- mga track ----------
@@ -76,7 +81,28 @@
   var SCALES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10], dorian: [0, 2, 3, 5, 7, 9, 10], hijaz: [0, 1, 4, 5, 7, 8, 10] };
   var REGIONS = { ph: "Philippines", gulf: "Gulf" };
 
-  function get(id) { return TRACKS.filter(function (t) { return t.id === id; })[0] || null; }
+  var CUSTOM = {}; // sariling gawa (Sound Maker) at "draft" na ginagawa pa lang
+  function get(id) { return TRACKS.filter(function (t) { return t.id === id; })[0] || CUSTOM[id] || null; }
+  var CHORDS = ["pad", "keys", "pluck", "marimba", "stab", "guitar", "drone"], LEADS = ["bell", "keys", "marimba", "pluck", "lead", "brass", "oud", "arp", "none"];
+  function fromRecipe(r, id) {
+    r = r || {};
+    var st = function (v) { return typeof v === "string" && /^[x.]{16}$/.test(v) ? v : null; }, dr = null;
+    if (r.drums) ["k", "s", "h", "p", "c", "d", "t"].forEach(function (k) { var v = st(r.drums[k]); if (v) { dr = dr || {}; dr[k] = v; } });
+    var n = function (v, lo, hi, d) { v = Number(v); return isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+    return {
+      id: id || r.id || "draft", custom: true, by: r.by || "", name: String(r.name || "My sound").slice(0, 30),
+      mood: r.mood ? String(r.mood).slice(0, 30) : r.by ? "Made by @" + r.by : "Made with Sound Maker",
+      bpm: Math.round(n(r.bpm, 60, 160, 100)), root: Math.round(n(r.root, 48, 67, 60)), scale: SCALES[r.scale] ? r.scale : "major",
+      prog: (Array.isArray(r.prog) ? r.prog : [0, 4, 5, 3]).slice(0, 4).map(function (x) { return Math.round(n(x, 0, 6, 0)); }),
+      drums: dr, bass: st(r.bass) || "x.......x.......", chord: CHORDS.indexOf(r.chord) > -1 ? r.chord : "keys", lead: LEADS.indexOf(r.lead) > -1 ? r.lead : "bell",
+      swing: n(r.swing, 0, 0.3, 0), rain: !!r.rain, crackle: !!r.crackle, seed: String(r.seed || "tigo"), tags: {}
+    };
+  }
+  function ensure(sound) {
+    if (!sound || !sound.id) return null;
+    if (sound.recipe && /^u-[a-z0-9]{8}$/.test(sound.id) && !CUSTOM[sound.id]) CUSTOM[sound.id] = fromRecipe(sound.recipe, sound.id);
+    return get(sound.id);
+  }
   function hz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
   function note(t, degree, octave) {
     var sc = SCALES[t.scale], n = sc.length, d = ((degree % n) + n) % n;
@@ -236,7 +262,7 @@
     };
 
     var step = 60 / t.bpm / 4 * (t.half ? 2 : 1);
-    var R = rng(t.id), melody = [], walk = 4;
+    var R = rng(t.seed || t.id), melody = [], walk = 4;
     // 2 bar na melody (paulit-ulit, may maliit na pagbabago sa ika-2 ulit)
     for (var b = 0; b < 4; b++) {
       var tones = chordNotes(t, t.prog[b]);
@@ -278,6 +304,7 @@
       if (t.chord === "stab" && (s === 2 || s === 6 || s === 10 || s === 14)) I.stab(at, tones);
       if (t.chord === "keys" && s === 8 && t.bpm > 80) I.keys(at, [tones[1] + 12], step * 6);
       // lead
+      if (t.lead === "none") return;
       if (t.lead === "arp") { I.pluck(at, [tones[s % 3] + 12]); return; }
       var mn = melody[bar * 16 + s];
       if (mn === null || mn === undefined) return;
@@ -307,15 +334,16 @@
     if (!t || !ctx) return false;
     var out = ctx.createGain(); out.gain.value = 0.0001; out.connect(ctx.destination);
     out.gain.exponentialRampToValueAtTime(Math.max(0.0002, o.vol == null ? 0.8 : o.vol), ctx.currentTime + 0.4);
-    var eng = Engine(ctx, out, t), n = 0, next = ctx.currentTime + 0.08;
+    var eng = Engine(ctx, out, t), n = 0, next = ctx.currentTime + 0.08, q = [];
     var timer = setInterval(function () {
       while (next < ctx.currentTime + 0.25) {
         var bar = Math.floor(n / 16) % 4, s = n % 16, loop = Math.floor(n / 64);
         eng.playStep(bar, s, next, loop);
+        q.push([next, bar, s]); if (q.length > 24) q.shift();
         next += eng.step; n++;
       }
     }, 50);
-    live = { id: id, out: out, timer: timer };
+    live = { id: id, out: out, timer: timer, q: q };
     document.dispatchEvent(new CustomEvent("tmn:sound", { detail: { id: id } }));
     return true;
   }
@@ -327,12 +355,19 @@
     setTimeout(function () { try { l.out.disconnect(); } catch (e) {} }, 1500);
     document.dispatchEvent(new CustomEvent("tmn:sound", { detail: { id: null } }));
   }
+  function position() {
+    if (!live || !ac) return null;
+    var now = ac.currentTime, hit = null;
+    for (var i = 0; i < live.q.length; i++) if (live.q[i][0] <= now) hit = live.q[i];
+    return hit ? { bar: hit[1], step: hit[2] } : null;
+  }
+  function preview(track, o) { CUSTOM.draft = Object.assign({}, track, { id: "draft" }); return play("draft", o); }
   function setVolume(v) { if (live && ac) live.out.gain.setTargetAtTime(Math.max(0.0002, v), ac.currentTime, 0.05); }
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") stop(); });
 
   // Offline (hal. para isama sa video o i-download)
   function render(id, seconds) {
-    var t = get(id), O = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    var t = typeof id === "object" ? id : get(id), O = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     if (!t || !O) return Promise.reject(new Error("Sound isn't available on this device."));
     var rate = 44100, ctx = new O(2, Math.ceil(rate * seconds), rate);
     var eng = Engine(ctx, ctx.destination, t), n = 0, at = 0.02;
@@ -432,7 +467,7 @@
   // ---------- ♪ chip sa post card / viewer ----------
   function esc(x) { return String(x).replace(/[&<>"']/g, function (c) { return "&#" + c.charCodeAt(0) + ";"; }); }
   function chip(sound) {
-    var t = sound && get(sound.id);
+    var t = ensure(sound);
     if (!t) return "";
     var on = live && live.id === t.id;
     return '<button type="button" class="snd-chip' + (on ? " playing" : "") + '" data-snd="' + t.id + '" data-vol="' + (sound.vol == null ? 0.8 : sound.vol) + '" aria-pressed="' + on + '" aria-label="Play sound: ' + esc(t.name) + '">' +
@@ -453,7 +488,8 @@
   // Bagong tunog (≤ 45 araw mula nang idagdag) — para sa "New" sa picker
   function fresh() { var now = Date.now(); return TRACKS.filter(function (t) { return t.added && now - new Date(t.added).getTime() < 45 * 86400000; }); }
   window.TMN_SOUNDS = {
-    chip: chip, fresh: fresh,
+    chip: chip, fresh: fresh, ensure: ensure, fromRecipe: fromRecipe, preview: preview, position: position,
+    SCALES: Object.keys(SCALES), CHORDS: CHORDS, LEADS: LEADS,
     list: TRACKS, get: get, region: region, local: local, REGIONS: REGIONS, play: play, stop: stop, setVolume: setVolume,
     playing: function () { return live ? live.id : null; },
     render: render, analyze: analyze, suggest: suggest

@@ -8,6 +8,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import { checkText, checkFor, blockMessage, logBlock, autoFlag } from "./moderation.ts";
 import { notify, unnotify } from "./notify.ts";
+import { resolveSound, USER_SOUND_ID } from "./sound-recipe.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 
@@ -247,7 +248,7 @@ async function createStory(p: any, me: any) {
   const v = checkFor(me, p.caption);
   if (!v.ok && v.level === "block") { await logBlock(db, me.id, v, "status caption"); return fail(blockMessage(v.category), 422, { blocked: true, category: v.category }); }
   const { data, error } = await db.from("stories").insert({
-    user_id: me.id, kind, path, mime: String(p.mime || "image/jpeg"), w: Number(p.w) || null, h: Number(p.h) || null, sound: cleanSound(p.sound),
+    user_id: me.id, kind, path, mime: String(p.mime || "image/jpeg"), w: Number(p.w) || null, h: Number(p.h) || null, sound: await resolveSound(db, p.sound),
     duration: Number(p.duration) || null, caption: String(p.caption ?? "").slice(0, 200),
     expires_at: new Date(Date.now() + STORY_HOURS * 3600_000).toISOString(),
   }).select("id").single();
@@ -290,20 +291,15 @@ async function soundTrends(_p: any, _me: any) {
     db.from("stories").select("sound").not("sound", "is", null).gte("created_at", since).limit(3000),
   ]);
   const count: Record<string, number> = {};
-  [...(ps ?? []), ...(ss ?? [])].forEach((r) => { const id = r.sound && r.sound.id; if (id) count[id] = (count[id] || 0) + 1; });
-  const list = Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id, uses]) => ({ id, uses }));
-  return reply({ ok: true, list });
-}
-// deno-lint-ignore no-explicit-any
-function cleanSound(s: any) {
-  if (!s || typeof s !== "object") return null;
-  const id = String(s.id ?? "");
-  if (!/^[a-z0-9-]{2,30}$/.test(id)) return null;
   // deno-lint-ignore no-explicit-any
-  const n = (v: any, d: number) => { const x = Number(v); return Number.isFinite(x) ? Math.min(1, Math.max(0, Math.round(x * 100) / 100)) : d; };
-  const out: Record<string, unknown> = { id, vol: n(s.vol, 0.8) };
-  if (s.orig != null) out.orig = n(s.orig, 0.4);
-  return out;
+  const recipe: Record<string, any> = {}; // sariling gawang tunog: kasama ang recipe para matugtog ng iba
+  [...(ps ?? []), ...(ss ?? [])].forEach((r) => {
+    const id = r.sound && r.sound.id; if (!id) return;
+    count[id] = (count[id] || 0) + 1;
+    if (USER_SOUND_ID.test(id) && r.sound.recipe && !recipe[id]) recipe[id] = r.sound.recipe;
+  });
+  const list = Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id, uses]) => (recipe[id] ? { id, uses, recipe: recipe[id] } : { id, uses }));
+  return reply({ ok: true, list });
 }
 // deno-lint-ignore no-explicit-any
 async function storyViewers(p: any, me: any) {

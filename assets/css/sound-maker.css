@@ -1,0 +1,76 @@
+/* TigoMeNote · sound-maker.css — Sound Maker (components/sound-maker.js) + "My sounds" sa sound picker + page na app/sound-maker.html */
+.sm { display: grid; gap: 14px; }
+.sm-top { display: flex; align-items: center; gap: 10px; }
+.sm-play { flex: none; width: 48px; height: 48px; border-radius: 50%; border: 0; background: #ff5a36; color: #fff; font-size: 20px; cursor: pointer; box-shadow: 0 6px 16px rgba(255,90,54,.35); }
+.sm-play:active { transform: scale(.94); }
+.sm-name { flex: 1; min-width: 0; }
+.sm-name .input { width: 100%; font-weight: 600; }
+.sm-vibes { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.sm-vibes::-webkit-scrollbar { display: none; }
+.sm-vibes .chip { flex: none; white-space: nowrap; }
+.sm-sec { display: grid; gap: 10px; padding: 12px; border-radius: 18px; background: var(--surface-2); }
+.sm-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.sm-h h4 { margin: 0; font-size: 15px; }
+.sm-bpm { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+.sm-bpm input { width: 120px; accent-color: #ff5a36; }
+.sm-bpm b { font-variant-numeric: tabular-nums; min-width: 26px; text-align: right; }
+
+/* grid ng beat: 16 hakbang, may maliit na puwang bawat 4 */
+.sm-grid { display: grid; gap: 5px; }
+.sm-row { display: grid; grid-template-columns: 52px repeat(16, minmax(0, 1fr)); gap: 3px; align-items: center; }
+.sm-lab { display: grid; justify-items: center; font-size: 17px; line-height: 1.05; }
+.sm-lab small { font-size: 9.5px; font-weight: 700; color: var(--text-2, var(--muted)); }
+.sm-cell { aspect-ratio: 1; min-width: 0; border-radius: 6px; border: 0; padding: 0; background: color-mix(in srgb, var(--text) 9%, transparent); cursor: pointer; transition: transform .06s, background .1s; }
+.sm-cell.beat { background: color-mix(in srgb, var(--text) 15%, transparent); }
+.sm-cell:nth-child(4n+2):not(:nth-child(2)) { margin-left: 3px; }
+.sm-cell.on { background: #ff5a36; box-shadow: inset 0 -3px 0 rgba(0,0,0,.18); }
+.sm-bass .sm-cell.on { background: #7c5cff; }
+.sm-row:nth-child(2) .sm-cell.on { background: #ffb020; } .sm-row:nth-child(3) .sm-cell.on { background: #2bb3a3; }
+.sm-row:nth-child(4) .sm-cell.on { background: #f06aa7; } .sm-row:nth-child(5) .sm-cell.on, .sm-row:nth-child(6) .sm-cell.on { background: #c8873a; }
+.sm-cell.now { outline: 2px solid var(--text); outline-offset: -2px; transform: scale(1.06); }
+.sm-cell:active { transform: scale(.9); }
+.sm-tools { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.sm-seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.sm-seg button { padding: 9px 4px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.sm-seg button[aria-checked="true"] { background: #ff5a36; border-color: #ff5a36; color: #fff; }
+.sm-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.sm-fields .field { display: grid; gap: 4px; margin: 0; }
+.sm-prog { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.sm-prog > .pe-label { flex-basis: 100%; }
+.sm-prog select { width: 64px; }
+.sm-presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.sm-presets .chip { font-size: 12px; }
+.sm-extra { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.sm-tog { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.sm-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sm-foot p { flex-basis: 100%; margin: 0; }
+.sm-del[data-sure] { background: #e8264f; color: #fff; border-color: #e8264f; }
+.sm-half .sm-row { grid-template-columns: 44px repeat(8, minmax(0, 1fr)); gap: 4px; }
+.sm-half + .sm-half { margin-top: 6px; }
+.sm-steps { font-weight: 700; }
+@media (max-width: 600px) {
+  .sm-lab small { font-size: 9px; }
+  .sm-cell { border-radius: 8px; }
+  .sm-fields { grid-template-columns: 1fr 1fr; }
+  .sm-seg { grid-template-columns: 1fr 1fr; }
+}
+.modal-sm .modal-body { padding-top: 6px; }
+
+/* "My sounds" sa sound picker */
+.sp-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sp-h h4 { margin: 0; }
+
+/* page: app/sound-maker.html */
+.smp-layout { display: grid; gap: 16px; }
+@media (min-width: 1000px) { .smp-layout { grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); align-items: start; } .smp-lib { position: sticky; top: 24px; } }
+.smp-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.smp-head h1 { margin: 0; font-size: 26px; }
+.smp-head p { margin: 2px 0 0; }
+.smp-lib { display: grid; gap: 10px; }
+.smp-lib h3 { margin: 0; font-size: 16px; }
+.smp-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--r-md, 14px); background: var(--surface-2); }
+.smp-item.on { outline: 2px solid #ff5a36; }
+.smp-item > span { flex: 1; min-width: 0; display: grid; }
+.smp-item b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.smp-item .sp-play { flex: none; }
