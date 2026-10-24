@@ -317,3 +317,8 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "sa web desktop ang laki… bakit walang like heart sa status… makikita mo sino ng view at ilan… pag ng upload ako sa web bakit walang auto ng sounds… new sound trending sounds".
 - **Files:** `sql/059-story-likes-sounds.sql` (story_views.liked_at, stories.sound, notification `story_like`), `backend/social-fast.ts` (likeStory, soundTrends, sound sa createStory, views/likes/faces), `backend/notify.ts` (story_like), `components/stories.js`, `components/sound-picker.js`, `sounds.js`, `pages/notifications.js`, `css/social.css`, `css/sounds.css`, `css/pages/explore.css`, `css/pages/notifications.css`, `config.js` (0.11.12), `lang/fil.js`, `lang/ar.js`
 - **Paano:** Ang Trending ay bilang lang ng TigoMeNote Sounds (walang kantang may copyright gaya ng sa TikTok/FB/IG).
+
+## 2026-10-24 · #41 Walang asul na highlight kapag nag-tap sa phone
+- **Ano:** Kapag nag-tap sa photo, status, button o nag-swipe, wala nang asul na highlight o asul na "select". Hindi ginalaw ang long-press sa link (Open in new tab) at ang pag-select ng text sa caption, comments at chat. Sa keyboard (desktop) may outline pa rin para sa accessibility.
+- **Bakit:** Ayon kay Bench: "pix mo lang ung pag ng click ako ng highlights ng blue… pero wag mo tanggalin ung longpress tapos newtab".
+- **Files:** `assets/css/base.css`, `config.js` (0.11.13)

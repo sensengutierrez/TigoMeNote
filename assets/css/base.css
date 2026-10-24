@@ -22,6 +22,15 @@ img, svg, video { display: block; max-width: 100%; }
 button, input, textarea, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+/* Phone: walang asul na highlight kapag nag-tap (link, button, photo, status), at walang asul na "select" kapag nag-swipe.
+   Hindi ginalaw ang long-press sa link (Open in new tab) at ang pag-select ng text sa caption, comments at chat. */
+html { -webkit-tap-highlight-color: transparent; }
+:focus:not(:focus-visible) { outline: none; }
+button, [role="button"], [role="tab"], nav, .sidebar, .bottom-nav, .topbar,
+img, video, canvas, svg, .pcard-media, .pc-track, .st-bar, .st-view, .st-ring, .mv, .vp, .tg-stage, .avatar, .chip, .segmented {
+  -webkit-user-select: none; user-select: none;
+}
+img { -webkit-user-drag: none; }
 ::selection { background: var(--accent); color: #fff; }
 
 .muted { color: var(--text-2); }
