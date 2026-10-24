@@ -104,13 +104,37 @@ body.tg-full { overflow: hidden; }
 .tg-stage:has(.tg-together:not(.hidden)) .tg-toast { bottom: 96px; }
 .tg-stage.playing .tg-together { display: none; }
 @media (pointer: coarse) {
+  .tg-hud { top: 64px; gap: 5px; } .tg-hud span { padding: 6px 10px; font-size: 13.5px; }
+  .tg-stage.playing { height: min(74vh, 720px); } .tg-stage.playing #tgFull { visibility: hidden; }
   .tg-together { bottom: 136px; } .tg-together button { min-width: 44px; font-size: 20px; }
   .tg-stage.live:has(.tg-together:not(.hidden)) .tg-toast { bottom: 214px; }
 }
 
+/* ---------- boses: speech bubble + sound settings ---------- */
+.tg-sound-btn { top: 110px; font-size: 18px; }
+.tg-stage:not(.live) .tg-sound-btn { display: block; top: 62px; }
+.tg-bubble { position: absolute; left: 0; top: 0; z-index: 2; max-width: 220px; padding: 8px 14px; border-radius: 18px; background: #fff; color: #1b1b1f;
+  font: 700 15px/1.25 var(--font-display, inherit); box-shadow: 0 6px 18px rgba(0,0,0,.14); pointer-events: none; opacity: 0; white-space: nowrap; }
+.tg-bubble::after { content: ""; position: absolute; left: 50%; bottom: -7px; margin-left: -7px; border: 7px solid transparent; border-bottom: 0; border-top-color: #fff; }
+.tg-bubble.show { opacity: 1; animation: tg-bub .25s ease; }
+.tg-bubble.flat { left: 50%; top: 22%; transform: translate(-50%, -100%); }
+@keyframes tg-bub { from { scale: .6; } to { scale: 1; } }
+.tg-sound { display: grid; gap: 14px; }
+.tg-sw { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tg-sw > span { display: grid; gap: 2px; }
+.tg-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.tg-seg button { padding: 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
+.tg-seg button[aria-checked="true"] { background: #ff5a36; border-color: #ff5a36; color: #fff; }
+.tg-range { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; font-weight: 600; font-size: 14px; }
+.tg-range input { grid-column: 1 / -1; grid-row: 2; width: 100%; accent-color: #ff5a36; }
+.tg-range b { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted, #777); }
+.tg-quit { position: absolute; right: 14px; top: 14px; z-index: 4; width: 40px; height: 40px; border-radius: 12px; border: 0; background: rgba(20,20,24,.75); color: #fff; font-size: 18px; cursor: pointer; }
+.tg-stage.playing .tg-top .tg-top-r, .tg-stage.playing .tg-sound-btn, .tg-stage.playing .tg-bubble { visibility: hidden; }
+.tg-stage.game-race .tg-pad .knob { border-radius: 12px; }
+
 /* ---------- Coin Rush ---------- */
 .tg-hud { position: absolute; top: 62px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 3; }
-.tg-hud span { padding: 8px 14px; border-radius: 999px; background: rgba(20,20,24,.78); color: #fff; font-weight: 800; font-variant-numeric: tabular-nums; font-size: 16px; }
+.tg-hud span { white-space: nowrap; padding: 8px 14px; border-radius: 999px; background: rgba(20,20,24,.78); color: #fff; font-weight: 800; font-variant-numeric: tabular-nums; font-size: 16px; }
 .tg-count { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; z-index: 3; font: 800 72px/1 var(--font-display); color: #fff; text-shadow: 0 4px 20px rgba(0,0,0,.35); }
 .tg-count.pop { animation: tg-pop .6s ease; }
 @keyframes tg-pop { 0% { transform: scale(.4); opacity: 0; } 50% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); } }

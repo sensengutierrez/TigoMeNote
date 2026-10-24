@@ -1,7 +1,7 @@
 // TigoMeNote · pet-fast (Supabase Edge Function, verify_jwt = off) — si "Tigo", ang virtual pet ng bawat user
 // Isang trabaho lang: alagaan si Tigo (stats na bumababa habang lumilipas ang oras) at ang "Gather" ng magkakalapit na kaibigan.
 // Actions (session token): get, act { do: feed|play|clean|pet|sleep|wake|daily }, style { name, color },
-//                          wear { outfit }, buy { id }, game { score, ms } (Coin Rush),
+//                          wear { outfit }, buy { id }, game { kind: coins|pac|race, score, ms },
 //                          nearby { on, lat, lng }, gather { user_id }, visits
 // Kaligtasan: ang "nearby" ay para lang sa magkaibigan (mutual follow o Family/Friends circle), kapag NAKA-ON sa dalawa,
 //             distansya lang ang ibinabalik (hindi ang lokasyon), at nawawala pagkalipas ng 20 minuto.
@@ -28,7 +28,7 @@ const ITEMS: Record<string, [string, number, number]> = {
 const SLOTS = ["hat", "face", "body", "hand", "buddy", "backdrop"];
 // Coins bawat bagong level (+ dagdag sa Lv8 at Lv9). Lv10 = golden glow.
 const levelCoins = (l: number) => 20 + (l === 8 ? 100 : l === 9 ? 150 : 0);
-const GAME = { perDay: 10, maxCoins: 30, minGapMs: 20_000 };
+const GAME = { perDay: 10, maxCoins: 30, minGapMs: 20_000, kinds: ["coins", "pac", "race"] }; // bawat laro: 10 beses bawat araw
 // Bawat oras: gaano bumababa (gising / tulog)
 const RATE = { hunger: [6, 3], joy: [4, 2], energy: [5, -14], clean: [3, 1] };
 
@@ -207,7 +207,7 @@ async function buy(p: any, me: any) {
   return reply({ ok: true, pet: shape(await store(pet)) });
 }
 
-// Coin Rush: may limit bawat araw at bawat laro (hindi puwedeng dayain ang dami)
+// Mga laro (Coin Rush, Pac-Tigo, Racing): may limit bawat araw at bawat laro (hindi puwedeng dayain ang dami)
 // deno-lint-ignore no-explicit-any
 async function game(p: any, me: any) {
   const pet = decay(await load(me.id));
@@ -217,7 +217,8 @@ async function game(p: any, me: any) {
   if (c.lastGame && Date.now() - c.lastGame < GAME.minGapMs) return fail("Wait a moment before the next run.", 429);
   const score = Math.max(0, Math.floor(Number(p.score) || 0)), ms = Math.max(0, Number(p.ms) || 0);
   const fair = Math.min(score, GAME.maxCoins, Math.ceil((ms / 1000) * 1.6));
-  const okRun = count(pet, "game", GAME.perDay);
+  const kind = GAME.kinds.includes(p.kind) ? p.kind : "coins";
+  const okRun = count(pet, kind === "coins" ? "game" : "game_" + kind, GAME.perDay);
   pet.counters.lastGame = Date.now();
   const before = levelOf(pet.xp);
   const won = okRun ? fair : 0;

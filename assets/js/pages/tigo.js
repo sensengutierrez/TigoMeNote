@@ -1,10 +1,11 @@
 /* TigoMeNote · pages/tigo.js (app/tigo.html) — alagaan si Tigo (3D), lakad/takbo, closet, laro, journey, at kaibigang malapit
    3D: tigo/pet-scene.js (+ pet-model, backdrops, buddies, outfit). Kontrol: tigo/controls.js (WASD/arrows + Space, joystick, swipe).
-   UI: tigo/closet-ui.js, tigo/games-ui.js (Coin Rush), tigo/journey-ui.js. Walang WebGL → 2D na sticker.
+   UI: tigo/closet-ui.js, tigo/games-ui.js (Coin Rush, Pac-Tigo, Racing), tigo/journey-ui.js. Walang WebGL → 2D na sticker.
+   Boses: tigo/voice.js + tigo/talk.js (nagsasalita parang baby; ⚙️ = Sound settings, naka-save sa device).
    Server: pet-fast (get, act, style, wear, buy, game, nearby, gather, visits). Stats: kinukuwenta rin dito para gumalaw ang bars. */
 (function () {
   var UI = window.TMN_UI, $ = function (id) { return document.getElementById(id); };
-  var pet = null, sc = null, ctl = null, busy = false, nearTimer = null, visitors = {}, firstNight = true, closet = null, playing = false, mods = {};
+  var pet = null, sc = null, ctl = null, busy = false, nearTimer = null, visitors = {}, firstNight = true, closet = null, playing = false, mods = {}, voice = null, talk = null, gameJump = null;
   var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
   var SNACKS = [["🥖", "Pandesal"], ["🥭", "Mango"], ["🍚", "Rice"], ["🌴", "Dates"], ["🍧", "Halo-halo"], ["🍌", "Banana"]];
   var MOOD = { happy: ["😄", "Happy"], ok: ["🙂", "Okay"], sad: ["😢", "Sad"], sleepy: ["😴", "Sleepy"], sick: ["🤒", "Not well"] };
@@ -56,7 +57,7 @@
       var cv = $("tgCanvas");
       ctl = c.createControls({
         stage: $("stage"), pad: $("tgPad"), jumpBtn: $("tgJump"),
-        onJump: function () { sc.jump(); },
+        onJump: function () { if (gameJump) return gameJump(); if (!sc.isInside()) { sc.jump(); if (voice) voice.sfx("jump"); } },
         onTap: function (e) {
           var r = cv.getBoundingClientRect();
           if (!playing && sc.pick(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1))) act("pet");
@@ -70,6 +71,46 @@
       });
       $("stage").classList.add("live"); $("stage").tigo = sc; // para sa tests
     } catch (e) { console.warn("3D off", e); fallback(); }
+    startVoice();
+  }
+  // ---------- boses ni Tigo ----------
+  async function startVoice() {
+    try {
+      var v = await mod("voice"), t = await mod("talk");
+      voice = v.createVoice(); talk = t.createTalk({ stage: $("stage"), sc: sc, voice: voice, getPet: live });
+      $("stage").voice = voice;
+      var unlock = function () { voice.unlock(); };
+      document.addEventListener("pointerdown", unlock, { once: true }); document.addEventListener("keydown", unlock, { once: true });
+      var p = live(), h = new Date().getHours();
+      setTimeout(function () { if (!p.asleep) say(h < 11 ? "morning" : "hello"); }, 1400);
+      talk.idle(true);
+    } catch (e) { console.warn("voice off", e); }
+  }
+  function say(k, o) { if (talk && !playing) talk.say(k, o); }
+  async function soundSheet() {
+    var v = await mod("voice"), S = voice ? voice.get() : v.loadSound();
+    var body = document.createElement("div"); body.className = "tg-sound";
+    var row = function (id, label, val) { return '<label class="tg-range"><span>' + label + '</span><input type="range" min="0" max="100" step="5" data-k="' + id + '" value="' + Math.round(val * 100) + '"><b>' + Math.round(val * 100) + "</b></label>"; };
+    body.innerHTML =
+      '<label class="tg-sw"><span><b>Tigo talks</b><small class="faint">Baby voice when you play and care</small></span><label class="switch"><input type="checkbox" data-k="voice"' + (S.voice ? " checked" : "") + "><span></span></label></label>" +
+      '<div class="tg-seg" role="radiogroup" aria-label="Voice style">' + [["babble", "👶 Baby babble"], ["words", "🗣️ Baby words"]].map(function (x) { return '<button type="button" role="radio" data-style="' + x[0] + '" aria-checked="' + (S.style === x[0]) + '">' + x[1] + "</button>"; }).join("") + "</div>" +
+      row("voiceVol", "🔊 Voice volume", S.voiceVol) + row("pitch", "🎵 Voice pitch (low → high)", S.pitch) + row("sfxVol", "🎮 Game sounds", S.sfxVol) +
+      '<label class="tg-sw"><span><b>Chatty Tigo</b><small class="faint">Talks now and then (hungry, sleepy, bored)</small></span><label class="switch"><input type="checkbox" data-k="chatty"' + (S.chatty ? " checked" : "") + "><span></span></label></label>" +
+      '<button type="button" class="btn btn-ghost btn-sm" data-test>▶ Test voice</button>' +
+      '<p class="faint small">"Baby words" uses your phone or computer\'s speech voice. Saved on this device.</p>';
+    function save(ch) { S = Object.assign(S, ch); v.saveSound(S); if (voice) voice.set(S); }
+    body.addEventListener("input", function (e) {
+      var k = e.target.dataset.k; if (!k) return;
+      if (e.target.type === "range") { e.target.nextElementSibling.textContent = e.target.value; save(Object.fromEntries([[k, e.target.value / 100]])); }
+      else save(Object.fromEntries([[k, e.target.checked]]));
+    });
+    body.addEventListener("change", function (e) { if (e.target.type === "range" && e.target.dataset.k !== "sfxVol") say("happy", { still: true }); if (e.target.dataset.k === "sfxVol" && voice) voice.sfx("coin"); });
+    body.addEventListener("click", function (e) {
+      var st = e.target.closest("[data-style]");
+      if (st) { save({ style: st.dataset.style }); body.querySelectorAll("[data-style]").forEach(function (b) { b.setAttribute("aria-checked", b === st); }); say("hello", { still: true }); }
+      if (e.target.closest("[data-test]")) { if (voice) voice.unlock(); say("pet", { still: true }); }
+    });
+    TMN_MODAL.open({ title: "Sound", size: "sm", cls: "modal-sheet", body: body });
   }
   function fallback() {
     sc = null; $("tgCanvas").classList.add("hidden"); $("stage").classList.remove("live");
@@ -78,6 +119,7 @@
     f.innerHTML = window.TMN_STICKERS ? TMN_STICKERS.svg(id, 220) : "";
     f.onclick = function () { act("pet"); };
     dress(pet.outfit);
+    if (!talk) startVoice();
   }
 
   // ---------- pag-aalaga ----------
@@ -94,6 +136,8 @@
     try {
       var r = await TMN_API.call("pet", "act", { do: what });
       pet = r.pet; paint();
+      say(r.msg === "full" ? "full" : r.msg === "clean" ? "clean" : what === "wake" ? "morning" : what === "sleep" ? "night" : what);
+      if (voice) voice.sfx(what === "feed" ? "eat" : what === "pet" ? "pop" : what === "play" ? "jump" : "pop");
       if (r.msg === "full") toast("Tigo is full! 😋");
       else if (r.msg === "clean") toast("Tigo is already clean ✨");
       else if (what === "feed") toast("Yum! " + (label || "") + " 😋");
@@ -108,6 +152,7 @@
   function levelUp(n) {
     if (sc) { sc.effect("stars"); sc.main.spin(); sc.main.setGlow(!!pet.glow); }
     if (navigator.vibrate) try { navigator.vibrate([80, 60, 80]); } catch (e) {}
+ say("level"); if (voice) voice.sfx("level");
     UI.toast("🎉 Level " + n + "!" + (LV_NEW[n] ? " New: " + LV_NEW[n] : "") + " +🪙", 4000);
   }
   function feedMenu() {
@@ -135,9 +180,9 @@
   }
   async function openGames() {
     var g = await mod("games-ui");
-    var m = TMN_MODAL.open({ title: "Games", size: "sm", cls: "modal-sheet", body: g.gamesNode(function (id) { m.close(); if (id === "coins") coinRush(); }) });
+    var m = TMN_MODAL.open({ title: "Games", size: "sm", cls: "modal-sheet", body: g.gamesNode(function (id) { m.close(); playGame(id); }) });
   }
-  async function coinRush() {
+  async function playGame(kind) {
     if (!sc) { toast("Games need 3D (WebGL) on this device."); return; }
     if (playing) return;
     var p = live();
@@ -146,15 +191,19 @@
     playing = true;
     $("stage").scrollIntoView({ behavior: "smooth", block: "center" });
     var g = await mod("games-ui");
-    var res = await g.runCoinRush(sc, $("stage"), Number($("stage").dataset.rush) || 30); // data-rush = mas maikli sa tests
+    if (talk) talk.idle(false);
+    var res = await g.runGame(kind, { sc: sc, stage: $("stage"), voice: voice, seconds: kind === "coins" ? Number($("stage").dataset.rush) || 30 : undefined, // data-rush = mas maikli sa tests
+      onJump: function (fn) { gameJump = fn; } });
+    gameJump = null; playing = false; if (talk) talk.idle(true);
+    say(res.win || res.place === 1 || res.score >= 10 ? "win" : "lose");
+    if (res.quit && !res.score) return;
     try {
-      var r = await TMN_API.call("pet", "game", { score: res.score, ms: res.ms });
+      var r = await TMN_API.call("pet", "game", { kind: kind, score: res.score, ms: res.ms });
       pet = r.pet; paint();
       toast(r.capped ? "Great run! Coin limit for today reached — come back tomorrow 🌙" : r.coins ? "+" + r.coins + " coins! 🪙" : "No coins this time — try again!");
       if (r.coins) sc.effect("stars");
       if (r.levelUp) levelUp(r.levelUp);
     } catch (e) { toast(e.message); }
-    playing = false;
   }
   $("tgSide").addEventListener("click", function (e) {
     var b = e.target.closest(".tg-act[data-a]"); if (!b || b.disabled) return;
@@ -167,6 +216,7 @@
   });
   $("tgName").addEventListener("click", openCloset);
   $("tgCoinsBtn").addEventListener("click", openGames);
+  $("tgSound").addEventListener("click", soundSheet);
 
   // ---------- full screen / landscape ----------
   $("tgFull").addEventListener("click", async function () {
@@ -225,7 +275,7 @@
           v0.setGlow(!!f.pet.glow);
         }
         var v = visitors[b.dataset.gather];
-        sc.effect("hearts"); sc.effect("hearts", v.group); sc.jump(); setTimeout(function () { v.jump(); sc.main.spin(); }, 500);
+        sc.effect("hearts"); sc.effect("hearts", v.group); sc.jump(); setTimeout(function () { v.jump(); sc.main.spin(); }, 500); say("friend");
         $("tgTogether").classList.remove("hidden");
         setTimeout(function () { together("dance"); }, 1400); // sayaw agad pagdating ng kaibigan
       }
@@ -238,6 +288,7 @@
   function together(kind) {
     if (!sc || playing || sc.isShowing()) return;
     var sec = sc.together(kind); if (!sec) return;
+    say(kind === "dance" ? "dance" : kind === "bow" ? "Thank you, friend!" : kind === "highfive" ? "High five!" : kind === "chase" ? "Catch me!" : "Wheee!");
     toast(TOG[kind] || "");
     var bar = $("tgTogether"); bar.querySelectorAll("button").forEach(function (b) { b.disabled = true; b.classList.toggle("on", b.dataset.t === kind); });
     setTimeout(function () { bar.querySelectorAll("button").forEach(function (b) { b.disabled = false; b.classList.remove("on"); }); }, sec * 1000);

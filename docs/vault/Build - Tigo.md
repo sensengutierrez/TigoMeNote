@@ -22,7 +22,15 @@ Virtual pet ng TigoMeNote (parang Tamagotchi pero sariling character): si **Tigo
 - 50 coins sa simula. **Coin Rush** (`coin-game.js`, `games-ui.js`): 30 s, coins sa lupa at nakalutang (talon), star coin = 3. Server: max 30 coins bawat laro, 10 laro bawat araw, 20 s pagitan, +4 XP, −8 energy.
 - Bawat bagong level: +20 coins (Lv8 +100, Lv9 +150). Lv10 = golden glow.
 - **Growth journey** (`journey-ui.js`): Lv1–10 na daan, ✓ = naabot, kasalukuyan, 🔒 = susunod.
-- Pac-Tigo at Racing: "Soon".
+- **Pac-Tigo** (`pac-game.js`): maze 15×13, 94 tuldok + 4 mangga, 3 Gloomy (humahabol / nag-aabang / pagala-gala), mangga = 6 s na takot sila. 3 buhay, 2 min. Coins = tuldok ÷ 4 + 2 bawat Gloomy + 8 kapag naubos.
+- **Tigo Racing** (`race-game.js`): paikot na track (CatmullRom), 3 lap, 3 computer na Tigo (may kaunting rubber band), ⚡ boost pads, coins sa daan, labas sa daan = bagal. Coins = nakuha + 15/10/6/3 ayon sa puwesto.
+- Ang laro ay may sariling mundo: `sc.beginGame()` itinatago ang isla, bahay, buddy at bisita; `sc.endGame()` ibinabalik.
+- Server: `game { kind }` — 10 laro bawat araw bawat uri, max 30 coins bawat laro, 20 s pagitan.
+
+## Boses at tunog (`voice.js`, `talk.js`)
+- Speech bubble sa ulo ni Tigo (sumusunod sa 3D). Mga linya: English sa code, baby Taglish sa `lang/fil.js`.
+- Baby babble: synth na pantig (triangle + formant filters), mataas kapag masaya, mababa kapag malungkot, tumataas kapag tanong. Baby words: `speechSynthesis` (depende sa boses ng device).
+- 🔊 Sound settings: Tigo talks, style, voice volume, pitch, game sounds, chatty. Naka-save sa device (`tmnTigoSound`). Nagsisimula lang ang tunog pagkatapos ng unang tap/key (patakaran ng browser).
 
 ## Gabi
 - Sleep → lalakad si Tigo papasok sa bahay kubo, iilaw ang bintana, Zzz sa bubong. Wake → lalabas at tatalon.
@@ -45,6 +53,6 @@ Virtual pet ng TigoMeNote (parang Tamagotchi pero sariling character): si **Tigo
 - Susunod sa APK: paalala kapag gutom/malungkot si Tigo (push), at widget sa home screen.
 
 ## Hindi pa na-test
-- Mock lang ang UI (41/41 sa test_tigo: keyboard, joystick, jump, closet/buy, journey, Coin Rush, bahay kubo, sayaw/Hi-5/Habulan/Ikot, full screen, 2D fallback). Hindi pa nasubukan: totoong server (pet-fast v2 na-deploy, wala pang totoong tawag), Gather ng dalawang totoong phone, landscape lock sa totoong phone, at bilis ng 3D sa mahinang phone.
+- Mock lang ang UI (test_tigo 41/41 + test_games: boses, sound settings, Pac-Tigo, Racing; keyboard, joystick, jump, closet/buy, journey, Coin Rush, bahay kubo, sayaw/Hi-5/Habulan/Ikot, full screen, 2D fallback). Hindi pa nasubukan: totoong server (pet-fast v2 na-deploy, wala pang totoong tawag), Gather ng dalawang totoong phone, landscape lock sa totoong phone, at bilis ng 3D sa mahinang phone.
 
 Tingnan din: [[Build - Daily]], [[Build - Safety and wellbeing]], [[System map]]

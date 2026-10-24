@@ -80,6 +80,9 @@ updated: 2026-10-24
 | 2026-10-24 | Coin Rush: max 30 coins bawat laro, 10 laro bawat araw, 20 s pagitan, at sinusuri ang tagal ng laro | Hindi ma-spam ang coins |
 | 2026-10-24 | Meet nearby: ≤200 m, ~10 m na katumpakan, tinatanggihan ang GPS na >150 m ang lapad | Ayon kay Bench "dapat magkalapit sila ng GPS"; distansya lang pa rin ang nakikita ng kaibigan |
 | 2026-10-24 | Sayaw/Hi-5/Habulan/Ikot ay sa screen mo lang (hindi live na sabay sa phone ng kaibigan) | Walang realtime na koneksyon ang Tigo; puwedeng idagdag sa susunod |
+| 2026-10-24 | Boses ni Tigo = synth sa browser (WebAudio), hindi recorded na audio | Walang file na ida-download, gumagana offline at sa APK, sariling tunog; may "Baby words" gamit ang speech ng device |
+| 2026-10-24 | Sound settings ay naka-save sa device lang | Iba-iba ang gusto bawat device (phone vs laptop); walang kailangang server |
+| 2026-10-24 | Pac-Tigo at Racing: sariling disenyo (Gloomies, Tigo karts) | Hindi kopya ng Pac-Man o ibang racing game (trademark) |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

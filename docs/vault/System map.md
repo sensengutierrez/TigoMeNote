@@ -56,7 +56,8 @@ updated: 2026-10-24
 | `components/appearance-settings.js` | Settings → Background: presets, kulay, picture (desktop/phone), sliders (`TMN_LOOK_UI`) |
 | `tigo/pet-model.js` / `tigo/pet-scene.js` | 3D na si Tigo (lakad, talon, sayaw) at ang mundo (camera, bisita, sabay na galaw) — ES modules, three.js |
 | `tigo/catalog.js` / `outfit.js` / `backdrops.js` / `buddies.js` | Closet items, isinusuot sa 3D, mga lugar + bahay kubo, maliliit na alaga |
-| `tigo/controls.js` / `coin-game.js` | WASD/arrows + Space, joystick, swipe · Coin Rush |
+| `tigo/controls.js` / `coin-game.js` / `pac-game.js` / `race-game.js` | WASD/arrows + Space, joystick, swipe · Coin Rush · Pac-Tigo · Tigo Racing |
+| `tigo/voice.js` / `talk.js` | Boses-baby ni Tigo (synth o speech), game sounds, speech bubble, Sound settings |
 | `tigo/closet-ui.js` / `games-ui.js` / `journey-ui.js` | Closet panel, listahan ng laro + HUD, Growth journey |
 | `pages/tigo.js` | Tigo page: alaga, closet, laro, journey, full screen, nearby/gather, sabay na galaw, visits |
 | `daily-store.js` / `components/daily-notes.js` | Daily notes sa device (IndexedDB): note, to-do, photos, mood, On this day (`TMN_DAILY`, `TMN_DAILY_UI`) |
@@ -102,7 +103,7 @@ updated: 2026-10-24
 | `profile-fast` | get, update, imageUpload, setImage, removeImage | `backend/profile-fast.ts` |
 | `safety-fast` | circle, invite, respond, update, remove, pause, ping, history, clearHistory, exportHistory, sos, sosUpdate, sosEnd, alerts, ack, pushKey, subscribe, unsubscribe, testPush | `backend/safety-fast.ts` + `webpush.ts` |
 | `daily-fast` | list, save, remove, done, snooze; due (cron bawat minuto, key `cron_daily`) | `backend/daily-fast.ts` + `webpush.ts` |
-| `pet-fast` | get, act (feed/play/clean/pet/sleep/wake/daily), style, wear, buy, game, nearby, gather, visits | `backend/pet-fast.ts` + `webpush.ts` |
+| `pet-fast` | get, act (feed/play/clean/pet/sleep/wake/daily), style, wear, buy, game (coins/pac/race), nearby, gather, visits | `backend/pet-fast.ts` + `webpush.ts` |
 | `wellbeing-fast` | status, setBirthdate, tick, save, guardianInvite, guardianRespond, guardianRemove | `backend/wellbeing-fast.ts` |
 | `moderation-fast` | report, queue, resolve, count | `backend/moderation-fast.ts` (+ `notify.ts`) |
 | `messages-fast` | inbox, unread, open, start, group, send, upload, react, pin, read, accept, decline, unsend, rename, addMembers, removeMember, leave, mute | `backend/messages-fast.ts` (+ `moderation.ts`) |

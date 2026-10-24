@@ -10,6 +10,8 @@
      sc.add(opts) / remove(t)    → bisita (Tigo ng kaibigan); sumusunod siya kay Tigo habang naglalakad
      sc.together(kind) → sec     → sabay na galaw: "dance" | "highfive" | "chase" (habulan) | "spin" (ikot) | "bow"
      sc.hasFriends()
+     sc.beginGame({ tick(dt,t), cam(camera,dt) }) / sc.endGame()  → ibang mundo para sa laro (Pac-Tigo, Racing)
+     sc.headScreen()             → { x, y } (px sa canvas) ng ulo ni Tigo, para sa speech bubble
      sc.effect(kind, at)         → "hearts" | "food" | "bubbles" | "stars" | "ball" | "sparkle"
      sc.onTick(fn) → off()       → para sa laro (coin-game.js); sc.mainState() → { x, y, z }
      sc.pick(x, y) · sc.dispose()
@@ -277,9 +279,30 @@ export function createScene(canvas, opts = {}) {
     portrait = w / h < 0.8; // phone (patayo): medyo malayo para kasya ang isla
     camera.updateProjectionMatrix();
   }
+  // ---------- laro na may sariling mundo ----------
+  let game = null;
+  const hidden = [];
+  function beginGame(g) {
+    game = g; show = null; auto = null; main.walk(0); main.move(null);
+    [place && place.group, buddy && buddy.group, zzz].concat(friends.map((f) => f.t.group)).forEach((o) => { if (o && o.visible) { o.visible = false; hidden.push(o); } });
+    main.group.visible = true;
+  }
+  function endGame() {
+    game = null; hidden.forEach((o) => { o.visible = true; }); hidden.length = 0;
+    scene.add(main.group); main.group.scale.setScalar(1); main.group.rotation.set(0, 0, 0);
+    me.x = 0; me.z = 0.4; me.vx = me.vz = 0; main.group.position.set(me.x, 0, me.z); main.walk(0); main.face(0);
+    main.group.visible = !inside; zzz.visible = inside;
+    sun.position.set(3.5, 6, 4); sun.target.position.set(0, 0, 0); sun.target.updateMatrixWorld();
+  }
+  scene.add(sun.target);
+  const headV = new THREE.Vector3();
   function loop() {
     if (!alive) return;
     const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+    if (game) {
+      game.tick(dt, t); main.update(dt, t); ticks.forEach((fn) => fn(dt, t)); updateFx(dt);
+      game.cam(camera, dt); renderer.render(scene, camera); raf = requestAnimationFrame(loop); return;
+    }
     moveMain(dt, updateShow(dt, t));
     moveFriends(dt);
     pets.forEach((p) => p.update(opts.reduced ? dt * 0.4 : dt, t));
@@ -306,7 +329,16 @@ export function createScene(canvas, opts = {}) {
   return {
     main, add, remove, effect, night, renderer, scene, setBackdrop, setBuddy,
     together, hasFriends() { return friends.length > 0; }, isShowing() { return !!show; },
+    beginGame, endGame, sun, camera, inGame() { return !!game; },
+    headScreen() {
+      if (inside || !main.group.visible) return null;
+      main.group.getWorldPosition(headV); const s = main.group.getWorldScale(new THREE.Vector3()).y;
+      headV.y += (2.05 + main.height()) * s; headV.project(camera);
+      if (headV.z > 1) return null;
+      return { x: (headV.x * 0.5 + 0.5) * canvas.clientWidth, y: (-headV.y * 0.5 + 0.5) * canvas.clientHeight };
+    },
     setInput(fn) { input = fn || (() => ({ x: 0, z: 0 })); },
+    input() { return input(); },
     jump() { if (!inside) { main.jump(); if (buddy) buddy.hop(); } },
     mainState() { return { x: me.x, z: me.z, y: main.height() }; },
     onTick(fn) { ticks.add(fn); return () => ticks.delete(fn); },

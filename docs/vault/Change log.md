@@ -286,3 +286,13 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Files:** `sql/055-tigo-closet.sql` (coins, owned, outfit, rewarded_level), `backend/pet-fast.ts` (v2: wear, buy, game), `assets/js/tigo/catalog.js`, `outfit.js`, `backdrops.js`, `buddies.js`, `controls.js`, `coin-game.js`, `closet-ui.js`, `games-ui.js`, `journey-ui.js` (bago lahat), `pet-model.js`, `pet-scene.js`, `pages/tigo.js`, `app/tigo.html`, `pages/tigo.css`, `config.js` (0.11.9), `lang/fil.js`, `lang/ar.js`
 - **Paano:** Detalye sa [[Build - Tigo]].
 
+## 2026-10-24 · #38 Tigo: nagsasalita parang baby + Sound settings, Pac-Tigo, Tigo Racing
+- **Ano:**
+  - **Boses ni Tigo:** speech bubble sa ibabaw ng ulo + boses-baby. "👶 Baby babble" (daldal na gawa sa synth, walang audio file) o "🗣️ Baby words" (totoong salita gamit ang speech ng device, mataas na tono). Nagsasalita kapag binati, pinakain, nilaro, nilinis, hinaplos, natulog/gumising, nag-level up, may kaibigan, at pagkatapos ng laro. "Chatty": paminsan-minsang nagsasabi kapag gutom, antok, marumi o bored.
+  - **🔊 Sound settings** (button sa stage): Tigo talks on/off, style, voice volume, pitch (mababa → mataas), game sounds, chatty, Test voice. Naka-save sa device.
+  - **Pac-Tigo:** maze na kakainin ang tuldok; 3 "Gloomy" (ulap ng lungkot) na humahabol; 🥭 mangga = matatakot sila at puwedeng habulin; 3 buhay, 2 minuto.
+  - **Tigo Racing:** 3 lap laban sa 3 Tigo; kusang umaandar, liko lang (A/D, ←/→, joystick, swipe), S/↓ preno, Space talon; ⚡ boost pads, coins sa daan, puwesto 1st–4th.
+  - Lahat ng laro: 3-2-1, HUD, ✕ para umalis, tunog (coin, talon, kain, panalo).
+- **Bakit:** Ayon kay Bench: "ok next muna tapos lagyan mo din sya ng sasalita parang baby lagyan mo setting para ma adjust ung sound".
+- **Files:** `assets/js/tigo/voice.js`, `talk.js`, `pac-game.js`, `race-game.js` (bago), `games-ui.js`, `pet-scene.js` (beginGame/endGame, headScreen, input), `pages/tigo.js`, `app/tigo.html`, `pages/tigo.css`, `backend/pet-fast.ts` (game kind: coins/pac/race, 10 bawat araw bawat laro), `config.js` (0.11.10), `lang/fil.js`, `lang/ar.js`
+- **Paano:** Detalye sa [[Build - Tigo]].
