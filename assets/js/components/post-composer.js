@@ -44,7 +44,7 @@
         ? '<p class="pc-warn small">' + I("clock", "ic-sm") + "Videos longer than 15 seconds will be cut to the first 15 s.</p>" : "") +
       (window.TMN_SOUND_PICK ? '<div class="field"><span class="pe-label">Sound</span><div class="pc-soundpick"></div></div>' : "") +
       '<label class="field"><span class="pe-label">Caption</span>' +
-        '<textarea class="input pc-cap" maxlength="' + CAP + '" rows="3" placeholder="What\'s the story?"></textarea>' +
+        '<textarea class="input pc-cap" maxlength="' + CAP + '" rows="3" placeholder="What\'s the story?" data-autogrow="220"></textarea>' +
         '<span class="pc-count faint small">' + (window.TMN_EMOJI_PICK ? '<button type="button" class="icon-btn pc-emo" aria-label="Emoji" aria-expanded="false">' + I("smile", "ic-sm") + "</button>" : "") + '<span class="pc-count-n">0 / ' + CAP + "</span></span></label>" +
       '<div class="field"><span class="pe-label">Who can see this</span>' +
         '<div class="segmented pc-vis" role="group" aria-label="Visibility">' + VIS.map(function (x) {

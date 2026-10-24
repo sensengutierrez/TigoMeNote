@@ -826,5 +826,22 @@ TMN_I18N.register("ar", {
   "Search GIFs": "ابحث عن GIF",
   "No GIFs found.": "لم يتم العثور على صور GIF.",
   "GIFs are coming soon.": "صور GIF قريباً.",
-  "Powered by KLIPY": "بواسطة KLIPY"
+  "Powered by KLIPY": "بواسطة KLIPY",
+  "Who are they to you?": "ما صلته بك؟",
+  "Spouse": "الزوج/الزوجة",
+  "Partner": "الشريك",
+  "Child": "الابن/الابنة",
+  "Sibling": "الأخ/الأخت",
+  "Grandparent": "الجد/الجدة",
+  "Grandchild": "الحفيد/الحفيدة",
+  "Relative": "قريب",
+  "Best friend": "أعز صديق",
+  "Friend": "صديق",
+  "Classmate": "زميل دراسة",
+  "Coworker": "زميل عمل",
+  "Neighbor": "جار",
+  "Only you can see this.": "أنت فقط من يرى هذا.",
+  "Set who they are to you": "حدّد صلته بك",
+  "Change who they are to you": "غيّر صلته بك",
+  "e.g. Ninang, Tito, Kumpare": "مثلاً: عمّ، خالة، صديق العائلة"
 });

@@ -205,3 +205,14 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Tanong ni Bench: "bakit ang bagal ng loading". Sa logs: 0.35–0.45 s ang bawat tawag kapag mainit, pero 2–3.3 s kapag cold start, at may OPTIONS na 2–2.6 s bago ang POST.
 - **Files:** `assets/js/api.js`, `assets/js/auth-guard.js`, `assets/js/notif-badge.js`, `backend/gifs-fast.ts` (v4, walang `moderation.ts` na), `sql/041-keep-warm.sql` (pg_cron + pg_net), `config.js` (0.11.2)
 - **Paano:** `Content-Type: text/plain` + `token` sa body = "simple request" (walang CORS preflight). Patayin ang keep-warm: `select cron.unschedule('tmn-keep-warm');`
+
+## 2026-10-24 · #31 "Sino siya sa iyo", mas maliit na media, auto-grow na reply, manipis na story ring, mas mabilis
+- **Ano:**
+  - **Label sa circle:** sa "Add to your circle" may "Who are they to you?": Family = Asawa, Partner, Anak, Magulang, Kapatid, Lolo/Lola, Apo, Kamag-anak; Friends = Best friend, Kaibigan, Kaklase, Katrabaho, Kapitbahay; **Other** = sariling sulat (hal. Ninang, Tito, hanggang 24 letra). Makikita bilang badge sa member; mapapalitan sa ⋯ → "Change who they are to you". Ikaw lang ang nakakakita.
+  - **Feed media:** hindi na lalampas sa `min(68vh, 560px)` ang photo/video; buo ang video (`object-fit: contain`) kaya hindi na kailangang mag-scroll.
+  - **Reply/comment at caption:** humahaba pataas habang nagta-type (auto-grow), walang scrollbar sa gilid.
+  - **Story ring:** mas manipis (2.5px).
+  - **Bilis:** hindi na hinihintay ang emoji font bago lumabas ang page; 10 min na cache ng sign-in check; 60 s na cache ng wellbeing state sa bawat lipat ng page; sabay-sabay na kinukuha ang huling location ng circle.
+- **Bakit:** Ayon kay Bench: "diko ma click malagay kung asawa anak… video masyado malaki… pag ng rereply ako me lumalabas na scroll sa gilid… story na me kulay nipisan… pabilisin mo lalo kase bumagal".
+- **Files:** `sql/043-circle-labels.sql`, `backend/safety-fast.ts` (v7), `assets/js/components/relation-picker.js` (bago), `pages/safety.js`, `app/safety.html`, `assets/css/pages/safety.css`, `assets/css/social.css`, `components/stories.js`, `components/app-shell.js` (`TMN_AUTOGROW`), `components/social-ui.js`, `components/post-composer.js`, `assets/css/components.css`, `assets/css/tokens.css`, `auth-guard.js`, `wellbeing.js`, `app/*.html` (font), `lang/fil.js`, `lang/ar.js`, `config.js` (0.11.3)
+- **Paano:** `safety_links.a_label` = tawag ni a kay b, `b_label` = tawag ni b kay a. Auto-grow: lagyan ng `data-autogrow="<max px>"` ang textarea.

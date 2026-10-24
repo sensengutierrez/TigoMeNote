@@ -5,7 +5,7 @@
    - window.TMN_TOKEN, window.TMN_USER, window.TMN_AUTH.logout() */
 (function () {
   var C = window.TMN_CONFIG, K = C.storageKeys;
-  var CACHE_MS = 60 * 1000;
+  var CACHE_MS = 10 * 60 * 1000; // bawat 10 min lang tinitingnan ulit (ang bawat API call ay may sariling check ng session)
 
   var style = document.createElement("style");
   style.id = "tmn-guard-style";

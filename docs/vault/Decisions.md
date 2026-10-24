@@ -63,6 +63,7 @@ updated: 2026-10-24
 | 2026-10-24 | Photos/videos: Report + admin review muna (walang image AI) | Walang libreng paraan para sa violence/baril sa larawan; pipili mamaya |
 | 2026-10-24 | Policies sa English; batas = Kingdom of Bahrain; contact = Report button hangga't walang email | Ipa-review sa abogado bago mag-Play Store |
 | 2026-10-23 | Lipat sa **Brevo** (free 300/araw) | Ayaw tanggapin ng Gmail ang App Password; walang domain na kailangan sa Brevo. SMS ay hindi pinili kasi may bayad. |
+| 2026-10-24 | Label sa circle ("Sino siya sa iyo") ay pribado: bawat panig may sariling label | Iba ang tawag ng anak sa magulang at ng magulang sa anak; walang ibang nakakakita |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

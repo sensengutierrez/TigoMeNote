@@ -186,4 +186,15 @@
       });
     }
   };
+
+  // Textarea na kusang humahaba habang nagta-type (walang scrollbar sa gilid): <textarea data-autogrow="140">
+  function autogrow(t) {
+    var max = Number(t.getAttribute("data-autogrow")) || 140;
+    t.style.height = "auto";
+    var h = Math.min(max, t.scrollHeight + 2);
+    t.style.height = h + "px";
+    t.style.overflowY = t.scrollHeight + 2 > max ? "auto" : "hidden";
+  }
+  document.addEventListener("input", function (e) { if (e.target && e.target.matches && e.target.matches("textarea[data-autogrow]")) autogrow(e.target); });
+  window.TMN_AUTOGROW = autogrow;
 })();

@@ -69,3 +69,9 @@ Tingnan din: [[Plan - Safety, family and wellbeing]], [[System map]], [[Decision
 - Ang in-invite mo ay nasa listahan na agad ng Family/Friends ("Invite sent · waiting for them to accept", **Cancel invite**), kasama sa bilang. Ang listahan ay nasa itaas ng mapa.
 - Ang inimbitahan: **notification** (`circle_invite`) na may **Accept/Decline** sa Notifications, bukod sa push. Pagtanggap: notification sa nag-invite (`circle_accept`). Nabubura ang invite notification kapag tinanggap, tinanggihan o kinansela.
 - Ang SOS ay napupunta lang sa **tinanggap** na Family/Friends.
+
+## "Sino siya sa iyo" (label) — 2026-10-24
+- `components/relation-picker.js` (`TMN_RELATION`): chips para sa Family (asawa, partner, anak, magulang, kapatid, lolo/lola, apo, kamag-anak) o Friends (best friend, kaibigan, kaklase, katrabaho, kapitbahay) + **Other** (sariling sulat, ≤24).
+- Naka-save sa `safety_links.a_label` / `b_label` (label ng bawat panig). `safety-fast`: `invite`/`respond`/`update` tumatanggap ng `label`; `circle` nagbabalik ng `label` mo.
+- UI: badge sa member at sa pending; ⋯ → Set/Change who they are to you.
+- Hindi pa na-test sa totoong server (mock lang, 22/22 sa circle test).

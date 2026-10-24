@@ -83,7 +83,7 @@
         '<div class="faint small">' + ago(p.publish_at) + "</div></div></div>" : "") +
       '<div class="sx-list" aria-live="polite"><div class="sx-loading faint small">Loading…</div></div>' +
       '<form class="sx-write">' + av(me, 32) +
-        '<textarea class="input" rows="1" maxlength="500" placeholder="Add a comment…"></textarea>' +
+        '<textarea class="input" rows="1" maxlength="500" placeholder="Add a comment…" data-autogrow="120"></textarea>' +
         (window.TMN_EMOJI_PICK ? '<button type="button" class="icon-btn sx-emo" aria-label="Emoji" aria-expanded="false">' + I("smile") + "</button>" : "") +
         '<button type="submit" class="btn btn-primary btn-sm" disabled>Post</button></form>';
     var list = root.querySelector(".sx-list"), ta = root.querySelector("textarea"), send = root.querySelector("[type=submit]");

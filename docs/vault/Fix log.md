@@ -43,6 +43,10 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-10-24 · Emoji na "kahon" (hal. 🫩, 🩷 sa Windows) → walang ganoong emoji ang font ng device → Noto Color Emoji (Google Fonts) sa bawat page at sa `--font-body`; ang preview ng message ay pinuputol na nang hindi nahahati ang emoji (`tokens.css`, `messages-fast.ts`)
 - 2026-10-24 · Sound picker: humahaba ang "Best match" sa buong lapad → `justify-self: start` (`sounds.css`)
 - 2026-10-24 · Mabagal ang loading → (1) cold start ng edge functions (2–3 s kapag ilang minutong walang gumagamit), (2) CORS preflight (OPTIONS) bago ang bawat POST dahil sa `x-session-token` header at JSON content-type → token sa body + text/plain (walang preflight), keep-warm bawat 3 min (sql/041), at cache ng badge (`api.js`, `auth-guard.js`, `notif-badge.js`)
+- 2026-10-24 · Feed: masyadong malaki ang video/photo, kailangang mag-scroll para makita ang buong video → `max-height` ay sobrang taas at `cover` ang video → `min(68vh, 560px)` at `contain` (`social.css`)
+- 2026-10-24 · Comment reply: may scrollbar sa gilid habang nagta-type → nakapirming taas ang textarea → auto-grow pataas hanggang 120px, nakatago ang scrollbar (`app-shell.js`, `components.css`, `social-ui.js`)
+- 2026-10-24 · Bumagal ulit ang page → (1) hinihintay ang Noto Color Emoji font (render-blocking CSS), (2) wellbeing at sign-in check sa bawat lipat ng page → font ay non-blocking (`media=print onload`), Segoe UI Emoji muna sa Windows, cache ng sign-in (10 min) at wellbeing (60 s) (`app/*.html`, `tokens.css`, `auth-guard.js`, `wellbeing.js`)
+- 2026-10-24 · Wellbeing: "Cannot read properties of undefined (reading 'sleep')" kapag walang `state` ang naka-cache → guard sa `apply()` (`wellbeing.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

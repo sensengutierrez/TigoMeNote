@@ -29,11 +29,11 @@
     el.innerHTML =
       '<div class="st-bar" role="list">' +
         '<div class="st-item st-me" role="listitem">' +
-          '<button type="button" ' + ring(mine ? "has" : "none", mine) + ' data-st="' + (mine ? "open-me" : "add") + '" aria-label="Your status">' + av(me, 62) + "</button>" +
+          '<button type="button" ' + ring(mine ? "has" : "none", mine) + ' data-st="' + (mine ? "open-me" : "add") + '" aria-label="Your status">' + av(me, 67) + "</button>" +
           '<button type="button" class="st-plus" data-st="add" aria-label="Add a status">' + I("plus", "ic-sm") + "</button>" +
           '<span class="st-name">Your status</span></div>' +
         others.map(function (g) {
-          return '<div class="st-item" role="listitem"><button type="button" ' + ring(g.unseen ? "has" : "seen", g) + ' data-st="open" data-uid="' + esc(g.user.id) + '">' + av(g.user, 62) + "</button>" +
+          return '<div class="st-item" role="listitem"><button type="button" ' + ring(g.unseen ? "has" : "seen", g) + ' data-st="open" data-uid="' + esc(g.user.id) + '">' + av(g.user, 67) + "</button>" +
             '<span class="st-name">' + esc(g.user.username) + "</span></div>";
         }).join("") +
         (state.loading && !others.length ? '<div class="st-item"><span class="st-ring skel"></span><span class="st-name skel" style="width:48px;height:10px"></span></div>' : "") +

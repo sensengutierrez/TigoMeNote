@@ -64,3 +64,13 @@
 .sf-row.is-pending { opacity: .85; }
 .sf-row.is-pending .avatar { outline: 2px dashed var(--line-strong); outline-offset: 2px; }
 .sf-invites { border-color: var(--ring-3); box-shadow: 0 0 0 1px var(--ring-3) inset; }
+
+/* Sino siya sa iyo (components/relation-picker.js) */
+.sf-rel:empty { display: none; }
+.rel { display: grid; gap: 8px; margin: 6px 0 4px; }
+.rel-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.rel-chip { height: 34px; padding: 0 14px; border-radius: var(--r-full); border: 1px solid var(--line); background: var(--surface); color: var(--text); font-weight: 600; font-size: 13px; cursor: pointer; }
+.rel-chip:hover { border-color: var(--line-strong); }
+.rel-chip[aria-pressed="true"] { background: var(--ink); color: var(--ink-text); border-color: var(--ink); }
+.rel-other { height: 40px; }
+.badge-rel { background: color-mix(in srgb, var(--ring-3) 18%, transparent); color: var(--text); }

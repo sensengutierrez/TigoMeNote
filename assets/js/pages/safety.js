@@ -77,7 +77,8 @@
   }
   function pendingRow(x) {
     return '<div class="sf-row is-pending" data-id="' + x.id + '">' + avatar(x.user) + '<div class="sf-row-main">' + who(x.user) +
-      '<span class="sf-sub small">' + I("clock", "ic-sm") + "<span>Invite sent · waiting for them to accept</span></span></div>" +
+      '<span class="sf-sub small">' + I("clock", "ic-sm") + "<span>Invite sent · waiting for them to accept</span></span>" +
+      (x.label && window.TMN_RELATION ? '<span class="sf-tags"><span class="badge badge-rel">' + esc(TMN_RELATION.label(x.label)) + "</span></span>" : "") + "</div>" +
       '<div class="sf-row-act"><button type="button" class="btn btn-ghost btn-sm" data-a="remove">Cancel invite</button></div></div>';
   }
   function memberRow(x) {
@@ -86,7 +87,9 @@
     else if (!x.they_share) sub = I("lock", "ic-sm") + "<span>Not sharing location with you</span>";
     else if (x.last) sub = I("pin", "ic-sm") + "<span>Seen " + ago(x.last.at) + "</span>" + (x.last.acc ? '<span class="faint">· ±' + Math.round(x.last.acc) + " m</span>" : "");
     else sub = I("pin", "ic-sm") + "<span>No location yet</span>";
-    var tags = (x.guardian ? '<span class="badge">Parent</span>' : "") + (x.ward ? '<span class="badge">Teen</span>' : "");
+    var rl = x.label && window.TMN_RELATION ? TMN_RELATION.label(x.label) : "";
+    var tags = (rl ? '<span class="badge badge-rel"' + (/^[a-z]+$/.test(x.label) ? "" : ' translate="no"') + ">" + esc(rl) + "</span>" : "") +
+      (x.guardian ? '<span class="badge">Parent</span>' : "") + (x.ward ? '<span class="badge">Teen</span>' : "");
     return '<div class="sf-row" data-id="' + x.id + '" data-uid="' + u.id + '">' + avatar(u) +
       '<div class="sf-row-main">' + who(u) + '<span class="sf-sub small">' + sub + "</span>" + (tags ? '<span class="sf-tags">' + tags + "</span>" : "") + "</div>" +
       '<div class="sf-row-act">' +
@@ -134,12 +137,14 @@
     body.className = "pick-list";
     body.innerHTML =
       (x.last ? '<button type="button" class="pick" data-m="dir">' + I("compass") + "Directions</button>" : "") +
+      (window.TMN_RELATION ? '<button type="button" class="pick" data-m="label">' + I("edit") + (x.label ? "Change who they are to you" : "Set who they are to you") + "</button>" : "") +
       '<button type="button" class="pick" data-m="kind">' + I(x.kind === "family" ? "users" : "home") + (x.kind === "family" ? "Move to Friends" : "Move to Family") + "</button>" +
       (x.locked ? "" : '<button type="button" class="pick danger" data-m="remove">' + I("trash") + "Remove from circle</button>");
     var m = TMN_MODAL.open({ title: x.user.display_name || x.user.username, size: "sm", cls: "modal-sheet", body: body });
     body.addEventListener("click", async function (e) {
       var b = e.target.closest("[data-m]"); if (!b) return;
       m.close();
+      if (b.dataset.m === "label") { TMN_RELATION.edit(x, function () { render(); UI.toast("Saved."); }); return; }
       if (b.dataset.m === "dir") window.open(N.directionsUrl(x.last.lat, x.last.lng), "_blank", "noopener");
       if (b.dataset.m === "kind") { try { await TMN_API.call("safety", "update", { id: x.id, kind: x.kind === "family" ? "friend" : "family" }); load(); } catch (err) { UI.toast(err.message); } }
       if (b.dataset.m === "remove") {
@@ -254,10 +259,15 @@
         '<button type="button" data-k="family" aria-pressed="' + (kind === "family") + '">' + I("home", "ic-sm") + "Family</button>" +
         '<button type="button" data-k="friend" aria-pressed="' + (kind === "friend") + '">' + I("users", "ic-sm") + "Friends</button></div>" +
       '<input class="input" type="search" placeholder="Search name or @username" aria-label="Search people">' +
+      '<div class="sf-rel"></div>' +
       '<div class="sf-list sf-inv-list"><p class="faint small">Type a name to search.</p></div>' +
       '<label class="sf-check"><input type="checkbox" class="inv-share"' + (kind === "family" ? " checked" : "") + "> Let them locate me</label>" +
       '<p class="faint small">They must accept first. You can change this anytime.</p>';
     var input = body.querySelector("input[type=search]"), list = body.querySelector(".sf-inv-list"), share = body.querySelector(".inv-share");
+    // Sino siya sa iyo (asawa, anak, kaibigan…): components/relation-picker.js
+    var relBox = body.querySelector(".sf-rel"), rel = null;
+    function paintRel() { if (!window.TMN_RELATION) return; relBox.innerHTML = TMN_RELATION.html(kind, null); rel = TMN_RELATION.bind(relBox); }
+    paintRel();
     var m = TMN_MODAL.open({
       title: "Add to your circle", size: "sm", body: body,
       actions: [
@@ -265,7 +275,7 @@
         { label: "Send invite", cls: "btn-primary", onClick: async function (api, btn) {
           if (!picked) { UI.toast("Choose a person first."); return; }
           btn.disabled = true;
-          try { await TMN_API.call("safety", "invite", { user_id: picked, kind: kind, share: share.checked }); UI.toast("Invite sent. They'll see it in Notifications."); m.close(); selectTab(kind); load(); }
+          try { await TMN_API.call("safety", "invite", { user_id: picked, kind: kind, share: share.checked, label: rel ? rel.value() : null }); UI.toast("Invite sent. They'll see it in Notifications."); m.close(); selectTab(kind); load(); }
           catch (e) { btn.disabled = false; UI.toast(e.message); }
         } }
       ]
@@ -274,6 +284,7 @@
       var b = e.target.closest("[data-k]"); if (!b) return;
       kind = b.dataset.k; share.checked = kind === "family";
       this.querySelectorAll("[data-k]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      paintRel();
     });
     input.addEventListener("input", function () {
       clearTimeout(t);

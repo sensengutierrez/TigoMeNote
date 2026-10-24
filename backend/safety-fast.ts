@@ -78,6 +78,9 @@ const iShare = (l: any, me: string) => (l.a_id === me ? l.a_shares : l.b_shares)
 // deno-lint-ignore no-explicit-any
 const theyShare = (l: any, me: string) => (l.a_id === me ? l.b_shares : l.a_shares);
 const myCol = (l: { a_id: string }, me: string) => (l.a_id === me ? "a_shares" : "b_shares");
+// "Sino siya sa iyo": label na ikaw lang ang nakakakita (a_label = tawag ni a kay b)
+const labelCol = (l: { a_id: string }, me: string) => (l.a_id === me ? "a_label" : "b_label");
+const cleanLabel = (v: unknown) => { const t = String(v ?? "").replace(/[<>]/g, "").trim().replace(/\s+/g, " ").slice(0, 24); return t || null; };
 
 async function myLinks(uid: string, acceptedOnly = false) {
   let q = db.from("safety_links").select("*").or(`a_id.eq.${uid},b_id.eq.${uid}`);
@@ -156,15 +159,16 @@ async function circle(_p: any, me: any) {
     const item: Record<string, unknown> = {
       id: l.id, kind: l.kind, status: l.status, created_at: l.created_at,
       user: { id: u.id, username: u.username, display_name: u.display_name, avatar_url: u.avatar_url },
-      i_share: iShare(l, me.id), they_share: theyShare(l, me.id),
+      i_share: iShare(l, me.id), they_share: theyShare(l, me.id), label: l[labelCol(l, me.id)] ?? null,
       guardian: guardians.includes(oid), ward: wards.includes(oid),
     };
     item.locked = !!item.guardian; // teen: hindi ma-off ang sharing sa guardian
     if (l.status === "pending") { (l.invited_by === me.id ? outgoing : incoming).push(item); continue; }
     item.paused = !!u.loc_paused;
-    item.last = theyShare(l, me.id) && !u.loc_paused ? await lastPoint(oid) : null;
+    item.last = theyShare(l, me.id) && !u.loc_paused ? lastPoint(oid) : null; // sabay-sabay (mas mabilis)
     members.push(item);
   }
+  await Promise.all(members.map(async (m) => { m.last = m.last ? await m.last : null; }));
   members.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "family" ? -1 : 1));
   return reply({ ok: true, me: { paused: !!me.loc_paused, push: subs.count ?? 0, supervised: guardians.length > 0, last: await lastPoint(me.id) }, members, incoming, outgoing });
 }
@@ -185,7 +189,9 @@ async function invite(p: any, me: any) {
   }
   const [a, b] = me.id < uid ? [me.id, uid] : [uid, me.id];
   const share = p.share === undefined ? kind === "family" : !!p.share;
-  const row = { a_id: a, b_id: b, kind, invited_by: me.id, a_shares: a === me.id ? share : false, b_shares: b === me.id ? share : false };
+  const label = cleanLabel(p.label);
+  const row = { a_id: a, b_id: b, kind, invited_by: me.id, a_shares: a === me.id ? share : false, b_shares: b === me.id ? share : false,
+    a_label: a === me.id ? label : null, b_label: b === me.id ? label : null };
   const { data, error } = await db.from("safety_links").insert(row).select("*").single();
   if (error) { if (error.code === "23505") return fail("Invite already sent.", 409); throw error; }
   // Lalabas din sa Notifications ng inimbitahan (hindi lang push)
@@ -201,7 +207,9 @@ async function respond(p: any, me: any) {
   await db.from("notifications").delete().eq("type", "circle_invite").eq("data->>link", l.id);
   if (!p.accept) { await db.from("safety_links").delete().eq("id", l.id); return reply({ ok: true }); }
   const share = p.share === undefined ? l.kind === "family" : !!p.share;
-  await db.from("safety_links").update({ status: "accepted", accepted_at: nowIso(), [myCol(l, me.id)]: share }).eq("id", l.id);
+  const ch: Record<string, unknown> = { status: "accepted", accepted_at: nowIso(), [myCol(l, me.id)]: share };
+  if (p.label !== undefined) ch[labelCol(l, me.id)] = cleanLabel(p.label);
+  await db.from("safety_links").update(ch).eq("id", l.id);
   await db.from("notifications").insert({ user_id: l.invited_by, actor_id: me.id, type: "circle_accept", data: { link: l.id, kind: l.kind } });
   await pushTo([l.invited_by], { type: "invite-ok", title: "Invite accepted", body: `${nameOf(me)} joined your ${l.kind === "family" ? "Family" : "Friends"} circle.`, url: "app/safety.html" }, "normal");
   return reply({ ok: true });
@@ -217,6 +225,7 @@ async function update(p: any, me: any) {
     ch[myCol(l, me.id)] = !!p.share;
   }
   if (p.kind === "family" || p.kind === "friend") ch.kind = p.kind;
+  if (p.label !== undefined) ch[labelCol(l, me.id)] = cleanLabel(p.label);
   if (!Object.keys(ch).length) return fail("Nothing to change.");
   await db.from("safety_links").update(ch).eq("id", l.id);
   return reply({ ok: true });

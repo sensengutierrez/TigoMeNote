@@ -974,5 +974,22 @@ TMN_I18N.register("fil", {
   "Search GIFs": "Hanapin ang GIF",
   "No GIFs found.": "Walang nahanap na GIF.",
   "GIFs are coming soon.": "Malapit na ang GIFs.",
-  "Powered by KLIPY": "Mula sa KLIPY"
+  "Powered by KLIPY": "Mula sa KLIPY",
+  "Who are they to you?": "Sino siya sa iyo?",
+  "Spouse": "Asawa",
+  "Partner": "Partner",
+  "Child": "Anak",
+  "Sibling": "Kapatid",
+  "Grandparent": "Lolo/Lola",
+  "Grandchild": "Apo",
+  "Relative": "Kamag-anak",
+  "Best friend": "Best friend",
+  "Friend": "Kaibigan",
+  "Classmate": "Kaklase",
+  "Coworker": "Katrabaho",
+  "Neighbor": "Kapitbahay",
+  "Only you can see this.": "Ikaw lang ang nakakakita nito.",
+  "Set who they are to you": "Itakda kung sino siya sa iyo",
+  "Change who they are to you": "Palitan kung sino siya sa iyo",
+  "e.g. Ninang, Tito, Kumpare": "hal. Ninang, Tito, Kumpare"
 });

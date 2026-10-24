@@ -110,7 +110,7 @@ Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast
 | `post_shares` | repost o link share | `sql/017-social.sql` |
 | `stories` / `story_views` | status (24 oras) at sino ang nanood | `sql/017-social.sql` |
 | `post_views` | sino ang nakakita ng post at kailan (views + History) | `sql/020-views-pins.sql` |
-| `safety_links` | Family/Friends (isang row bawat pares, may share bawat panig) | `sql/023-safety.sql` |
+| `safety_links` | Family/Friends (isang row bawat pares, may share at label bawat panig) | `sql/023-safety.sql`, `sql/043-circle-labels.sql` |
 | `location_points` | location (30 araw) | `sql/023-safety.sql` |
 | `sos_alerts` / `sos_acks` | SOS at sino ang tumutugon | `sql/023-safety.sql` |
 | `push_subs` | push subscriptions (webpush ngayon, fcm sa APK) | `sql/023-safety.sql` |

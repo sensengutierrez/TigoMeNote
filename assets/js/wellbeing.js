@@ -33,12 +33,14 @@
     lastTick = now;
     try {
       var r = await TMN_API.call("wellbeing", "tick", { seconds: sec, tz: tz() }, { timeout: 15000 });
-      st = r; apply();
+      st = r; keep(); apply();
     } catch (e) {}
   }
 
+  function keep() { try { sessionStorage.setItem("tmnWbState", JSON.stringify({ at: Date.now(), st: st })); } catch (e) {} }
+
   function apply() {
-    if (!st) return;
+    if (!st || !st.state) return;
     if (st.needs_birthdate) { birthGate(); return; }
     if (exempt) { closeOv(); return; }
     var s = st.state, snooze = get(SNOOZE) || {};
@@ -147,7 +149,10 @@
     if (!window.TMN_TOKEN) return;
     session();
     lastTick = Date.now();
-    TMN_API.call("wellbeing", "tick", { seconds: 0, tz: tz() }, { timeout: 15000 }).then(function (r) { st = r; apply(); }).catch(function () {});
+    // Paglipat ng page: gamitin muna ang huling sagot kung bago pa (< 60 s), para walang dagdag na tawag sa server
+    var cached = null; try { cached = JSON.parse(sessionStorage.getItem("tmnWbState") || "null"); } catch (e) {}
+    if (cached && Date.now() - cached.at < 60000) { st = cached.st; apply(); }
+    else TMN_API.call("wellbeing", "tick", { seconds: 0, tz: tz() }, { timeout: 15000 }).then(function (r) { st = r; keep(); apply(); }).catch(function () {});
     setInterval(function () { if (!document.hidden) { session(); tick(); } }, TICK);
   }
   document.addEventListener("visibilitychange", function () { if (!document.hidden) { lastTick = Date.now(); session(); if (st) apply(); } else tick(true); });
