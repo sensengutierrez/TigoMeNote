@@ -59,3 +59,8 @@
 .lx-where { display: flex; gap: 6px; align-items: center; }
 .lx-btns { display: grid; gap: 8px; }
 .lx-btns .btn { justify-content: center; }
+
+/* In-invite na hindi pa tumatanggap (nasa listahan na rin) */
+.sf-row.is-pending { opacity: .85; }
+.sf-row.is-pending .avatar { outline: 2px dashed var(--line-strong); outline-offset: 2px; }
+.sf-invites { border-color: var(--ring-3); box-shadow: 0 0 0 1px var(--ring-3) inset; }

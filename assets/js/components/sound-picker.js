@@ -35,6 +35,7 @@
     root.innerHTML =
       '<p class="sp-note small faint">' + I("sparkle", "ic-sm") + "Original TigoMeNote music, made on your device. Free to use, no copyright issues.</p>" +
       '<div class="sp-sec"><h4>For you</h4><div class="sp-list sp-for"><p class="faint small">Matching your photo…</p></div></div>' +
+      '<div class="sp-sec sp-local-sec hidden"><h4 class="sp-local-h"></h4><div class="sp-list sp-local"></div></div>' +
       '<div class="sp-sec"><h4>All sounds</h4><div class="sp-list sp-all"></div></div>' +
       '<div class="sp-mix">' +
         '<label class="sp-vol">' + I("music", "ic-sm") + '<span>Music</span><input type="range" min="0" max="100" class="sp-vol-m"></label>' +
@@ -54,6 +55,13 @@
     function paint() {
       root.querySelector(".sp-for").innerHTML = forYou.length ? forYou.slice(0, 4).map(function (t, i) { return rowHtml(t, i === 0); }).join("") : '<p class="faint small">Matching your photo…</p>';
       var shown = forYou.slice(0, 4).map(function (t) { return t.id; });
+      // Local sounds (Pilipinas / Gulf) ayon sa device; kung wala, makikita pa rin sa All sounds
+      var loc = S().local ? S().local().filter(function (t) { return shown.indexOf(t.id) < 0; }) : [];
+      var regs = S().region ? S().region() : [];
+      root.querySelector(".sp-local-sec").classList.toggle("hidden", !loc.length);
+      root.querySelector(".sp-local-h").textContent = "Local · " + regs.map(function (r) { return S().REGIONS[r]; }).join(" & ");
+      root.querySelector(".sp-local").innerHTML = loc.map(function (t) { return rowHtml(t); }).join("");
+      shown = shown.concat(loc.map(function (t) { return t.id; }));
       root.querySelector(".sp-all").innerHTML = S().list.filter(function (t) { return shown.indexOf(t.id) < 0; }).map(function (t) { return rowHtml(t); }).join("");
       var vm = root.querySelector(".sp-vol-m"), vo = root.querySelector(".sp-vol-o");
       vm.value = String(Math.round((cur ? cur.vol : 0.8) * 100)); vm.disabled = !cur;

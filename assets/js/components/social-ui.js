@@ -84,8 +84,10 @@
       '<div class="sx-list" aria-live="polite"><div class="sx-loading faint small">Loading…</div></div>' +
       '<form class="sx-write">' + av(me, 32) +
         '<textarea class="input" rows="1" maxlength="500" placeholder="Add a comment…"></textarea>' +
+        (window.TMN_EMOJI_PICK ? '<button type="button" class="icon-btn sx-emo" aria-label="Emoji" aria-expanded="false">' + I("smile") + "</button>" : "") +
         '<button type="submit" class="btn btn-primary btn-sm" disabled>Post</button></form>';
     var list = root.querySelector(".sx-list"), ta = root.querySelector("textarea"), send = root.querySelector("[type=submit]");
+    if (window.TMN_EMOJI_PICK) TMN_EMOJI_PICK.attach(root.querySelector(".sx-emo"), ta);
     var count = 0;
     function row(c) {
       return '<div class="sx-c" data-cid="' + esc(c.id) + '">' + '<button type="button" class="sx-av" data-sx="user" data-uid="' + esc((c.user || {}).id || "") + '">' + av(c.user, 34) + "</button>" +

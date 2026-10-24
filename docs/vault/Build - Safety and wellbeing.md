@@ -64,3 +64,8 @@ Sa server: ang FCM sending ay idadagdag kapag may Firebase project na (`pushTo()
 - iPhone push: kailangang naka-"Add to Home Screen" (iOS 16.4+).
 
 Tingnan din: [[Plan - Safety, family and wellbeing]], [[System map]], [[Decisions]]
+
+## Invites (Family/Friends) — 2026-10-24
+- Ang in-invite mo ay nasa listahan na agad ng Family/Friends ("Invite sent · waiting for them to accept", **Cancel invite**), kasama sa bilang. Ang listahan ay nasa itaas ng mapa.
+- Ang inimbitahan: **notification** (`circle_invite`) na may **Accept/Decline** sa Notifications, bukod sa push. Pagtanggap: notification sa nag-invite (`circle_accept`). Nabubura ang invite notification kapag tinanggap, tinanggihan o kinansela.
+- Ang SOS ay napupunta lang sa **tinanggap** na Family/Friends.

@@ -52,12 +52,14 @@
     } catch (e) { UI.toast(e.message); }
   }
   function render() {
-    var m = data.members;
-    $("nFamily").textContent = m.filter(function (x) { return x.kind === "family"; }).length;
-    $("nFriend").textContent = m.filter(function (x) { return x.kind === "friend"; }).length;
-    var list = m.filter(function (x) { return x.kind === tab; });
-    $("members").innerHTML = list.map(memberRow).join("");
-    $("membersEmpty").classList.toggle("hidden", !!list.length);
+    var m = data.members, out = data.outgoing;
+    // Kasama sa bilang at listahan ang mga in-invite mo na hindi pa tumatanggap (para hindi "nawawala")
+    function count(k) { return m.concat(out).filter(function (x) { return x.kind === k; }).length; }
+    $("nFamily").textContent = count("family");
+    $("nFriend").textContent = count("friend");
+    var list = m.filter(function (x) { return x.kind === tab; }), pend = out.filter(function (x) { return x.kind === tab; });
+    $("members").innerHTML = list.map(memberRow).join("") + pend.map(pendingRow).join("");
+    $("membersEmpty").classList.toggle("hidden", !!(list.length + pend.length));
     $("emptyTitle").textContent = tab === "family" ? "No Family yet" : "No Friends yet";
     $("emptyText").textContent = tab === "family"
       ? "Add the people you trust. They'll get your SOS and, if you allow, see where you are."
@@ -71,12 +73,12 @@
         '<div class="sf-row-act"><button type="button" class="btn btn-primary btn-sm" data-a="accept">Accept</button>' +
         '<button type="button" class="btn btn-ghost btn-sm" data-a="decline">Decline</button></div></div>';
     }).join("");
-    $("outWrap").classList.toggle("hidden", !data.outgoing.length);
-    $("outgoing").innerHTML = data.outgoing.map(function (x) {
-      return '<div class="sf-row" data-id="' + x.id + '">' + avatar(x.user, 36) + '<div class="sf-row-main">' + who(x.user) + '<span class="faint small">' + (x.kind === "family" ? "Family" : "Friends") + " · invited</span></div>" +
-        '<div class="sf-row-act"><button type="button" class="btn btn-ghost btn-sm" data-a="remove">Cancel</button></div></div>';
-    }).join("");
     paintMap();
+  }
+  function pendingRow(x) {
+    return '<div class="sf-row is-pending" data-id="' + x.id + '">' + avatar(x.user) + '<div class="sf-row-main">' + who(x.user) +
+      '<span class="sf-sub small">' + I("clock", "ic-sm") + "<span>Invite sent · waiting for them to accept</span></span></div>" +
+      '<div class="sf-row-act"><button type="button" class="btn btn-ghost btn-sm" data-a="remove">Cancel invite</button></div></div>';
   }
   function memberRow(x) {
     var u = x.user, sub;
@@ -94,11 +96,13 @@
       "</div></div>";
   }
 
-  $("circleTabs").addEventListener("click", function (e) {
-    var b = e.target.closest("[data-k]"); if (!b) return;
-    tab = b.dataset.k;
-    this.querySelectorAll("[data-k]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+  function selectTab(k) {
+    tab = k;
+    $("circleTabs").querySelectorAll("[data-k]").forEach(function (x) { x.setAttribute("aria-pressed", String(x.dataset.k === k)); });
     if (data) render();
+  }
+  $("circleTabs").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-k]"); if (b) selectTab(b.dataset.k);
   });
 
   function linkById(id) { return data && data.members.concat(data.incoming, data.outgoing).filter(function (x) { return x.id === id; })[0]; }
@@ -261,7 +265,7 @@
         { label: "Send invite", cls: "btn-primary", onClick: async function (api, btn) {
           if (!picked) { UI.toast("Choose a person first."); return; }
           btn.disabled = true;
-          try { await TMN_API.call("safety", "invite", { user_id: picked, kind: kind, share: share.checked }); UI.toast("Invite sent."); m.close(); load(); }
+          try { await TMN_API.call("safety", "invite", { user_id: picked, kind: kind, share: share.checked }); UI.toast("Invite sent. They'll see it in Notifications."); m.close(); selectTab(kind); load(); }
           catch (e) { btn.disabled = false; UI.toast(e.message); }
         } }
       ]

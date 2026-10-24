@@ -248,3 +248,25 @@ body.modal-open { overflow: hidden; }
 .mod-hint { margin-top: 6px; padding: 8px 10px; border-radius: var(--r-md); background: var(--danger-soft); color: var(--danger); font-size: 13px; line-height: 1.4; }
 .mod-hint a { color: inherit; font-weight: 600; }
 [aria-invalid="true"].input, textarea[aria-invalid="true"] { border-color: var(--danger); }
+
+/* ---------- emoji picker + stickers (components/emoji-picker.js) ---------- */
+.emp {
+  position: fixed; z-index: 95; width: 352px; height: 400px; display: grid; grid-template-rows: auto auto 1fr;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-lg); overflow: hidden;
+}
+.emp.is-sheet { left: 0 !important; right: 0; bottom: 0; top: auto !important; width: auto; height: min(56vh, 420px); border-radius: var(--r-xl) var(--r-xl) 0 0; padding-bottom: env(safe-area-inset-bottom); }
+.emp-tabs { display: flex; gap: 2px; padding: 6px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line); }
+.emp-tabs::-webkit-scrollbar { display: none; }
+.emp-tab { flex: none; width: 36px; height: 36px; border: 0; border-radius: 10px; background: none; font-size: 20px; font-family: var(--font-emoji); display: grid; place-items: center; cursor: pointer; opacity: .7; }
+.emp-tab:hover { background: var(--bg-soft); opacity: 1; }
+.emp-tab[aria-selected="true"] { background: var(--bg-soft); opacity: 1; box-shadow: inset 0 -2px 0 var(--accent); }
+.emp-stk-ic { display: grid; place-items: center; }
+.emp-title { padding: 8px 12px 2px; color: var(--text-3); font-weight: 600; }
+.emp-body { overflow-y: auto; padding: 4px 8px 10px; overscroll-behavior: contain; }
+.emp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); align-content: start; }
+.emp-e { height: 40px; border: 0; background: none; border-radius: 10px; font-size: 26px; line-height: 1; font-family: var(--font-emoji); cursor: pointer; display: grid; place-items: center; }
+.emp-e:hover, .emp-e:focus-visible { background: var(--bg-soft); }
+.emp-stickers { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 4px; align-content: start; }
+.emp-stk { border: 0; background: none; border-radius: 14px; padding: 4px; cursor: pointer; display: grid; place-items: center; transition: transform .12s var(--ease); }
+.emp-stk:hover { background: var(--bg-soft); transform: scale(1.04); }
+.emp-empty { grid-column: 1 / -1; padding: 24px 8px; text-align: center; }

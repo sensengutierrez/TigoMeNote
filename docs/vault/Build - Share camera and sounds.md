@@ -21,10 +21,11 @@ updated: 2026-10-24
 - Iisang listahan ng filters na rin ang photo editor ng Gallery.
 
 ## TigoMeNote Sounds (auto sound)
-- **12 sariling track** na ginagawa ng browser (Web Audio): Sunny Steps, Golden Hour, Night Drive, Island Breeze, Soft Morning, Hype Up, Lofi Notes, City Lights, Family Day, Rain Window, Dreamy, Victory. Walang audio file, walang download, gumagana offline, **walang copyright issue**.
+- **20 sariling track** na ginagawa ng browser (Web Audio): Sunny Steps, Golden Hour, Night Drive, Island Breeze, Soft Morning, Hype Up, Lofi Notes, City Lights, Family Day, Rain Window, Dreamy, Victory, at **Local**: Pinoy (Harana, Jeepney Ride, Fiesta, Budots Bounce, Boracay Sunset) at Gulf (Khaleeji Nights, Desert Oud, Manama Skyline; hijaz scale, oud, darbuka). Walang audio file, walang download, gumagana offline, **walang copyright issue**.
 - Bawat track ay "recipe": tempo, chords, drums, bass, instrument at melody (pareho bawat tugtog). May compressor at limiter para hindi mag-crack sa speaker.
 - **Auto-pick:** tinitingnan ang photo/video (liwanag, kulay, init, contrast, kulay na nangingibabaw), oras ng araw at filter → pinakabagay na track. Hal. madilim/gabi → Night Drive; maliwanag at asul → Island Breeze; Mono/Noir → Rain Window.
-- **Sound picker:** For you (4, may "Best match") + All sounds, preview, lakas ng music, lakas ng sariling tunog ng video, No sound, at **Auto-pick** on/off (naka-save sa device).
+- **Local sounds:** `TMN_SOUNDS.region()` = `ph` kung Asia/Manila o Filipino ang wika; `gulf` kung Bahrain/Saudi/UAE/Qatar/Kuwait/Oman o Arabic. May dagdag na puntos ang local sa auto-pick (lalabas kapag bagay din sa photo), at may sariling "Local · …" na listahan sa Sounds.
+- **Sound picker:** For you (4, may "Best match") + Local + All sounds, preview, lakas ng music, lakas ng sariling tunog ng video, No sound, at **Auto-pick** on/off (naka-save sa device).
 - Ang post ay may `sound` lang (id + lakas), hindi audio file. Sa viewer: kusang tumutugtog; sa feed: pindutin ang ♪ chip. Humihinto kapag isinara o umalis sa page.
 - Sa video na may sound: ang sariling tunog ng video ay hinihinaan ayon sa pinili (default 40%).
 

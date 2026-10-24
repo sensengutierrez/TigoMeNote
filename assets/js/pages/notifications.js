@@ -70,6 +70,8 @@
       case "follow": return who(g) + " started following you.";
       case "follow_request": return who(g) + (n.pending ? " wants to follow you." : " requested to follow you.");
       case "follow_accept": return who(g) + " accepted your follow request.";
+      case "circle_invite": return who(g) + (n.data && n.data.kind === "friend" ? " wants to add you to their Friends circle." : " wants to add you to their Family circle.");
+      case "circle_accept": return who(g) + (n.data && n.data.kind === "friend" ? " joined your Friends circle." : " joined your Family circle.");
       case "milestone": return esc(n.body || "");
       case "recap": return recapHtml(n.data);
       case "moderation": return esc(n.body || "");
@@ -79,7 +81,7 @@
 
   // ---------- kaliwa (avatar o icon) ----------
   var SYS = { milestone: ["trophy", "nt-sys-gold"], recap: ["chart", "nt-sys-mint"], moderation: ["shield", "nt-sys-coral"] };
-  var BADGE = { like: "heart", comment: "comment", repost: "repost", follow: "userPlus", follow_request: "userPlus", follow_accept: "check" };
+  var BADGE = { like: "heart", comment: "comment", repost: "repost", follow: "userPlus", follow_request: "userPlus", follow_accept: "check", circle_invite: "shield", circle_accept: "shield" };
   function left(g) {
     if (SYS[g.type]) return '<span class="nt-sys ' + SYS[g.type][1] + '">' + I(SYS[g.type][0]) + "</span>";
     var us = [];
@@ -96,6 +98,10 @@
     if (g.type === "follow_request" && n.pending) {
       return '<div class="nt-btns"><button type="button" class="btn btn-primary btn-sm" data-nt="approve">Confirm</button>' +
         '<button type="button" class="btn btn-ghost btn-sm" data-nt="decline">Delete</button></div>';
+    }
+    if (g.type === "circle_invite" && n.data && n.data.link && !n.done) {
+      return '<div class="nt-btns"><button type="button" class="btn btn-primary btn-sm" data-nt="caccept">Accept</button>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-nt="cdecline">Decline</button></div>';
     }
     if ((g.type === "follow" || g.type === "follow_accept") && g.items.length === 1 && n.actor) {
       return n.following
@@ -150,7 +156,12 @@
       b.disabled = true;
       var a = b.dataset.nt;
       try {
-        if (a === "approve" || a === "decline") {
+        if (a === "caccept" || a === "cdecline") {
+          // Family/Friends invite: tatanggapin dito, ang pag-share ng location ay sa Safety
+          await TMN_API.call("safety", "respond", { id: n.data.link, accept: a === "caccept" });
+          if (a === "caccept") { n.done = true; n.unread = false; UI.toast("Added to your circle. Manage location sharing in Safety."); }
+          else { items = items.filter(function (x) { return x !== n; }); UI.toast("Invite declined."); }
+        } else if (a === "approve" || a === "decline") {
           await TMN_API.call("social", a === "approve" ? "approveRequest" : "declineRequest", { user_id: n.actor.id });
           if (a === "approve") { n.type = "follow"; n.unread = false; g.type = "follow"; n.pending = false; }
           else items = items.filter(function (x) { return x !== n; });
@@ -168,6 +179,7 @@
     if (row.dataset.post) { location.href = "explore.html?post=" + encodeURIComponent(row.dataset.post); return; }
     if (g.type === "follow" || g.type === "follow_request" || g.type === "follow_accept") { if (n.actor) S.userSheet(n.actor.id); return; }
     if (g.type === "milestone" || g.type === "recap") location.href = "profile.html";
+    if (g.type === "circle_invite" || g.type === "circle_accept") location.href = "safety.html";
   });
 
   $("ntGear").addEventListener("click", function () { TMN_NOTIF_SETTINGS.open(); });

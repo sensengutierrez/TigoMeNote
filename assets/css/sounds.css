@@ -15,7 +15,7 @@
 .sp-item:nth-child(3n) .sp-play { background: linear-gradient(135deg, var(--ring-1), var(--ring-3)); }
 .sp-main { flex: 1; min-width: 0; display: grid; }
 .sp-main b { font-size: 15px; }
-.sp-best { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: var(--r-full); background: var(--accent-soft); color: var(--accent); margin-left: 4px; }
+.sp-best { justify-self: start; width: max-content; display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: var(--r-full); background: var(--accent-soft); color: var(--accent); margin-left: 4px; }
 .sp-mix { display: grid; gap: 10px; padding-top: 6px; border-top: 1px solid var(--line); }
 .sp-vol { display: grid; grid-template-columns: auto 92px 1fr; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
 .sp-vol input { width: 100%; accent-color: var(--accent); }

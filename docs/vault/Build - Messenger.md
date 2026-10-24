@@ -9,7 +9,7 @@ updated: 2026-10-24
 **Page:** `app/messages.html` (Messages sa menu; may bilang ng bago) · links: `messages.html?c=<chat>` at `messages.html?to=<user>` (galing sa **Message** button sa profile ng iba)
 **Code:** `assets/js/pages/messages.js` (inbox, Chats/Requests, search, APK gate), `components/chat-view.js` (isang chat), `components/chat-new.js` (bagong chat/group, pumili ng tao), `realtime.js` (live ping), `native-bridge.js` (`messenger`), `notif-badge.js` (bilang), `components/notif-settings.js` (Messages setting)
 **Styles:** `assets/css/pages/messages.css`
-**Server:** `messages-fast` v1 (+ `moderation.ts`), `notify-fast` v2 (`pushRaw`), `moderation-fast` v3 (report ng message)
+**Server:** `messages-fast` v2 (+ `moderation.ts`), `notify-fast` v2 (`pushRaw`), `moderation-fast` v3 (report ng message)
 **SQL:** `sql/033-messages.sql` (napatakbo na): `conversations`, `conversation_members`, `messages`, `message_reactions`, `notif_prefs.messages`, report type `message`, private bucket `chat-media`
 
 ## Sino ang puwedeng mag-message
@@ -18,8 +18,15 @@ updated: 2026-10-24
 - Group: 3–50 tao; ang gumawa ang admin. Admin: Add people, Remove, Pin. Lahat: Rename, Mute, Leave (kapag umalis ang huling admin, may bagong admin).
 - Lahat ng text ay dumadaan sa text filter (block/flag) at sa teen rules (bawal ang phone, email, ibang app).
 
+## Emoji at stickers
+- **Emoji picker** (`components/emoji-picker.js`): ☺ button sa chat, comments at caption. Tabs: Recent, ✨ New (Unicode 14–16), Smileys, People, Hearts, Animals, Food, Activities, Travel, Objects, Flags. Naaalala ang huling ginamit (sa device).
+- **Hindi na kahon:** Noto Color Emoji (Google Fonts) ang fallback na font sa bawat page.
+- **Reactions:** 6 na mabilis + **(+)** para sa kahit anong emoji (server: isang emoji lang, `isEmoji`).
+- **Stickers** (`stickers.js`): 20 "Tigo" stickers na SVG; message `kind = 'sticker'`, `body` = sticker id. Walang upload; walang text filter (fixed ang laman).
+
 ## Paano gumagana
 - **Live:** Supabase Realtime (broadcast) sa lihim na channel bawat chat (`channel_key`). "Ping" lang ang dumadaan (walang laman ng message); ang browser ang kumukuha sa server. "typing…" ay diretso sa channel. Kapag hindi konektado: poll bawat 4 s habang bukas ang chat.
+- **Iwas loop:** ang "read" ping ay ipinapadala lang kapag may bagong nabasa; hindi pinapansin ng browser ang sariling "read" at may 3 s na pagitan. Ang link ng photo ay hindi pinapalitan bawat refresh (para hindi mag-reload ang larawan).
 - **Seen:** `last_read_at` bawat member. DM: "Seen"/"Sent"; group: "Seen by N" / "Seen by everyone".
 - **Photo:** compress (gaya ng posts), signed upload sa `chat-media`, signed URL (1 oras).
 - **Location:** kasalukuyang GPS (may tanong muna), card na may **View map** (Leaflet) at **Directions**. Puwedeng i-**pin** para laging nasa itaas.

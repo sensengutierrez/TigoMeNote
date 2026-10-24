@@ -38,6 +38,10 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-10-24 · Share camera (test): walang lumalabas na Sound row sa composer → pinapalitan ng `row()` ang buong `className` ng container → `classList.add/toggle` na lang (`sound-picker.js`)
 - 2026-10-24 · ♪ chip sa post card (test): napunta sa sulok ng screen → may lumang `.pc-sound` (mute button ng video, `position:absolute`) → bagong pangalan `.pc-music` at `.pc-soundpick` (`post-card.js`, `post-composer.js`, `posts.css`)
 - 2026-10-24 · TigoMeNote Sounds (test): umaabot sa 1.9 ang lakas (nagka-crack) → idinagdag ang limiter at hininaan ang master (`sounds.js`)
+- 2026-10-24 · Chat: blangko ang photo at walang laman ang viewer → loop: bawat `open` ay nagpi-ping ng "read" → lahat ng bukas na chat (pati sarili) ay nagre-reload → bagong signed URL bawat reload kaya hindi natatapos mag-load ang larawan → "read" ping lang kapag may bagong nabasa (server), hindi pinapansin ang sariling "read" at may 3 s na pagitan (browser), hindi pinapalitan ang link ng photo hangga't hindi malapit mag-expire, at hindi na nire-render kung walang nagbago (`messages-fast.ts`, `chat-view.js`)
+- 2026-10-24 · Safety: "hindi lumalabas" ang in-add na Family/Friend → pending pa (hindi pa tinatanggap) at nasa maliit na "Waiting…" sa ilalim ng "No Family yet"; walang notification ang inimbitahan (push lang, kung naka-on) → pending ay nasa listahan na mismo + bilang, listahan bago ang mapa, at notification na may Accept/Decline (`safety.js`, `safety.html`, `safety-fast.ts`, `notifications.js`, sql/037)
+- 2026-10-24 · Emoji na "kahon" (hal. 🫩, 🩷 sa Windows) → walang ganoong emoji ang font ng device → Noto Color Emoji (Google Fonts) sa bawat page at sa `--font-body`; ang preview ng message ay pinuputol na nang hindi nahahati ang emoji (`tokens.css`, `messages-fast.ts`)
+- 2026-10-24 · Sound picker: humahaba ang "Best match" sa buong lapad → `justify-self: start` (`sounds.css`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

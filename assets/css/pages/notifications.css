@@ -33,6 +33,7 @@
 .nt-b-comment { background: var(--ring-3); }
 .nt-b-repost { background: var(--ring-2); }
 .nt-b-follow, .nt-b-follow_request, .nt-b-follow_accept { background: var(--ink); color: var(--ink-text); }
+.nt-b-circle_invite, .nt-b-circle_accept { background: var(--ring-3); color: #fff; }
 .nt-sys { flex: none; width: 50px; height: 50px; border-radius: 16px; display: grid; place-items: center; }
 .nt-sys .ic { width: 24px; height: 24px; }
 .nt-sys-gold { background: color-mix(in srgb, var(--ring-2) 18%, var(--surface)); color: color-mix(in srgb, var(--ring-2) 75%, var(--text)); }

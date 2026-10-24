@@ -45,7 +45,7 @@
       (window.TMN_SOUND_PICK ? '<div class="field"><span class="pe-label">Sound</span><div class="pc-soundpick"></div></div>' : "") +
       '<label class="field"><span class="pe-label">Caption</span>' +
         '<textarea class="input pc-cap" maxlength="' + CAP + '" rows="3" placeholder="What\'s the story?"></textarea>' +
-        '<span class="pc-count faint small">0 / ' + CAP + "</span></label>" +
+        '<span class="pc-count faint small">' + (window.TMN_EMOJI_PICK ? '<button type="button" class="icon-btn pc-emo" aria-label="Emoji" aria-expanded="false">' + I("smile", "ic-sm") + "</button>" : "") + '<span class="pc-count-n">0 / ' + CAP + "</span></span></label>" +
       '<div class="field"><span class="pe-label">Who can see this</span>' +
         '<div class="segmented pc-vis" role="group" aria-label="Visibility">' + VIS.map(function (x) {
           return '<button type="button" data-vis="' + x.v + '" aria-pressed="' + (x.v === state.vis) + '">' + I(x.icon, "ic-sm") + x.label + "</button>";
@@ -103,7 +103,8 @@
     }
     window.addEventListener("online", paintNet); window.addEventListener("offline", paintNet);
 
-    cap.addEventListener("input", function () { count.textContent = cap.value.length + " / " + CAP; });
+    cap.addEventListener("input", function () { count.querySelector(".pc-count-n").textContent = cap.value.length + " / " + CAP; });
+    if (window.TMN_EMOJI_PICK) TMN_EMOJI_PICK.attach(root.querySelector(".pc-emo"), cap);
     root.querySelector(".pc-vis").addEventListener("click", function (e) { var b = e.target.closest("[data-vis]"); if (b && !state.busy) { state.vis = b.dataset.vis; paintVis(); } });
     root.querySelector(".pc-when").addEventListener("click", function (e) {
       var b = e.target.closest("[data-when]"); if (!b || state.busy) return;

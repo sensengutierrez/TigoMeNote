@@ -37,6 +37,8 @@ updated: 2026-10-24
 | `filters.js` | Iisang listahan ng 13 libreng filters + `draw()` (`TMN_FILTERS`) |
 | `components/camera.js` | Sariling camera: live filters, photo, video ≤15 s (`TMN_CAMERA`) |
 | `sounds.js` | TigoMeNote Sounds: music na gawa sa device, auto-pick, ♪ chip (`TMN_SOUNDS`) |
+| `emoji-data.js` / `components/emoji-picker.js` | Listahan ng emoji (pati pinakabago) at emoji picker + Stickers tab (`TMN_EMOJI_DATA`, `TMN_EMOJI_PICK`) |
+| `stickers.js` | 20 sariling TigoMeNote stickers na SVG (`TMN_STICKERS`) |
 | `components/sound-picker.js` / `capture-review.js` | Pumili ng sound + Sound row (`TMN_SOUND_PICK`); review pagkakuha (`TMN_REVIEW`) |
 | `components/weather.js` | Weather card + auto location |
 | `post-queue.js` | Offline outbox ng posts: compress + kusang upload (`TMN_POSTQ`) |
@@ -118,9 +120,9 @@ Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast
 | `usage_days` | oras ng gamit bawat araw | `sql/024-wellbeing.sql` |
 | `reports` | report ng users at automatic na flag | `sql/026-moderation.sql` |
 | `moderation_log` | log ng admin at automatic na block/flag | `sql/026-moderation.sql` |
-| `notifications` | activity ng bawat user (reaction, comment, follow, milestone, recap, notice) | `sql/029-notifications.sql` |
+| `notifications` | activity ng bawat user (reaction, comment, follow, milestone, recap, notice, Family/Friends invite at accept) | `sql/029-notifications.sql`, `sql/037` |
 | `conversations` / `conversation_members` | chats, members, requests, Seen (`last_read_at`) | `sql/033-messages.sql` |
-| `messages` / `message_reactions` | messages (text, photo, location, system) at reactions | `sql/033-messages.sql` |
+| `messages` / `message_reactions` | messages (text, photo, location, sticker, system) at reactions (kahit anong emoji) | `sql/033-messages.sql`, `sql/037` |
 | `notif_prefs` | settings ng notifications (pause, sleep, Off/In app/Push) | `sql/029-notifications.sql` |
 
 `posts` ay may `pinned_at` (hanggang 3) at `view_count` (sql/020), at `sound` (sql/035). Function: `record_post_views()` (service_role lang).

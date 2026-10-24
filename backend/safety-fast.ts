@@ -188,6 +188,8 @@ async function invite(p: any, me: any) {
   const row = { a_id: a, b_id: b, kind, invited_by: me.id, a_shares: a === me.id ? share : false, b_shares: b === me.id ? share : false };
   const { data, error } = await db.from("safety_links").insert(row).select("*").single();
   if (error) { if (error.code === "23505") return fail("Invite already sent.", 409); throw error; }
+  // Lalabas din sa Notifications ng inimbitahan (hindi lang push)
+  await db.from("notifications").insert({ user_id: uid, actor_id: me.id, type: "circle_invite", data: { link: data.id, kind } });
   await pushTo([uid], { type: "invite", title: kind === "family" ? "Family invite" : "Friend invite", body: `${nameOf(me)} wants to add you to their ${kind === "family" ? "Family" : "Friends"} circle.`, url: "app/safety.html" }, "normal");
   return reply({ ok: true, id: data.id });
 }
@@ -196,9 +198,11 @@ async function invite(p: any, me: any) {
 async function respond(p: any, me: any) {
   const { data: l } = await db.from("safety_links").select("*").eq("id", String(p.id || "")).maybeSingle();
   if (!l || (l.a_id !== me.id && l.b_id !== me.id) || l.status !== "pending" || l.invited_by === me.id) return fail("Invite not found.", 404);
+  await db.from("notifications").delete().eq("type", "circle_invite").eq("data->>link", l.id);
   if (!p.accept) { await db.from("safety_links").delete().eq("id", l.id); return reply({ ok: true }); }
   const share = p.share === undefined ? l.kind === "family" : !!p.share;
   await db.from("safety_links").update({ status: "accepted", accepted_at: nowIso(), [myCol(l, me.id)]: share }).eq("id", l.id);
+  await db.from("notifications").insert({ user_id: l.invited_by, actor_id: me.id, type: "circle_accept", data: { link: l.id, kind: l.kind } });
   await pushTo([l.invited_by], { type: "invite-ok", title: "Invite accepted", body: `${nameOf(me)} joined your ${l.kind === "family" ? "Family" : "Friends"} circle.`, url: "app/safety.html" }, "normal");
   return reply({ ok: true });
 }
@@ -224,6 +228,7 @@ async function remove(p: any, me: any) {
   if (!l || (l.a_id !== me.id && l.b_id !== me.id)) return fail("Not found.", 404);
   if ((await guardiansOf(me)).includes(other(l, me.id))) return fail("You can't remove your parent until you turn 18.", 403);
   await db.from("safety_links").delete().eq("id", l.id);
+  if (l.status === "pending") await db.from("notifications").delete().eq("type", "circle_invite").eq("data->>link", l.id);
   return reply({ ok: true });
 }
 

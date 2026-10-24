@@ -47,6 +47,7 @@
         '<form class="ch-compose">' +
           '<button type="button" class="icon-btn" data-ch="photo" aria-label="Send a photo" title="Photo">' + I("image") + "</button>" +
           '<button type="button" class="icon-btn" data-ch="loc" aria-label="Send your location" title="Location">' + I("pin") + "</button>" +
+          (window.TMN_EMOJI_PICK ? '<button type="button" class="icon-btn" data-ch="emoji" aria-label="Emoji and stickers" title="Emoji and stickers" aria-expanded="false">' + I("smile") + "</button>" : "") +
           '<textarea class="input ch-input" rows="1" maxlength="2000" placeholder="Message…" aria-label="Message"></textarea>' +
           '<button type="submit" class="icon-btn ch-send" aria-label="Send">' + I("send") + "</button>" +
           '<input type="file" accept="image/*" class="hidden ch-file">' +
@@ -69,7 +70,7 @@
       root.querySelector(".ch-who").innerHTML = pic + '<span class="ch-who-t"><b translate="no">' + esc(chatName(c, S.members, me.id)) + '</b><span class="faint small" translate="no">' + esc(sub) + "</span></span>" +
         (c.muted ? I("bellOff", "ic-sm ch-muted") : "");
     }
-    function pinText(m) { return m.kind === "photo" ? "📷 Photo" : m.kind === "location" ? "Location" : (m.body || ""); }
+    function pinText(m) { return m.kind === "photo" ? "📷 Photo" : m.kind === "location" ? "Location" : m.kind === "sticker" ? "Sticker" : (m.body || ""); }
     function paintPin() {
       var b = root.querySelector(".ch-pin");
       b.classList.toggle("hidden", !S.pinned);
@@ -113,8 +114,12 @@
       if (m.kind === "photo") {
         var src = m.localUrl || (m.photo && m.photo.url);
         var ratio = m.photo && m.photo.w && m.photo.h ? m.photo.w / m.photo.h : 1;
-        return '<button type="button" class="ch-photo" data-ch="photo-open" style="aspect-ratio:' + Math.max(.6, Math.min(1.8, ratio)) + '">' + (src ? '<img alt="" src="' + esc(src) + '">' : I("image")) + "</button>" +
+        return '<button type="button" class="ch-photo" data-ch="photo-open" style="aspect-ratio:' + Math.max(.6, Math.min(1.8, ratio)) + '">' + (src ? '<img alt="" src="' + esc(src) + '" onerror="this.parentNode.classList.add(\'broken\')">' : I("image")) + '<span class="ch-photo-err">' + I("image") + "<small>Tap to reload</small></span>" + "</button>" +
           (m.body ? '<span class="ch-text" translate="no">' + linkify(m.body) + "</span>" : "");
+      }
+      if (m.kind === "sticker") {
+        var svg = window.TMN_STICKERS ? TMN_STICKERS.svg(m.body, 132) : "";
+        return svg ? '<span class="ch-sticker">' + svg + "</span>" : '<span class="ch-sticker missing">Sticker</span>';
       }
       if (m.kind === "location" && m.loc) {
         return '<div class="ch-loc"><span class="ch-loc-pin">' + I("pin") + "</span><span><b>Location</b><span class=\"faint small\" translate=\"no\">" +
@@ -150,9 +155,12 @@
       var atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 80;
       var prevH = list.scrollHeight, prevTop = list.scrollTop;
       var seen = seenLine();
-      list.innerHTML = (S.more ? '<div class="ch-older"><button type="button" class="btn btn-ghost btn-sm" data-ch="older">Load older</button></div>' : "") +
+      var html = (S.more ? '<div class="ch-older"><button type="button" class="btn btn-ghost btn-sm" data-ch="older">Load older</button></div>' : "") +
         (S.msgs.length ? S.msgs.map(function (m, i) { return msgHtml(m, S.msgs[i - 1], S.msgs[i + 1], seen); }).join("")
           : '<div class="ch-empty faint small">Say hi 👋</div>');
+      if (html === S.lastHtml && keepScroll !== "top") return; // walang nagbago → huwag galawin (iwas kurap ng photo)
+      S.lastHtml = html;
+      list.innerHTML = html;
       if (keepScroll === "top") list.scrollTop = list.scrollHeight - prevH + prevTop;
       else if (atBottom || keepScroll === "bottom") list.scrollTop = list.scrollHeight;
     }
@@ -165,9 +173,16 @@
         if (S.dead) return;
         S.chat = r.chat; S.members = r.members; S.pinned = r.pinned; S.more = r.more;
         // Pagsamahin: palitan ang luma, idagdag ang bago, ingatan ang mga hindi pa naipapadala
-        var byId = {};
+        var byId = {}, now = Date.now();
         S.msgs.forEach(function (m) { if (m.id) byId[m.id] = m; });
-        r.messages.forEach(function (m) { byId[m.id] = m; });
+        r.messages.forEach(function (m) {
+          // Huwag palitan ang link ng photo bawat refresh (bagong link = reload = blangko); bago lang pag malapit nang mag-expire
+          var old = byId[m.id];
+          if (m.photo && m.photo.url && old && old.photo && old.photo.url && old.urlAt && now - old.urlAt < 45 * 60000) { m.photo.url = old.photo.url; m.urlAt = old.urlAt; }
+          else if (m.photo && m.photo.url) m.urlAt = now;
+          if (old && old.localUrl) m.localUrl = old.localUrl;
+          byId[m.id] = m;
+        });
         var pend = S.msgs.filter(function (m) { return (m.pending || m.failed) && !r.messages.some(function (x) { return x.client_id && x.client_id === m.client_id; }); });
         S.msgs = Object.keys(byId).map(function (k) { return byId[k]; }).concat(pend).sort(function (a, b) { return a.at < b.at ? -1 : a.at > b.at ? 1 : 0; });
         paintHead(); paintPin(); paintReq(); render(S.first ? null : "bottom"); S.first = true;
@@ -183,6 +198,8 @@
       clearTimeout(refreshT);
       refreshT = setTimeout(load, 120);
     }
+    var softAt = 0;
+    function refreshSoon() { var wait = Math.max(120, 3000 - (Date.now() - softAt)); softAt = Date.now() + wait; clearTimeout(refreshT); refreshT = setTimeout(load, wait); }
     async function older() {
       var first = S.msgs.filter(function (m) { return m.id; })[0]; if (!first) return;
       var r = await TMN_API.call("messages", "open", { id: id, before: first.at });
@@ -202,6 +219,7 @@
       if (window.TMN_RT && S.chat.channel) {
         rt = TMN_RT.join(S.chat.channel, function (ev, p) {
           if (ev === "typing") { if (p.user_id !== me.id) { S.typing[p.user_id] = Date.now() + 5000; showTyping(); setTimeout(showTyping, 5200); } return; }
+          if (ev === "read") { if (p.user_id === me.id) return; return refreshSoon(); } // Seen lang ang magbabago
           if (ev === "msg" && p.user_id) { delete S.typing[p.user_id]; showTyping(); }
           refresh();
         });
@@ -288,7 +306,8 @@
       var canPin = S.chat.status === "active" && isAdmin() && !m.deleted;
       var isPinned = S.pinned && S.pinned.id === m.id;
       body.innerHTML =
-        (m.deleted ? "" : '<div class="ch-emojis">' + EMOJIS.map(function (e) { return '<button type="button" data-e="' + e + '"' + (mineRx && mineRx.emoji === e ? ' aria-pressed="true"' : "") + ">" + e + "</button>"; }).join("") + "</div>") +
+        (m.deleted ? "" : '<div class="ch-emojis">' + EMOJIS.map(function (e) { return '<button type="button" data-e="' + e + '"' + (mineRx && mineRx.emoji === e ? ' aria-pressed="true"' : "") + ">" + e + "</button>"; }).join("") +
+          (window.TMN_EMOJI_PICK ? '<button type="button" class="ch-more-rx" data-more-rx aria-label="More emoji">' + I("plus") + "</button>" : "") + "</div>") +
         '<div class="ch-acts">' +
           (canPin ? '<button type="button" class="btn btn-ghost btn-block" data-a="pin">' + I("pin", "ic-sm") + (isPinned ? "Unpin" : "Pin") + "</button>" : "") +
           (m.kind === "text" && m.body ? '<button type="button" class="btn btn-ghost btn-block" data-a="copy">' + I("edit", "ic-sm") + "Copy text</button>" : "") +
@@ -298,7 +317,16 @@
         '<p class="faint small center">' + new Date(m.at).toLocaleString(loc(), { dateStyle: "medium", timeStyle: "short" }) + "</p>";
       var sheet = TMN_MODAL.open({ title: "", size: "sm", cls: "modal-sheet", body: body });
       body.addEventListener("click", async function (e) {
-        var eb = e.target.closest("[data-e]"), ab = e.target.closest("[data-a]");
+        var eb = e.target.closest("[data-e]"), ab = e.target.closest("[data-a]"), more = e.target.closest("[data-more-rx]");
+        if (more) {
+          // Kahit anong emoji (pati pinakabago) bilang reaction
+          TMN_EMOJI_PICK.open(more, { closeOnPick: true, onEmoji: async function (em) {
+            sheet.close();
+            try { var r2 = await TMN_API.call("messages", "react", { message_id: m.id, emoji: em }); Object.assign(m, { reactions: r2.message.reactions }); render(); }
+            catch (err) { UI.toast(err.message); }
+          } });
+          return;
+        }
         try {
           if (eb) {
             var emoji = mineRx && mineRx.emoji === eb.dataset.e ? null : eb.dataset.e;
@@ -384,14 +412,26 @@
       var a = b.dataset.ch, row = b.closest("[data-id]"), m = row ? find(row.dataset.id) : null;
       try {
         if (a === "photo") fileIn.click();
+        else if (a === "emoji") {
+          if (b.getAttribute("aria-expanded") === "true") { TMN_EMOJI_PICK.close(); return; }
+          TMN_EMOJI_PICK.open(b, { stickers: S.chat && S.chat.status !== "request", onEmoji: function (em) { TMN_EMOJI_PICK.insert(input, em); },
+            onSticker: function (sid) { queue({ kind: "sticker", body: sid }); } });
+        }
         else if (a === "loc") sendLocation();
         else if (a === "menu" || a === "who") { if (a === "who" && S.chat.kind === "dm" && others()[0] && window.TMN_SOCIAL) TMN_SOCIAL.userSheet(others()[0].id); else menu(); }
         else if (a === "older") older();
         else if (a === "retry" && m) deliver(m);
         else if (a === "map" && m) openMap(m);
         else if (a === "photo-open" && m) {
+          if (b.classList.contains("broken")) { m.urlAt = 0; S.lastHtml = null; load(); return; } // kumuha ng bagong link
           var src = m.localUrl || (m.photo && m.photo.url);
-          if (src) TMN_MODAL.open({ title: "", size: "lg", cls: "modal-sheet ch-viewer", body: '<img alt="" src="' + esc(src) + '">' });
+          if (src) {
+            var pv = document.createElement("div"), im = new Image();
+            pv.className = "ch-viewer-box"; im.alt = ""; im.src = src;
+            im.onerror = function () { pv.innerHTML = '<p class="faint small">Couldn\'t load the photo. Close and tap it again.</p>'; };
+            pv.appendChild(im);
+            TMN_MODAL.open({ title: "Photo", size: "lg", cls: "modal-sheet ch-viewer", body: pv });
+          }
         }
         else if ((a === "msg" || a === "rx") && m && m.id && m.kind !== "system" && !m.pending) msgSheet(m);
         else if (a === "pin-go" && S.pinned) {

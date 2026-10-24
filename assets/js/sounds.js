@@ -7,6 +7,7 @@
      TMN_SOUNDS.suggest(features)          → mga track na pinakabagay, una ang pinakamahusay
      TMN_SOUNDS.analyze(blob|canvas|video) → { brightness, saturation, warmth, contrast, hue, hour, ... }
      TMN_SOUNDS.render(id, seconds)        → Promise<AudioBuffer> (hal. para isama sa video)
+     TMN_SOUNDS.local() / region()         → Local sounds (Pilipinas / Gulf) ayon sa time zone at wika ng device
      TMN_SOUNDS.chip(sound)                → html ng "♪ Golden Hour" na button (tap = play/stop, sa kahit anong page)
    Kailangan ng tap muna ng user bago tumunog (patakaran ng browser). */
 (function () {
@@ -36,9 +37,30 @@
     { id: "dreamy", name: "Dreamy", mood: "Soft · Dream pop", bpm: 88, root: 65, scale: "major", prog: [0, 2, 5, 3],
       drums: { k: "x.......x.......", s: "....x.......x...", h: "..x...x...x...x." }, bass: "x.......x.......", chord: "pad", lead: "bell", tags: { pink: 3, soft: 2, bright: 1, pastel: 3 } },
     { id: "victory", name: "Victory", mood: "Epic · Anthem", bpm: 120, root: 55, scale: "major", prog: [0, 4, 5, 3],
-      drums: { k: "x...x...x...x...", s: "....x.......x...", h: "x.x.x.x.x.x.x.x.", c: "x..............." }, bass: "x.x.x.x.x.x.x.x.", chord: "stab", lead: "lead", tags: { contrast: 2, bright: 2, energy: 2, green: 2 } }
+      drums: { k: "x...x...x...x...", s: "....x.......x...", h: "x.x.x.x.x.x.x.x.", c: "x..............." }, bass: "x.x.x.x.x.x.x.x.", chord: "stab", lead: "lead", tags: { contrast: 2, bright: 2, energy: 2, green: 2 } },
+
+    // ---------- Local: Pilipinas (region "ph") ----------
+    { id: "harana", name: "Harana", mood: "Pinoy · Serenade", region: "ph", gain: 1.6, bpm: 72, root: 59, scale: "major", prog: [0, 5, 3, 4],
+      drums: null, bass: "x.......x.......", chord: "guitar", lead: "bell", tags: { warm: 2, evening: 2, night: 1, soft: 2, calm: 1, pink: 1 } },
+    { id: "jeepney-ride", name: "Jeepney Ride", mood: "Pinoy · OPM pop", region: "ph", bpm: 108, root: 62, scale: "major", prog: [3, 4, 2, 5],
+      drums: { k: "x.......x.x.....", s: "....x.......x...", h: "x.x.x.x.x.x.x.x." }, bass: "x..x....x..x....", chord: "guitar", lead: "pluck", tags: { bright: 2, day: 2, happy: 2, sat: 1 } },
+    { id: "fiesta", name: "Fiesta", mood: "Pinoy · Festive", region: "ph", bpm: 124, root: 60, scale: "major", prog: [0, 3, 4, 4],
+      drums: { k: "x...x...x...x...", s: "..x...x...x.x.x.", h: "x.x.x.x.x.x.x.x.", c: "x..............." }, bass: "x...x...x...x...", chord: "stab", lead: "brass", tags: { sat: 3, party: 2, energy: 2, happy: 2, contrast: 1 } },
+    { id: "budots-bounce", name: "Budots Bounce", mood: "Pinoy · Dance", region: "ph", bpm: 130, root: 55, scale: "minor", prog: [0, 0, 5, 4],
+      drums: { k: "x..x..x.x..x..x.", s: "....x.......x...", h: "..x...x...x...x.", p: "....x.......x..x" }, bass: "x..x..x.x..x..x.", chord: "stab", lead: "pluck", tags: { energy: 3, party: 2, sat: 1, contrast: 1 } },
+    { id: "boracay-sunset", name: "Boracay Sunset", mood: "Pinoy · Beach house", region: "ph", bpm: 102, root: 64, scale: "major", prog: [0, 4, 5, 3],
+      drums: { k: "x...x...x...x...", p: "....x.......x...", h: "..x...x...x...x." }, bass: "..x...x...x...x.", chord: "marimba", lead: "bell", tags: { blue: 2, warm: 2, evening: 2, bright: 1, happy: 1 } },
+
+    // ---------- Local: Gulf / Bahrain (region "gulf") ----------
+    { id: "khaleeji-nights", name: "Khaleeji Nights", mood: "Gulf · Khaleeji", region: "gulf", gain: 1.25, bpm: 104, root: 57, scale: "hijaz", prog: [0, 0, 6, 0],
+      drums: { d: "x.....x...x.....", t: "...x..x.x...x.x.", p: "....x.......x..." }, bass: "x.....x...x.....", chord: "drone", lead: "oud", tags: { night: 2, warm: 2, party: 1, sat: 1 } },
+    { id: "desert-oud", name: "Desert Oud", mood: "Gulf · Oud", region: "gulf", gain: 1.6, bpm: 76, root: 52, scale: "hijaz", prog: [0, 0, 3, 0],
+      drums: { d: "x.......x.......", t: "....x..x....x..." }, bass: "x...............", chord: "drone", lead: "oud", tags: { warm: 3, evening: 2, calm: 2, soft: 1 } },
+    { id: "manama-skyline", name: "Manama Skyline", mood: "Gulf · Arabic pop", region: "gulf", bpm: 100, root: 55, scale: "hijaz", prog: [0, 6, 5, 6],
+      drums: { k: "x...x...x...x...", p: "....x.......x...", t: "..x..x....x..x.." }, bass: "x..x....x..x....", chord: "pad", lead: "oud", tags: { night: 2, sat: 2, energy: 1, contrast: 1 } }
   ];
-  var SCALES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10], dorian: [0, 2, 3, 5, 7, 9, 10] };
+  var SCALES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10], dorian: [0, 2, 3, 5, 7, 9, 10], hijaz: [0, 1, 4, 5, 7, 8, 10] };
+  var REGIONS = { ph: "Philippines", gulf: "Gulf" };
 
   function get(id) { return TRACKS.filter(function (t) { return t.id === id; })[0] || null; }
   function hz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
@@ -52,7 +74,7 @@
 
   // ---------- engine (isang graph para sa live at offline) ----------
   function Engine(ctx, dest, t) {
-    var master = ctx.createGain(); master.gain.value = 0.5;
+    var master = ctx.createGain(); master.gain.value = 0.5 * (t.gain || 1);
     var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3;
     // Limiter sa dulo para hindi "mag-crack" ang tunog sa phone speaker
     var lim = ctx.createDynamicsCompressor(); lim.threshold.value = -3; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.12;
@@ -137,6 +159,58 @@
         f.connect(g); g.connect(master); env(g, at, 0.01, 0.07, 0.2, 0.7, 0.1, at + dur);
         osc("square", hz(m), at, at + dur + 0.15, f, 4); osc("sawtooth", hz(m), at, at + dur + 0.15, f, -4);
       },
+      // Gitara (strum): sunod-sunod na kuwerdas, malambot
+      guitar: function (at, notes, down) {
+        var ns = down ? notes.slice() : notes.slice().reverse();
+        ns.concat([ns[0] + 12]).forEach(function (m, i) {
+          var g = ctx.createGain(), f = ctx.createBiquadFilter(), t0 = at + i * 0.018;
+          f.type = "lowpass"; f.frequency.setValueAtTime(2600, t0); f.frequency.exponentialRampToValueAtTime(700, t0 + 0.5);
+          f.connect(g); g.connect(master); env(g, t0, 0.003, 0.09, 0.7, 0.001, 0, 0);
+          osc("triangle", hz(m), t0, t0 + 0.9, f); osc("sawtooth", hz(m), t0, t0 + 0.4, f, 3);
+        });
+      },
+      // Brass (pang-fiesta)
+      brass: function (at, m, dur) {
+        var g = ctx.createGain(), f = ctx.createBiquadFilter(); f.type = "lowpass"; f.Q.value = 2;
+        f.frequency.setValueAtTime(500, at); f.frequency.exponentialRampToValueAtTime(3200, at + 0.06); f.frequency.exponentialRampToValueAtTime(1400, at + dur);
+        f.connect(g); g.connect(master); env(g, at, 0.02, 0.08, 0.15, 0.75, 0.08, at + dur);
+        osc("sawtooth", hz(m), at, at + dur + 0.12, f, -6); osc("sawtooth", hz(m), at, at + dur + 0.12, f, 6);
+      },
+      // Oud: maikling pluck na may konting "slide" sa simula
+      oud: function (at, m, dur) {
+        var g = ctx.createGain(), f = ctx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = hz(m) * 2.2; f.Q.value = 1.2;
+        f.connect(g); g.connect(master); env(g, at, 0.002, 0.28, Math.min(0.5, dur), 0.001, 0, 0);
+        [["sawtooth", 1], ["triangle", 2]].forEach(function (x) {
+          var o = ctx.createOscillator(); o.type = x[0];
+          o.frequency.setValueAtTime(hz(m) * x[1] * 0.97, at); o.frequency.exponentialRampToValueAtTime(hz(m) * x[1], at + 0.04);
+          o.connect(f); o.start(at); o.stop(at + 0.6);
+        });
+      },
+      // Drone: root + fifth na mahaba (pang-Arabic)
+      drone: function (at, root, dur) {
+        var g = ctx.createGain(), f = ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 900;
+        f.connect(g); g.connect(master); env(g, at, 0.5, 0.1, 0.6, 0.8, 0.6, at + dur);
+        [root, root + 7, root + 12].forEach(function (m, i) { osc(i ? "triangle" : "sawtooth", hz(m), at, at + dur + 0.7, f, i * 4 - 4); });
+      },
+      // Darbuka: doum (mababa) at tak (matinis)
+      doum: function (at) {
+        var g = ctx.createGain(); g.connect(master); env(g, at, 0.002, 0.7, 0.22, 0.001, 0, 0);
+        var o = ctx.createOscillator(); o.type = "sine"; o.frequency.setValueAtTime(190, at); o.frequency.exponentialRampToValueAtTime(90, at + 0.15);
+        o.connect(g); o.start(at); o.stop(at + 0.3);
+      },
+      tak: function (at) {
+        var g = ctx.createGain(), f = ctx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 3200; f.Q.value = 2;
+        f.connect(g); g.connect(master); env(g, at, 0.001, 0.32, 0.06, 0.001, 0, 0); noiseSrc(at, 0.08, f);
+        var g2 = ctx.createGain(); g2.connect(master); env(g2, at, 0.001, 0.12, 0.04, 0.001, 0, 0); osc("triangle", 640, at, at + 0.06, g2);
+      },
+      clap: function (at) {
+        var g = ctx.createGain(), f = ctx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1500; f.Q.value = 0.9;
+        f.connect(g); g.connect(master);
+        g.gain.setValueAtTime(0.0001, at);
+        [0, 0.012, 0.024].forEach(function (d) { g.gain.setValueAtTime(0.3, at + d); g.gain.exponentialRampToValueAtTime(0.05, at + d + 0.01); });
+        g.gain.setValueAtTime(0.25, at + 0.036); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.2);
+        noiseSrc(at, 0.22, f);
+      },
       crackle: function (at, dur) {
         var g = ctx.createGain(), f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = 2500;
         g.gain.value = 0.025; f.connect(g); g.connect(master); noiseSrc(at, dur, f);
@@ -148,12 +222,18 @@
     };
 
     var step = 60 / t.bpm / 4 * (t.half ? 2 : 1);
-    var R = rng(t.id), melody = [];
+    var R = rng(t.id), melody = [], walk = 4;
     // 2 bar na melody (paulit-ulit, may maliit na pagbabago sa ika-2 ulit)
     for (var b = 0; b < 4; b++) {
       var tones = chordNotes(t, t.prog[b]);
       for (var s = 0; s < 16; s++) {
         var on = s % 4 === 0 ? R() < 0.7 : s % 2 === 0 ? R() < 0.35 : R() < 0.12;
+        if (t.scale === "hijaz") {
+          // Arabic na himig: sunod-sunod na nota sa hijaz scale (hindi talon-talon sa chord)
+          if (on) { walk = Math.max(0, Math.min(9, walk + [-2, -1, -1, 1, 1, 2][Math.floor(R() * 6)])); melody.push(note(t, walk, 1)); }
+          else melody.push(null);
+          continue;
+        }
         melody.push(on ? tones[Math.floor(R() * 3)] + 12 + (R() < 0.2 ? 2 : 0) : null);
       }
     }
@@ -162,13 +242,18 @@
       if (t.swing && s % 2 === 1) at += step * t.swing;
       var deg = t.prog[bar], tones = chordNotes(t, deg), D = t.drums;
       if (D) {
-        if (D.k[s] === "x") I.kick(at);
-        if (D.s[s] === "x") I.snare(at);
-        if (D.h[s] === "x") I.hat(at, s === 14 && bar === 3);
+        if (D.k && D.k[s] === "x") I.kick(at);
+        if (D.s && D.s[s] === "x") I.snare(at);
+        if (D.h && D.h[s] === "x") I.hat(at, s === 14 && bar === 3);
         if (D.c && D.c[s] === "x" && bar === 0 && loop % 2 === 0) I.crash(at);
+        if (D.d && D.d[s] === "x") I.doum(at);
+        if (D.t && D.t[s] === "x") I.tak(at);
+        if (D.p && D.p[s] === "x") I.clap(at);
       }
       if (t.bass[s] === "x") I.bass(at, note(t, deg, -2), step * 1.8);
+      if (t.chord === "guitar" && (s === 0 || s === 4 || s === 6 || s === 10 || s === 12 || s === 14)) I.guitar(at, [tones[0] - 12, tones[1] - 12, tones[2] - 12], s % 4 === 0);
       if (s === 0) {
+        if (t.chord === "drone") I.drone(at, note(t, 0, -1), step * 16);
         if (t.chord === "pad") I.pad(at, tones, step * 16);
         if (t.chord === "keys") I.keys(at, tones, step * 15);
         if (t.crackle) I.crackle(at, step * 16);
@@ -188,6 +273,8 @@
       else if (t.lead === "marimba") I.marimba(at, [mn]);
       else if (t.lead === "pluck") I.pluck(at, [mn]);
       else if (t.lead === "lead") I.lead(at, mn, step * 1.6);
+      else if (t.lead === "brass") I.brass(at, mn, step * 1.5);
+      else if (t.lead === "oud") I.oud(at, mn - 12, step * 2);
     }
     return { master: master, step: step, playStep: playStep };
   }
@@ -280,9 +367,27 @@
       resolve(base());
     });
   }
-  // Iskor bawat track ayon sa itsura + oras + filter
+  // Saan ang user (para sa Local sounds): wika ng app at time zone ng device
+  function region() {
+    var out = [];
+    try {
+      var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      if (tz === "Asia/Manila") out.push("ph");
+      if (/^Asia\/(Bahrain|Riyadh|Qatar|Dubai|Kuwait|Muscat|Aden|Baghdad)$/.test(tz)) out.push("gulf");
+    } catch (e) {}
+    var lang = ((window.TMN_I18N && TMN_I18N.lang) || "") + " " + (navigator.languages || [navigator.language || ""]).join(" ");
+    if (/\b(fil|tl)\b/i.test(lang) && out.indexOf("ph") < 0) out.push("ph");
+    if (/\bar\b/i.test(lang) && out.indexOf("gulf") < 0) out.push("gulf");
+    return out;
+  }
+  function local(regs) {
+    regs = regs || region();
+    return TRACKS.filter(function (t) { return t.region && regs.indexOf(t.region) > -1; });
+  }
+  // Iskor bawat track ayon sa itsura + oras + filter (+ kaunting dagdag sa Local sounds)
   function suggest(f) {
     f = f || {};
+    var regs = f.regions || region();
     var h = f.hour == null ? new Date().getHours() : f.hour;
     var want = {
       bright: f.brightness > 0.6 ? 2 : f.brightness > 0.45 ? 1 : 0,
@@ -305,6 +410,7 @@
     return TRACKS.map(function (t) {
       var score = 0;
       Object.keys(t.tags).forEach(function (k) { score += (want[k] || 0) * t.tags[k]; });
+      if (t.region && regs.indexOf(t.region) > -1) score += 4; // local muna kapag bagay din
       return { track: t, score: score };
     }).sort(function (a, b) { return b.score - a.score; }).map(function (x) { return x.track; });
   }
@@ -332,7 +438,7 @@
 
   window.TMN_SOUNDS = {
     chip: chip,
-    list: TRACKS, get: get, play: play, stop: stop, setVolume: setVolume,
+    list: TRACKS, get: get, region: region, local: local, REGIONS: REGIONS, play: play, stop: stop, setVolume: setVolume,
     playing: function () { return live ? live.id : null; },
     render: render, analyze: analyze, suggest: suggest
   };
