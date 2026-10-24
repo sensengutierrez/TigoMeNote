@@ -1,5 +1,5 @@
 // TigoMeNote · messages-fast (Supabase Edge Function, verify_jwt = off) — Tigo Messenger
-// Chats (1:1 at group), messages (text, photo, location, sticker), reactions (kahit anong emoji), pin, Seen, message requests.
+// Chats (1:1 at group), messages (text, photo, location, sticker, gif), reactions (kahit anong emoji), pin, Seen, message requests.
 // Files: index.ts + moderation.ts (text filter) — parehong folder sa deploy.
 // Actions (kailangan ng session token):
 //   inbox, unread, open, start, group, send, upload, react, pin, read, accept, decline, unsend,
@@ -150,6 +150,7 @@ async function shape(rows: any[], me: any) {
       body: gone || hidden ? null : m.body, deleted: gone, hidden: !!m.hidden_at,
       photo: !gone && !hidden && m.media_path ? { url: url[m.media_path] ?? null, w: m.media_w, h: m.media_h } : null,
       loc: !gone && !hidden && m.lat != null ? { lat: m.lat, lng: m.lng } : null,
+      gif: !gone && !hidden && m.kind === "gif" ? { url: m.body, w: m.media_w, h: m.media_h } : null,
       // deno-lint-ignore no-explicit-any
       reactions: r.map((x: any) => ({ user_id: x.user_id, emoji: x.emoji })),
     };
@@ -159,7 +160,7 @@ async function shape(rows: any[], me: any) {
 function preview(m: any, me: string) {
   if (!m) return null;
   const who = m.user_id === me ? "You: " : "";
-  const text = m.deleted_at ? "Message unsent" : m.kind === "photo" ? "📷 Photo" : m.kind === "location" ? "📍 Location" : m.kind === "sticker" ? "Sticker" : (m.body ?? "");
+  const text = m.deleted_at ? "Message unsent" : m.kind === "photo" ? "📷 Photo" : m.kind === "location" ? "📍 Location" : m.kind === "sticker" ? "Sticker" : m.kind === "gif" ? "GIF" : (m.body ?? "");
   return { at: m.created_at, text: m.kind === "system" ? text : who + text, mine: m.user_id === me, kind: m.kind };
 }
 
@@ -303,13 +304,17 @@ async function send(p: any, me: any) {
   const { count } = await db.from("messages").select("id", { count: "exact", head: true }).eq("user_id", me.id).gte("created_at", since);
   if ((count ?? 0) >= MSG_PER_MIN) return fail("Slow down a bit 🙂 Try again in a minute.", 429);
 
-  const kind = ["photo", "location", "sticker"].includes(p.kind) ? p.kind : "text";
+  const kind = ["photo", "location", "sticker", "gif"].includes(p.kind) ? p.kind : "text";
   const row: Record<string, unknown> = { conversation_id: c.id, user_id: me.id, client_id: clientId, kind };
   // deno-lint-ignore no-explicit-any
   let flagged: any = null;
   const body = String(p.body ?? "").trim().replace(/\n{4,}/g, "\n\n\n").slice(0, 2000);
   if (kind === "text" && !body) return fail("Write a message.");
-  if (kind === "sticker") {
+  if (kind === "gif") {
+    // GIF/sticker mula sa KLIPY (gifs-fast): link lang na galing sa KLIPY ang tinatanggap
+    if (!/^https:\/\/([a-z0-9-]+\.)*klipy\.com\/\S+$/i.test(body) || body.length > 600) return fail("Invalid GIF.");
+    Object.assign(row, { body, media_w: Number(p.w) || null, media_h: Number(p.h) || null });
+  } else if (kind === "sticker") {
     // TigoMeNote stickers: id lang (ang larawan ay nasa app); walang text na kailangang i-check
     if (!/^[a-z0-9-]{2,30}$/.test(body)) return fail("Invalid sticker.");
     row.body = body;
@@ -349,7 +354,7 @@ async function send(p: any, me: any) {
   // Real-time + push sa iba
   const members = await membersOf(c.id);
   const to = members.filter((x) => x.user_id !== me.id && x.status !== "left" && !x.muted).map((x) => x.user_id);
-  const text = kind === "photo" ? "📷 Photo" : kind === "location" ? "📍 Shared a location" : kind === "sticker" ? "Sent a sticker" : cut(body, 140);
+  const text = kind === "photo" ? "📷 Photo" : kind === "location" ? "📍 Shared a location" : kind === "sticker" ? "Sent a sticker" : kind === "gif" ? "Sent a GIF" : cut(body, 140);
   later(Promise.all([
     ping(c.channel_key, "msg", { id: msg.id, user_id: me.id }),
     pushRaw(to, {

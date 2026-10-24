@@ -820,5 +820,11 @@ TMN_I18N.register("ar", {
   "wants to add you to their Friends circle.": "يريد إضافتك إلى دائرة الأصدقاء.",
   "joined your Family circle.": "انضم إلى دائرة عائلتك.",
   "joined your Friends circle.": "انضم إلى دائرة أصدقائك.",
-  "Added to your circle. Manage location sharing in Safety.": "تمت الإضافة إلى دائرتك. يمكنك إدارة مشاركة الموقع من صفحة الأمان."
+  "Added to your circle. Manage location sharing in Safety.": "تمت الإضافة إلى دائرتك. يمكنك إدارة مشاركة الموقع من صفحة الأمان.",
+  "GIFs": "صور GIF",
+  "Search KLIPY": "ابحث في KLIPY",
+  "Search GIFs": "ابحث عن GIF",
+  "No GIFs found.": "لم يتم العثور على صور GIF.",
+  "GIFs are coming soon.": "صور GIF قريباً.",
+  "Powered by KLIPY": "بواسطة KLIPY"
 });

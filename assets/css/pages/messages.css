@@ -183,3 +183,9 @@ body.msg-gate .inbox { display: none; }
 .ch-sticker svg { width: 100%; height: 100%; display: block; }
 .ch-sticker.missing { display: grid; place-items: center; border: 1px dashed var(--line-strong); border-radius: 16px; color: var(--text-3); font-size: 13px; }
 .ch-emojis .ch-more-rx { font-size: 18px; }
+
+/* GIF message (KLIPY) */
+.ch-bubble.k-gif { background: none !important; padding: 0 !important; box-shadow: none !important; }
+.ch-gif { position: relative; display: block; width: min(240px, 60vw); border-radius: 16px; overflow: hidden; background: var(--surface-2); }
+.ch-gif img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ch-gif-tag { position: absolute; left: 8px; bottom: 8px; font-size: 10px; font-weight: 800; color: #fff; background: rgba(0,0,0,.5); padding: 1px 6px; border-radius: 6px; }

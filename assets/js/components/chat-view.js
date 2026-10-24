@@ -70,7 +70,7 @@
       root.querySelector(".ch-who").innerHTML = pic + '<span class="ch-who-t"><b translate="no">' + esc(chatName(c, S.members, me.id)) + '</b><span class="faint small" translate="no">' + esc(sub) + "</span></span>" +
         (c.muted ? I("bellOff", "ic-sm ch-muted") : "");
     }
-    function pinText(m) { return m.kind === "photo" ? "📷 Photo" : m.kind === "location" ? "Location" : m.kind === "sticker" ? "Sticker" : (m.body || ""); }
+    function pinText(m) { return m.kind === "photo" ? "📷 Photo" : m.kind === "location" ? "Location" : m.kind === "sticker" ? "Sticker" : m.kind === "gif" ? "GIF" : (m.body || ""); }
     function paintPin() {
       var b = root.querySelector(".ch-pin");
       b.classList.toggle("hidden", !S.pinned);
@@ -116,6 +116,10 @@
         var ratio = m.photo && m.photo.w && m.photo.h ? m.photo.w / m.photo.h : 1;
         return '<button type="button" class="ch-photo" data-ch="photo-open" style="aspect-ratio:' + Math.max(.6, Math.min(1.8, ratio)) + '">' + (src ? '<img alt="" src="' + esc(src) + '" onerror="this.parentNode.classList.add(\'broken\')">' : I("image")) + '<span class="ch-photo-err">' + I("image") + "<small>Tap to reload</small></span>" + "</button>" +
           (m.body ? '<span class="ch-text" translate="no">' + linkify(m.body) + "</span>" : "");
+      }
+      if (m.kind === "gif" && m.gif && m.gif.url) {
+        var gr = m.gif.w && m.gif.h ? m.gif.w / m.gif.h : 1;
+        return '<span class="ch-gif" style="aspect-ratio:' + Math.max(.5, Math.min(2, gr)) + '"><img alt="GIF" loading="lazy" src="' + esc(m.gif.url) + '"><span class="ch-gif-tag">GIF</span></span>';
       }
       if (m.kind === "sticker") {
         var svg = window.TMN_STICKERS ? TMN_STICKERS.svg(m.body, 132) : "";
@@ -238,6 +242,7 @@
       m.pending = true; m.failed = false; render("bottom");
       try {
         var data = { id: id, client_id: m.client_id, kind: m.kind, body: m.body || "" };
+        if (m.kind === "gif" && m.gif) { data.w = m.gif.w; data.h = m.gif.h; }
         if (m.kind === "photo") {
           if (!m.path) {
             var up = await TMN_API.call("messages", "upload", { id: id, size: m.file.size, mime: m.file.mime });
@@ -415,7 +420,9 @@
         else if (a === "emoji") {
           if (b.getAttribute("aria-expanded") === "true") { TMN_EMOJI_PICK.close(); return; }
           TMN_EMOJI_PICK.open(b, { stickers: S.chat && S.chat.status !== "request", onEmoji: function (em) { TMN_EMOJI_PICK.insert(input, em); },
-            onSticker: function (sid) { queue({ kind: "sticker", body: sid }); } });
+            onSticker: function (sid) { queue({ kind: "sticker", body: sid }); },
+            gifs: !!(window.TMN_CONFIG && TMN_CONFIG.fn && TMN_CONFIG.fn.gifs),
+            onGif: function (g) { queue({ kind: "gif", body: g.full.url, gif: g.full }); } });
         }
         else if (a === "loc") sendLocation();
         else if (a === "menu" || a === "who") { if (a === "who" && S.chat.kind === "dm" && others()[0] && window.TMN_SOCIAL) TMN_SOCIAL.userSheet(others()[0].id); else menu(); }

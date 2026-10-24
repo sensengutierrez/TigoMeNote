@@ -89,6 +89,7 @@ updated: 2026-10-24
 | `wellbeing-fast` | status, setBirthdate, tick, save, guardianInvite, guardianRespond, guardianRemove | `backend/wellbeing-fast.ts` |
 | `moderation-fast` | report, queue, resolve, count | `backend/moderation-fast.ts` (+ `notify.ts`) |
 | `messages-fast` | inbox, unread, open, start, group, send, upload, react, pin, read, accept, decline, unsend, rename, addMembers, removeMember, leave, mute | `backend/messages-fast.ts` (+ `moderation.ts`) |
+| `gifs-fast` | trending, search (GIFs/stickers ng KLIPY; secret `KLIPY_API_KEY`) | `backend/gifs-fast.ts` (+ `moderation.ts` para sa edad) |
 | `notify-fast` | list, count, seen, prefs, setPrefs, push at pushRaw (service key lang) | `backend/notify-fast.ts` (+ `webpush.ts`) |
 
 Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast, profile-fast at auth-fast. Ang `notify.ts` ay kasama sa deploy ng posts-fast, social-fast at moderation-fast.

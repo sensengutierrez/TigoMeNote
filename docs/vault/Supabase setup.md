@@ -1,6 +1,6 @@
 ---
 tags: [setup]
-updated: 2026-10-23
+updated: 2026-10-24
 ---
 # Supabase setup
 
@@ -18,6 +18,7 @@ updated: 2026-10-23
 | `SMTP_PASS` | Gmail **App Password** (fallback) | Optional na |
 | `MAIL_FROM_NAME` | Pangalan ng sender | Optional (default TigoMeNote) |
 | `REQUIRE_APPROVAL` | `"true"` = Pending ang bagong users | Optional |
+| `KLIPY_API_KEY` | KLIPY API key (GIFs/stickers sa chat, `gifs-fast`) | Hiwalay na key para sa TigoMeNote; kung wala: "GIFs are coming soon." |
 
 > Walang totoong value ng secret dito, at hindi dapat ilagay kailanman.
 

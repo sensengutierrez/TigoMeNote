@@ -968,5 +968,11 @@ TMN_I18N.register("fil", {
   "wants to add you to their Friends circle.": "ay gustong idagdag ka sa Friends circle nila.",
   "joined your Family circle.": "ay sumali na sa Family circle mo.",
   "joined your Friends circle.": "ay sumali na sa Friends circle mo.",
-  "Added to your circle. Manage location sharing in Safety.": "Naidagdag sa circle mo. Sa Safety ang pag-share ng location."
+  "Added to your circle. Manage location sharing in Safety.": "Naidagdag sa circle mo. Sa Safety ang pag-share ng location.",
+  "GIFs": "GIFs",
+  "Search KLIPY": "Hanapin sa KLIPY",
+  "Search GIFs": "Hanapin ang GIF",
+  "No GIFs found.": "Walang nahanap na GIF.",
+  "GIFs are coming soon.": "Malapit na ang GIFs.",
+  "Powered by KLIPY": "Mula sa KLIPY"
 });
