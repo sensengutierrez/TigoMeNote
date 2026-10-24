@@ -7,7 +7,7 @@
 (function () {
   var UI = window.TMN_UI, I = window.TMN_ICON, esc = UI.esc;
   var EMOJIS = ["❤️", "😂", "😮", "😢", "🔥", "👏"];
-  var POLL_FAST = 4000, POLL_SLOW = 30000;
+  var POLL_FAST = 6000, POLL_SLOW = 60000; // realtime ang pangunahin; reserba lang ang poll
 
   function av(u, size) {
     u = u || {};

@@ -8,6 +8,7 @@
 // Notifications: reaction, comment, repost at milestone (ilang post na) ay dumadaan sa notify.ts.
 // Explore activity (parang Komoot): posts.activity = { type, title, route [[lat,lng,ele]], stats, start_at }; puwedeng walang photo.
 // Storage: private bucket "post-media" — signed upload URL (pang-upload) at signed read URL (1 oras).
+// Photo: may kasamang maliit na preview (<i>_t.jpg, ≤ 300 KB) para sa feed; ang buong photo ay kapag binuksan (tipid sa data).
 // Secrets: AUTH_PEPPER (hindi ginagamit dito), SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY (automatic).
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
@@ -23,6 +24,7 @@ const db = createClient(
 const BUCKET = "post-media";
 const MAX_MEDIA_PER_POST = 10;
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;     // compressed photo (~300 KB karaniwan)
+const MAX_THUMB_BYTES = 300 * 1024;          // maliit na preview para sa feed (~40–80 KB karaniwan)
 const MAX_VIDEO_BYTES = 12 * 1024 * 1024;    // compressed 720p na ≤15 s
 const MAX_VIDEO_SECONDS = 15.5;
 const MEDIA_PER_DAY = 40;                    // bawat user
@@ -116,7 +118,7 @@ async function hydrate(posts: any[], me: any) {
     db.from("post_bookmarks").select("post_id").in("post_id", ids).eq("user_id", me.id),
     db.from("follows").select("following_id").eq("follower_id", me.id),
   ]);
-  const paths = (media ?? []).map((m) => m.path);
+  const paths = (media ?? []).flatMap((m) => (m.thumb_path ? [m.path, m.thumb_path] : [m.path]));
   const signed: Record<string, string> = {};
   if (paths.length) {
     const { data } = await db.storage.from(BUCKET).createSignedUrls(paths, READ_URL_SECONDS);
@@ -139,7 +141,7 @@ async function hydrate(posts: any[], me: any) {
       hidden: !!p.hidden_at, hidden_reason: p.hidden_at ? p.hidden_reason ?? null : null,
       author: byId[p.user_id] ? { ...byId[p.user_id], following: following.has(p.user_id) } : null,
       media: (media ?? []).filter((m) => m.post_id === p.id).map((m) => ({
-        kind: m.kind, url: signed[m.path] ?? null, w: m.w, h: m.h, duration: m.duration, mime: m.mime,
+        kind: m.kind, url: signed[m.path] ?? null, thumb: m.thumb_path ? signed[m.thumb_path] ?? null : null, w: m.w, h: m.h, duration: m.duration, mime: m.mime,
       })),
       stats: {
         views: p.view_count ?? 0,
@@ -195,7 +197,14 @@ async function createUpload(p: any, me: any) {
     const path = `${me.id}/${clientId}/${i}.${extFor(mime)}`;
     const { data, error } = await db.storage.from(BUCKET).createSignedUploadUrl(path, { upsert: true });
     if (error || !data) throw error ?? new Error("signed upload failed");
-    uploads.push({ index: i, path, url: data.signedUrl, token: data.token });
+    // Maliit na preview para sa feed (photo lang, ≤ 300 KB): <i>_t.jpg sa parehong folder
+    let thumb: { thumb_path: string; thumb_url: string } | Record<string, never> = {};
+    if (files[i].kind !== "video" && Number(files[i].thumb_size) > 0 && Number(files[i].thumb_size) <= MAX_THUMB_BYTES) {
+      const tp = `${me.id}/${clientId}/${i}_t.jpg`;
+      const t = await db.storage.from(BUCKET).createSignedUploadUrl(tp, { upsert: true });
+      if (t.data) thumb = { thumb_path: tp, thumb_url: t.data.signedUrl };
+    }
+    uploads.push({ index: i, path, url: data.signedUrl, token: data.token, ...thumb });
   }
   return reply({ ok: true, uploads });
 }
@@ -286,8 +295,9 @@ async function createPost(p: any, me: any) {
     }
     throw error;
   }
+  const thumbOf = (path: string) => { const t = path.replace(/\.[a-z0-9]+$/, "_t.jpg"); return t !== path && present.has(t) ? t : null; };
   const rows = media.map((m: Record<string, unknown>, i: number) => ({
-    post_id: post.id, user_id: me.id, kind: m.kind === "video" ? "video" : "photo", path: m.path,
+    post_id: post.id, user_id: me.id, kind: m.kind === "video" ? "video" : "photo", path: m.path, thumb_path: m.kind === "video" ? null : thumbOf(m.path as string),
     mime: String(m.mime || "image/jpeg"), size: sizes[m.path as string] || Number(m.size) || 0,
     w: Number(m.w) || null, h: Number(m.h) || null, duration: Number(m.duration) || null, position: i,
   }));
@@ -601,8 +611,8 @@ async function updatePost(p: any, me: any) {
 async function deletePost(p: any, me: any) {
   const { data: post } = await db.from("posts").select("id").eq("id", String(p.id || "")).eq("user_id", me.id).maybeSingle();
   if (!post) return fail("Post not found.", 404);
-  const { data: media } = await db.from("post_media").select("path").eq("post_id", post.id);
-  const paths = (media ?? []).map((m) => m.path);
+  const { data: media } = await db.from("post_media").select("path, thumb_path").eq("post_id", post.id);
+  const paths = (media ?? []).flatMap((m) => (m.thumb_path ? [m.path, m.thumb_path] : [m.path]));
   if (paths.length) await db.storage.from(BUCKET).remove(paths);
   await db.from("posts").delete().eq("id", post.id);
   return reply({ ok: true });

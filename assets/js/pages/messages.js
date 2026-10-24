@@ -108,8 +108,10 @@
   document.addEventListener("click", function (e) { if (e.target.closest("[data-new-chat]")) TMN_CHAT_NEW.open(function (id) { loadList(); openChat(id); }); });
   window.addEventListener("keydown", function (e) { if (e.key === "Escape" && current && !document.querySelector(".modal-backdrop")) closeChat(); });
 
-  // Bawat 20 s habang nakikita, at agad kapag may push
-  setInterval(function () { if (document.visibilityState === "visible") loadList(); }, 20000);
+  // Realtime ang pangunahing balita ng bagong message; poll lang bilang reserba (20 s kung walang realtime, 2 min kung meron)
+  (function poll() {
+    setTimeout(function () { if (document.visibilityState === "visible") loadList(); poll(); }, window.TMN_RT && TMN_RT.connected() ? 120000 : 20000);
+  })();
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") loadList(); });
   if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", function (e) {
     if (e.data && e.data.type === "tmn-push" && e.data.data && e.data.data.type === "message") softReload();

@@ -67,7 +67,7 @@ updated: 2026-10-24
 | `components/profile-editor.js` | Edit profile + palit ng photo/cover (`TMN_PROFILE_EDIT`) |
 | `components/app-shell.js` | Gumagawa ng layout ng app pages mula sa nav-items |
 | `native-bridge.js` | Phone features (GPS, alarm, push); sa APK: `window.TMN_APP` (`TMN_NATIVE`) |
-| `push-setup.js` / `sw.js` | Push notifications (`TMN_PUSH`) + service worker |
+| `push-setup.js` / `sw.js` | Push notifications (`TMN_PUSH`) + service worker: cache ng static (`?v=`), pages, fonts at Storage photos |
 | `safety-watch.js` / `location-share.js` | Bantay ng SOS at pagpapadala ng location sa bawat page |
 | `wellbeing.js` | Sleep, break, daily limit, birthdate prompt sa bawat page |
 | `components/sos-button.js` / `sos-overlay.js` / `map-view.js` / `wellbeing-settings.js` | SOS button, pulang alarm screen, mapa, wellbeing settings |

@@ -1,12 +1,12 @@
 /* TigoMeNote · safety-watch.js — bantay ng SOS sa bawat page ng app
-   - Tuwing 30 s (habang nakikita ang page) + agad kapag may push: kinukuha ang active na SOS ng circle mo.
+   - Tuwing 60 s (habang nakikita ang page) + agad kapag may push o bumalik sa app: kinukuha ang active na SOS ng circle mo.
    - SOS ng iba → pulang screen + alarm (components/sos-overlay.js). Kapag "Silence", maliit na bar na lang.
    - Sarili mong SOS → tuloy-tuloy na pagpapadala ng location (bawat ~15 s) habang bukas ang app.
    - Nagpapadala ng event "tmn:safety" {share, alerts} para sa location-share.js at safety page.
    TMN_SAFETY_WATCH.refresh() → kunin agad. */
 (function () {
   var N = window.TMN_NATIVE, A = window.TMN_SOS_ALERT;
-  var POLL = 30000, SOS_EVERY = 15000;
+  var POLL = 60000, SOS_EVERY = 15000;
   var SILENCED = "tmnSosSilenced";
   var timer = null, busy = false, last = { alerts: [], share: false };
   var stopWatch = null, lastSent = 0;

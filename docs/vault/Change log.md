@@ -322,3 +322,14 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Ano:** Kapag nag-tap sa photo, status, button o nag-swipe, wala nang asul na highlight o asul na "select". Hindi ginalaw ang long-press sa link (Open in new tab) at ang pag-select ng text sa caption, comments at chat. Sa keyboard (desktop) may outline pa rin para sa accessibility.
 - **Bakit:** Ayon kay Bench: "pix mo lang ung pag ng click ako ng highlights ng blue… pero wag mo tanggalin ung longpress tapos newtab".
 - **Files:** `assets/css/base.css`, `config.js` (0.11.13)
+
+## 2026-10-24 · #42 Mas mabilis sa phone at tipid sa Free plan
+- **Ano:**
+  - **Mumbai region:** lahat ng tawag sa function ay may `?forceFunctionRegion=ap-south-1`, kaya tumatakbo ang function katabi ng database (dati malapit sa user, kaya malayo pa ang query papuntang Mumbai).
+  - **Cache sa phone (service worker):** naka-save sa phone ang JS/CSS (ayon sa `?v=`), ang mga page, fonts at mga photo ng Storage. Sa ikalawang bukas, galing na sa phone ang karamihan. Binubura ang photo cache kapag nag-logout.
+  - **Maliit na preview ng photo:** bawat bagong photo ay may kasamang ≤960 px na preview (`_t.jpg`, ≤300 KB) para sa feed; ang buong photo ay kapag binuksan lang. Lumang posts = buong photo pa rin.
+  - **Mas kaunting polling:** notif badge 3 min, safety watch 1 min, wellbeing 2 min, messages list 2 min kapag naka-realtime (20 s kung hindi), chat 6 s → 60 s kapag tahimik.
+  - **Mas matalinong cron:** `tmn-reminders` ay tumatawag lang kung may reminder na due; `tmn-keep-warm` bawat 4 min lang at kapag may gumamit sa nakaraang 15 min.
+- **Bakit:** Ayon kay Bench: "bakit kaya medyo mabagal… sa phone" at "sa free muna tayo". Mga 7,750 function calls sa 24 oras na may 4 users lang; 500k/buwan ang limit.
+- **Files:** `assets/js/config.js` (REGION, 0.11.14), `sw.js`, `auth-guard.js`, `notif-badge.js`, `safety-watch.js`, `wellbeing.js`, `pages/messages.js`, `components/chat-view.js`, `post-queue.js`, `components/post-card.js`, `components/post-viewer.js`, `backend/posts-fast.ts` (thumb_path), `sql/062-cron-savings.sql`, `sql/063-post-thumbs.sql`
+- **Paano:** Function `posts-fast` v13. Ang preview ay ginagawa sa phone (canvas), walang server na nagre-resize.

@@ -7,7 +7,7 @@
    TMN_WELLBEING.refresh() · TMN_WELLBEING.state */
 (function () {
   var I = function (n, c) { return window.TMN_ICON ? TMN_ICON(n, c) : ""; };
-  var TICK = 60000, IDLE_RESET = 5 * 60000;
+  var TICK = 120000, IDLE_RESET = 5 * 60000; // tick bawat 2 min (hanggang 120 s bawat tawag ang tinatanggap ng server)
   var SESS = "tmnSess", SNOOZE = "tmnWbSnooze", BREAK_SNOOZE = "tmnBreakSnooze";
   var page = document.body.dataset.page || "";
   var exempt = page === "safety";

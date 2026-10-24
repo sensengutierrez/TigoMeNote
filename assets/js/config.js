@@ -3,6 +3,8 @@
    Pag may bagong edge function: idagdag sa `fn` sa baba. */
 (function () {
   var SUPABASE_URL = "https://njwtfoimkorkcysxvrqb.supabase.co";
+  // Patakbuhin ang functions sa Mumbai (ap-south-1), katabi ng database: mas kaunting biyahe bawat tawag = mas mabilis
+  var REGION = "?forceFunctionRegion=ap-south-1";
 
   // Root ng site (gumagana sa GitHub Pages project link o custom domain).
   // Kinukuha mula sa lokasyon ng file na ito: <root>/assets/js/config.js
@@ -11,27 +13,27 @@
 
   window.TMN_CONFIG = Object.freeze({
     appName: "TigoMeNote",
-    version: "0.11.13",
+    version: "0.11.14",
     root: root,
     supabaseUrl: SUPABASE_URL,
     // Public key lang ito (ligtas sa browser). Gagamitin sa Realtime ng messenger.
     publishableKey: "sb_publishable_wsx8gUJXqBAnzKTEwYYseA_MrI9OHjP",
     functionsUrl: SUPABASE_URL + "/functions/v1/",
     fn: Object.freeze({
-      auth: SUPABASE_URL + "/functions/v1/auth-fast",
-      posts: SUPABASE_URL + "/functions/v1/posts-fast",
-      profile: SUPABASE_URL + "/functions/v1/profile-fast",
-      social: SUPABASE_URL + "/functions/v1/social-fast",
-      safety: SUPABASE_URL + "/functions/v1/safety-fast",
-      wellbeing: SUPABASE_URL + "/functions/v1/wellbeing-fast",
-      moderation: SUPABASE_URL + "/functions/v1/moderation-fast",
-      notify: SUPABASE_URL + "/functions/v1/notify-fast",
-      messages: SUPABASE_URL + "/functions/v1/messages-fast",
-      gifs: SUPABASE_URL + "/functions/v1/gifs-fast",
-      daily: SUPABASE_URL + "/functions/v1/daily-fast",
-      pet: SUPABASE_URL + "/functions/v1/pet-fast"
-      // brain: SUPABASE_URL + "/functions/v1/brain-fast",
-      // chat:  SUPABASE_URL + "/functions/v1/chat",
+      auth: SUPABASE_URL + "/functions/v1/auth-fast" + REGION,
+      posts: SUPABASE_URL + "/functions/v1/posts-fast" + REGION,
+      profile: SUPABASE_URL + "/functions/v1/profile-fast" + REGION,
+      social: SUPABASE_URL + "/functions/v1/social-fast" + REGION,
+      safety: SUPABASE_URL + "/functions/v1/safety-fast" + REGION,
+      wellbeing: SUPABASE_URL + "/functions/v1/wellbeing-fast" + REGION,
+      moderation: SUPABASE_URL + "/functions/v1/moderation-fast" + REGION,
+      notify: SUPABASE_URL + "/functions/v1/notify-fast" + REGION,
+      messages: SUPABASE_URL + "/functions/v1/messages-fast" + REGION,
+      gifs: SUPABASE_URL + "/functions/v1/gifs-fast" + REGION,
+      daily: SUPABASE_URL + "/functions/v1/daily-fast" + REGION,
+      pet: SUPABASE_URL + "/functions/v1/pet-fast" + REGION
+      // brain: SUPABASE_URL + "/functions/v1/brain-fast" + REGION,
+      // chat:  SUPABASE_URL + "/functions/v1/chat" + REGION,
     }),
     // Map (Locate / SOS): Leaflet + OpenStreetMap (libre, walang key)
     map: Object.freeze({

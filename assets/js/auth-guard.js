@@ -56,6 +56,8 @@
           body: JSON.stringify({ action: "logout", token: token })
         });
       } catch (e) {}
+      // Burahin ang mga photo na naka-cache sa device (sw.js) para hindi makita ng susunod na gagamit
+      try { if (window.caches) await caches.delete("tmn-media-v1"); } catch (e) {}
       clearAll();
       location.replace(C.root + "login.html");
     }

@@ -12,7 +12,7 @@
 (function () {
   var C = window.TMN_CONFIG;
   var DBV = 1, dbp = null, running = false;
-  var PHOTO_MAX = 1600, PHOTO_Q = 0.82, VIDEO_MAX_SEC = 15, VIDEO_LONG = 1280, VIDEO_BPS = 1500000;
+  var PHOTO_MAX = 1600, THUMB_MAX = 960, PHOTO_Q = 0.82, VIDEO_MAX_SEC = 15, VIDEO_LONG = 1280, VIDEO_BPS = 1500000;
 
   function dbName() { return "tmn-outbox-" + ((window.TMN_USER || {}).id || "guest"); }
   function open() {
@@ -57,7 +57,15 @@
       out = await new Promise(function (r) { c.toBlob(r, "image/jpeg", q); });
       q -= 0.12;
     } while (out && out.size > 1.8 * 1024 * 1024 && q > 0.4);
-    return { kind: "photo", blob: out, mime: "image/jpeg", w: s.w, h: s.h, duration: 0, size: out.size };
+    // Maliit na preview para sa feed (960 px): mas mabilis sa phone at tipid sa data; ang buo ay kapag binuksan
+    var thumb = null;
+    try {
+      var t = fit(s.w, s.h, THUMB_MAX), tc = document.createElement("canvas"); tc.width = t.w; tc.height = t.h;
+      tc.getContext("2d").drawImage(c, 0, 0, t.w, t.h);
+      thumb = await new Promise(function (r) { tc.toBlob(r, "image/jpeg", 0.72); });
+      if (thumb && thumb.size >= out.size * 0.8) thumb = null; // maliit na photo na: hindi na kailangan
+    } catch (e) { thumb = null; }
+    return { kind: "photo", blob: out, mime: "image/jpeg", w: s.w, h: s.h, duration: 0, size: out.size, thumb: thumb };
   }
 
   function pickVideoMime() {
@@ -192,11 +200,13 @@
           // Walang photo (Explore post na mapa lang): diretso sa createPost
           var up = !e.files.length ? { uploads: [] } : await TMN_API.call("posts", "createUpload", {
             client_id: e.id, caption: e.caption + (e.activity ? " " + e.activity.title : ""),
-            files: e.files.map(function (f) { return { kind: f.kind, mime: f.mime, size: f.size, duration: f.duration }; })
+            files: e.files.map(function (f) { return { kind: f.kind, mime: f.mime, size: f.size, duration: f.duration, thumb_size: f.thumb ? f.thumb.size : 0 }; })
           });
           if (!up.already) {
             for (var k = 0; k < up.uploads.length; k++) {
-              await putFile(up.uploads[k].url, e.files[up.uploads[k].index]);
+              var uf = e.files[up.uploads[k].index];
+              await putFile(up.uploads[k].url, uf);
+              if (up.uploads[k].thumb_url && uf.thumb) { try { await putFile(up.uploads[k].thumb_url, { mime: "image/jpeg", blob: uf.thumb }); } catch (er) { /* ok lang: buong photo ang gagamitin */ } }
               e.progress = { done: k + 1, total: e.files.length }; await put(e); emit();
             }
           }

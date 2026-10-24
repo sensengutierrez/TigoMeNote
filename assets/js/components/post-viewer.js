@@ -36,7 +36,7 @@
       var inner = route ? '<div class="pt-route">' + TMN_ROUTE.svg(p.activity.route, 300, 300, { attr: false }) + "</div>"
         : !m.url ? '<div class="pt-missing">' + I("image") + "</div>"
         : m.kind === "video" ? '<video src="' + esc(m.url) + '#t=0.1" muted playsinline preload="metadata"></video>'
-        : '<img alt="" loading="lazy" src="' + esc(m.url) + '">';
+        : '<img alt="" loading="lazy" decoding="async" src="' + esc(m.thumb || m.url) + '">';
       var badges = "";
       if (p.hidden) badges += '<span class="pt-badge review">' + I("flag", "ic-sm") + "Under review</span>";
       if (opts.pins !== false && p.pinned) badges += '<span class="pt-badge pin">Pinned</span>';

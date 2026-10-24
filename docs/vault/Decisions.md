@@ -87,6 +87,9 @@ updated: 2026-10-24
 | 2026-10-24 | Trending sounds = TigoMeNote Sounds lang (bilang sa posts + status, 7 araw), walang commercial na kanta | Ang mga kanta sa TikTok/FB/IG ay may lisensya; bawal gamitin dito nang walang kasunduan |
 | 2026-10-24 | ❤️ sa status ay naka-save sa `story_views.liked_at` (walang bagong table) | Isang row bawat nanood; kasama ang view at like |
 | 2026-10-24 | Desktop Explore: 560 px na feed | Masyadong malaki ang post sa buong lapad; parang Facebook/Instagram ang sukat |
+| 2026-10-24 | Functions naka-pin sa ap-south-1 (Mumbai) | Katabi ng database; mas mabilis kaysa function na malapit sa user pero malayo sa DB |
+| 2026-10-24 | Feed preview photo ginagawa sa phone (≤960 px), hindi Supabase image transform | Bayad na feature ang image transform; libre ang canvas sa phone |
+| 2026-10-24 | Keep-warm at reminders cron ay tumatakbo lang kapag kailangan | Tipid sa 500k invocations/buwan ng Free plan |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

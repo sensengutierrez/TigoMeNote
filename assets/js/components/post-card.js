@@ -43,7 +43,7 @@
     var slides = p.media.map(function (m, i) {
       var inner = !m.url ? '<div class="pt-missing">' + I("image") + "</div>"
         : m.kind === "video" ? '<video src="' + esc(m.url) + '" playsinline muted loop preload="metadata"></video>'
-        : '<img alt="" loading="lazy" src="' + esc(m.url) + '">';
+        : '<img alt="" loading="lazy" decoding="async" src="' + esc(m.thumb || m.url) + '">'; // maliit na preview muna (tipid sa data)
       return '<div class="pc-slide' + (m.kind === "video" ? " is-video" : "") + '">' + inner + (m.kind === "video" ? '<button type="button" class="pc-sound" data-act="sound" aria-label="Sound on">' + I("mute", "ic-sm") + "</button>" : "") + "</div>";
     }).join("");
     var m0 = p.media[0], ar = m0.w && m0.h ? Math.max(0.8, Math.min(1.91, m0.w / m0.h)) : arOf(m0.url); // galing sa server (w/h) o naalala

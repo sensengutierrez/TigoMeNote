@@ -1,9 +1,9 @@
 /* TigoMeNote · notif-badge.js — bilang ng bagong notifications sa bawat page (bell sa itaas at sa menu)
-   - Kinukuha tuwing 60 s habang nakikita ang page, at agad kapag may dumating na push.
+   - Kinukuha tuwing 3 min habang nakikita ang page, at agad kapag may dumating na push o bumalik sa app (tipid sa server).
    - Ang notifications page ang nagsasabing "nakita na" (TMN_NOTIF_BADGE.set(0)).
    TMN_NOTIF_BADGE.refresh() · TMN_NOTIF_BADGE.set(n) */
 (function () {
-  var POLL = 60000, KEY = "tmnNotifCount", KEY_M = "tmnMsgCount", KEY_AT = "tmnBadgeAt", FRESH = 30000;
+  var POLL = 180000, KEY = "tmnNotifCount", KEY_M = "tmnMsgCount", KEY_AT = "tmnBadgeAt", FRESH = 30000;
   var busy = false, timer = null;
 
   function set(n) {
