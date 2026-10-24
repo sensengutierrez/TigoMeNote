@@ -296,3 +296,12 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "ok next muna tapos lagyan mo din sya ng sasalita parang baby lagyan mo setting para ma adjust ung sound".
 - **Files:** `assets/js/tigo/voice.js`, `talk.js`, `pac-game.js`, `race-game.js` (bago), `games-ui.js`, `pet-scene.js` (beginGame/endGame, headScreen, input), `pages/tigo.js`, `app/tigo.html`, `pages/tigo.css`, `backend/pet-fast.ts` (game kind: coins/pac/race, 10 bawat araw bawat laro), `config.js` (0.11.10), `lang/fil.js`, `lang/ar.js`
 - **Paano:** Detalye sa [[Build - Tigo]].
+
+## 2026-10-24 · #39 Post media parang Facebook + video play mode (full screen / minimize)
+- **Ano:**
+  - **Feed (Explore, Home, Profile):** buong lapad ang photo/video at sumusunod ang taas sa hugis nito (4:5 pinakamatangkad, 1.91:1 pinakamalapad). Wala nang itim na gilid at wala nang scroll sa loob ng box; swipe lang kapag maraming photo.
+  - **Video sa feed:** kusang tumutugtog nang naka-mute; 🔇/🔊 na button (hindi na play arrow). Tap sa video = **play mode**: buong-screen na player na may ✕, **▭ minimize** (maliit na lumulutang na player sa sulok, tuloy ang video habang nag-i-scroll, puwedeng i-drag, tap = palakihin) at **⛶ full screen** (pahiga kung kaya ng phone). Tuloy mula sa kung nasaan na ang video.
+  - **Post viewer (Profile at link ng post):** isang buong post na lang (photo/video sa itaas, caption at comments sa ilalim) at isang scroll lang ang buong modal; sa desktop 680 px ang lapad. Video doon = play mode din.
+- **Bakit:** Ayon kay Bench: "pag click ko scroll pa ung image… sa post na me video me arrow pa… dapat click ung video me lalabas na playmode tapos pwede full or minimize… same desktop… hindi na scroll sa loob ng box".
+- **Files:** `assets/js/components/video-player.js` (bago, `TMN_PLAYER`), `components/post-card.js`, `components/post-viewer.js`, `icons.js` (mute, expand, shrink, pip), `css/social.css`, `css/posts.css`, `css/components.css`, `app/explore.html`, `home.html`, `profile.html`, `messages.html`, `notifications.html`, `share.html`, `config.js` (0.11.11), `lang/fil.js`, `lang/ar.js`
+- **Paano:** Ang hugis ay galing sa `w`/`h` ng media (server); kung wala, kinukuha pagka-load at naaalala sa device (`tmnMediaAR`).

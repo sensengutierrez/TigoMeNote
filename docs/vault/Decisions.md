@@ -83,6 +83,7 @@ updated: 2026-10-24
 | 2026-10-24 | Boses ni Tigo = synth sa browser (WebAudio), hindi recorded na audio | Walang file na ida-download, gumagana offline at sa APK, sariling tunog; may "Baby words" gamit ang speech ng device |
 | 2026-10-24 | Sound settings ay naka-save sa device lang | Iba-iba ang gusto bawat device (phone vs laptop); walang kailangang server |
 | 2026-10-24 | Pac-Tigo at Racing: sariling disenyo (Gloomies, Tigo karts) | Hindi kopya ng Pac-Man o ibang racing game (trademark) |
+| 2026-10-24 | Feed media: hugis ayon sa photo (4:5 hanggang 1.91:1), `cover` sa loob | Parang Facebook: walang itim na gilid at walang scroll sa loob; ang sobrang tangkad/lapad ay bahagyang napuputol |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

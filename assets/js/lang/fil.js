@@ -1304,5 +1304,11 @@ TMN_I18N.register("fil", {
   "Quit game": "Umalis sa laro",
   "Grab coins in 30 seconds. Jump for the floating ones!": "Kunin ang coins sa loob ng 30 segundo. Tumalon para sa nakalutang!",
   "Eat all the dots in the maze. Mangoes make the Gloomies run away!": "Kainin lahat ng tuldok sa maze. Sa mangga, tatakbo ang Gloomies!",
-  "3 laps against 3 Tigos. Hit ⚡ pads to go faster!": "3 ikot laban sa 3 Tigo. Dumaan sa ⚡ para bumilis!"
+  "3 laps against 3 Tigos. Hit ⚡ pads to go faster!": "3 ikot laban sa 3 Tigo. Dumaan sa ⚡ para bumilis!",
+  "Minimize": "I-minimize",
+  "Full screen": "Buong screen",
+  "Open player": "Buksan ang player",
+  "Video player": "Video player",
+  "Sound on": "Buksan ang tunog",
+  "Sound off": "Patayin ang tunog"
 });

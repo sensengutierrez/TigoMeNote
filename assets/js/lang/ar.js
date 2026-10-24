@@ -1141,5 +1141,11 @@ TMN_I18N.register("ar", {
   "Quit game": "إنهاء اللعبة",
   "Grab coins in 30 seconds. Jump for the floating ones!": "اجمع العملات في 30 ثانية. اقفز للعملات الطائرة!",
   "Eat all the dots in the maze. Mangoes make the Gloomies run away!": "كل كل النقاط في المتاهة. المانجو يجعل الغيوم الحزينة تهرب!",
-  "3 laps against 3 Tigos. Hit ⚡ pads to go faster!": "3 لفات ضد 3 تيغو. مرّ على ⚡ لتسرع!"
+  "3 laps against 3 Tigos. Hit ⚡ pads to go faster!": "3 لفات ضد 3 تيغو. مرّ على ⚡ لتسرع!",
+  "Minimize": "تصغير",
+  "Full screen": "ملء الشاشة",
+  "Open player": "فتح المشغل",
+  "Video player": "مشغل الفيديو",
+  "Sound on": "تشغيل الصوت",
+  "Sound off": "إيقاف الصوت"
 });

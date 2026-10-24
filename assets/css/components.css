@@ -312,3 +312,29 @@ html.mv-open, html.mv-open body { overflow: hidden; }
 .mv-nav.prev { left: 14px; } .mv-nav.next { right: 14px; }
 .mv-nav:disabled { opacity: 0; pointer-events: none; }
 @media (hover: none) { .mv-nav { display: none; } }
+
+/* ---------- Video play mode (components/video-player.js) ---------- */
+html.vp-open, html.vp-open body { overflow: hidden; }
+.vp { position: fixed; inset: 0; z-index: 106; background: #000; color: #fff; display: grid; grid-template-rows: auto 1fr; animation: mv-in .15s ease-out; }
+.vp-top { display: flex; align-items: center; gap: 8px; padding: max(10px, env(safe-area-inset-top)) 12px 6px; }
+.vp-gap { flex: 1; }
+.vp-btn { width: 38px; height: 38px; border-radius: 50%; border: 0; display: grid; place-items: center; background: rgba(255,255,255,.14); color: #fff; cursor: pointer; position: relative; }
+.vp-btn::after { content: ""; position: absolute; inset: -5px; }
+.vp-btn:hover { background: rgba(255,255,255,.26); }
+.vp-btn svg { width: 18px; height: 18px; }
+.vp-stage { min-height: 0; display: flex; align-items: center; justify-content: center; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+.vp-stage video { width: 100%; height: 100%; object-fit: contain; background: #000; display: block; }
+.vp.fs .vp-top { position: absolute; top: 0; left: 0; right: 0; z-index: 2; opacity: 0; transition: opacity .2s; }
+.vp.fs:hover .vp-top, .vp.fs:focus-within .vp-top { opacity: 1; }
+.vp.fs { grid-template-rows: 1fr; }
+.vp-mini-ui { display: none; }
+/* maliit na lumulutang na player */
+.vp.mini { inset: auto 12px calc(76px + env(safe-area-inset-bottom)) auto; width: min(58vw, 340px); aspect-ratio: var(--vp-ar, 16 / 9); max-height: 46vh;
+  grid-template-rows: 1fr; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.45); touch-action: none; cursor: grab; animation: none; }
+.vp.mini .vp-top { display: none; }
+.vp.mini .vp-stage { padding: 0; }
+.vp.mini video { pointer-events: none; }
+.vp.mini .vp-mini-ui { display: flex; position: absolute; top: 6px; right: 6px; gap: 6px; z-index: 2; }
+.vp.mini .vp-btn { width: 30px; height: 30px; background: rgba(0,0,0,.55); }
+.vp.mini .vp-btn svg { width: 15px; height: 15px; }
+@media (min-width: 900px) { .vp.mini { bottom: 20px; right: 20px; } }

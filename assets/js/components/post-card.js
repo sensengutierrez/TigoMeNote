@@ -27,16 +27,27 @@
       (p.caption ? '<p class="pc-act-cap">' + esc(p.caption) + "</p>" : "") +
       (cells.length ? '<div class="pc-act-stats">' + cells.map(function (c) { return '<div><span class="faint small">' + c[0] + '</span><b translate="no">' + c[1] + "</b></div>"; }).join("") + "</div>" : "");
   }
+  // Hugis ng media (parang Facebook): buong lapad, taas ayon sa photo/video (4:5 pinakamatangkad, 1.91:1 pinakamalapad).
+  // Walang itim na gilid at walang scroll sa loob. Naaalala ang hugis bawat URL para hindi tumalon ang feed.
+  var AR_KEY = "tmnMediaAR", arCache = null;
+  function arMap() { if (!arCache) { try { arCache = JSON.parse(localStorage.getItem(AR_KEY) || "{}"); } catch (e) { arCache = {}; } } return arCache; }
+  function arOf(url) { var v = arMap()[String(url).split("?")[0]]; return v ? Math.max(0.8, Math.min(1.91, v)) : 0; }
+  function arSave(url, v) {
+    var m = arMap(), k = String(url).split("?")[0]; if (m[k] === v) return; m[k] = v;
+    var ks = Object.keys(m); if (ks.length > 400) ks.slice(0, ks.length - 400).forEach(function (x) { delete m[x]; });
+    try { localStorage.setItem(AR_KEY, JSON.stringify(m)); } catch (e) {}
+  }
   function mediaHtml(p) {
     var hasRoute = !!(p.activity && p.activity.route && window.TMN_ROUTE);
     if (!p.media.length) return hasRoute ? '<div class="pcard-media pc-route-only"><button type="button" class="pc-route-full" data-act="route" aria-label="Open map">' + routeSvg(p, 640, 460) + "</button></div>" : "";
     var slides = p.media.map(function (m, i) {
       var inner = !m.url ? '<div class="pt-missing">' + I("image") + "</div>"
-        : m.kind === "video" ? '<video src="' + esc(m.url) + '" playsinline muted loop preload="metadata"' + (i === 0 ? "" : "") + "></video>"
+        : m.kind === "video" ? '<video src="' + esc(m.url) + '" playsinline muted loop preload="metadata"></video>'
         : '<img alt="" loading="lazy" src="' + esc(m.url) + '">';
-      return '<div class="pc-slide">' + inner + (m.kind === "video" ? '<button type="button" class="pc-sound" data-act="sound" aria-label="Sound">' + I("play", "ic-sm") + "</button>" : "") + "</div>";
+      return '<div class="pc-slide' + (m.kind === "video" ? " is-video" : "") + '">' + inner + (m.kind === "video" ? '<button type="button" class="pc-sound" data-act="sound" aria-label="Sound on">' + I("mute", "ic-sm") + "</button>" : "") + "</div>";
     }).join("");
-    return '<div class="pcard-media">' +
+    var m0 = p.media[0], ar = m0.w && m0.h ? Math.max(0.8, Math.min(1.91, m0.w / m0.h)) : arOf(m0.url); // galing sa server (w/h) o naalala
+    return '<div class="pcard-media' + (ar ? "" : " ar-wait") + '" style="--ar:' + (ar || 1) + '">' +
       '<div class="pc-track" data-act="track">' + slides + "</div>" +
       (p.media.length > 1 ? '<span class="pc-count-badge">1/' + p.media.length + '</span><div class="pc-dots">' +
         p.media.map(function (_, i) { return '<span class="' + (i ? "" : "on") + '"></span>'; }).join("") + "</div>" : "") +
@@ -131,11 +142,19 @@
     // Tap sa photo/video = buong-screen na tingin (TMN_VIEWER). Hinihintay saglit para hindi masalo ang double-tap ❤️
     var openT = null, dblAt = 0;
     function viewer(p, i) { if (window.TMN_VIEWER) TMN_VIEWER.open(TMN_VIEWER.itemsOf(p), i); }
+    // Video: play mode (parang Facebook) — tuloy mula sa kung nasaan na, may full screen at minimize
+    function player(p, sl) {
+      var v = sl.querySelector("video"); if (!v || !window.TMN_PLAYER) return false;
+      var m = p.media[[].indexOf.call(sl.parentNode.children, sl)] || {};
+      TMN_PLAYER.open({ url: m.url || v.currentSrc || v.src, time: v.currentTime, volume: p.sound && p.sound.orig != null ? p.sound.orig : null,
+        onClose: function (t) { try { v.currentTime = t; } catch (e) {} } });
+      return true;
+    }
     root.addEventListener("click", function (e) {
       var sl = e.target.closest(".pc-slide"); if (!sl || e.target.closest("button") || !root.contains(sl)) return;
       var p = post(sl); if (!p || Date.now() - dblAt < 450) return;
       var i = [].indexOf.call(sl.parentNode.children, sl);
-      clearTimeout(openT); openT = setTimeout(function () { viewer(p, i); }, 280);
+      clearTimeout(openT); openT = setTimeout(function () { if (!sl.classList.contains("is-video") || !player(p, sl)) viewer(p, i); }, 280);
     });
     root.addEventListener("click", async function (e) {
       var t = e.target.closest("[data-act]"); if (!t || !root.contains(t)) return;
@@ -164,7 +183,10 @@
       }
       if (act === "more") S().postMenu(p, api);
       if (act === "route") viewer(p, p.media.length);
-      if (act === "sound") { var v = t.parentNode.querySelector("video"); if (v) { v.muted = !v.muted; if (v.paused) v.play(); t.classList.toggle("on", !v.muted); } }
+      if (act === "sound") {
+        var v = t.parentNode.querySelector("video");
+        if (v) { v.muted = !v.muted; if (v.paused) v.play().catch(function () {}); t.classList.toggle("on", !v.muted); t.innerHTML = I(v.muted ? "mute" : "volume", "ic-sm"); t.setAttribute("aria-label", v.muted ? "Sound on" : "Sound off"); }
+      }
     });
     // Double-tap sa photo = ❤️ (parang Instagram)
     var lastTap = 0;
@@ -193,6 +215,15 @@
       m.querySelectorAll(".pc-dots span").forEach(function (d, k) { d.classList.toggle("on", k === i); });
       var c = m.querySelector(".pc-count-badge"); if (c) c.textContent = (i + 1) + "/" + tr.children.length;
     }, true);
+    // Kunin ang tunay na hugis ng unang photo/video (kapag hindi pa alam)
+    function fit(el) {
+      var w = el.naturalWidth || el.videoWidth, h = el.naturalHeight || el.videoHeight; if (!w || !h) return;
+      var sl = el.closest(".pc-slide"), box = el.closest(".pcard-media"); if (!sl || !box || !box.classList.contains("ar-wait") || sl !== sl.parentNode.firstElementChild) return; // may w/h na galing sa server = sundin iyon
+      var ar = Math.round((w / h) * 1000) / 1000; arSave(el.currentSrc || el.src, ar);
+      box.style.setProperty("--ar", Math.max(0.8, Math.min(1.91, ar))); box.classList.remove("ar-wait");
+    }
+    root.addEventListener("load", function (e) { if (e.target.tagName === "IMG") fit(e.target); }, true);
+    root.addEventListener("loadedmetadata", function (e) { if (e.target.tagName === "VIDEO") fit(e.target); }, true);
     // Auto-play ng video kapag nasa screen
     if ("IntersectionObserver" in window) {
       var io = new IntersectionObserver(function (es) {

@@ -92,7 +92,7 @@
       var p = cur(), m = p.media[slide] || {};
       media.innerHTML = !p.media.length && p.activity && p.activity.route && window.TMN_ROUTE ? '<div class="pv-route">' + TMN_ROUTE.svg(p.activity.route, 800, 800) + "</div>"
         : !m.url ? '<div class="pt-missing">' + I("image", "ic-lg") + "<span>Couldn't load. Please try again.</span></div>"
-        : m.kind === "video" ? '<video src="' + esc(m.url) + '" controls playsinline autoplay></video>'
+        : m.kind === "video" ? '<video src="' + esc(m.url) + '" playsinline autoplay muted loop></video><span class="pv-play" aria-hidden="true">' + I("play") + "</span>"
         : '<img alt="" src="' + esc(m.url) + '">';
       // May sound ang post: hinaan ang sariling tunog ng video ayon sa pinili ng nag-post
       var vid = media.querySelector("video");
@@ -151,7 +151,11 @@
     // Tap sa photo/video/mapa = buong-screen (TMN_VIEWER)
     media.addEventListener("click", function (e) {
       if (e.target.closest("button") || !window.TMN_VIEWER) return;
-      if (e.target.closest("video") && e.offsetY > e.target.clientHeight - 48) return; // controls ng video
+      var v = media.querySelector("video"), m = cur().media[slide] || {};
+      if (v && window.TMN_PLAYER) { // video = play mode (full screen / minimize)
+        TMN_PLAYER.open({ url: m.url, time: v.currentTime, volume: cur().sound && cur().sound.orig != null ? cur().sound.orig : null, onClose: function (t) { try { v.currentTime = t; } catch (er) {} } });
+        return;
+      }
       TMN_VIEWER.open(TMN_VIEWER.itemsOf(cur()), cur().media.length ? slide : 0);
     });
     root.querySelector(".pv-act").addEventListener("click", function (e) {

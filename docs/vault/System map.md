@@ -75,6 +75,7 @@ updated: 2026-10-24
 | `realtime.js` | Live "ping" ng chat gamit ang Supabase Realtime (`TMN_RT`) |
 | `components/chat-view.js` / `chat-new.js` | Isang chat (`TMN_CHAT`); bagong chat/group at pumili ng tao (`TMN_CHAT_NEW`) |
 | `zip.js` | Gumawa ng .zip sa browser (`TMN_ZIP`) |
+| `components/video-player.js` | Video play mode: full screen, minimize (lumulutang na mini player), drag (`TMN_PLAYER`) |
 | `file-save.js` | I-save sa TigoMeNote folder: APK Documents, desktop na pinili, o Downloads (`TMN_FILES`) |
 | `components/location-export.js` / `files-settings.js` | Kopya ng location (.zip) at Delete sheet; Settings → Files on this device |
 | `notif-badge.js` | Bilang ng bagong notifications sa bell at menu, bawat page (`TMN_NOTIF_BADGE`) |

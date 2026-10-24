@@ -16,13 +16,18 @@
 .pc-follow { height: 32px; }
 
 /* Pare-parehong laki ng photo/video sa feed: kasya ang buong post sa screen (walang scroll), buo ang makikita */
-.pcard-media { position: relative; width: 100%; background: #0b0b0d; height: clamp(220px, calc(100dvh - 320px), 460px); overflow: hidden; }
-.pc-track { display: flex; height: 100%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+/* Media na parang Facebook: buong lapad, taas ayon sa hugis ng photo/video (--ar galing sa post-card.js), walang itim na gilid, walang scroll sa loob */
+.pcard-media { position: relative; width: 100%; background: #0b0b0d; aspect-ratio: var(--ar, 1); height: auto; overflow: hidden; }
+.pcard-media.pc-route-only { aspect-ratio: 640 / 460; }
+.pc-track { display: flex; height: 100%; overflow: hidden; touch-action: pan-y; }
+.pc-track:has(> .pc-slide + .pc-slide) { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; touch-action: pan-x pan-y; overscroll-behavior-x: contain; }
 .pc-track::-webkit-scrollbar { display: none; }
 .pc-slide { position: relative; flex: 0 0 100%; height: 100%; scroll-snap-align: center; display: grid; place-items: center; }
-.pc-slide img, .pc-slide video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.pc-slide img, .pc-slide video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pc-slide.is-video { cursor: pointer; }
 .pc-slide .pt-missing { color: #888; }
-.pc-sound { position: absolute; right: 10px; bottom: 10px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(0,0,0,.55); color: #fff; display: grid; place-items: center; }
+.pc-sound { position: absolute; right: 10px; bottom: 10px; width: 34px; height: 34px; border-radius: 50%; border: 0; background: rgba(0,0,0,.5); color: #fff; display: grid; place-items: center; cursor: pointer; }
+.pc-sound::after { content: ""; position: absolute; inset: -6px; }
 .pc-count-badge { position: absolute; top: 10px; right: 10px; font-size: 12px; font-weight: 600; color: #fff; background: rgba(0,0,0,.55); padding: 3px 9px; border-radius: var(--r-full); }
 .pc-dots { position: absolute; bottom: 10px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; pointer-events: none; }
 .pc-dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.5); }
