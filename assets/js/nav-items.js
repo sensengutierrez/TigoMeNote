@@ -20,6 +20,7 @@ window.TMN_NAV = {
     { id: "share",    label: "Share",    icon: "plus",    href: "app/share.html", primary: true },
     { id: "safety",   label: "Safety",   icon: "shield",  href: "app/safety.html" },
     { id: "messages", label: "Messages", icon: "chat",    href: "app/messages.html" },
+    { id: "tigo",     label: "Tigo",     icon: "tigo",    href: "app/tigo.html" },
     { id: "profile",  label: "Profile",  icon: "user",    href: "app/profile.html" }
   ],
 
@@ -33,7 +34,7 @@ window.TMN_NAV = {
   ],
 
   // Icon buttons sa itaas na bar ng phone (kanan), galing sa main o more
-  topbar: ["notifications"],
+  topbar: ["tigo", "notifications"],
 
   // Alin sa main ang lalabas sa bottom tabs ng phone (max 5)
   tabs: ["home", "gallery", "share", "safety", "profile"]

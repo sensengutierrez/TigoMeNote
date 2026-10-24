@@ -259,3 +259,15 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Files:** `sql/050-daily-reminders.sql` (table `reminders`, cron `tmn-reminders` bawat minuto, key `cron_daily` sa app_keys), `backend/daily-fast.ts` (bago, v1) + `webpush.ts`, `assets/js/daily-store.js` (bago), `components/daily-notes.js` (bago), `components/reminders.js` (bago), `components/mini-calendar.js` (bago), `components/home-clock.js` (bago), `pages/daily.js`, `app/home.html`, `assets/css/pages/daily.css`, `assets/css/look.css`, `sw.js` (alarm/reminder), `config.js` (0.11.7, `daily`), `lang/fil.js`, `lang/ar.js`
 - **Paano:** Detalye sa [[Build - Daily]].
 - **Na-test:** live ang cron: bawat minuto `{"ok":true,"sent":0}` mula sa daily-fast (2026-10-24).
+
+## 2026-10-24 · #36 Tigo: sariling 3D virtual pet (parang Tamagotchi) + Gather ng magkakalapit na kaibigan
+- **Ano:**
+  - Bagong page **Tigo** (menu + icon sa itaas ng phone): si Tigo (ang note na may mukha ng stickers) sa **3D** na isla (three.js). Humihinga, kumukurap, sumusunod ang tingin, tumatalon, kumakain, natutulog (gabi + Zzz).
+  - Alaga: **Feed** (Pandesal, Mangga, Kanin, Dates, Halo-halo, Saging), **Play** (bola), **Clean** (bula), **Sleep/Wake**, tap kay Tigo = ❤️. Bumababa ang Food/Fun/Energy/Clean habang lumilipas ang oras; hindi namamatay si Tigo, nalulungkot lang.
+  - **Level/XP**: mula sa alaga, sa pagsusulat sa Daily (note, to-do, mood), at sa paglalaro kasama ng kaibigan. Unlock: 🌱 Sprout (Lv 2), 🎀 Bow (3), 🧢 Cap (4), 🎧 Headphones (5), 👑 Crown (7). **Style**: pangalan, 8 kulay, isusuot.
+  - **Meet nearby friends / Gather**: kapag naka-on sa dalawang magkaibigan at magkalapit (≤600 m), lalabas sila; pindot **Gather** = pupunta ang Tigo ng kaibigan sa isla mo at maglalaro (+15 Fun at XP sa dalawa, isang beses bawat araw), may push sa kaibigan.
+  - Sa Daily: maliit na card ni Tigo (mood, level).
+  - Walang WebGL: 2D na Tigo (sticker).
+- **Bakit:** Ayon kay Bench: "alam mo ba ung larong tamagotchi… sige simulan natin, tapos pag me friend or classmate pwede silang mag gather pumasyal basta magkalapit sila… mas latest na 3D… i-ready to apps sya".
+- **Files:** `sql/052-tigo-pets.sql` (pets, pet_meets), `sql/053-keep-warm-pet.sql`, `backend/pet-fast.ts` (bago, v1) + `webpush.ts`, `assets/vendor/three/` (three.js r170, MIT), `assets/js/tigo/pet-model.js` (bago), `assets/js/tigo/pet-scene.js` (bago), `assets/js/pages/tigo.js` (bago), `app/tigo.html` (bago), `assets/css/pages/tigo.css` (bago), `nav-items.js`, `icons.js` (tigo), `daily-store.js` (event `tmn:daily-add`), `pages/daily.js`, `app/home.html`, `pages/daily.css`, `config.js` (0.11.8, `pet`), `lang/fil.js`, `lang/ar.js`
+- **Paano:** Detalye sa [[Build - Tigo]].

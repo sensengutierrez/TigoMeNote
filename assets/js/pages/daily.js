@@ -65,6 +65,22 @@
   }
   $("dnOtd").addEventListener("click", function (e) { var b = e.target.closest("[data-day]"); if (b) setDay(b.dataset.day); });
 
+  // ---------- si Tigo: sumasaya kapag nagsusulat ka sa Daily ----------
+  var MOODS = { happy: "😄", ok: "🙂", sad: "😢", sleepy: "😴", sick: "🤒" };
+  function paintTigo(p) {
+    var el = $("tigoCard"); if (!p || !el) return;
+    el.classList.remove("hidden");
+    el.innerHTML = '<span class="tg-mini-face" style="--c:' + ({ coral: "#ff7a59", amber: "#ffc04d", mint: "#3dd6c0", sky: "#7cc4ff", pink: "#ff9ec7", lilac: "#b9a2ff", lime: "#b8e65c", ink: "#3a3a40" }[p.color] || "#ff7a59") + '">' + (MOODS[p.mood] || "🙂") + "</span>" +
+      '<span class="tg-mini-main"><b>' + UI.esc(p.name) + ' <small class="faint">Lv ' + p.level + "</small></b><span class=\"faint small\">" +
+      (p.mood === "happy" ? "Happy! Keep writing in Daily." : p.mood === "sleepy" ? "Sleepy… let " + UI.esc(p.name) + " rest." : p.hunger < 35 ? "Hungry! Tap to feed." : "Misses you. Tap to play.") + "</span></span>" +
+      '<span class="tg-mini-go">' + (window.TMN_ICON ? TMN_ICON("chevronR", "ic-sm") : "›") + "</span>";
+  }
+  if (navigator.onLine) TMN_API.call("pet", "get", {}).then(function (r) { paintTigo(r.pet); }, function () {});
+  document.addEventListener("tmn:daily-add", function () {
+    if (!navigator.onLine) return;
+    TMN_API.call("pet", "act", { do: "daily" }).then(function (r) { paintTigo(r.pet); if (r.levelUp) UI.toast("🎉 " + r.pet.name + " reached level " + r.levelUp + "!"); }, function () {});
+  });
+
   // ---------- reminders, orasan ----------
   if (window.TMN_REMIND) TMN_REMIND.mount($("remind"));
   if (window.TMN_HOMECLOCK) TMN_HOMECLOCK.mount($("homeClock"));

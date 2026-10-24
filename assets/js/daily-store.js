@@ -61,7 +61,7 @@
     var now = Date.now();
     var note = Object.assign({ id: "d" + now.toString(36) + Math.random().toString(36).slice(2, 6), day: n.day || dayKey(), pinned: false, createdAt: now, updatedAt: now }, clean(n));
     await tx("notes", "readwrite", function (s) { s.put(note); });
-    changed(); return note;
+    changed(); document.dispatchEvent(new CustomEvent("tmn:daily-add", { detail: { kind: note.kind } })); return note;
   }
   async function update(id, ch) {
     var cur = await tx("notes", "readonly", function (s, o) { var r = s.get(id); r.onsuccess = function () { o.v = r.result; }; });
@@ -75,7 +75,7 @@
   function mood(day) { return tx("moods", "readonly", function (s, o) { var r = s.get(day); r.onsuccess = function () { o.v = r.result ? r.result.mood : null; }; }); }
   async function setMood(day, m) {
     await tx("moods", "readwrite", function (s) { if (m) s.put({ day: day, mood: m }); else s.delete(day); });
-    changed();
+    changed(); if (m) document.dispatchEvent(new CustomEvent("tmn:daily-add", { detail: { kind: "mood" } }));
   }
   // "On this day": parehong araw noong nakaraang mga buwan at taon (hindi kasama ngayon)
   async function onThisDay(day) {

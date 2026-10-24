@@ -72,6 +72,10 @@ updated: 2026-10-24
 | 2026-10-24 | Tuloy-tuloy na music kahit lumipat ng page o naka-lock = sa APK na | Pinili ni Bench; sa web, humihinto ang audio kapag nagpalit ng page |
 | 2026-10-24 | Daily notes = nasa device lang; reminders/alarms = nasa server | Pribado ang notes; ang reminder ay kailangang nasa server para may push sa tamang oras kahit sarado ang app |
 | 2026-10-24 | Cron ng reminders: sariling random key (app_keys `cron_daily`), hindi service key | Walang secret sa SQL o notes; ang key ay ginawa sa database mismo |
+| 2026-10-24 | Tigo = sariling character (note na may mukha), hindi Tamagotchi | Trademark ng Bandai ang Tamagotchi; kapareho ng stickers natin ang Tigo |
+| 2026-10-24 | 3D gamit ang three.js r170 na naka-vendor sa `assets/vendor/three` (hindi CDN) | Gumagana sa APK at offline na cache; na-test dito; ini-load lang sa Tigo page |
+| 2026-10-24 | Gather: magkaibigan lang (mutual follow o Family/Friends), naka-on sa dalawa, distansya lang (hindi lokasyon), ~100 m na katumpakan, 20 min | Kaligtasan, lalo na sa mga bata/teen |
+| 2026-10-24 | Hindi namamatay si Tigo | Hindi nakaka-stress; nalulungkot lang kapag napabayaan |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)
