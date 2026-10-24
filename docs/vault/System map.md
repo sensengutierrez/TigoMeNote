@@ -16,8 +16,9 @@ updated: 2026-10-23
 | `gallery.html` | app/ | Gallery: albums, upload, edit (device lang) | oo |
 | `profile.html` | app/ | Profile: cover, photo, edit profile, naka-pilang uploads, mga tab (Posts, Private, Reposts, Saved, Liked, History) | oo |
 | `safety.html` | app/ | Safety: SOS, map, Family/Friends, invites, parental | oo |
-| `settings.html` | app/ | Theme, language, wellbeing, logout | oo |
-| (wala pa) | app/admin/ | Admin pages | Admin lang |
+| `settings.html` | app/ | Theme, language, wellbeing, about & policies, logout | oo |
+| `reports.html` | app/admin/ | Reports: review ng ni-report at auto-flag | Admin lang |
+| `index, terms, privacy, guidelines, copyright, third-party.html` | legal/ | Mga policy page | hindi |
 
 ## Shared code — `assets/js/`
 | File | Trabaho |
@@ -69,6 +70,9 @@ updated: 2026-10-23
 | `profile-fast` | get, update, imageUpload, setImage, removeImage | `backend/profile-fast.ts` |
 | `safety-fast` | circle, invite, respond, update, remove, pause, ping, history, clearHistory, sos, sosUpdate, sosEnd, alerts, ack, pushKey, subscribe, unsubscribe, testPush | `backend/safety-fast.ts` + `webpush.ts` |
 | `wellbeing-fast` | status, setBirthdate, tick, save, guardianInvite, guardianRespond, guardianRemove | `backend/wellbeing-fast.ts` |
+| `moderation-fast` | report, queue, resolve, count | `backend/moderation-fast.ts` |
+
+Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast, profile-fast at auth-fast.
 
 | Table | Para saan | SQL |
 |---|---|---|
@@ -95,13 +99,15 @@ updated: 2026-10-23
 | `follow_requests` | follow requests sa private account | `sql/024-wellbeing.sql` |
 | `wellbeing` | sleep, break, daily limit, timezone | `sql/024-wellbeing.sql` |
 | `usage_days` | oras ng gamit bawat araw | `sql/024-wellbeing.sql` |
+| `reports` | report ng users at automatic na flag | `sql/026-moderation.sql` |
+| `moderation_log` | log ng admin at automatic na block/flag | `sql/026-moderation.sql` |
 
 `posts` ay may `pinned_at` (hanggang 3) at `view_count` (sql/020). Function: `record_post_views()` (service_role lang).
 
 Storage bucket: **`post-media`** (private, 12 MB/file, jpeg/webp/webm/mp4). Signed URLs lang galing sa `posts-fast`.
 Storage bucket: **`profile-media`** (public na view, 3 MB/file, jpeg/webp). Upload ay galing lang sa `profile-fast`.
 
-`users` ay may `email` at `email_verified_at` (sql/007), `banner_url`, `avatar_path`, `banner_path` (sql/015), `loc_paused` (sql/023), `birthdate`, `private_account` (sql/024). Status: Unverified → Active / Pending / Inactive.
+`users` ay may `email` at `email_verified_at` (sql/007), `banner_url`, `avatar_path`, `banner_path` (sql/015), `loc_paused` (sql/023), `birthdate`, `private_account` (sql/024), `strikes` (sql/026). Ang `posts`, `post_comments`, `stories` ay may `hidden_at` (sql/026). Status: Unverified → Active / Pending / Inactive.
 
 ## Tools
 `tools/cache-bust.py` — naglalagay ng `?v=<version>` (galing sa `config.js`) sa lahat ng sariling `.js`/`.css` sa HTML. Patakbuhin tuwing release.

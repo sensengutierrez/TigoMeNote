@@ -5,6 +5,7 @@
 // Story files: private bucket "post-media", path <user_id>/stories/<file>, signed read URL 1 oras.
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
+import { checkText, blockMessage, logBlock, autoFlag } from "./moderation.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 
@@ -173,7 +174,7 @@ async function followList(p: any, me: any) {
 async function stories(_p: any, me: any) {
   const circle = [me.id, ...(await followingIds(me))];
   const { data: st } = await db.from("stories").select("*").in("user_id", circle).gt("expires_at", nowIso()).order("created_at", { ascending: true });
-  const list = st ?? [];
+  const list = (st ?? []).filter((s) => !s.hidden_at || s.user_id === me.id); // nakatago = nire-review
   if (!list.length) return reply({ ok: true, groups: [] });
   const ids = list.map((s) => s.id);
   const [{ data: seen }, { data: us }, signedRes, { data: allViews }] = await Promise.all([
@@ -225,12 +226,15 @@ async function createStory(p: any, me: any) {
   const { data: listed } = await db.storage.from(BUCKET).list(`${me.id}/stories`, { search: name, limit: 5 });
   if (!(listed ?? []).some((o) => o.name === name)) return fail("The upload hasn't finished.", 409, { retry: true });
   const kind = p.kind === "video" ? "video" : "photo";
+  const v = checkText(p.caption);
+  if (!v.ok && v.level === "block") { await logBlock(db, me.id, v, "status caption"); return fail(blockMessage(v.category), 422, { blocked: true, category: v.category }); }
   const { data, error } = await db.from("stories").insert({
     user_id: me.id, kind, path, mime: String(p.mime || "image/jpeg"), w: Number(p.w) || null, h: Number(p.h) || null,
     duration: Number(p.duration) || null, caption: String(p.caption ?? "").slice(0, 200),
     expires_at: new Date(Date.now() + STORY_HOURS * 3600_000).toISOString(),
   }).select("id").single();
   if (error) throw error;
+  if (!v.ok) await autoFlag(db, { type: "story", id: data.id, owner: me.id }, v);
   // Linisin ang mga expired na sarili (files + rows)
   const { data: old } = await db.from("stories").select("id, path").eq("user_id", me.id).lt("expires_at", nowIso());
   if (old && old.length) {

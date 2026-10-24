@@ -74,6 +74,7 @@ Ilalagay sa onboarding, Settings → Help, at Play Store listing:
 7. **Emergency:** ang SOS ay tumutulong sa Family/Friends; sa totoong emergency, tumawag sa 999 / 911.
 8. **Sleep at break:** paano i-set, at na hindi nito naba-block ang SOS.
 9. **Data Safety form (Play Store):** location, birthdate, at usage time ay kailangang ideklara.
+10. **Policies:** ang Terms, Privacy Policy at Community Guidelines ay nasa `legal/` ([[Build - Moderation and policies]]). Ang Privacy Policy URL ay kailangan sa Play Store listing.
 
 ## Pagkakasunod ng gagawin
 1. **Safety:** circles, invite/accept, Locate (30 days), SOS + push.

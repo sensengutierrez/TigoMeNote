@@ -1,0 +1,47 @@
+/* TigoMeNote · pages/legal.css — Terms, Privacy, Guidelines, Copyright, Third-party */
+body.legal { background: var(--bg); min-height: 100vh; display: flex; flex-direction: column; }
+.lg-top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px clamp(16px, 4vw, 40px); background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.lg-top-actions { display: flex; align-items: center; gap: 8px; }
+.lg-wrap { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; width: 100%; max-width: 1180px; margin: 0 auto; padding: 24px clamp(16px, 4vw, 40px) 40px; }
+.lg-nav { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.lg-nav::-webkit-scrollbar { display: none; }
+.lg-nav a { white-space: nowrap; padding: 8px 12px; border-radius: var(--r-full); color: var(--text-2); font-weight: 600; font-size: 14px; text-decoration: none; border: 1px solid var(--line); background: var(--surface); }
+.lg-nav a[aria-current="page"] { background: var(--ink); color: var(--ink-text); border-color: var(--ink); }
+.lg-main { min-width: 0; max-width: 760px; }
+.lg-main h1 { font-family: var(--font-display); font-size: clamp(30px, 5vw, 44px); line-height: 1.05; margin: 0 0 10px; }
+.lg-lead { font-size: 17px; color: var(--text-2); margin: 0 0 6px; }
+.lg-body { margin-top: 18px; line-height: 1.65; font-size: 15.5px; }
+.lg-body h2 { font-family: var(--font-display); font-size: 22px; margin: 30px 0 8px; }
+.lg-body h3 { font-size: 16px; margin: 20px 0 4px; }
+.lg-body p, .lg-body li { color: var(--text); }
+.lg-body ul, .lg-body ol { padding-inline-start: 22px; display: grid; gap: 6px; }
+.lg-body a { color: var(--accent); }
+.lg-table { width: 100%; border-collapse: collapse; font-size: 14px; display: block; overflow-x: auto; }
+.lg-table th, .lg-table td { text-align: start; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.lg-table th { font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-3); }
+.lg-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.lg-card { display: grid; gap: 4px; padding: 16px; text-decoration: none; color: var(--text); transition: transform .15s var(--ease, ease); }
+.lg-card:hover { transform: translateY(-2px); }
+.lg-card span { color: var(--text-2); font-size: 14px; }
+.lg-note { margin-top: 32px; }
+.lg-foot { text-align: center; padding: 18px 16px 28px; border-top: 1px solid var(--line); }
+.lg-foot a { color: inherit; }
+@media (min-width: 900px) {
+  .lg-wrap { grid-template-columns: 220px minmax(0, 1fr); gap: 48px; }
+  .lg-nav { flex-direction: column; position: sticky; top: 84px; align-self: start; }
+  .lg-nav a { border: 0; background: none; border-radius: var(--r-md); }
+  .lg-nav a:hover { background: var(--surface-2); }
+  .lg-nav a[aria-current="page"] { background: var(--surface-2); color: var(--text); }
+}
+@media (max-width: 599px) { .lg-top .btn { display: none; } }
+
+/* Brand (kopya mula shell.css, dahil walang app shell dito) */
+.brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 800; font-size: 19px; letter-spacing: -0.03em; }
+.brand-mark {
+  width: 32px; height: 32px; border-radius: 10px; background: var(--ink); color: var(--ink-text);
+  display: grid; place-items: center; font-size: 15px; position: relative;
+}
+.brand-mark::after { content: ""; position: absolute; right: -2px; top: -2px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+.brand b { color: var(--accent); font-weight: 800; }
+.lg-top .brand { color: var(--text); text-decoration: none; }
+[dir="rtl"] .brand-mark::after { right: auto; left: -2px; }

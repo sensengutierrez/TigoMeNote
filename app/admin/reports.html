@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>Reports · TigoMeNote</title>
+  <link rel="manifest" href="../../manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../../assets/img/apple-touch-icon.png">
+  <script src="../../assets/js/theme.js?v=0.7.0"></script>
+  <script src="../../assets/js/config.js?v=0.7.0"></script>
+  <script src="../../assets/js/i18n.js?v=0.7.0"></script>
+  <script src="../../assets/js/auth-guard.js?v=0.7.0"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../../assets/css/tokens.css?v=0.7.0">
+  <link rel="stylesheet" href="../../assets/css/base.css?v=0.7.0">
+  <link rel="stylesheet" href="../../assets/css/components.css?v=0.7.0">
+  <link rel="stylesheet" href="../../assets/css/shell.css?v=0.7.0">
+  <link rel="stylesheet" href="../../assets/css/safety.css?v=0.7.0">
+  <link rel="stylesheet" href="../../assets/css/posts.css?v=0.7.0">
+  <link rel="stylesheet" href="../../assets/css/pages/admin-reports.css?v=0.7.0">
+</head>
+<body data-page="reports">
+  <main id="page" class="page wide">
+    <header class="page-head">
+      <div>
+        <h1>Reports</h1>
+        <p class="muted">Content reported by users or caught by the automatic filter. Hidden content is only visible to its owner until you decide.</p>
+      </div>
+    </header>
+    <div class="segmented ar-tabs" role="tablist" aria-label="Report status" id="arTabs">
+      <button type="button" role="tab" data-s="open" aria-pressed="true">Open <span class="badge" id="arOpen" translate="no"></span></button>
+      <button type="button" role="tab" data-s="actioned" aria-pressed="false">Actioned</button>
+      <button type="button" role="tab" data-s="dismissed" aria-pressed="false">Dismissed</button>
+    </div>
+    <div class="ar-list" id="arList"></div>
+    <div class="empty hidden" id="arEmpty">
+      <div class="empty-art"><i data-icon="shield" data-size="lg"></i></div>
+      <h3 id="arEmptyTitle">All clear</h3>
+      <p id="arEmptyText">No open reports right now.</p>
+    </div>
+  </main>
+  <script src="../../assets/js/icons.js?v=0.7.0"></script>
+  <script src="../../assets/js/nav-items.js?v=0.7.0"></script>
+  <script src="../../assets/js/components/app-shell.js?v=0.7.0"></script>
+  <script src="../../assets/js/api.js?v=0.7.0"></script>
+  <script src="../../assets/js/native-bridge.js?v=0.7.0"></script>
+  <script src="../../assets/js/push-setup.js?v=0.7.0"></script>
+  <script src="../../assets/js/components/sos-overlay.js?v=0.7.0"></script>
+  <script src="../../assets/js/safety-watch.js?v=0.7.0"></script>
+  <script src="../../assets/js/location-share.js?v=0.7.0"></script>
+  <script src="../../assets/js/wellbeing.js?v=0.7.0"></script>
+  <script src="../../assets/js/post-queue.js?v=0.7.0"></script>
+  <script src="../../assets/js/components/modal.js?v=0.7.0"></script>
+  <script src="../../assets/js/pages/admin-reports.js?v=0.7.0"></script>
+</body>
+</html>

@@ -4,10 +4,12 @@
 // Actions: createUpload, createPost, myPosts, userPosts, getPost, feed, updatePost, deletePost,
 //          react, reactions, comments, addComment, deleteComment, bookmark, bookmarks, share, unrepost, shares,
 //          view, pin, liked, reposts, history
+// Moderation: caption at comment ay dumadaan sa moderation.ts (block o flag). Nakatago (hidden_at) = may-ari lang ang nakakakita.
 // Storage: private bucket "post-media" — signed upload URL (pang-upload) at signed read URL (1 oras).
 // Secrets: AUTH_PEPPER (hindi ginagamit dito), SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY (automatic).
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
+import { checkText, blockMessage, logBlock, autoFlag } from "./moderation.ts";
 
 const db = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -76,6 +78,7 @@ async function followingIds(me: any): Promise<string[]> {
 async function canSee(post: any, me: any) {
   if (!post || post.deleted_at) return false;
   if (post.user_id === me.id) return true;
+  if (post.hidden_at) return false; // nire-review ng admin
   if (new Date(post.publish_at) > new Date()) return false;
   if (post.visibility === "private") return false;
   // Private account (hal. Teen): followers lang ang nakakakita, kahit "public" ang post
@@ -104,7 +107,7 @@ async function hydrate(posts: any[], me: any) {
   const [{ data: media }, { data: reacts }, { data: comments }, { data: shares }, { data: marks }, { data: fol }] = await Promise.all([
     db.from("post_media").select("*").in("post_id", ids).order("position"),
     db.from("post_reactions").select("post_id, user_id, emoji").in("post_id", ids),
-    db.from("post_comments").select("post_id").in("post_id", ids).is("deleted_at", null),
+    db.from("post_comments").select("post_id").in("post_id", ids).is("deleted_at", null).is("hidden_at", null),
     db.from("post_shares").select("post_id, user_id, kind").in("post_id", ids),
     db.from("post_bookmarks").select("post_id").in("post_id", ids).eq("user_id", me.id),
     db.from("follows").select("following_id").eq("follower_id", me.id),
@@ -129,6 +132,7 @@ async function hydrate(posts: any[], me: any) {
       publish_at: p.publish_at, created_at: p.created_at, mine: p.user_id === me.id,
       scheduled: new Date(p.publish_at).getTime() > now,
       pinned: !!p.pinned_at, pinned_at: p.pinned_at ?? null,
+      hidden: !!p.hidden_at, hidden_reason: p.hidden_at ? p.hidden_reason ?? null : null,
       author: byId[p.user_id] ? { ...byId[p.user_id], following: following.has(p.user_id) } : null,
       media: (media ?? []).filter((m) => m.post_id === p.id).map((m) => ({
         kind: m.kind, url: signed[m.path] ?? null, w: m.w, h: m.h, duration: m.duration, mime: m.mime,
@@ -155,6 +159,9 @@ async function createUpload(p: any, me: any) {
   if (!clientId) return fail("Missing client_id.");
   const files = Array.isArray(p.files) ? p.files : [];
   if (!files.length || files.length > MAX_MEDIA_PER_POST) return fail(`1 to ${MAX_MEDIA_PER_POST} photos/videos per post.`);
+  // Caption check bago pa mag-upload ng files
+  const v = checkText(p.caption);
+  if (!v.ok && v.level === "block") { await logBlock(db, me.id, v, "caption"); return fail(blockMessage(v.category), 422, { blocked: true, category: v.category }); }
 
   // Kung na-post na ito dati (retry), huwag nang ulitin
   const { data: existing } = await db.from("posts").select("id").eq("user_id", me.id).eq("client_id", clientId).maybeSingle();
@@ -197,6 +204,8 @@ async function createPost(p: any, me: any) {
   if (existing) return reply({ ok: true, already: true, post: (await hydrate([existing], me))[0] });
 
   const caption = String(p.caption ?? "").slice(0, 1000);
+  const v = checkText(caption);
+  if (!v.ok && v.level === "block") { await logBlock(db, me.id, v, "caption"); return fail(blockMessage(v.category), 422, { blocked: true, category: v.category }); }
   const visibility = ["public", "followers", "private"].includes(p.visibility) ? p.visibility : "public";
   const publishAt = parsePublishAt(p.publish_at);
   if (!publishAt) return fail("Invalid schedule date/time.");
@@ -232,6 +241,7 @@ async function createPost(p: any, me: any) {
   }));
   const { error: mErr } = await db.from("post_media").insert(rows);
   if (mErr) { await db.from("posts").delete().eq("id", post.id); throw mErr; }
+  if (!v.ok) await autoFlag(db, { type: "post", id: post.id, owner: me.id }, v);
   return reply({ ok: true, post: (await hydrate([post], me))[0] });
 }
 
@@ -252,7 +262,7 @@ async function feed(p: any, me: any) {
   const before = p.before ? String(p.before) : null;
   const following = await followingIds(me);
   const circle = [me.id, ...following];
-  let q = db.from("posts").select("*").is("deleted_at", null).lte("publish_at", nowIso()).order("publish_at", { ascending: false }).limit(limit);
+  let q = db.from("posts").select("*").is("deleted_at", null).is("hidden_at", null).lte("publish_at", nowIso()).order("publish_at", { ascending: false }).limit(limit);
   if (p.mode === "following") {
     q = q.in("user_id", circle);
   } else {
@@ -270,7 +280,7 @@ async function feed(p: any, me: any) {
   const items: { post: any; at: string; by?: string }[] = (posts ?? []).map((x) => ({ post: x, at: x.publish_at }));
   const repIds = [...new Set((reps ?? []).map((r) => r.post_id))].filter((id) => !items.some((i) => i.post.id === id));
   if (repIds.length) {
-    const { data: rp } = await db.from("posts").select("*").in("id", repIds).is("deleted_at", null).eq("visibility", "public").lte("publish_at", nowIso());
+    const { data: rp } = await db.from("posts").select("*").in("id", repIds).is("deleted_at", null).is("hidden_at", null).eq("visibility", "public").lte("publish_at", nowIso());
     for (const r of reps ?? []) {
       const post = (rp ?? []).find((x) => x.id === r.post_id);
       if (post && !items.some((i) => i.post.id === post.id)) items.push({ post, at: r.created_at, by: r.user_id });
@@ -305,7 +315,7 @@ async function userPosts(p: any, me: any) {
   }
   let q = db.from("posts").select("*").eq("user_id", uid).is("deleted_at", null).in("visibility", vis)
     .order("publish_at", { ascending: false }).limit(limit);
-  if (!isMe) q = q.lte("publish_at", nowIso());
+  if (!isMe) q = q.lte("publish_at", nowIso()).is("hidden_at", null);
   if (p.before) q = q.lt("publish_at", String(p.before));
   const { data } = await q;
   const list = (data ?? []).slice().sort((a, b) => (a.pinned_at ? 1 : 0) === (b.pinned_at ? 1 : 0)
@@ -411,7 +421,7 @@ async function shares(p: any, me: any) {
 async function comments(p: any, me: any) {
   const post = await visiblePost(p.post_id, me);
   if (!post) return fail("Post not found.", 404);
-  let q = db.from("post_comments").select("id, user_id, body, created_at").eq("post_id", post.id).is("deleted_at", null)
+  let q = db.from("post_comments").select("id, user_id, body, created_at").eq("post_id", post.id).is("deleted_at", null).is("hidden_at", null)
     .order("created_at", { ascending: true }).limit(200);
   if (p.after) q = q.gt("created_at", String(p.after));
   const { data } = await q;
@@ -427,11 +437,14 @@ async function addComment(p: any, me: any) {
   if (!post) return fail("Post not found.", 404);
   const body = String(p.body ?? "").trim().replace(/\n{3,}/g, "\n\n");
   if (!body || body.length > 500) return fail("Comment: 1–500 characters.");
+  const v = checkText(body);
+  if (!v.ok && v.level === "block") { await logBlock(db, me.id, v, "comment"); return fail(blockMessage(v.category), 422, { blocked: true, category: v.category }); }
   const since = new Date(Date.now() - 60_000).toISOString();
   const { count } = await db.from("post_comments").select("id", { count: "exact", head: true }).eq("user_id", me.id).gte("created_at", since);
   if ((count ?? 0) >= 10) return fail("Slow down a bit 🙂 Try again later.", 429);
   const { data, error } = await db.from("post_comments").insert({ post_id: post.id, user_id: me.id, body }).select("*").single();
   if (error) throw error;
+  if (!v.ok) await autoFlag(db, { type: "comment", id: data.id, owner: me.id }, v);
   const u = await usersById([me.id]);
   return reply({ ok: true, comment: { id: data.id, body: data.body, at: data.created_at, user: u[me.id], can_delete: true } });
 }
@@ -494,7 +507,12 @@ async function updatePost(p: any, me: any) {
   const { data: post } = await db.from("posts").select("*").eq("id", String(p.id || "")).eq("user_id", me.id).is("deleted_at", null).maybeSingle();
   if (!post) return fail("Post not found.", 404);
   const ch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (p.caption !== undefined) ch.caption = String(p.caption).slice(0, 1000);
+  let v: ReturnType<typeof checkText> = { ok: true };
+  if (p.caption !== undefined) {
+    ch.caption = String(p.caption).slice(0, 1000);
+    v = checkText(ch.caption as string);
+    if (!v.ok && v.level === "block") { await logBlock(db, me.id, v, "caption"); return fail(blockMessage(v.category), 422, { blocked: true, category: v.category }); }
+  }
   if (p.visibility !== undefined) {
     if (!["public", "followers", "private"].includes(p.visibility)) return fail("Invalid visibility.");
     ch.visibility = p.visibility;
@@ -506,6 +524,7 @@ async function updatePost(p: any, me: any) {
   }
   const { data: upd, error } = await db.from("posts").update(ch).eq("id", post.id).select("*").single();
   if (error) throw error;
+  if (!v.ok) await autoFlag(db, { type: "post", id: post.id, owner: me.id }, v);
   return reply({ ok: true, post: (await hydrate([upd], me))[0] });
 }
 

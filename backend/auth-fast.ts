@@ -7,6 +7,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.15";
+import { checkText, blockMessage } from "./moderation.ts";
 
 const db = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -268,6 +269,10 @@ async function register(p: Record<string, string>, req: Request) {
     return fail("Username: 3–24 letters, numbers, _ or . only.");
   if (password.length < 8 || password.length > 72)
     return fail("Password: 8–72 characters.");
+  // Bawal na pangalan (hal. bentahan ng baril/droga, sexual)
+  const nameCheck = checkText(display, username.replace(/[._]/g, " "));
+  if (!nameCheck.ok && nameCheck.level === "block")
+    return fail(blockMessage(nameCheck.category), 422, { field: "username", blocked: true });
   // Edad: 13+ lang. 13–17 = Teen (private account muna)
   const birth = String(p.birthdate ?? "");
   const bd = new Date(birth + "T00:00:00Z");

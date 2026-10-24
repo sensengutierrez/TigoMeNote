@@ -20,3 +20,7 @@
 .lang-pick button b { font-size: 14px; }
 .lang-pick button[aria-checked="true"] { border-color: var(--ink); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--ink); }
 .wb-mount { display: contents; }
+.row-link { text-decoration: none; color: inherit; cursor: pointer; }
+.row-link:hover { background: var(--surface-2); }
+.row-link > .ic { color: var(--text-3); flex: none; }
+[dir="rtl"] .row-link > .ic { transform: scaleX(-1); }

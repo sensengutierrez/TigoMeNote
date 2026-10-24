@@ -162,3 +162,13 @@
 [dir="rtl"] .pcard-head { padding: 10px 12px 10px 8px; }
 .sx-private { display: grid; justify-items: center; gap: 6px; padding: 28px 12px; text-align: center; color: var(--text-2); }
 .sx-private .ic { width: 28px; height: 28px; }
+
+/* Report sheet */
+.rp-form { display: grid; gap: 12px; }
+.rp-reasons { max-height: min(46vh, 380px); overflow-y: auto; }
+.rp-reason { cursor: pointer; font-weight: 500; }
+.rp-reason input { accent-color: var(--danger); width: 18px; height: 18px; flex: none; margin: 0; }
+.rp-reason:has(input:checked) { border-color: var(--danger); background: var(--danger-soft); }
+.rp-form textarea { width: 100%; resize: vertical; padding: 10px 12px; font: inherit; }
+.sx-report { color: var(--text-3); }
+.sx-report:hover { color: var(--danger); }

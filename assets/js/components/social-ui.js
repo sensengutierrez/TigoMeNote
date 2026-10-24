@@ -90,7 +90,8 @@
     function row(c) {
       return '<div class="sx-c" data-cid="' + esc(c.id) + '">' + '<button type="button" class="sx-av" data-sx="user" data-uid="' + esc((c.user || {}).id || "") + '">' + av(c.user, 34) + "</button>" +
         '<div class="sx-cbody"><b data-sx="user" data-uid="' + esc((c.user || {}).id || "") + '">' + esc((c.user || {}).username || "") + "</b> " + esc(c.body) +
-        '<div class="faint small">' + ago(c.at) + (c.can_delete ? ' · <button type="button" class="link-btn small" data-del="' + esc(c.id) + '">Delete</button>' : "") + "</div></div></div>";
+        '<div class="faint small">' + ago(c.at) + (c.can_delete ? ' · <button type="button" class="link-btn small" data-del="' + esc(c.id) + '">Delete</button>' : "") +
+        ((c.user || {}).id !== me.id ? ' · <button type="button" class="link-btn small" data-rep="' + esc(c.id) + '">Report</button>' : "") + "</div></div></div>";
     }
     async function load() {
       try {
@@ -120,6 +121,8 @@
       } catch (err) { UI().toast(err.message); send.disabled = false; }
     });
     list.addEventListener("click", async function (e) {
+      var rp = e.target.closest("[data-rep]");
+      if (rp) { reportSheet("comment", rp.dataset.rep, "comment"); return; }
       var d = e.target.closest("[data-del]");
       if (d) {
         if (!(await TMN_MODAL.confirm("Delete this comment?", { okText: "Delete", danger: true }))) return;
@@ -221,6 +224,46 @@
   }
 
   // ---------- ⋯ menu ng post ----------
+  // ---------- Report (Community Guidelines) ----------
+  var REASONS = [
+    ["violence", "Violence or threats"], ["nudity", "Nudity or sexual content"], ["crime", "Drugs or other crime"],
+    ["firearms", "Illegal firearms or weapons"], ["child_safety", "Involves a child (child safety)"], ["harassment", "Bullying or harassment"],
+    ["hate", "Hate speech"], ["self_harm", "Suicide or self-harm"], ["spam", "Spam or scam"], ["other", "Something else"]
+  ];
+  function reportSheet(type, id, label) {
+    var body = document.createElement("form");
+    body.className = "rp-form";
+    var L = window.TMN_CONFIG.legal || {};
+    body.innerHTML = '<p class="muted small">Why are you reporting this ' + esc(label || type) + "? Your report is private.</p>" +
+      '<div class="pick-list rp-reasons">' + REASONS.map(function (r) {
+        return '<label class="pick rp-reason"><input type="radio" name="reason" value="' + r[0] + '"><span>' + r[1] + "</span></label>";
+      }).join("") + "</div>" +
+      '<p class="alert small rp-danger hidden">If someone is in danger right now, call 999 (Bahrain) or 911 (Philippines).</p>' +
+      '<textarea class="input" rows="2" maxlength="500" placeholder="Add details (optional)"></textarea>' +
+      (L.guidelines ? '<a class="small link-btn" href="' + esc(L.guidelines) + '" target="_blank" rel="noopener">Read the Community Guidelines</a>' : "");
+    body.addEventListener("change", function () {
+      var v = (body.querySelector("input:checked") || {}).value;
+      body.querySelector(".rp-danger").classList.toggle("hidden", !/^(violence|self_harm|child_safety)$/.test(v || ""));
+    });
+    var m = TMN_MODAL.open({
+      title: "Report", size: "sm", cls: "modal-sheet", body: body,
+      actions: [
+        { label: "Cancel", cls: "btn-ghost", onClick: function (api) { api.close(); } },
+        { label: "Send report", cls: "btn-danger-solid", onClick: async function (api, btn) {
+          var v = (body.querySelector("input:checked") || {}).value;
+          if (!v) { UI().toast("Choose a reason."); return; }
+          btn.disabled = true;
+          try {
+            var r = await TMN_API.call("moderation", "report", { target_type: type, target_id: id, reason: v, note: body.querySelector("textarea").value.trim() });
+            api.close();
+            UI().toast(r.already ? "You already reported this." : "Thanks. We'll review it.");
+          } catch (err) { btn.disabled = false; UI().toast(err.message); }
+        } }
+      ]
+    });
+    return m;
+  }
+
   function postMenu(p, api) {
     var body = document.createElement("div");
     body.className = "pick-list";
@@ -230,7 +273,8 @@
       (p.mine && !p.scheduled ? '<button type="button" class="pick" data-a="pin">' + I("pin") + (p.pinned ? "Unpin from profile" : "Pin to profile") + "</button>" : "") +
       (p.mine ? '<button type="button" class="pick" data-a="edit">' + I("edit") + "Edit</button>" +
         '<button type="button" class="pick danger" data-a="delete">' + I("trash") + "Delete</button>" : "") +
-      (!p.mine && p.author ? '<button type="button" class="pick" data-a="user">' + I("user") + "View @" + esc(p.author.username) + "</button>" : "");
+      (!p.mine && p.author ? '<button type="button" class="pick" data-a="user">' + I("user") + "View @" + esc(p.author.username) + "</button>" : "") +
+      (!p.mine ? '<button type="button" class="pick danger" data-a="report">' + I("flag") + "Report post</button>" : "");
     var m = TMN_MODAL.open({ title: "Post", size: "sm", cls: "modal-sheet", body: body });
     body.addEventListener("click", async function (e) {
       var b = e.target.closest("[data-a]"); if (!b) return;
@@ -242,6 +286,7 @@
         try { await navigator.clipboard.writeText(url); UI().toast("Link copied ✓"); } catch (err) { TMN_MODAL.prompt("Copy the link", { value: url, okText: "OK", maxLength: 500 }); }
       }
       if (a === "user") userSheet(p.author.id);
+      if (a === "report") reportSheet("post", p.id, "post");
       if (a === "pin") {
         try {
           var pr = await TMN_API.call("posts", "pin", { id: p.id, on: !p.pinned });
@@ -273,7 +318,8 @@
         '<div class="sx-cover">' + (u.banner_url ? '<img alt="" src="' + esc(u.banner_url) + '">' : "") + "</div>" +
         '<div class="sx-phead">' + av(u, 88) +
           '<div class="sx-pname"><h3>' + esc(u.display_name) + (u.private_account ? " " + I("lock", "ic-sm") : "") + '</h3><span class="faint">@' + esc(u.username) + (u.follows_you ? ' · <span class="badge">Follows you</span>' : "") + "</span></div>" +
-          (u.me ? '<a class="btn btn-ghost btn-sm" href="profile.html">' + I("user", "ic-sm") + "My profile</a>" : followBtn(u)) + "</div>" +
+          (u.me ? '<a class="btn btn-ghost btn-sm" href="profile.html">' + I("user", "ic-sm") + "My profile</a>" : followBtn(u) +
+            '<button type="button" class="icon-btn sx-report" data-report-user aria-label="Report account" title="Report account">' + I("flag") + "</button>") + "</div>" +
         (u.bio ? '<p class="sx-bio">' + esc(u.bio) + "</p>" : "") +
         '<div class="sx-stats"><span><b>' + c.posts + "</b> posts</span>" +
           '<button type="button" data-list="followers"><b>' + c.followers + "</b> followers</button>" +
@@ -283,6 +329,7 @@
       bindPeople(root);
       root.addEventListener("click", function (e) {
         var l = e.target.closest("[data-list]"); if (l) followList(u, l.dataset.list);
+        if (e.target.closest("[data-report-user]")) reportSheet("user", u.id, "account");
       });
       var pr = await TMN_API.call("posts", "userPosts", { user_id: u.id, limit: 30 });
       var grid = root.querySelector(".sx-grid"), posts = pr.posts || [];
@@ -306,6 +353,6 @@
 
   window.TMN_SOCIAL = {
     commentsSheet: commentsSheet, whoSheet: whoSheet, shareMenu: shareMenu, shareLink: shareLink, postMenu: postMenu,
-    follow: follow, userSheet: userSheet, followList: followList, peopleHtml: peopleHtml, bindPeople: bindPeople, postLink: postLink
+    follow: follow, userSheet: userSheet, reportSheet: reportSheet, followList: followList, peopleHtml: peopleHtml, bindPeople: bindPeople, postLink: postLink
   };
 })();

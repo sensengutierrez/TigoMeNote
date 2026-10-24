@@ -70,6 +70,7 @@
       var st = e.status === "uploading" ? '<span class="q-state uploading">' + I("refresh", "ic-sm spin") + "Uploading " + e.progress.done + "/" + e.progress.total + "</span>"
         : e.status === "done" ? '<span class="q-state done">' + I("check", "ic-sm") + (e.publishAt && new Date(e.publishAt) > new Date() ? "Uploaded · scheduled" : "Posted") + "</span>"
         : e.status === "error" ? '<span class="q-state">' + I("info", "ic-sm") + "Not uploaded yet</span>"
+        : e.status === "blocked" ? '<span class="q-state err">' + I("flag", "ic-sm") + "Blocked</span>"
         : '<span class="q-state">' + I("clock", "ic-sm") + (navigator.onLine ? "Waiting" : "Waiting for internet") + "</span>";
       var sub = st + "<span>" + kinds + "</span><span>" + I(v[0], "ic-sm") + v[1] + "</span>" +
         (e.publishAt ? "<span>" + I("calendar", "ic-sm") + PU.short(e.publishAt) + "</span>" : "");
@@ -79,7 +80,7 @@
       return '<div class="q-item"><div class="q-thumb">' + thumb + '</div><div class="q-main">' +
         '<div class="q-title">' + (UI.esc(e.caption) || '<span class="faint">No caption</span>') + "</div>" +
         '<div class="q-sub">' + sub + "</div>" +
-        (e.status === "error" && e.error ? '<div class="q-sub err">' + UI.esc(e.error) + "</div>" : "") +
+((e.status === "error" || e.status === "blocked") && e.error ? '<div class="q-sub err">' + UI.esc(e.error) + "</div>" : "") +
         (e.status === "uploading" ? '<div class="q-bar"><span style="width:' + Math.round(100 * e.progress.done / Math.max(1, e.progress.total)) + '%"></span></div>' : "") +
         '</div><div class="q-acts">' + acts + "</div></div>";
     }).join("");

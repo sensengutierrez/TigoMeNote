@@ -4,6 +4,7 @@
 // Storage: PUBLIC bucket "profile-media" (pang-view ng lahat), pero ang upload ay signed URL galing dito lang.
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
+import { checkText, blockMessage, logBlock, autoFlag } from "./moderation.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const db = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
@@ -79,8 +80,11 @@ async function update(p: any, me: any) {
     if (b.length > 300) return fail("Bio: up to 300 characters.");
     ch.bio = b;
   }
+  const v = checkText(ch.display_name as string, ch.bio as string);
+  if (!v.ok && v.level === "block") { await logBlock(db, me.id, v, "profile"); return fail(blockMessage(v.category), 422); }
   const { data, error } = await db.from("users").update(ch).eq("id", me.id).select("*").single();
   if (error) throw error;
+  if (!v.ok) await autoFlag(db, { type: "user", id: me.id, owner: me.id }, v);
   return reply({ ok: true, user: publicUser(data) });
 }
 

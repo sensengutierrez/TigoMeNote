@@ -36,6 +36,7 @@
         : m.kind === "video" ? '<video src="' + esc(m.url) + '#t=0.1" muted playsinline preload="metadata"></video>'
         : '<img alt="" loading="lazy" src="' + esc(m.url) + '">';
       var badges = "";
+      if (p.hidden) badges += '<span class="pt-badge review">' + I("flag", "ic-sm") + "Under review</span>";
       if (opts.pins !== false && p.pinned) badges += '<span class="pt-badge pin">Pinned</span>';
       if (p.scheduled) badges += '<span class="pt-badge sched">' + I("clock", "ic-sm") + short(p.publish_at) + "</span>";
       if (opts.showVis && p.visibility !== "public") badges += '<span class="pt-badge">' + I(VIS[p.visibility][0], "ic-sm") + "</span>";
@@ -102,6 +103,7 @@
       var v = VIS[p.visibility] || VIS.public;
       root.querySelector(".pv-badges").innerHTML =
         (p.mine ? '<span class="badge">' + I(v[0], "ic-sm") + v[1] + "</span>" : "") +
+        (p.hidden ? '<span class="badge badge-review" title="Hidden from others while an admin reviews it.">' + I("flag", "ic-sm") + "Under review</span>" : "") +
         (p.pinned ? '<span class="badge badge-pin">' + I("pin", "ic-sm") + "Pinned</span>" : "") +
         (p.scheduled ? '<span class="badge badge-accent">' + I("clock", "ic-sm") + "Appears " + when(p.publish_at) + "</span>" : "") +
         (p.stats && !p.scheduled ? '<span class="badge" title="Views">' + I("play", "ic-sm") + '<span translate="no">' + num(p.stats.views) + "</span> views</span>" : "");

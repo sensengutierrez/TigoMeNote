@@ -23,6 +23,8 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-10-24 · Viewer sa phone (Arabic): naputol ang Delete button → hindi nagwa-wrap ang `.pv-actions` → `flex-wrap` + mas maikling "Pin" (`posts.css`)
 - 2026-10-24 · Test ng verify email: "list index out of range" → kailangan na ng birthdate sa Create account kaya hindi naipadala ang register → idinagdag ang birthdate sa test (`test_verify.py`)
 - 2026-10-24 · SOS overlay: pagpindot ng "Silence alarm" ay hindi naitatala → `hide()` ay binubura ang `current` bago ang callback → itinabi muna ang `current` (`sos-overlay.js`)
+- 2026-10-24 · Admin Reports: hindi gumagana ang Dismiss/Delete (test) → ang `action` ng desisyon ay pumapalit sa `action` ng API call (`resolve`) → pinalitan ng `decision` (`admin-reports.js`, `moderation-fast.ts`)
+- 2026-10-24 · Text filter: hindi nahuli ang "سأقتلك" at "xxx" → hinihiwalay ng NFKD ang hamza; at ginagawang "xx" ang "xxx" → tinanggal ang lahat ng `\p{M}` (pati sa patterns), at hiwalay na bersyon ang pag-ikli ng paulit-ulit na letra (`moderation.ts`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

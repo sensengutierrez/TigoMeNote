@@ -24,7 +24,9 @@ window.TMN_NAV = {
 
   // Ibaba ng menu (sidebar + hamburger lang, wala sa bottom tabs)
   more: [
-    { id: "settings", label: "Settings", icon: "gear",    href: "app/settings.html" }
+    { id: "settings", label: "Settings", icon: "gear",    href: "app/settings.html" },
+    { id: "reports",  label: "Reports",  icon: "flag",    href: "app/admin/reports.html", role: "Admin" },
+    { id: "policies", label: "Policies", icon: "info",    href: "legal/index.html" }
     // Halimbawa ng admin-only (pag nagawa na ang page):
     // { id: "admin", label: "Admin", icon: "shield", href: "app/admin/index.html", role: "Admin" }
   ],

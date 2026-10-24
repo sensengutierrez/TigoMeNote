@@ -1,0 +1,2 @@
+-- TigoMeNote · 027 · vault sync: Build - Moderation and policies (record lang; napatakbo na)
+-- Build note = buong body; 00 Home, Decisions, Fix log, Plan, Change log, System map = replace() upsert. Laman: docs/vault.

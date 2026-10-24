@@ -98,3 +98,5 @@
   .ph-photo { height: 96px; }
   .l-copy h1 { font-size: 58px; }
 }
+.l-legal { text-align: center; padding: 8px 16px 24px; }
+.l-legal a { color: inherit; }

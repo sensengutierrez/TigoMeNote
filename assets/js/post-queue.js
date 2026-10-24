@@ -185,11 +185,11 @@
       var all = (await getAll()).sort(function (a, b) { return a.createdAt - b.createdAt; });
       for (var i = 0; i < all.length; i++) {
         var e = all[i];
-        if (e.status === "done" || !backoffOk(e) || !navigator.onLine) continue;
+        if (e.status === "done" || e.status === "blocked" || !backoffOk(e) || !navigator.onLine) continue;
         try {
           e.status = "uploading"; e.error = null; e.lastTry = Date.now(); await put(e); emit();
           var up = await TMN_API.call("posts", "createUpload", {
-            client_id: e.id,
+            client_id: e.id, caption: e.caption,
             files: e.files.map(function (f) { return { kind: f.kind, mime: f.mime, size: f.size, duration: f.duration }; })
           });
           if (!up.already) {
@@ -216,7 +216,8 @@
           if (window.TMN_UI) TMN_UI.toast(e.publishAt && new Date(e.publishAt) > new Date() ? "Uploaded ✓ It will appear at the scheduled time." : "Posted ✓");
         } catch (err) {
           e.attempts = (e.attempts || 0) + 1;
-          e.status = navigator.onLine ? "error" : "queued";
+          // Hinarang ng Community Guidelines: hindi na uulitin
+          e.status = err.data && err.data.blocked ? "blocked" : navigator.onLine ? "error" : "queued";
           e.error = err.message || "Upload failed";
           await put(e); emit();
           if (err.status === 401) break; // expired session: hintayin ang login

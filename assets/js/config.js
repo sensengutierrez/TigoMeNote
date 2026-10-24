@@ -11,7 +11,7 @@
 
   window.TMN_CONFIG = Object.freeze({
     appName: "TigoMeNote",
-    version: "0.6.0",
+    version: "0.7.0",
     root: root,
     supabaseUrl: SUPABASE_URL,
     // Public key lang ito (ligtas sa browser). Gagamitin sa Realtime ng messenger.
@@ -23,7 +23,8 @@
       profile: SUPABASE_URL + "/functions/v1/profile-fast",
       social: SUPABASE_URL + "/functions/v1/social-fast",
       safety: SUPABASE_URL + "/functions/v1/safety-fast",
-      wellbeing: SUPABASE_URL + "/functions/v1/wellbeing-fast"
+      wellbeing: SUPABASE_URL + "/functions/v1/wellbeing-fast",
+      moderation: SUPABASE_URL + "/functions/v1/moderation-fast"
       // brain: SUPABASE_URL + "/functions/v1/brain-fast",
       // chat:  SUPABASE_URL + "/functions/v1/chat",
     }),
@@ -34,6 +35,16 @@
       tiles: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
       attribution: "&copy; OpenStreetMap contributors",
       directions: "https://www.google.com/maps/dir/?api=1&destination="
+    }),
+    // Policies (public pages, nasa root/legal/). contactEmail: email para sa copyright/privacy requests (ilagay kapag meron na)
+    legal: Object.freeze({
+      home: root + "legal/index.html",
+      terms: root + "legal/terms.html",
+      privacy: root + "legal/privacy.html",
+      guidelines: root + "legal/guidelines.html",
+      copyright: root + "legal/copyright.html",
+      thirdParty: root + "legal/third-party.html",
+      contactEmail: ""
     }),
     // Emergency hotlines na lumalabas sa SOS (country code → numero)
     emergency: Object.freeze({ BH: "999", PH: "911", default: "112" }),
