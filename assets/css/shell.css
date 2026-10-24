@@ -44,6 +44,9 @@
   backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px);
   border-bottom: 1px solid var(--line);
 }
+.topbar-link { position: relative; }
+.topbar-link .dot-count { position: absolute; top: 3px; right: 1px; min-width: 16px; height: 16px; font-size: 10px; padding: 0 4px; }
+.topbar-link.active { color: var(--accent); }
 .topbar-title { flex: 1; font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.02em; padding-left: 4px; }
 
 /* ---------- Bottom tabs (phone) ---------- */

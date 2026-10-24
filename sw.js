@@ -1,5 +1,5 @@
 /* TigoMeNote · sw.js — service worker (push notifications lang)
-   Tumatanggap ng push mula sa safety-fast (SOS, invites) at ipinapakita bilang notification.
+   Tumatanggap ng push mula sa safety-fast (SOS, invites) at notify-fast (reactions, comments, followers…) at ipinapakita bilang notification.
    Kapag pinindot: binubuksan ang tamang page. Kapag bukas ang app: sinasabihan din ang page (para tumunog ang alarm).
    Walang offline caching dito (hiwalay na trabaho kung gagawin). */
 self.addEventListener("install", function () { self.skipWaiting(); });

@@ -84,6 +84,10 @@
     '<header class="topbar">' +
       '<button class="icon-btn js-open-drawer" type="button" aria-label="Open menu" aria-expanded="false">' + I("menu") + "</button>" +
       '<div class="topbar-title">' + esc(title) + "</div>" +
+      (NAV.topbar || []).map(byId).filter(Boolean).filter(allowed).map(function (item) {
+        return '<a class="icon-btn topbar-link' + (item.id === pageId ? " active" : "") + '" href="' + url(item.href) + '" aria-label="' + esc(item.label) + '">' + I(item.icon) +
+          '<span class="dot-count nav-badge hidden" data-for="' + item.id + '"></span></a>';
+      }).join("") +
       themeBtn() +
     "</header>" +
 

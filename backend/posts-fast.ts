@@ -5,11 +5,13 @@
 //          react, reactions, comments, addComment, deleteComment, bookmark, bookmarks, share, unrepost, shares,
 //          view, pin, liked, reposts, history
 // Moderation: caption at comment ay dumadaan sa moderation.ts (block o flag). Nakatago (hidden_at) = may-ari lang ang nakakakita.
+// Notifications: reaction, comment, repost at milestone (ilang post na) ay dumadaan sa notify.ts.
 // Storage: private bucket "post-media" — signed upload URL (pang-upload) at signed read URL (1 oras).
 // Secrets: AUTH_PEPPER (hindi ginagamit dito), SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY (automatic).
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import { checkText, checkFor, blockMessage, logBlock, autoFlag } from "./moderation.ts";
+import { notify, unnotify } from "./notify.ts";
 
 const db = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -66,6 +68,7 @@ function parsePublishAt(v: unknown) {
 }
 
 const EMOJIS = ["❤️", "😂", "😮", "😢", "🔥", "👏"];
+const MILESTONES = [1, 10, 25, 50, 100, 200, 300, 500, 1000];
 const nowIso = () => new Date().toISOString();
 
 // deno-lint-ignore no-explicit-any
@@ -242,7 +245,19 @@ async function createPost(p: any, me: any) {
   const { error: mErr } = await db.from("post_media").insert(rows);
   if (mErr) { await db.from("posts").delete().eq("id", post.id); throw mErr; }
   if (!v.ok) await autoFlag(db, { type: "post", id: post.id, owner: me.id }, v);
+  await milestone(me);
   return reply({ ok: true, post: (await hydrate([post], me))[0] });
+}
+// "You've shared 50 posts!" (isang beses lang bawat bilang)
+// deno-lint-ignore no-explicit-any
+async function milestone(me: any) {
+  const { count } = await db.from("posts").select("id", { count: "exact", head: true }).eq("user_id", me.id).is("deleted_at", null);
+  const n = count ?? 0;
+  if (!MILESTONES.includes(n)) return;
+  const { count: had } = await db.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", me.id).eq("type", "milestone").eq("data->>count", String(n));
+  if (had) return;
+  const body = n === 1 ? "You shared your first post! Welcome to TigoMeNote 🎉" : `You've shared ${n} posts! Take a moment to celebrate 🎉`;
+  await notify(db, { to: me.id, type: "milestone", body, data: { count: n } });
 }
 
 // deno-lint-ignore no-explicit-any
@@ -392,9 +407,11 @@ async function react(p: any, me: any) {
   if (!post) return fail("Post not found.", 404);
   if (p.emoji === null || p.emoji === "") {
     await db.from("post_reactions").delete().eq("post_id", post.id).eq("user_id", me.id);
+    await unnotify(db, { to: post.user_id, actor: me.id, type: "like", post: post.id });
   } else {
     if (!EMOJIS.includes(p.emoji)) return fail("Invalid reaction.");
     await db.from("post_reactions").upsert({ post_id: post.id, user_id: me.id, emoji: p.emoji, created_at: nowIso() });
+    await notify(db, { to: post.user_id, actor: me.id, type: "like", post: post.id, emoji: p.emoji, once: true });
   }
   return reply({ ok: true, post: (await hydrate([post], me))[0] });
 }
@@ -445,6 +462,7 @@ async function addComment(p: any, me: any) {
   const { data, error } = await db.from("post_comments").insert({ post_id: post.id, user_id: me.id, body }).select("*").single();
   if (error) throw error;
   if (!v.ok) await autoFlag(db, { type: "comment", id: data.id, owner: me.id }, v);
+  await notify(db, { to: post.user_id, actor: me.id, type: "comment", post: post.id, comment: data.id, body: body.slice(0, 140) });
   const u = await usersById([me.id]);
   return reply({ ok: true, comment: { id: data.id, body: data.body, at: data.created_at, user: u[me.id], can_delete: true } });
 }
@@ -490,6 +508,7 @@ async function share(p: any, me: any) {
     if (author?.private_account) return fail("Posts from private accounts can't be reposted.", 403);
     const { error } = await db.from("post_shares").insert({ post_id: post.id, user_id: me.id, kind });
     if (error && error.code !== "23505") throw error;
+    await notify(db, { to: post.user_id, actor: me.id, type: "repost", post: post.id, once: true });
   } else {
     await db.from("post_shares").insert({ post_id: post.id, user_id: me.id, kind });
   }
@@ -499,6 +518,7 @@ async function share(p: any, me: any) {
 async function unrepost(p: any, me: any) {
   await db.from("post_shares").delete().eq("post_id", String(p.post_id || "")).eq("user_id", me.id).eq("kind", "repost");
   const post = await visiblePost(p.post_id, me);
+  if (post) await unnotify(db, { to: post.user_id, actor: me.id, type: "repost", post: post.id });
   return reply({ ok: true, post: post ? (await hydrate([post], me))[0] : null });
 }
 

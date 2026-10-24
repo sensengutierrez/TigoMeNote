@@ -2,10 +2,12 @@
 // Follow, people (search / suggestions / profile ng ibang user), at Status/Stories (24 oras).
 // Actions: follow, unfollow, people, profile, followList, requests, approveRequest, declineRequest,
 //          stories, storyUpload, createStory, viewStory, storyViewers, deleteStory
+// Notifications (notify.ts): bagong follower, follow request, at na-approve na request.
 // Story files: private bucket "post-media", path <user_id>/stories/<file>, signed read URL 1 oras.
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import { checkText, checkFor, blockMessage, logBlock, autoFlag } from "./moderation.ts";
+import { notify, unnotify } from "./notify.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 
@@ -63,10 +65,12 @@ async function follow(p: any, me: any) {
   if (already) return reply({ ok: true, following: true });
   if (u.private_account) {
     await db.from("follow_requests").upsert({ follower_id: me.id, following_id: id }, { onConflict: "follower_id,following_id", ignoreDuplicates: true });
+    await notify(db, { to: id, actor: me.id, type: "follow_request", once: true });
     return reply({ ok: true, following: false, requested: true });
   }
   const { error } = await db.from("follows").insert({ follower_id: me.id, following_id: id });
   if (error && error.code !== "23505") throw error;
+  await notify(db, { to: id, actor: me.id, type: "follow", once: true });
   return reply({ ok: true, following: true });
 }
 // deno-lint-ignore no-explicit-any
@@ -74,6 +78,7 @@ async function unfollow(p: any, me: any) {
   const id = String(p.user_id || "");
   await db.from("follows").delete().eq("follower_id", me.id).eq("following_id", id);
   await db.from("follow_requests").delete().eq("follower_id", me.id).eq("following_id", id);
+  await unnotify(db, { to: id, actor: me.id, type: "follow_request" });
   return reply({ ok: true, following: false, requested: false });
 }
 // Para kanino ang requests: sarili, o ang teen na binabantayan (p.for)
@@ -102,6 +107,9 @@ async function approveRequest(p: any, me: any) {
   const { error } = await db.from("follows").insert({ follower_id: fid, following_id: owner });
   if (error && error.code !== "23505") throw error;
   await db.from("follow_requests").delete().eq("follower_id", fid).eq("following_id", owner);
+  // Ang request sa listahan ng may-ari ay nagiging "started following you"; sabihan ang nag-request
+  await db.from("notifications").update({ type: "follow", read_at: nowIso() }).eq("user_id", owner).eq("actor_id", fid).eq("type", "follow_request");
+  await notify(db, { to: fid, actor: owner, type: "follow_accept", once: true });
   return reply({ ok: true });
 }
 // deno-lint-ignore no-explicit-any
@@ -109,6 +117,7 @@ async function declineRequest(p: any, me: any) {
   const owner = await requestOwner(p, me);
   if (!owner) return fail("You don't supervise this account.", 403);
   await db.from("follow_requests").delete().eq("follower_id", String(p.user_id || "")).eq("following_id", owner);
+  await unnotify(db, { to: owner, actor: String(p.user_id || ""), type: "follow_request" });
   return reply({ ok: true });
 }
 async function requestedIds(me: string): Promise<Set<string>> {

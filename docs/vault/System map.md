@@ -16,6 +16,7 @@ updated: 2026-10-24
 | `gallery.html` | app/ | Gallery: albums, upload, edit (device lang) | oo |
 | `profile.html` | app/ | Profile: cover, photo, edit profile, naka-pilang uploads, mga tab (Posts, Private, Reposts, Saved, Liked, History) | oo |
 | `safety.html` | app/ | Safety: SOS, map, Family/Friends, invites, parental | oo |
+| `notifications.html` | app/ | Notifications: activity list + notification settings | oo |
 | `settings.html` | app/ | Theme, language, wellbeing, about & policies, logout | oo |
 | `reports.html` | app/admin/ | Reports: review ng ni-report at auto-flag | Admin lang |
 | `index, terms, privacy, guidelines, copyright, third-party.html` | legal/ | Mga policy page | hindi |
@@ -49,6 +50,8 @@ updated: 2026-10-24
 | `wellbeing.js` | Sleep, break, daily limit, birthdate prompt sa bawat page |
 | `components/sos-button.js` / `sos-overlay.js` / `map-view.js` / `wellbeing-settings.js` | SOS button, pulang alarm screen, mapa, wellbeing settings |
 | `moderation-check.js` | Rules ng text filter sa browser (`TMN_MOD`); **huwag i-edit**, gawa ng `tools/build-moderation-client.mjs` |
+| `notif-badge.js` | Bilang ng bagong notifications sa bell at menu, bawat page (`TMN_NOTIF_BADGE`) |
+| `components/notif-settings.js` | Notification settings: push, pause, sleep mode, Off/In app/Push (`TMN_NOTIF_SETTINGS`) |
 | `components/mod-guard.js` | Live na babala at harang bago mag-post/comment/save (`TMN_GUARD`) |
 | `pages/<page>.js` | Code ng isang page lang |
 
@@ -72,9 +75,10 @@ updated: 2026-10-24
 | `profile-fast` | get, update, imageUpload, setImage, removeImage | `backend/profile-fast.ts` |
 | `safety-fast` | circle, invite, respond, update, remove, pause, ping, history, clearHistory, sos, sosUpdate, sosEnd, alerts, ack, pushKey, subscribe, unsubscribe, testPush | `backend/safety-fast.ts` + `webpush.ts` |
 | `wellbeing-fast` | status, setBirthdate, tick, save, guardianInvite, guardianRespond, guardianRemove | `backend/wellbeing-fast.ts` |
-| `moderation-fast` | report, queue, resolve, count | `backend/moderation-fast.ts` |
+| `moderation-fast` | report, queue, resolve, count | `backend/moderation-fast.ts` (+ `notify.ts`) |
+| `notify-fast` | list, count, seen, prefs, setPrefs, push (service key lang) | `backend/notify-fast.ts` (+ `webpush.ts`) |
 
-Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast, profile-fast at auth-fast.
+Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast, profile-fast at auth-fast. Ang `notify.ts` ay kasama sa deploy ng posts-fast, social-fast at moderation-fast.
 
 | Table | Para saan | SQL |
 |---|---|---|
@@ -103,6 +107,8 @@ Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast
 | `usage_days` | oras ng gamit bawat araw | `sql/024-wellbeing.sql` |
 | `reports` | report ng users at automatic na flag | `sql/026-moderation.sql` |
 | `moderation_log` | log ng admin at automatic na block/flag | `sql/026-moderation.sql` |
+| `notifications` | activity ng bawat user (reaction, comment, follow, milestone, recap, notice) | `sql/029-notifications.sql` |
+| `notif_prefs` | settings ng notifications (pause, sleep, Off/In app/Push) | `sql/029-notifications.sql` |
 
 `posts` ay may `pinned_at` (hanggang 3) at `view_count` (sql/020). Function: `record_post_views()` (service_role lang).
 

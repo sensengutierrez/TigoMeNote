@@ -20,6 +20,10 @@
   --ink-text: #ffffff;
   --accent: #ff5a36;       /* isang accent lang: active dot, badge, highlight */
   --accent-soft: #fff0eb;
+  /* Kulay ng TigoMeNote ring (status) at badges ng notifications: coral → amber → mint */
+  --ring-1: #ff5a36;
+  --ring-2: #ffb020;
+  --ring-3: #14b8a6;
   --success: #16a34a;
   --danger: #dc2626;
   --danger-soft: #fdecec;
@@ -59,6 +63,9 @@
   --ink-text: #0e0e10;
   --accent: #ff7a5c;
   --accent-soft: #2a1914;
+  --ring-1: #ff7a5c;
+  --ring-2: #ffc145;
+  --ring-3: #2dd4bf;
   --danger: #f87171;
   --danger-soft: #2a1515;
   --focus: #60a5fa;

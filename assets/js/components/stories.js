@@ -15,6 +15,11 @@
   function av(u, s) { return window.TMN_POST_CARD.avatar(u, s); }
   function ago(iso) { return window.TMN_POSTS_UI ? TMN_POSTS_UI.ago(iso) : ""; }
 
+  // Hati ng ring: isang guhit bawat status (hanggang 12)
+  function ring(cls, g) {
+    var n = g ? Math.min(12, (g.items || []).length || 1) : 1;
+    return 'class="st-ring ' + cls + (n === 1 ? " one" : "") + '" style="--n:' + n + '"';
+  }
   // ---------- Bar ----------
   function render() {
     var el = state.el; if (!el) return;
@@ -24,11 +29,11 @@
     el.innerHTML =
       '<div class="st-bar" role="list">' +
         '<div class="st-item st-me" role="listitem">' +
-          '<button type="button" class="st-ring' + (mine ? " has" : " none") + '" data-st="' + (mine ? "open-me" : "add") + '" aria-label="Your status">' + av(me, 62) + "</button>" +
+          '<button type="button" ' + ring(mine ? "has" : "none", mine) + ' data-st="' + (mine ? "open-me" : "add") + '" aria-label="Your status">' + av(me, 62) + "</button>" +
           '<button type="button" class="st-plus" data-st="add" aria-label="Add a status">' + I("plus", "ic-sm") + "</button>" +
           '<span class="st-name">Your status</span></div>' +
         others.map(function (g) {
-          return '<div class="st-item" role="listitem"><button type="button" class="st-ring' + (g.unseen ? " has" : " seen") + '" data-st="open" data-uid="' + esc(g.user.id) + '">' + av(g.user, 62) + "</button>" +
+          return '<div class="st-item" role="listitem"><button type="button" ' + ring(g.unseen ? "has" : "seen", g) + ' data-st="open" data-uid="' + esc(g.user.id) + '">' + av(g.user, 62) + "</button>" +
             '<span class="st-name">' + esc(g.user.username) + "</span></div>";
         }).join("") +
         (state.loading && !others.length ? '<div class="st-item"><span class="st-ring skel"></span><span class="st-name skel" style="width:48px;height:10px"></span></div>' : "") +

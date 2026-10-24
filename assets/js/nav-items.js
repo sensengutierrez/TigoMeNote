@@ -16,6 +16,7 @@ window.TMN_NAV = {
     { id: "home",     label: "Daily",    icon: "sun",     href: "app/home.html" },
     { id: "gallery",  label: "Gallery",  icon: "album",   href: "app/gallery.html" },
     { id: "explore",  label: "Explore",  icon: "compass", href: "app/explore.html" },
+    { id: "notifications", label: "Notifications", icon: "bell", href: "app/notifications.html" },
     { id: "share",    label: "Share",    icon: "plus",    href: "app/share.html", primary: true },
     { id: "safety",   label: "Safety",   icon: "shield",  href: "app/safety.html" },
     { id: "messages", label: "Messages", icon: "chat",    href: "app/messages.html" },
@@ -30,6 +31,9 @@ window.TMN_NAV = {
     // Halimbawa ng admin-only (pag nagawa na ang page):
     // { id: "admin", label: "Admin", icon: "shield", href: "app/admin/index.html", role: "Admin" }
   ],
+
+  // Icon buttons sa itaas na bar ng phone (kanan), galing sa main o more
+  topbar: ["notifications"],
 
   // Alin sa main ang lalabas sa bottom tabs ng phone (max 5)
   tabs: ["home", "gallery", "share", "safety", "profile"]

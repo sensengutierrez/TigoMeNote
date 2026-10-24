@@ -1,5 +1,5 @@
 // TigoMeNote · moderation-fast (Supabase Edge Function, verify_jwt = off)
-// Reports ng users at review ng admin. Isang file lang (index.ts).
+// Reports ng users at review ng admin. Files: index.ts + notify.ts (sinasabihan ang may-ari kapag itinago, tinanggal o binigyan ng strike).
 // Actions:
 //   report  (lahat ng user)  → mag-report ng post / comment / user / story
 //   queue, resolve, count    → Admin lang
@@ -9,6 +9,7 @@
 //   - Ang may-ari lang ang nakakakita ng nakatagong content (may "Under review"), habang tinitingnan ng admin.
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
+import { notify } from "./notify.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 
@@ -60,6 +61,30 @@ async function ownerOf(type: string, id: string): Promise<string | null> {
 async function log(actor: string | null, action: string, type: string, id: string, userId: string | null, reason?: string | null, note?: string | null) {
   await db.from("moderation_log").insert({ actor_id: actor, action, target_type: type, target_id: id, user_id: userId, reason: reason ?? null, note: note ?? null });
 }
+// Sabihan ang may-ari ng desisyon (laging naka-on; hindi ito mapapatay sa settings)
+const WHAT: Record<string, string> = { post: "post", comment: "comment", story: "status", user: "account" };
+const WHY: Record<string, string> = {
+  violence: "violence", nudity: "nudity", crime: "drugs or crime", firearms: "illegal firearms", harassment: "harassment",
+  hate: "hate speech", child_safety: "child safety", self_harm: "self-harm", spam: "spam", other: "other", admin: "review",
+};
+async function tellOwner(owner: string | null, action: string, type: string, id: string, reason?: string | null) {
+  if (!owner) return;
+  const what = WHAT[type] ?? type, why = reason ? ` (${WHY[reason] ?? reason})` : "";
+  const body: Record<string, string> = {
+    auto_hide: `Your ${what} is hidden while we review reports${why}.`,
+    hide: `Your ${what} was hidden because it may break our Community Guidelines${why}.`,
+    delete: `Your ${what} was removed for breaking our Community Guidelines${why}. This counts as a strike.`,
+    warn: `You received a warning (strike) for breaking our Community Guidelines${why}.`,
+    restore: `Your ${what} is visible again after review.`,
+  };
+  if (!body[action]) return;
+  await notify(db, { to: owner, type: "moderation", post: type === "post" && action !== "delete" ? id : null, body: body[action], data: { action, target: type, reason: reason ?? null } });
+}
+async function isHidden(type: string, id: string) {
+  if (type === "user") return false;
+  const { data } = await db.from(TABLE[type]).select("hidden_at").eq("id", id).maybeSingle();
+  return !!data?.hidden_at;
+}
 async function setHidden(type: string, id: string, on: boolean, reason?: string) {
   if (type === "user") return;
   const ch: Record<string, unknown> = { hidden_at: on ? nowIso() : null };
@@ -90,6 +115,7 @@ async function report(p: any, me: any) {
     if (reason === "child_safety" || people >= AUTO_HIDE_REPORTS) {
       await setHidden(type, id, true, reason);
       await log(null, "auto_hide", type, id, owner, reason, `${people} report(s)`);
+      await tellOwner(owner, "auto_hide", type, id, reason);
       hidden = true;
     }
   }
@@ -183,6 +209,7 @@ async function resolve(p: any, me: any) {
     await db.from("users").update({ strikes: (u?.strikes ?? 0) + 1 }).eq("id", owner);
   };
   if (owner === me.id && (action === "suspend" || action === "warn")) return fail("You can't do this to your own account.");
+  const wasHidden = action === "dismiss" || action === "unhide" ? await isHidden(type, id) : false;
   switch (action) {
     case "dismiss":
       await setHidden(type, id, false); await close("dismissed"); break;
@@ -221,6 +248,8 @@ async function resolve(p: any, me: any) {
       return fail("Unknown action.");
   }
   await log(me.id, action, type, id, owner, p.reason ?? null, note);
+  if (action === "hide" || action === "delete" || action === "warn") await tellOwner(owner, action, type, id, p.reason ?? null);
+  else if (wasHidden) await tellOwner(owner, "restore", type, id);
   return reply({ ok: true });
 }
 

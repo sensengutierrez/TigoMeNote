@@ -27,6 +27,7 @@ Ito ang "utak" ng project: lahat ng ginawa, paano ginawa, at bakit. Buksan ang f
 - [[Build - Profile tabs and pins]] — TikTok-style tabs, views at ❤️, Pin (3)
 - [[Build - Safety and wellbeing]] — Family/Friends, Locate, SOS + push, 13+, parental, sleep, break
 - [[Build - Moderation and policies]] — Terms, Privacy, Guidelines, Copyright, Third-party; text filter, Report, admin Reports
+- [[Build - Notifications]] — activity list, push, notification settings, TigoMeNote ring sa Status
 
 ## Plans
 - [[Plan - Safety, family and wellbeing]] — plano + guidelines ng APK (web version: tapos na)
