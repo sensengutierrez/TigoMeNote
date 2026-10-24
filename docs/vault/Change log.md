@@ -216,3 +216,9 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "diko ma click malagay kung asawa anak… video masyado malaki… pag ng rereply ako me lumalabas na scroll sa gilid… story na me kulay nipisan… pabilisin mo lalo kase bumagal".
 - **Files:** `sql/043-circle-labels.sql`, `backend/safety-fast.ts` (v7), `assets/js/components/relation-picker.js` (bago), `pages/safety.js`, `app/safety.html`, `assets/css/pages/safety.css`, `assets/css/social.css`, `components/stories.js`, `components/app-shell.js` (`TMN_AUTOGROW`), `components/social-ui.js`, `components/post-composer.js`, `assets/css/components.css`, `assets/css/tokens.css`, `auth-guard.js`, `wellbeing.js`, `app/*.html` (font), `lang/fil.js`, `lang/ar.js`, `config.js` (0.11.3)
 - **Paano:** `safety_links.a_label` = tawag ni a kay b, `b_label` = tawag ni b kay a. Auto-grow: lagyan ng `data-autogrow="<max px>"` ang textarea.
+
+## 2026-10-24 · #32 Pare-parehong laki ng photo/video sa feed
+- **Ano:** Lahat ng photo at video sa feed ay iisang laki na ang kahon (`clamp(220px, 100dvh − 320px, 460px)`), buo ang makikita (`contain`), at kasya ang buong post sa screen kaya hindi na kailangang mag-scroll.
+- **Bakit:** Ayon kay Bench (may screenshot): "ng scroll padin ako dapat pag ganyan kalake same size nalang wala ng scroll sa picture at video".
+- **Files:** `assets/css/social.css`, `assets/js/components/post-card.js` (wala nang aspect-ratio bawat post), `config.js` (0.11.4)
+- **Na-test (mock):** 1366×768 → post 670px; 1280×720 → 622px; phone 390×844 → 682px (lahat kasya).

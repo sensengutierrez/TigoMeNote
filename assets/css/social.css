@@ -15,13 +15,12 @@
 .pc-who .faint { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; overflow: hidden; }
 .pc-follow { height: 32px; }
 
-.pcard-media { position: relative; width: 100%; background: #0b0b0d; max-height: min(68vh, 560px); overflow: hidden; }
+/* Pare-parehong laki ng photo/video sa feed: kasya ang buong post sa screen (walang scroll), buo ang makikita */
+.pcard-media { position: relative; width: 100%; background: #0b0b0d; height: clamp(220px, calc(100dvh - 320px), 460px); overflow: hidden; }
 .pc-track { display: flex; height: 100%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
 .pc-track::-webkit-scrollbar { display: none; }
 .pc-slide { position: relative; flex: 0 0 100%; height: 100%; scroll-snap-align: center; display: grid; place-items: center; }
-.pc-slide img, .pc-slide video { width: 100%; height: 100%; object-fit: cover; display: block; }
-/* Video: buo ang makikita (walang putol), hindi na kailangang i-scroll */
-.pc-slide video { object-fit: contain; background: #000; }
+.pc-slide img, .pc-slide video { width: 100%; height: 100%; object-fit: contain; display: block; }
 .pc-slide .pt-missing { color: #888; }
 .pc-sound { position: absolute; right: 10px; bottom: 10px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(0,0,0,.55); color: #fff; display: grid; place-items: center; }
 .pc-count-badge { position: absolute; top: 10px; right: 10px; font-size: 12px; font-weight: 600; color: #fff; background: rgba(0,0,0,.55); padding: 3px 9px; border-radius: var(--r-full); }

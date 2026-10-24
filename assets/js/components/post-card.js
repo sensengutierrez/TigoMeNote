@@ -24,8 +24,7 @@
         : '<img alt="" loading="lazy" src="' + esc(m.url) + '">';
       return '<div class="pc-slide">' + inner + (m.kind === "video" ? '<button type="button" class="pc-sound" data-act="sound" aria-label="Sound">' + I("play", "ic-sm") + "</button>" : "") + "</div>";
     }).join("");
-    var r = p.media[0] && p.media[0].w && p.media[0].h ? Math.max(0.8, Math.min(1.91, p.media[0].w / p.media[0].h)) : 1;
-    return '<div class="pcard-media" style="aspect-ratio:' + r.toFixed(3) + '">' +
+    return '<div class="pcard-media">' +
       '<div class="pc-track" data-act="track">' + slides + "</div>" +
       (p.media.length > 1 ? '<span class="pc-count-badge">1/' + p.media.length + '</span><div class="pc-dots">' +
         p.media.map(function (_, i) { return '<span class="' + (i ? "" : "on") + '"></span>'; }).join("") + "</div>" : "") +

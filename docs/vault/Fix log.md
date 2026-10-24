@@ -47,6 +47,7 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-10-24 · Comment reply: may scrollbar sa gilid habang nagta-type → nakapirming taas ang textarea → auto-grow pataas hanggang 120px, nakatago ang scrollbar (`app-shell.js`, `components.css`, `social-ui.js`)
 - 2026-10-24 · Bumagal ulit ang page → (1) hinihintay ang Noto Color Emoji font (render-blocking CSS), (2) wellbeing at sign-in check sa bawat lipat ng page → font ay non-blocking (`media=print onload`), Segoe UI Emoji muna sa Windows, cache ng sign-in (10 min) at wellbeing (60 s) (`app/*.html`, `tokens.css`, `auth-guard.js`, `wellbeing.js`)
 - 2026-10-24 · Wellbeing: "Cannot read properties of undefined (reading 'sleep')" kapag walang `state` ang naka-cache → guard sa `apply()` (`wellbeing.js`)
+- 2026-10-24 · Feed: kailangan pa ring mag-scroll sa video kahit 560px na → ang video na walang w/h ay square (1:1) kaya laging pinakamataas, at mas mataas ang buong post kaysa sa screen → iisang taas na batay sa screen (`100dvh − 320px`, 220–460px) at `contain` sa photo at video (`social.css`, `post-card.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.
