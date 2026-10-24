@@ -24,3 +24,13 @@ html.bg-dark .page-head h1, html.bg-dark .page-head .lead, html.bg-dark .page-he
 html.bg-dark .page > h1, html.bg-dark .empty h3, html.bg-dark .empty p { color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.45); }
 /* Dark mode + maliwanag na background o picture: dinidilim para mabasa pa rin ang text */
 html[data-theme="dark"].has-bg:not(.bg-dark) body::before { filter: brightness(.45) saturate(.9); }
+/* Text na direktang nasa ibabaw ng background (hindi nasa card): may "halo" na kulay ng page para laging mabasa,
+   kahit maliwanag o magulo ang picture (light mode at dark mode) */
+html.has-bg:not(.bg-dark) .page-head h1, html.has-bg:not(.bg-dark) .page-head .lead, html.has-bg:not(.bg-dark) .page-head .eyebrow,
+html.has-bg:not(.bg-dark) .ex-head h1, html.has-bg:not(.bg-dark) .page > h1, html.has-bg:not(.bg-dark) .more-wrap,
+html.has-bg:not(.bg-dark) .settings-version {
+  color: var(--text);
+  text-shadow: 0 0 1px var(--bg), 0 0 4px var(--bg), 0 0 10px var(--bg), 0 0 18px var(--bg), 0 0 28px var(--bg);
+}
+html.has-bg .page-head .lead { font-weight: 500; }
+html.has-bg .page-head .eyebrow { font-weight: 700; }

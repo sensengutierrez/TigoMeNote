@@ -54,6 +54,8 @@ updated: 2026-10-24
 | `components/create-menu.js` | "Create": Status / Post / Explore (`TMN_CREATE`) |
 | `appearance.js` / `look-tigo.js` | Background ng app sa lahat ng page + sariling TigoMeNote designs (`TMN_LOOK`, `TMN_LOOK_TIGO`) |
 | `components/appearance-settings.js` | Settings → Background: presets, kulay, picture (desktop/phone), sliders (`TMN_LOOK_UI`) |
+| `daily-store.js` / `components/daily-notes.js` | Daily notes sa device (IndexedDB): note, to-do, photos, mood, On this day (`TMN_DAILY`, `TMN_DAILY_UI`) |
+| `components/reminders.js` / `mini-calendar.js` / `home-clock.js` | Reminders & alarms (`TMN_REMIND`), calendar ng buwan (`TMN_CAL`), Pinas ⇄ dito (`TMN_HOMECLOCK`) |
 | `music-store.js` / `components/music-player.js` | My music: playlist sa device (IndexedDB) + player sa profile (`TMN_MUSICDB`, `TMN_MUSIC`) |
 | `components/image-cropper.js` | Crop ng larawan bago i-upload (`TMN_CROPPER`) |
 | `components/profile-editor.js` | Edit profile + palit ng photo/cover (`TMN_PROFILE_EDIT`) |
@@ -94,6 +96,7 @@ updated: 2026-10-24
 | `social-fast` | follow, unfollow, people, profile, followList, requests, approveRequest, declineRequest, stories, storyUpload, createStory, viewStory, storyViewers, deleteStory | `backend/social-fast.ts` |
 | `profile-fast` | get, update, imageUpload, setImage, removeImage | `backend/profile-fast.ts` |
 | `safety-fast` | circle, invite, respond, update, remove, pause, ping, history, clearHistory, exportHistory, sos, sosUpdate, sosEnd, alerts, ack, pushKey, subscribe, unsubscribe, testPush | `backend/safety-fast.ts` + `webpush.ts` |
+| `daily-fast` | list, save, remove, done, snooze; due (cron bawat minuto, key `cron_daily`) | `backend/daily-fast.ts` + `webpush.ts` |
 | `wellbeing-fast` | status, setBirthdate, tick, save, guardianInvite, guardianRespond, guardianRemove | `backend/wellbeing-fast.ts` |
 | `moderation-fast` | report, queue, resolve, count | `backend/moderation-fast.ts` (+ `notify.ts`) |
 | `messages-fast` | inbox, unread, open, start, group, send, upload, react, pin, read, accept, decline, unsend, rename, addMembers, removeMember, leave, mute | `backend/messages-fast.ts` (+ `moderation.ts`) |
@@ -106,6 +109,7 @@ Ang `moderation.ts` (text filter) ay kasama sa deploy ng posts-fast, social-fast
 |---|---|---|
 | `users` | accounts (+ `appearance`, `bg_desktop_url`, `bg_phone_url` = background ng app) | `sql/001-users.sql`, `sql/048-app-background.sql` |
 | `sessions` | login tokens (hash lang) | `sql/002-sessions.sql` |
+| `reminders` | Daily reminders at alarms (oras, ulit, sent/done) | `sql/050-daily-reminders.sql` |
 | `write_action_dedup` | rate limit / duplicate guard | `sql/003-write-action-dedup.sql` |
 | `brain_notes` | kopya ng vault na ito sa database | `sql/004-brain-notes.sql` |
 | `email_codes` | 6-digit codes (hash lang), purpose `verify` o `reset` | `sql/007-email-verify.sql` |

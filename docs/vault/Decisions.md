@@ -70,6 +70,8 @@ updated: 2026-10-24
 | 2026-10-24 | Background = naka-save sa account (users.appearance + bg_desktop/bg_phone sa profile-media) | Pinili ni Bench; pareho sa lahat ng device |
 | 2026-10-24 | My music = sariling playlist sa device lang (IndexedDB), hindi ina-upload | Pinili ni Bench (ako lang); walang copyright problem |
 | 2026-10-24 | Tuloy-tuloy na music kahit lumipat ng page o naka-lock = sa APK na | Pinili ni Bench; sa web, humihinto ang audio kapag nagpalit ng page |
+| 2026-10-24 | Daily notes = nasa device lang; reminders/alarms = nasa server | Pribado ang notes; ang reminder ay kailangang nasa server para may push sa tamang oras kahit sarado ang app |
+| 2026-10-24 | Cron ng reminders: sariling random key (app_keys `cron_daily`), hindi service key | Walang secret sa SQL o notes; ang key ay ginawa sa database mismo |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

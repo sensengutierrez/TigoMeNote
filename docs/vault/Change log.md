@@ -245,3 +245,17 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "laki ng x hahaha", "sa buong background… pwede me color background iba iba… mag upload kung para sa desktop or laptop size or phone size… ma adjust ung transparent", "mag lagay or gawa ka din ng background natin na TigoMeNote walang katulad at original", at "sa my profile… playlist using storage music… kahit mag minimize gumagana padin". Pinili ni Bench: music = ako lang; tuloy-tuloy na tugtog = sa APK na; background = sa account.
 - **Files:** `sql/048-app-background.sql`, `backend/profile-fast.ts` (v8: look, saveLook, bg_desktop/bg_phone), `assets/js/appearance.js` (bago), `assets/js/look-tigo.js` (bago), `assets/css/look.css` (bago), `components/appearance-settings.js` (bago), `assets/js/music-store.js` (bago), `components/music-player.js` (bago), `assets/css/music.css` (bago), `pages/settings.js`, `pages/profile.js`, `app/*.html` (appearance.js + look.css sa 10 page), `app/settings.html`, `app/profile.html`, `components.css` (X), `pages/settings.css`, `lang/fil.js`, `lang/ar.js`, `config.js` (0.11.6)
 - **Paano:** Detalye sa [[Build - Background and music]].
+
+## 2026-10-24 · #35 Daily: notes, to-do, mood, reminders at alarms, calendar, "On this day", Pinas ⇄ dito
+- **Ano:**
+  - **Daily notes** (nasa device lang): sulat, ✓ to-do list (bawat linya = item, may check), photo/video (naka-save din sa Gallery), link na napipindot. Pin, Edit, Share to Explore (kung may photo), Delete.
+  - **How's your day?** — mood ng araw (emoji); lumalabas sa "This week" at Calendar.
+  - **This week** — pindutin ang araw para makita/sulatan ang araw na iyon; **Calendar** button = maliit na calendar ng buwan (tuldok = may notes, emoji = mood, 🔔 = reminder).
+  - **Reminders & alarms** — Reminder o Alarm, petsa/oras, ulitin (isang beses, araw-araw, linggo-linggo, buwan-buwan), note. May push sa phone kahit sarado ang app; kapag bukas ang app: tumutunog (alarm = tuloy-tuloy hanggang Stop), may Snooze 10 min at Done.
+  - **✨ On this day** — notes sa parehong petsa noong nakaraang buwan/taon.
+  - **Pinas ⇄ dito** — oras sa Pilipinas at sa kinaroroonan mo (hal. Bahrain), may "Good time to call home" o "It's late in the Philippines".
+  - **Light mode**: mababasa na ang text na nasa ibabaw mismo ng background (may halo na kulay ng page).
+- **Bakit:** Ayon kay Bench (may screenshot): "pag naka light mode me mga letter na di na babasa", "ung daily natin pwede na nating simulan, mag add kadin na pwede gumawa ng alarm, reminders", "ung this week pwede mag lagay ka ng button para ma view ung maliit na calendar", "ano pa ba unique na pwede duon".
+- **Files:** `sql/050-daily-reminders.sql` (table `reminders`, cron `tmn-reminders` bawat minuto, key `cron_daily` sa app_keys), `backend/daily-fast.ts` (bago, v1) + `webpush.ts`, `assets/js/daily-store.js` (bago), `components/daily-notes.js` (bago), `components/reminders.js` (bago), `components/mini-calendar.js` (bago), `components/home-clock.js` (bago), `pages/daily.js`, `app/home.html`, `assets/css/pages/daily.css`, `assets/css/look.css`, `sw.js` (alarm/reminder), `config.js` (0.11.7, `daily`), `lang/fil.js`, `lang/ar.js`
+- **Paano:** Detalye sa [[Build - Daily]].
+- **Na-test:** live ang cron: bawat minuto `{"ok":true,"sent":0}` mula sa daily-fast (2026-10-24).

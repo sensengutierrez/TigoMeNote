@@ -1,5 +1,5 @@
 /* TigoMeNote · sw.js — service worker (push notifications lang)
-   Tumatanggap ng push mula sa safety-fast (SOS, invites) at notify-fast (reactions, comments, followers…) at ipinapakita bilang notification.
+   Tumatanggap ng push mula sa safety-fast (SOS, invites), notify-fast (reactions, comments, followers…) at daily-fast (reminders, alarms).
    Kapag pinindot: binubuksan ang tamang page. Kapag bukas ang app: sinasabihan din ang page (para tumunog ang alarm).
    Walang offline caching dito (hiwalay na trabaho kung gagawin). */
 self.addEventListener("install", function () { self.skipWaiting(); });
@@ -8,7 +8,7 @@ self.addEventListener("activate", function (e) { e.waitUntil(self.clients.claim(
 self.addEventListener("push", function (e) {
   var d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) { d = { title: "TigoMeNote", body: e.data ? e.data.text() : "" }; }
-  var sos = d.type === "sos";
+  var sos = d.type === "sos", alarm = d.type === "alarm";
   var base = self.registration.scope;
   var opts = {
     body: d.body || "",
@@ -16,8 +16,8 @@ self.addEventListener("push", function (e) {
     badge: base + "assets/img/badge-72.png",
     tag: (d.type || "tmn") + "-" + (d.id || ""),
     renotify: true,
-    requireInteraction: sos,
-    vibrate: sos ? [800, 300, 800, 300, 800, 300, 800] : [200],
+    requireInteraction: sos || alarm, // alarm (Daily): nananatili sa screen hanggang pindutin
+    vibrate: sos ? [800, 300, 800, 300, 800, 300, 800] : alarm ? [600, 200, 600, 200, 600, 200, 600, 200, 600] : d.type === "reminder" ? [300, 150, 300] : [200],
     data: { url: d.url || "app/home.html", type: d.type, id: d.id }
   };
   e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {

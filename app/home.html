@@ -7,23 +7,25 @@
   <title>Daily · TigoMeNote</title>
   <link rel="manifest" href="../manifest.webmanifest">
   <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
-  <script src="../assets/js/theme.js?v=0.11.6"></script>
-  <script src="../assets/js/look-tigo.js?v=0.11.6"></script>
-  <script src="../assets/js/appearance.js?v=0.11.6"></script>
-  <script src="../assets/js/config.js?v=0.11.6"></script>
-  <script src="../assets/js/i18n.js?v=0.11.6"></script>
-  <script src="../assets/js/auth-guard.js?v=0.11.6"></script>
+  <script src="../assets/js/theme.js?v=0.11.7"></script>
+  <script src="../assets/js/look-tigo.js?v=0.11.7"></script>
+  <script src="../assets/js/appearance.js?v=0.11.7"></script>
+  <script src="../assets/js/config.js?v=0.11.7"></script>
+  <script src="../assets/js/i18n.js?v=0.11.7"></script>
+  <script src="../assets/js/auth-guard.js?v=0.11.7"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="../assets/css/tokens.css?v=0.11.6">
-  <link rel="stylesheet" href="../assets/css/base.css?v=0.11.6">
-  <link rel="stylesheet" href="../assets/css/components.css?v=0.11.6">
-  <link rel="stylesheet" href="../assets/css/shell.css?v=0.11.6">
-  <link rel="stylesheet" href="../assets/css/look.css?v=0.11.6">
-  <link rel="stylesheet" href="../assets/css/safety.css?v=0.11.6">
-  <link rel="stylesheet" href="../assets/css/pages/daily.css?v=0.11.6">
+  <link rel="stylesheet" href="../assets/css/tokens.css?v=0.11.7">
+  <link rel="stylesheet" href="../assets/css/base.css?v=0.11.7">
+  <link rel="stylesheet" href="../assets/css/components.css?v=0.11.7">
+  <link rel="stylesheet" href="../assets/css/shell.css?v=0.11.7">
+  <link rel="stylesheet" href="../assets/css/look.css?v=0.11.7">
+  <link rel="stylesheet" href="../assets/css/safety.css?v=0.11.7">
+  <link rel="stylesheet" href="../assets/css/posts.css?v=0.11.7">
+  <link rel="stylesheet" href="../assets/css/sounds.css?v=0.11.7">
+  <link rel="stylesheet" href="../assets/css/pages/daily.css?v=0.11.7">
 </head>
 <body data-page="home">
   <main id="page" class="page">
@@ -31,34 +33,29 @@
       <div>
         <div class="eyebrow" id="today"></div>
         <h1 id="greet">Hello!</h1>
-        <p class="lead">Your notes for today. Private Daily notes stay on your device.</p>
+        <p class="lead">Your notes, to-dos and reminders. Private Daily notes stay on your device.</p>
       </div>
     </header>
 
     <div class="layout">
      <div class="stack">
-      <div class="composer card">
-        <span class="avatar" id="meAvatar" style="--size:42px"></span>
-        <button class="composer-input" type="button" disabled>What's your note today?</button>
-        <div class="composer-actions">
-          <button class="icon-btn" type="button" disabled aria-label="Take photo"><i data-icon="camera"></i></button>
-          <span class="badge badge-accent">Soon</span>
-        </div>
-      </div>
-
-      <section class="card empty feed-empty">
-        <div class="empty-art"><i data-icon="sun" data-size="lg"></i></div>
-        <h3>No notes yet today</h3>
-        <p>When Daily is ready, your notes, photos and videos for today will show up here.</p>
-      </section>
+      <div class="composer card dn-composer" id="dnComposer"></div>
+      <section class="card dn-otd hidden" id="dnOtd" aria-label="On this day"></section>
+      <div class="dn-list" id="dnList"></div>
      </div>
 
      <aside class="layout-aside">
       <section class="card wx-card" id="weather" aria-label="Weather"></section>
       <section class="card">
-        <h3 class="side-title">This week</h3>
+        <div class="side-head"><h3 class="side-title" id="weekTitle">This week</h3>
+          <button class="btn btn-ghost btn-sm" type="button" id="calBtn"><i data-icon="calendar" data-size="sm"></i>Calendar</button></div>
         <div class="week" id="week" aria-label="This week"></div>
       </section>
+      <section class="card">
+        <h3 class="side-title" id="moodTitle">How's your day?</h3>
+        <div class="dn-moods" id="dnMood" role="group" aria-label="Mood"></div>
+      </section>
+      <section class="card rm-card" id="remind" aria-label="Reminders and alarms"></section>
       <section class="card">
         <h3 class="side-title">Today</h3>
         <div class="today-stats">
@@ -67,30 +64,41 @@
           <div><b id="tVideos">0</b><span>Videos</span></div>
         </div>
       </section>
+      <section class="card" id="homeClock" aria-label="Philippines time"></section>
       <section class="card card-flat side-note">
         <i data-icon="lock"></i>
-        <p>Your Daily notes are saved on your device only. You choose what to share.</p>
+        <p>Your Daily notes are saved on your device only. You choose what to share. Reminders are saved to your account so your phone can ring.</p>
       </section>
      </aside>
     </div>
   </main>
 
-  <script src="../assets/js/icons.js?v=0.11.6"></script>
-  <script src="../assets/js/nav-items.js?v=0.11.6"></script>
-  <script src="../assets/js/components/app-shell.js?v=0.11.6"></script>
-  <script src="../assets/js/media-store.js?v=0.11.6"></script>
-  <script src="../assets/js/components/weather.js?v=0.11.6"></script>
-  <script src="../assets/js/api.js?v=0.11.6"></script>
-  <script src="../assets/js/moderation-check.js?v=0.11.6"></script>
-  <script src="../assets/js/components/mod-guard.js?v=0.11.6"></script>
-  <script src="../assets/js/native-bridge.js?v=0.11.6"></script>
-  <script src="../assets/js/push-setup.js?v=0.11.6"></script>
-  <script src="../assets/js/components/sos-overlay.js?v=0.11.6"></script>
-  <script src="../assets/js/safety-watch.js?v=0.11.6"></script>
-  <script src="../assets/js/location-share.js?v=0.11.6"></script>
-  <script src="../assets/js/wellbeing.js?v=0.11.6"></script>
-  <script src="../assets/js/notif-badge.js?v=0.11.6"></script>
-  <script src="../assets/js/post-queue.js?v=0.11.6"></script>
-  <script src="../assets/js/pages/daily.js?v=0.11.6"></script>
+  <script src="../assets/js/icons.js?v=0.11.7"></script>
+  <script src="../assets/js/nav-items.js?v=0.11.7"></script>
+  <script src="../assets/js/components/app-shell.js?v=0.11.7"></script>
+  <script src="../assets/js/media-store.js?v=0.11.7"></script>
+  <script src="../assets/js/components/weather.js?v=0.11.7"></script>
+  <script src="../assets/js/api.js?v=0.11.7"></script>
+  <script src="../assets/js/components/modal.js?v=0.11.7"></script>
+  <script src="../assets/js/moderation-check.js?v=0.11.7"></script>
+  <script src="../assets/js/components/mod-guard.js?v=0.11.7"></script>
+  <script src="../assets/js/native-bridge.js?v=0.11.7"></script>
+  <script src="../assets/js/push-setup.js?v=0.11.7"></script>
+  <script src="../assets/js/components/sos-overlay.js?v=0.11.7"></script>
+  <script src="../assets/js/safety-watch.js?v=0.11.7"></script>
+  <script src="../assets/js/location-share.js?v=0.11.7"></script>
+  <script src="../assets/js/wellbeing.js?v=0.11.7"></script>
+  <script src="../assets/js/notif-badge.js?v=0.11.7"></script>
+  <script src="../assets/js/post-queue.js?v=0.11.7"></script>
+  <script src="../assets/js/sounds.js?v=0.11.7"></script>
+  <script src="../assets/js/components/sound-picker.js?v=0.11.7"></script>
+  <script src="../assets/js/components/post-composer.js?v=0.11.7"></script>
+  <script src="../assets/js/components/media-viewer.js?v=0.11.7"></script>
+  <script src="../assets/js/daily-store.js?v=0.11.7"></script>
+  <script src="../assets/js/components/daily-notes.js?v=0.11.7"></script>
+  <script src="../assets/js/components/reminders.js?v=0.11.7"></script>
+  <script src="../assets/js/components/mini-calendar.js?v=0.11.7"></script>
+  <script src="../assets/js/components/home-clock.js?v=0.11.7"></script>
+  <script src="../assets/js/pages/daily.js?v=0.11.7"></script>
 </body>
 </html>

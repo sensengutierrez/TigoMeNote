@@ -30,6 +30,7 @@ Ito ang "utak" ng project: lahat ng ginawa, paano ginawa, at bakit. Buksan ang f
 - [[Build - Notifications]] — activity list, push, notification settings, TigoMeNote ring sa Status
 - [[Build - Share camera and sounds]] — sariling camera, 13 libreng filters, auto sound (TigoMeNote Sounds), ♪ sa posts
 - [[Build - Explore activity]] — Explore post na parang Komoot (route sa mapa + photos + stats) at buong-screen na viewer na may X
+- [[Build - Daily]] — Daily notes (device), to-do, mood, reminders at alarms (push), calendar, On this day, Pinas ⇄ dito
 - [[Build - Background and music]] — background ng app (TigoMeNote originals, kulay, sariling picture desktop/phone) at My music sa profile
 - [[Build - Messenger]] — Tigo Messenger: chats, groups, photo, location + pin, reactions, Seen, requests; hiwalay na app sa APK
 
