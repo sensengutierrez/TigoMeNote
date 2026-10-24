@@ -194,3 +194,4 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Tanong ni Bench kung puwedeng gamitin ang KLIPY API na gamit niya sa ibang web app; gumawa siya ng hiwalay na key para sa TigoMeNote.
 - **Files:** `backend/gifs-fast.ts` (bago, v1), `backend/messages-fast.ts` (v3, kind `gif`), `sql/039-chat-gifs.sql`, `assets/js/components/emoji-picker.js`, `components/chat-view.js`, `config.js` (0.11.1, `gifs`), `assets/css/components.css`, `pages/messages.css`, `lang/fil.js`, `lang/ar.js`
 - **Paano:** Ang browser → `gifs-fast` → KLIPY (`api.klipy.com/api/v1/<key>/gifs|stickers/trending|search`). Ang key ay nasa Supabase secret `KLIPY_API_KEY` lang. Detalye: [[Build - Messenger]].
+- **Na-test:** 2026-10-24, gumagana sa totoong server (nailagay ni Bench ang `KLIPY_API_KEY`; test key = 100 requests/oras).
