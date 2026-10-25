@@ -5,7 +5,7 @@
      rig.yaw()                           → kung saan nakaharap ang camera (para sa direksyon ng lakad)
      rig.setView(id) / rig.next() → id   → isang button lang (parang MIR4): "follow" → "wide" → "top" → "close" → …
      rig.view() · rig.zoom() · rig.dispose()
-   Phone: swipe sa gitna ng screen = ikot (kaliwa/kanan, 360°) at taas/baba (pataas = tingala sa langit);
+   Phone: swipe sa gitna ng screen = ikot (kaliwa/kanan, 360°); ang mundo ay sumusunod sa daliri: swipe pababa = tingala sa langit, pataas = pabalik;
           dalawang daliri (pinch) = zoom. stick() = (opsyonal) joystick ng camera.
    Desktop: hila ng mouse = ikot; wheel = zoom; Q / E = ikot sa keyboard.
    blocked() = true kapag may laro (ang laro ang may hawak ng camera). claim(e) = true kapag iba ang gagamit ng hila (hal. paglipat ng gamit sa bahay). */
@@ -27,7 +27,7 @@ export function createCameraRig({ camera, el, blocked = () => false, claim = () 
   const keys = new Set();
 
   function down(e) {
-    if (blocked() || e.button > 0 || e.target.closest("button, a, input, select, .tg-pad, .tg-together, .tg-room-bar, .tg-dock, .tg-btns, .tg-sheet, .tg-top")) return;
+    if (blocked() || e.button > 0 || e.target.closest("button, a, input, select, .tg-pad, .tg-together, .tg-room-bar, .tg-dock, .tg-btns, .tg-sheet, .tg-top, .tg-size")) return;
     if (claim(e)) return;
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY });
     if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y) || 1; zoom0 = goal.zoom; }
@@ -45,7 +45,8 @@ export function createCameraRig({ camera, el, blocked = () => false, claim = () 
     if (!dragged) { dragged = true; try { el.setPointerCapture(e.pointerId); } catch (er) {} }
     const k = (e.pointerType === "mouse" ? 2 : 2.6) * Math.PI / Math.max(320, el.clientWidth); // isang swipe sa buong lapad ≈ isang ikot
     goal.yaw -= dx * k; s.yaw = goal.yaw;
-    goal.elev = Math.max(ELEV_MIN, Math.min(ELEV_MAX, goal.elev + dy * 0.0055)); s.elev = goal.elev;
+    // sumusunod ang mundo sa daliri (parang 3D engine): hila pababa = bababa ang mundo, lilitaw ang langit; hila pataas = pabalik / mula sa itaas
+    goal.elev = Math.max(ELEV_MIN, Math.min(ELEV_MAX, goal.elev - dy * (2.4 / Math.max(320, el.clientHeight)))); s.elev = goal.elev;
   }
   function up(e) { pts.delete(e.pointerId); if (pts.size < 2) pinch0 = 0; }
   function wheel(e) {

@@ -54,7 +54,7 @@ export function createControls({ stage, pad, lookPad, jumpBtn, runBtn, stopBtn, 
   // ---------- tap sa stage ----------
   let s0 = null;
   if (stage) {
-    stage.addEventListener("pointerdown", (e) => { if (e.target.closest("button, .tg-pad, .tg-room-bar, .tg-dock, .tg-sheet, .tg-btns")) return; s0 = { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId }; });
+    stage.addEventListener("pointerdown", (e) => { if (e.target.closest("button, .tg-pad, .tg-room-bar, .tg-dock, .tg-sheet, .tg-btns, .tg-size")) return; s0 = { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId }; });
     stage.addEventListener("pointerup", (e) => {
       if (!s0 || e.pointerId !== s0.id) return;
       const d = Math.hypot(e.clientX - s0.x, e.clientY - s0.y), dt = performance.now() - s0.t; s0 = null;

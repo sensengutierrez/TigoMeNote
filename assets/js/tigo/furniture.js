@@ -1,15 +1,15 @@
 /* TigoMeNote · tigo/furniture.js — mga gamit sa loob ng bahay ni Tigo (3D, gawa sa code; sariling disenyo)
    import { FURN, buildFurniture } from "./furniture.js"
-   FURN[id] = { w, d, wall?, flat?, seat?, bed? }  → sukat sa sahig (para hindi tumagos si Tigo), wall = nakasabit sa dingding
+   FURN[id] = { w, d, wall?, flat?, seat? (taas ng upuan), bed? }  → sukat sa sahig (para hindi tumagos si Tigo), wall = nakasabit sa dingding
    buildFurniture(id) → { group, update(t, night), dispose() }  — nakaharap sa +z (papunta sa gitna ng kwarto)
    May galaw: umiikot ang electric fan, lumalangoy ang isda, totoong oras sa wall clock, ilaw sa gabi (lamp, star lights, TV). */
 import * as THREE from "../../vendor/three/three.module.min.js";
 
 export const FURN = {
   bed: { w: 1.2, d: 1.9, bed: true }, rug: { w: 1.6, d: 1.6, flat: true }, plant: { w: 0.5, d: 0.5 }, lamp: { w: 0.45, d: 0.45 },
-  banig: { w: 1.4, d: 2.0, flat: true }, table: { w: 1.2, d: 0.8 }, chair: { w: 0.5, d: 0.5 }, sofa: { w: 1.8, d: 0.8 },
-  beanbag: { w: 0.8, d: 0.8 }, bookshelf: { w: 1.0, d: 0.4 }, tv: { w: 1.2, d: 0.45 }, fan: { w: 0.5, d: 0.5 },
-  desk: { w: 1.2, d: 0.6 }, toybox: { w: 0.7, d: 0.5 }, aquarium: { w: 1.0, d: 0.45 }, majlis: { w: 2.0, d: 0.8 },
+  banig: { w: 1.4, d: 2.0, flat: true }, table: { w: 1.2, d: 0.8 }, chair: { w: 0.5, d: 0.5, seat: 0.45 }, sofa: { w: 1.8, d: 0.8, seat: 0.5 },
+  beanbag: { w: 0.8, d: 0.8, seat: 0.4 }, bookshelf: { w: 1.0, d: 0.4 }, tv: { w: 1.2, d: 0.45 }, fan: { w: 0.5, d: 0.5 },
+  desk: { w: 1.2, d: 0.6 }, toybox: { w: 0.7, d: 0.5 }, aquarium: { w: 1.0, d: 0.45 }, majlis: { w: 2.0, d: 0.8, seat: 0.18 },
   cactus: { w: 0.4, d: 0.4 }, piano: { w: 1.4, d: 0.6 }, fridge: { w: 0.7, d: 0.6 },
   painting: { w: 0.9, d: 0.1, wall: true }, clock: { w: 0.5, d: 0.1, wall: true }, shelf: { w: 0.9, d: 0.25, wall: true },
   mirror: { w: 0.6, d: 0.08, wall: true }, garland: { w: 1.6, d: 0.1, wall: true }, "banner-ph": { w: 0.9, d: 0.05, wall: true }, "banner-bh": { w: 0.9, d: 0.05, wall: true },

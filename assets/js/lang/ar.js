@@ -1288,5 +1288,13 @@ TMN_I18N.register("ar", {
   "Wake": "استيقظ",
   "Full": "كامل",
   "Run (Shift)": "ركض (Shift)",
-  "Camera: Follow view": "الكاميرا: عرض المتابعة"
+  "Camera: Follow view": "الكاميرا: عرض المتابعة",
+  "Sit": "اجلس",
+  "Sleep in bed": "نم في السرير",
+  "Stand up": "قف",
+  "⬆ Tayo": "⬆ قف",
+  "Sit down!": "لنجلس!",
+  "Tigo size": "حجم تيغو",
+  "Tigo is in bed 🛏️ Tap ⬆ Tayo first.": "تيغو في السرير 🛏️ اضغط ⬆ قف أولاً.",
+  "Tigo is already sleeping 🌙": "تيغو نائم بالفعل 🌙"
 });

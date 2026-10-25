@@ -59,15 +59,27 @@
   async function start3d() {
     try {
       var m = await mod("pet-scene"), c = await mod("controls");
-      sc = m.createScene($("tgCanvas"), { reduced: reduced, pet: { color: pet.color }, backdrop: (pet.outfit || {}).backdrop, el: $("stage"), onDoor: doorBar,
-        onRoom: function (on) { if (!on && decor) decor.close(); if (on) say("home", { still: true }); } });
+      sc = m.createScene($("tgCanvas"), { reduced: reduced, pet: { color: pet.color }, backdrop: (pet.outfit || {}).backdrop, el: $("stage"), onDoor: doorBar, size: loadSize(),
+        onRoom: function (on) { $("stage").classList.toggle("in-room", on); if (!on && decor) decor.close(); if (on) say("home", { still: true }); },
+        onPose: function (p) {
+          var st = $("stage"), j = $("tgJump");
+          st.classList.toggle("pose-sit", p === "sit"); st.classList.toggle("pose-bed", p === "bed");
+          j.textContent = p === "stand" ? "⤒" : "⬆ Tayo"; j.setAttribute("aria-label", p === "stand" ? "Jump" : "Stand up");
+        } });
+      paintSize(loadSize());
       sc.setRoom(pet.room);
       dress(pet.outfit, pet.color); paint();
       var cv = $("tgCanvas");
       ctl = c.createControls({
         stage: $("stage"), pad: $("tgPad"), jumpBtn: $("tgJump"), runBtn: $("tgRun"), stopBtn: $("tgStop"),
         onStop: function () { if (gameJump) return; sc.stop(); },
-        onJump: function () { if (gameJump) return gameJump(); if (!sc.isInside()) { sc.jump(); if (voice) voice.sfx("jump"); } },
+        onJump: function () {
+          if (gameJump) return gameJump();
+          var ps = sc.pose();
+          if (ps === "bed") { if ((live() || {}).asleep) act("wake"); else sc.standUp(); return; } // ⬆ Tayo = gising
+          if (ps === "sit") { sc.standUp(); return; }
+          if (!sc.isInside()) { sc.jump(); if (voice) voice.sfx("jump"); }
+        },
         onTap: function (e) {
           var r = cv.getBoundingClientRect();
           if (!playing && sc.pick(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1))) act("pet");
@@ -84,6 +96,46 @@
     startVoice();
   }
   // ---------- camera: View at Zoom ----------
+  // ---------- sa loob ng bahay: 🪑 Sit at 🛏️ Sleep ----------
+  $("tgSit").addEventListener("click", function () {
+    if (!sc) return;
+    if (sc.pose() === "sit") { sc.standUp(); return; }
+    if (sc.pose() === "bed") { toast("Tigo is in bed 🛏️ Tap ⬆ Tayo first."); return; }
+    if (sc.sit()) say("Sit down!", { still: true });
+  });
+  $("tgBed").addEventListener("click", function () {
+    var p = live() || {};
+    if (p.asleep) { toast("Tigo is already sleeping 🌙"); return; }
+    act("sleep");
+  });
+  // ---------- laki ni Tigo (naka-save sa device) ----------
+  var SIZE_KEY = "tmnTigoSize";
+  function loadSize() { try { var v = parseFloat(localStorage.getItem(SIZE_KEY)); return v >= 0.5 && v <= 1.3 ? v : 1; } catch (e) { return 1; } }
+  function paintSize(k) {
+    var f = (k - 0.5) / 0.8, el = $("tgSize");
+    el.querySelector(".tg-size-fill").style.height = Math.round(f * 100) + "%";
+    el.querySelector(".tg-size-thumb").style.bottom = Math.round(f * 100) + "%";
+    el.setAttribute("aria-valuenow", String(Math.round(k * 100))); el.title = "Size " + Math.round(k * 100) + "%";
+  }
+  function setSize(k, save) {
+    k = Math.max(0.5, Math.min(1.3, Math.round(k * 100) / 100));
+    if (sc) sc.setSize(k); paintSize(k);
+    if (save) try { localStorage.setItem(SIZE_KEY, String(k)); } catch (e) {}
+    return k;
+  }
+  (function () {
+    var el = $("tgSize"), tr = el.querySelector(".tg-size-track"), id = null;
+    function at(e) { var r = tr.getBoundingClientRect(); return 0.5 + 0.8 * Math.max(0, Math.min(1, (r.bottom - e.clientY) / r.height)); }
+    el.addEventListener("pointerdown", function (e) { e.preventDefault(); e.stopPropagation(); id = e.pointerId; try { el.setPointerCapture(id); } catch (er) {} setSize(at(e)); });
+    el.addEventListener("pointermove", function (e) { if (e.pointerId === id) setSize(at(e)); });
+    function end(e) { if (e.pointerId !== id) return; id = null; setSize(at(e), true); }
+    el.addEventListener("pointerup", end); el.addEventListener("pointercancel", function () { id = null; });
+    el.addEventListener("keydown", function (e) {
+      var k = loadSize(), d = e.key === "ArrowUp" || e.key === "ArrowRight" ? 0.05 : e.key === "ArrowDown" || e.key === "ArrowLeft" ? -0.05 : 0;
+      if (d) { e.preventDefault(); e.stopPropagation(); setSize(k + d, true); }
+    });
+    paintSize(loadSize());
+  })();
   // isang button lang (parang MIR4): Follow → Wide → Top → Close-up
   var VIEW = { follow: ["🎥", "Follow view"], wide: ["🔭", "Wide view"], top: ["🗺️", "Top view"], close: ["🔍", "Close-up"] };
   $("tgView").addEventListener("click", function () {

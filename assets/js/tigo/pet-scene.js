@@ -12,6 +12,8 @@
      sc.rig                      → camera (camera-rig.js): next() view, zoomStep(), yaw()
      sc.setLook(fn)              → fn() = { x, y } (opsyonal na joystick ng camera; ang swipe ay nasa camera-rig.js)
      sc.setRun(fn)               → fn() = true kapag tumatakbo (🏃 Run) · sc.stop() = hinto agad, haharap sa camera
+     sc.sit() / sc.standUp() / sc.pose() → "stand" | "sit" | "bed"  (sa bahay: upo sa pinakamalapit na upuan o sa sahig)
+     sc.setSize(k)               → laki ni Tigo (0.5–1.3), pang-display lang · opts.onPose(pose) kapag nagbago
      sc.ray(x, y) → Raycaster    · sc.setClaim(fn) → kung may ibang gagamit ng hila sa screen (paglipat ng gamit)
      opts.onDoor(state)          → "near" (malapit sa pinto sa labas) | "room" (nasa loob) | null
      sc.add(opts) / remove(t)    → bisita (Tigo ng kaibigan); sumusunod siya kay Tigo habang naglalakad
@@ -67,6 +69,9 @@ export function createScene(canvas, opts = {}) {
   // ---------- mga Tigo ----------
   const pets = [];
   const main = createTigo(opts.pet || {}); scene.add(main.group); pets.push(main);
+  let sizeK = Math.max(0.5, Math.min(1.3, Number(opts.size) || 1)), pose = "stand", seat = null;
+  main.group.scale.setScalar(sizeK);
+  function setPose(p) { if (p !== pose) { pose = p; if (opts.onPose) opts.onPose(p); } }
   const me = { x: 0, z: 0.4, vx: 0, vz: 0, idle: 0 };
   main.group.position.set(me.x, 0, me.z);
   // bisita: may sariling posisyon; kusang sumusunod sa tabi ni Tigo (salitan kaliwa/kanan)
@@ -181,6 +186,9 @@ export function createScene(canvas, opts = {}) {
   }
   function moveMain(dt, sg) {
     if (inside) return;
+    if (pose === "sit") { // nakaupo: tatayo kapag ginalaw ang joystick
+      const i = input(); if (Math.hypot(i.x, i.z) > 0.35 && !isNight) standUp(); else { main.walk(0); return; }
+    }
     let ix = 0, iz = 0;
     if (sg && sg.snap) { // ikot: sundan mismo ang bilog
       me.x += (sg.x - me.x) * 0.25; me.z += (sg.z - me.z) * 0.25; me.vx = me.vz = 0;
@@ -270,12 +278,32 @@ export function createScene(canvas, opts = {}) {
     main.group.rotation.order = "YXZ";
     if (b) { me.x = b.x; me.z = b.z; main.group.position.set(b.x, b.y, b.z); main.face(b.face); main.group.rotation.y = b.face; }
     else { main.face(0); main.group.position.y = 0.12; }
-    main.group.rotation.x = -1.45; main.group.scale.setScalar(0.78); // nakahiga, ulo sa unan (medyo maliit para kasya sa kama)
+    main.group.rotation.x = -1.45; main.group.scale.setScalar(0.78 * sizeK); // nakahiga, ulo sa unan (medyo maliit para kasya sa kama)
+    seat = null; setPose("bed");
+  }
+  // upo: sa pinakamalapit na upuan (lalakad muna doon) o sa sahig
+  function sit() {
+    if (inside || game || show || pose !== "stand") return false;
+    const s = inRoom && room.seatNear(me.x, me.z);
+    const sitAt = (st) => {
+      auto = null; me.vx = me.vz = 0; main.walk(0); main.group.rotation.order = "YXZ";
+      seat = st;
+      if (st) { me.x = st.x; me.z = st.z; main.group.position.set(st.x, st.y - 0.12 * sizeK, st.z); main.face(st.face); main.group.rotation.y = st.face; main.group.rotation.x = -0.22; }
+      else { main.group.position.y = -0.14 * sizeK; main.face(rig.yaw()); main.group.rotation.x = -0.3; }
+      setPose("sit");
+    };
+    if (s) walkTo(s.front.x, s.front.z, () => sitAt(s)); else sitAt(null);
+    return true;
   }
   function standUp() {
-    if (main.group.rotation.x === 0 && main.group.position.y === 0) return;
-    main.group.rotation.x = 0; main.group.rotation.z = 0; main.group.position.y = 0; main.group.scale.setScalar(1);
-    const b = room && room.bedSpot(); if (b && inRoom) { me.x = b.beside.x; me.z = b.beside.z; main.group.position.set(me.x, 0, me.z); }
+    const was = pose; seat = seat || null;
+    if (main.group.rotation.x !== 0 || main.group.position.y !== 0) {
+      main.group.rotation.x = 0; main.group.rotation.z = 0; main.group.position.y = 0; main.group.scale.setScalar(sizeK);
+      const b = room && room.bedSpot();
+      if (was === "sit" && seat) { const f = room && room.seatNear(me.x, me.z, 0.6); if (f) { me.x = f.front.x; me.z = f.front.z; } main.group.position.set(me.x, 0, me.z); }
+      else if (b && inRoom && was === "bed") { me.x = b.beside.x; me.z = b.beside.z; main.group.position.set(me.x, 0, me.z); }
+    }
+    seat = null; setPose("stand");
   }
 
   // ---------- gabi: pasok sa bahay kubo ----------
@@ -290,6 +318,7 @@ export function createScene(canvas, opts = {}) {
     if (place) place.night(on);
     sky.set(skyColors(SKY[placeId]), on);
     if (game) return;
+    if (on && pose === "sit") standUp(); // tatayo muna bago pumunta sa kama
     if (on && !inside) {
       // papasok sa bahay → lalakad sa kama → hihiga
       const toBed = () => {
@@ -376,14 +405,15 @@ export function createScene(canvas, opts = {}) {
   const hidden = [];
   function beginGame(g) {
     if (inRoom) leaveRoom(true);
-    if (inside) { inside = false; standUp(); }
+    if (inside) inside = false;
+    if (pose !== "stand") standUp();
     game = g; show = null; auto = null; main.walk(0); main.move(null); setDoor(null);
     [place && place.group, buddy && buddy.group, zzz, sky.group].concat(friends.map((f) => f.t.group)).forEach((o) => { if (o && o.visible) { o.visible = false; hidden.push(o); } });
     main.group.visible = true;
   }
   function endGame() {
     game = null; hidden.forEach((o) => { o.visible = true; }); hidden.length = 0;
-    scene.add(main.group); main.group.scale.setScalar(1); main.group.rotation.set(0, 0, 0);
+    scene.add(main.group); main.group.scale.setScalar(sizeK); main.group.rotation.set(0, 0, 0); setPose("stand");
     me.x = 0; me.z = 0.4; me.vx = me.vz = 0; main.group.position.set(me.x, 0, me.z); main.walk(0); main.face(0);
     main.group.visible = true; zzz.visible = false;
     if (place) place.group.visible = !inRoom;
@@ -431,6 +461,13 @@ export function createScene(canvas, opts = {}) {
     setRoom(d) { roomData = d || null; if (room) ensureRoom(); },
     setLook(fn) { look2 = fn || (() => null); },
     setRun(fn) { running = fn || (() => false); },
+    sit, pose() { return pose; },
+    standUp() { if (pose === "sit") standUp(); },
+    setSize(k) {
+      sizeK = Math.max(0.5, Math.min(1.3, Number(k) || 1));
+      if (!game) main.group.scale.setScalar(sizeK * (pose === "bed" ? 0.78 : 1));
+      return sizeK;
+    },
     stop() {
       if (game || inside) return;
       auto = null; me.vx = me.vz = 0; main.walk(0); main.face(rig.yaw());

@@ -5,6 +5,7 @@
      room.add(id) → entry · room.remove(e) · room.move(e, x, z) · room.rotate(e) · room.select(e|null)
      room.pick(raycaster) → entry|null · room.floorPoint(raycaster) → { x, z }|null
      room.collide(x, z) → [x, z]  (para hindi tumagos si Tigo sa dingding at gamit) · room.bedSpot() → { x, z, y, face }|null
+     room.seatNear(x, z) → pinakamalapit na upuan (chair, sofa, bean bag, majlis) para sa 🪑 Sit
      room.update(t, night, camera) → bumababa ang dingding na nakaharang sa camera (parang dollhouse)
    Pinto: nasa harap (z = +ROOM.d/2), gitna. Gamit sa dingding (wall) = kusang dumidikit sa pinakamalapit na dingding. */
 import * as THREE from "../../vendor/three/three.module.min.js";
@@ -178,6 +179,18 @@ export function buildRoom() {
     }
     return [x, z];
   }
+  // Pinakamalapit na upuan (chair, sofa, bean bag, majlis): { x, z, y, face, front{x,z} } o null
+  function seatNear(x, z, max = 2.2) {
+    let best = null, bd = max;
+    for (const e of entries) {
+      const f = FURN[e.id]; if (!f || !f.seat) continue;
+      const d = Math.hypot(e.x - x, e.z - z); if (d >= bd) continue;
+      const back = e.id === "sofa" || e.id === "majlis" ? 0.12 : 0; // umupo nang medyo nasa likod (may sandalan)
+      bd = d; best = { x: e.x - Math.sin(e.r) * back, z: e.z - Math.cos(e.r) * back, y: f.seat, face: e.r,
+        front: { x: e.x + Math.sin(e.r) * (f.d / 2 + 0.35), z: e.z + Math.cos(e.r) * (f.d / 2 + 0.35) } };
+    }
+    return best;
+  }
   function bedSpot() {
     const b = entries.find((e) => FURN[e.id] && FURN[e.id].bed); if (!b) return null;
     // x/z = paanan ng kama (doon ang "paa" ni Tigo; ang ulo ay papunta sa unan)
@@ -212,7 +225,7 @@ export function buildRoom() {
   }
 
   return {
-    group, setStyle, setItems, add, remove: removeEntry, select, pick, floorPoint, collide, bedSpot, update,
+    group, setStyle, setItems, add, remove: removeEntry, select, pick, floorPoint, collide, bedSpot, seatNear, update,
     style() { return { ...style }; },
     list() { return entries.map((e) => ({ id: e.id, x: e.x, z: e.z, r: e.r })); },
     move(e, x, z) { e.x = x; e.z = z; place(e); },

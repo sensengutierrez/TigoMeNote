@@ -1453,5 +1453,13 @@ TMN_I18N.register("fil", {
   "Wake": "Gising",
   "Full": "Buo",
   "Run (Shift)": "Takbo (Shift)",
-  "Camera: Follow view": "Camera: Sunod na view"
+  "Camera: Follow view": "Camera: Sunod na view",
+  "Sit": "Upo",
+  "Sleep in bed": "Matulog sa kama",
+  "Stand up": "Tumayo",
+  "⬆ Tayo": "⬆ Tayo",
+  "Sit down!": "Upo muna!",
+  "Tigo size": "Laki ni Tigo",
+  "Tigo is in bed 🛏️ Tap ⬆ Tayo first.": "Nasa kama si Tigo 🛏️ I-tap muna ang ⬆ Tayo.",
+  "Tigo is already sleeping 🌙": "Natutulog na si Tigo 🌙"
 });

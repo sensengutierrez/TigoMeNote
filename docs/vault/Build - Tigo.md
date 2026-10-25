@@ -34,6 +34,8 @@ Virtual pet ng TigoMeNote (parang Tamagotchi pero sariling character): si **Tigo
 
 ## Camera (`camera-rig.js`, `sky-dome.js`)
 - Phone: joystick (D-pad) = lakad; kanan: ⤒ Jump, 🏃 Run, ✋ Stop, 🎥 Camera (isang button: Follow → Wide → Top → Close-up). Swipe sa gitna = ikot 360° at tingala; pinch = zoom.
+- Swipe: sumusunod ang mundo sa daliri (pababa = langit, pataas = pabalik). Laki ni Tigo: bar na may kulay sa kaliwa (50–130%, naka-save sa device).
+- Sa bahay: 🪑 Sit (pinakamalapit na upuan o sahig) at 🛏️ Sleep palit sa Run/Stop; ⬆ Tayo = tumayo / gumising.
 - Game UI sa phone: mini stats + menu bar (lahat ng action, « = itago) + sheet para sa Closet/Decorate (▾ minimize, ✕ sara). Landscape = buong screen na laro (sheet sa kanan).
 - Desktop: hila ng mouse = ikot, wheel = zoom, Q/E = ikot. Ang lakad (joystick/WASD) ay ayon sa direksyon ng camera.
 - 3D na langit: ulap at araw (araw), buwan at bituin (gabi at Moon base).

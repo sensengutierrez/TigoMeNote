@@ -367,3 +367,12 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "gawin mo sana ung joystick ganto… run, jump, stop parang isang game… pag naka land scape… lahat ng process nya kasama… ung pag zoom at focus isang botton lang same sa mir4… swipe swipe sa gitna… always check ung overlap… pag hindi naka land scape check padin" at "ayusin mo din ung puso… baliktad".
 - **Files:** `app/tigo.html`, `css/pages/tigo.css`, `pages/tigo.js`, `tigo/camera-rig.js`, `tigo/controls.js`, `tigo/pet-scene.js`, `lang/fil.js`, `lang/ar.js`, `config.js` (0.11.16)
 - **Paano:** May overlap test (test_layout: 390×844, 360×740, 844×390, 740×360, desktop) na sinusuri na walang nagpapatong at nasa loob ng screen ang lahat, kasama habang nasa bahay, nagde-decorate, naka-minimize ang sheet at may Closet.
+
+## 2026-10-25 · #46 Swipe na parang 3D engine, Sit/Sleep/Tayo sa bahay, at laki ni Tigo
+- **Ano:**
+  - **Swipe:** ang mundo ay sumusunod sa daliri: swipe pababa = bababa ang mundo at lilitaw ang langit; swipe pataas = pabalik (hanggang tingin mula sa itaas). Tuloy-tuloy, isang swipe sa buong taas ng screen = buong saklaw.
+  - **Sa loob ng bahay:** ang 🏃 Run at ✋ Stop ay napapalitan ng **🪑 Sit** (lalakad sa pinakamalapit na upuan, sofa, bean bag o majlis; kung wala, sa sahig) at **🛏️ Sleep** (matutulog sa kama). Kapag nakaupo o nakahiga, ang Jump ay nagiging **⬆ Tayo** (tatayo / gigising). Ang joystick ay nagpapatayo rin kapag nakaupo.
+  - **Laki ni Tigo:** patayong bar sa gilid na may kulay (parang status bars): hila pataas = mas malaki, pababa = mas maliit (50%–130%). Gumagana sa loob at labas ng bahay; naka-save sa device.
+- **Bakit:** Ayon kay Bench: "pag swipe ko pataas or down dapat ung realword tataas at bababa… parang realtime engine", "pag nasa loob ng bahay ung stop, run at ung jump mapapalitan ng sit, sleep sa bed… jump, matatayo sya" at "pwede sya liitan… ung adjustment gawin mo para ung sa status natin na me kulay".
+- **Files:** `tigo/camera-rig.js`, `tigo/pet-scene.js` (sit, standUp, pose, setSize), `tigo/room.js` (seatNear), `tigo/furniture.js` (seat), `tigo/controls.js`, `pages/tigo.js`, `app/tigo.html`, `css/pages/tigo.css`, `lang/fil.js`, `lang/ar.js`, `config.js` (0.11.17)
+- **Paano:** Overlap test (test_layout) 114/114 kasama ang Sit, Sleep at size bar sa portrait, landscape at desktop.
