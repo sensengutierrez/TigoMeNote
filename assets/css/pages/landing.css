@@ -100,3 +100,4 @@
 }
 .l-legal { text-align: center; padding: 8px 16px 24px; }
 .l-legal a { color: inherit; }
+@media (max-width: 440px) { .l-getapp { display: none; } }

@@ -54,6 +54,12 @@
       thirdParty: root + "legal/third-party.html",
       contactEmail: ""
     }),
+    // Mga app (APK) at Get app page. app-version.json = ginagawa ng .github/workflows/apk.yml tuwing may bagong release
+    apps: Object.freeze({
+      getPage: root + "get/",
+      publicGet: "https://tigomenote.com/get/",   // laman ng QR (assets/img/qr-get.svg ← tools/make-qr.py)
+      versionJson: root + "app-version.json"
+    }),
     // Emergency hotlines na lumalabas sa SOS (country code → numero)
     emergency: Object.freeze({ BH: "999", PH: "911", default: "112" }),
     // Service worker (push notifications) — nasa root ng site

@@ -15,6 +15,7 @@ updated: 2026-10-24
 | `sound-maker.html` | app/ | Sound Maker: gumawa ng sariling beat/tunog, listahan ng My sounds | oo |
 | `messages.html` | app/ | Tigo Messenger: chats, groups, requests (sa APK: bubuksan ang hiwalay na app) | oo |
 | `gallery.html` | app/ | Gallery: albums, upload, edit (device lang) | oo |
+| `get/index.html` | get/ | Get the app: Android APK, iPhone (Home Screen + notifications), QR para sa computer (public) | hindi |
 | `profile.html` | app/ | Profile: cover, photo, edit profile, naka-pilang uploads, mga tab (Posts, Private, Reposts, Saved, Liked, History) | oo |
 | `safety.html` | app/ | Safety: SOS, map, Family/Friends, invites, parental | oo |
 | `notifications.html` | app/ | Notifications: activity list + notification settings | oo |

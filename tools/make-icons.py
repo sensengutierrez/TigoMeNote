@@ -45,5 +45,6 @@ with sync_playwright() as pw:
         for n in ("ic_launcher", "ic_launcher_round"): open(f"{res}/mipmap-anydpi-v26/{n}.xml", "w").write(xml)
         render(pg, splash(app), 1280, f"{res}/drawable/splash.png")
         render(pg, logo.icon(app), 512, f"{res}/store-icon-512.png", True)
+        render(pg, logo.icon(app), 192, f"{img}/app-{app}.png", True)   # para sa Get app page
     br.close()
 print("icons ok")

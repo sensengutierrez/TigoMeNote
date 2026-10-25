@@ -22,6 +22,7 @@
   }
   function allowed(item) {
     var u = window.TMN_USER;
+    if (item.web && window.TMN_IN_APP) return false;
     return !item.role || (u && u.role === item.role);
   }
   function url(href) { return C.root + href; }

@@ -9,6 +9,7 @@
      href   – path mula sa root ng site
      role   – (optional) "Admin" = admin lang makakakita
      primary– (optional) true = malaking button sa gitna ng bottom tabs
+     web    – (optional) true = sa web lang (nakatago sa loob ng APK)
 */
 window.TMN_NAV = {
   // Main menu
@@ -28,6 +29,7 @@ window.TMN_NAV = {
   more: [
     { id: "sounds",   label: "Sound Maker", icon: "music", href: "app/sound-maker.html" },
     { id: "settings", label: "Settings", icon: "gear",    href: "app/settings.html" },
+    { id: "getapp",   label: "Get app",  icon: "phone",   href: "get/", web: true },
     { id: "reports",  label: "Reports",  icon: "flag",    href: "app/admin/reports.html", role: "Admin" },
     { id: "policies", label: "Policies", icon: "info",    href: "legal/index.html" }
     // Halimbawa ng admin-only (pag nagawa na ang page):

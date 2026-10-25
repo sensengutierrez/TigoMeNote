@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="Get the TigoMeNote app: Android (APK) or iPhone (Home Screen).">
+  <title>Get the app · TigoMeNote</title>
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <script src="../assets/js/theme.js?v=0.11.18"></script>
+  <script src="../assets/js/config.js?v=0.11.18"></script>
+  <script src="../assets/js/i18n.js?v=0.11.18"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/tokens.css?v=0.11.18">
+  <link rel="stylesheet" href="../assets/css/base.css?v=0.11.18">
+  <link rel="stylesheet" href="../assets/css/components.css?v=0.11.18">
+  <link rel="stylesheet" href="../assets/css/shell.css?v=0.11.18">
+  <link rel="stylesheet" href="../assets/css/pages/landing.css?v=0.11.18">
+  <link rel="stylesheet" href="../assets/css/pages/get.css?v=0.11.18">
+</head>
+<body class="landing get-page">
+  <header class="l-nav">
+    <a class="brand" href="../"><span class="brand-mark">T</span><span>Tigo<b>Me</b>Note</span></a>
+    <div class="l-nav-actions">
+      <span id="langMini"></span>
+      <button class="icon-btn js-theme" type="button" aria-label="Toggle dark mode"></button>
+      <a class="btn btn-ghost js-open" href="../login.html">Open on web</a>
+    </div>
+  </header>
+
+  <main class="ga">
+    <section class="ga-hero">
+      <img class="ga-logo" src="../assets/img/app-main.png" alt="" width="96" height="96">
+      <h1>Get the TigoMeNote app</h1>
+      <p class="ga-sub">Daily notes, photos, Explore, and Tigo. Free.</p>
+    </section>
+
+    <div class="ga-tabs segmented" role="tablist" aria-label="Your device">
+      <button type="button" role="tab" data-tab="android" aria-selected="false">🤖 Android</button>
+      <button type="button" role="tab" data-tab="ios" aria-selected="false">📱 iPhone</button>
+      <button type="button" role="tab" data-tab="pc" aria-selected="false">💻 Computer</button>
+    </div>
+
+    <!-- Android: APK -->
+    <section class="ga-card" data-panel="android" hidden>
+      <div class="ga-dl">
+        <a class="btn btn-primary btn-lg ga-btn" id="apkBtn" href="#" rel="noopener">⬇ Download for Android</a>
+        <span class="faint small" id="apkMeta">Loading…</span>
+      </div>
+      <ol class="ga-steps">
+        <li><b>Tap Download.</b> <span>The file is <code>TigoMeNote.apk</code>.</span></li>
+        <li><b>Open the file</b> <span>from the notification or your Downloads.</span></li>
+        <li><b>If Android asks, allow "Install unknown apps"</b> <span>for Chrome (or your browser), then go back.</span></li>
+        <li><b>Tap Install, then Open</b> <span>and sign in with your TigoMeNote account.</span></li>
+      </ol>
+      <p class="ga-note small">🔒 The app is signed by TigoMeNote. It's not on Google Play yet, so Android shows a warning; that's normal. To update, download again and install over it — your data stays.</p>
+    </section>
+
+    <!-- iPhone: Home Screen (PWA) -->
+    <section class="ga-card" data-panel="ios" hidden>
+      <p class="ga-lead">There's no App Store app yet. On iPhone, add TigoMeNote to your Home Screen: it opens full screen like an app and can get notifications.</p>
+      <ol class="ga-steps">
+        <li><b>Open tigomenote.com in Safari.</b> <span>Not inside Instagram, Messenger or another app.</span></li>
+        <li><b>Tap Share</b> <span class="ga-ic">⬆︎</span> <span>at the bottom of Safari.</span></li>
+        <li><b>Tap "Add to Home Screen"</b>, <span>then Add.</span></li>
+        <li><b>Open TigoMeNote from your Home Screen</b> <span>and sign in.</span></li>
+        <li><b>Turn on notifications:</b> <span>Settings → Notifications → Turn on → Allow.</span></li>
+      </ol>
+      <p class="ga-note small">🔔 Notifications on iPhone need iOS 16.4 or newer, and only work when TigoMeNote is opened from the Home Screen icon (not from a Safari tab).</p>
+    </section>
+
+    <!-- Computer: QR -->
+    <section class="ga-card" data-panel="pc" hidden>
+      <div class="ga-qr-row">
+        <div class="ga-qr"><img src="../assets/img/qr-get.svg" alt="QR code: tigomenote.com/get" width="196" height="196"></div>
+        <div>
+          <p class="ga-lead"><b>Scan with your phone camera</b> to get the app.</p>
+          <ol class="ga-steps compact">
+            <li>Open the camera on your phone.</li>
+            <li>Point it at the QR code.</li>
+            <li>Tap the link that appears, then follow the steps for Android or iPhone.</li>
+          </ol>
+          <p class="faint small">Or open <b class="selectable" id="getUrl">tigomenote.com/get</b> on your phone.</p>
+          <a class="btn btn-ghost" href="../login.html">Use TigoMeNote on the web</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="ga-family">
+      <h2>TigoMeNote apps</h2>
+      <div class="ga-apps">
+        <div class="ga-app"><img src="../assets/img/app-main.png" alt="" width="56" height="56"><div><b>TigoMeNote</b><span>Daily, Explore, photos, Safety</span></div><span class="ga-tag ok">Available</span></div>
+        <div class="ga-app"><img src="../assets/img/app-tigo.png" alt="" width="56" height="56"><div><b>Tigo</b><span>Play with Tigo, full screen game</span></div><span class="ga-tag">Coming soon</span></div>
+        <div class="ga-app"><img src="../assets/img/app-chat.png" alt="" width="56" height="56"><div><b>TigoMeNote Chat</b><span>Messages and calls</span></div><span class="ga-tag">Coming soon</span></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="l-legal faint small" aria-label="Policies"><a href="../legal/index.html">About</a> · <a href="../legal/terms.html">Terms</a> · <a href="../legal/privacy.html">Privacy</a></nav>
+
+  <script src="../assets/js/icons.js?v=0.11.18"></script>
+  <script src="../assets/js/pages/get.js?v=0.11.18"></script>
+</body>
+</html>

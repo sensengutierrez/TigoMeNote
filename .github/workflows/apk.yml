@@ -89,3 +89,22 @@ jobs:
           TAG="${APP}-v${VER}"
           gh release view "$TAG" > /dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --notes "APK ${APP} ${VER}" --latest=false
           gh release upload "$TAG" out/*.apk --clobber
+      - name: Update app-version.json (Get app page + auto-update)
+        if: env.SIGN == 'release'
+        run: |
+          NAME=$(python3 -c "import json;print(json.load(open('apk/$APP/capacitor.config.json'))['appName'].replace(' ',''))")
+          python3 - <<PY
+          import json, os, hashlib, datetime
+          p = "app-version.json"
+          d = json.load(open(p)) if os.path.exists(p) else {}
+          cfg = json.load(open("apk/$APP/capacitor.config.json"))
+          f = "out/$NAME.apk"; a, b, c = (int(x) for x in "$VER".split("."))
+          d["$APP"] = {"name": cfg["appName"], "id": cfg["appId"], "version": "$VER", "code": a * 1000000 + b * 1000 + c,
+                       "url": "https://github.com/${{ github.repository }}/releases/download/$APP-v$VER/$NAME.apk",
+                       "size": os.path.getsize(f), "sha256": hashlib.sha256(open(f, "rb").read()).hexdigest(),
+                       "date": datetime.date.today().isoformat()}
+          json.dump(d, open(p, "w"), indent=2); open(p, "a").write("\n")
+          PY
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app-version.json
+          git diff --cached --quiet || { git commit -m "app-version.json: $APP $VER" && git pull --rebase && git push; }

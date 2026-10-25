@@ -72,8 +72,6 @@
     background: #0d0d10; color: #fff; overflow: hidden; z-index: 2;
   }
   .auth-art > * { position: relative; }
-  .auth-art .brand-mark { background: #fff; color: #0d0d10; }
-  .auth-art .brand-mark::after { border-color: #0d0d10; }
 
   /* Gumagalaw na kulay sa likod */
   .art-bg { position: absolute !important; inset: 0; overflow: hidden; }
