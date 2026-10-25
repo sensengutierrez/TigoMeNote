@@ -61,6 +61,7 @@ updated: 2026-10-24
 | `tigo/controls.js` / `coin-game.js` / `pac-game.js` / `race-game.js` | WASD/arrows + Space, 2 joystick (lakad + camera) · Coin Rush · Pac-Tigo · Tigo Racing |
 | `tigo/camera-rig.js` / `sky-dome.js` | Camera: 360°, tingala, Follow/Top/Close-up, zoom · 3D na langit (ulap, araw, buwan, bituin) |
 | `tigo/room.js` / `furniture.js` / `room-ui.js` | Loob ng bahay (dingding, sahig, banggaan) · mga gamit sa 3D · Decorate panel |
+| `tigo/photo.js` | 📸 litrato ni Tigo (frame, Save, Share, Share to Explore) + level-up share |
 | `tigo/voice.js` / `talk.js` | Boses-baby ni Tigo (synth o speech), game sounds, speech bubble, Sound settings |
 | `tigo/closet-ui.js` / `games-ui.js` / `journey-ui.js` | Closet panel, listahan ng laro + HUD, Growth journey |
 | `pages/tigo.js` | Tigo page: alaga, closet, laro, journey, full screen, nearby/gather, sabay na galaw, visits |

@@ -17,6 +17,7 @@
      sc.ray(x, y) → Raycaster    · sc.setClaim(fn) → kung may ibang gagamit ng hila sa screen (paglipat ng gamit)
      opts.onDoor(state)          → "near" (malapit sa pinto sa labas) | "room" (nasa loob) | null
      sc.add(opts) / remove(t)    → bisita (Tigo ng kaibigan); sumusunod siya kay Tigo habang naglalakad
+     sc.dance("dance"|"budots"|"robot") → sec  → solo na sayaw (💃 Groove · 🕺 Budots · 🤖 Robot); sasabay ang bisita
      sc.together(kind) → sec     → sabay na galaw: "dance" | "highfive" | "chase" (habulan) | "spin" (ikot) | "bow"
      sc.hasFriends()
      sc.beginGame({ tick(dt,t), cam(camera,dt) }) / sc.endGame()  → ibang mundo para sa laro (Pac-Tigo, Racing)
@@ -159,6 +160,26 @@ export function createScene(canvas, opts = {}) {
     }
     if (T >= show.dur) { all.forEach((p) => { p.move(null); p.walk(0); }); main.face(0); show = null; }
     return goal;
+  }
+
+  // ---------- 💃 sayaw (solo, kahit walang kaibigan; sasabay ang bisita at buddy) ----------
+  const DANCES = { dance: 5, budots: 5, robot: 5 };
+  let danceT = 0, confT = 0;
+  function dance(kind) {
+    if (game || inside || show || !DANCES[kind]) return 0;
+    if (pose !== "stand") standUp();
+    auto = null; me.vx = me.vz = 0; main.walk(0); main.face(rig.yaw());
+    const sec = DANCES[kind];
+    main.move(kind, sec); friends.forEach((f) => f.t.move(kind, sec)); if (buddy) buddy.hop();
+    danceT = sec; confT = 0.4; return sec;
+  }
+  function updateDance(dt) {
+    if (danceT <= 0) return;
+    const i = input(); // naglakad = tigil sayaw
+    if (Math.hypot(i.x || 0, i.z || 0) > 0.2) { danceT = 0; main.move(null); friends.forEach((f) => f.t.move(null)); return; }
+    danceT -= dt; confT -= dt;
+    if (confT <= 0) { confT = 0.45; effect(Math.random() < 0.7 ? "confetti" : "sparkle"); }
+    if (buddy && Math.random() < dt * 1.2) buddy.hop();
   }
 
   // ---------- buddy ----------
@@ -429,6 +450,7 @@ export function createScene(canvas, opts = {}) {
       game.cam(camera, dt); renderer.render(scene, camera); raf = requestAnimationFrame(loop); return;
     }
     moveMain(dt, updateShow(dt, t));
+    updateDance(dt);
     moveFriends(dt);
     pets.forEach((p) => p.update(opts.reduced ? dt * 0.4 : dt, t));
     if (buddy) buddy.update(dt, t, inside && !inRoom ? { x: HOUSE.door.x + 0.3, z: HOUSE.door.z + 0.6 } : me, false);
@@ -462,6 +484,7 @@ export function createScene(canvas, opts = {}) {
     setLook(fn) { look2 = fn || (() => null); },
     setRun(fn) { running = fn || (() => false); },
     sit, pose() { return pose; },
+    dance, dancing() { return danceT > 0; },
     standUp() { if (pose === "sit") standUp(); },
     setSize(k) {
       sizeK = Math.max(0.5, Math.min(1.3, Number(k) || 1));
@@ -481,6 +504,16 @@ export function createScene(canvas, opts = {}) {
       headV.y += (2.05 + main.height()) * s; headV.project(camera);
       if (headV.z > 1) return null;
       return { x: (headV.x * 0.5 + 0.5) * canvas.clientWidth, y: (-headV.y * 0.5 + 0.5) * canvas.clientHeight };
+    },
+    // 📸 litrato: i-render ngayon (≥1080px ang lapad) at ibalik ang kopya (2D canvas) — walang preserveDrawingBuffer
+    snapshot(minW = 1080) {
+      const pr = renderer.getPixelRatio(), w = canvas.clientWidth || canvas.width;
+      const want = Math.min(3, Math.max(pr, minW / Math.max(1, w)));
+      if (want !== pr) renderer.setPixelRatio(want); // mas malinaw na litrato kahit maliit ang screen
+      renderer.render(scene, camera);
+      const out = document.createElement("canvas"); out.width = canvas.width; out.height = canvas.height; out.getContext("2d").drawImage(canvas, 0, 0);
+      if (want !== pr) { renderer.setPixelRatio(pr); renderer.render(scene, camera); }
+      return out;
     },
     setInput(fn) { input = fn || (() => ({ x: 0, z: 0 })); },
     input() { return input(); },

@@ -376,3 +376,15 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "pag swipe ko pataas or down dapat ung realword tataas at bababa… parang realtime engine", "pag nasa loob ng bahay ung stop, run at ung jump mapapalitan ng sit, sleep sa bed… jump, matatayo sya" at "pwede sya liitan… ung adjustment gawin mo para ung sa status natin na me kulay".
 - **Files:** `tigo/camera-rig.js`, `tigo/pet-scene.js` (sit, standUp, pose, setSize), `tigo/room.js` (seatNear), `tigo/furniture.js` (seat), `tigo/controls.js`, `pages/tigo.js`, `app/tigo.html`, `css/pages/tigo.css`, `lang/fil.js`, `lang/ar.js`, `config.js` (0.11.17)
 - **Paano:** Overlap test (test_layout) 114/114 kasama ang Sit, Sleep at size bar sa portrait, landscape at desktop.
+
+## 2026-10-25 · #47 Mas totoong damit, bag at alaga · totoong hawak · 📸 Photo + Share · 💃 Dance (3 sayaw)
+- **Ano:**
+  - **Damit at bag:** Backpack na may flap, bulsa, zipper, hawakan at buckle; ang strap ay dumadaan sa ibabaw ng balikat at nakadikit sa katawan (wala nang "patpat" na lumalampas sa paa). Hoodie na bumabalot hanggang balikat (hood sa likod, zipper, tali, bulsa). Cape na nakasabit sa balikat at umuugoy kapag naglalakad.
+  - **Totoong hawak:** ang braso ay may balikat at kamao; ang hawak ay dumadaan sa kamao at laging patayo kahit gumagalaw ang braso. Ang flag ay wumawagayway, ang lobo ay umuugoy, ang payong ay may J na hawakan at 8 tela.
+  - **Alaga:** aso at pusa na may nguso, 4 na paang gumagalaw kapag naglalakad, kwelyo at gintong tag; pusa may balbas at guhit; kuneho may malalaking paa sa likod.
+  - **📸 Photo:** sa menu (phone/landscape) at sa gilid (desktop). Flash, tapos litrato (≥1080px) na may pangalan, level, petsa, "with (bisita)", "at home" at TigoMeNote. Preview: ⬇ Save · ↗ Share (share ng phone, kung meron) · 📤 Share to Explore (bubukas ang New post na may litrato at caption). Gumagana sa labas, sa loob ng bahay at kahit may bisita.
+  - **Level up:** ang 📸 ay nagiging **🎉 Lv N** (mga 45 s) → litrato na may "🎉 Level N!" na banner, pang-share.
+  - **💃 Dance:** pindot → 3 sayaw: 🪩 Groove, 🕺 Budots, 🤖 Robot (5 s, may confetti; sasabay ang bisita at buddy; gumagana rin sa loob ng bahay). Naglakad = tigil sayaw.
+- **Bakit:** Ayon kay Bench: "medyo real, para di pangit tingnan", "ung pag hawak ng flag… dapat real na hawak", "mag lagay kadin ng tap to photo… pwede top to share para sa explore… pag ng level pwede sya i share" at "dance botton… pag click ng botton me 3 bottons pwede mag dance".
+- **Files:** `tigo/pet-model.js`, `tigo/outfit.js`, `tigo/buddies.js`, `tigo/pet-scene.js` (snapshot, dance), `tigo/photo.js` (bago), `pages/tigo.js`, `app/tigo.html`, `css/pages/tigo.css`, `lang/fil.js`, `lang/ar.js`, `config.js` (0.11.18)
+- **Paano:** Ang post maker (composer, sounds, emoji) ay ini-load lang kapag pinindot ang Share to Explore, kaya hindi bumibigat ang Tigo page. test_photo 18/18; test_layout 139/139 (may 💃 row, sa loob ng bahay, portrait, landscape, desktop); test_tigo 41/41, test_house 33/33, test_games 10/10, test_posts 41/41.

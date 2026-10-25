@@ -6,7 +6,7 @@
      t.setMood("happy"|"ok"|"sad"|"sleepy"|"sick")   t.sleep(true|false)
      t.jump() · t.eat() · t.spin() · t.wiggle() · t.lookAt(x, y)  (x,y = -1..1)
      t.setColor(id) · t.setGear(id) · t.wear(slot, id) · t.setGlow(on) · t.dispose()
-     t.move("dance"|"highfive"|"cheer"|"bow", sec) → sayaw/galaw kasama ang kaibigan
+     t.move("dance"|"budots"|"robot"|"highfive"|"cheer"|"bow", sec) → sayaw/galaw (solo o kasama ang kaibigan)
      t.walk(speed 0..1, heading rad)  → lakad (gumagalaw ang paa at kamay); heading = saan nakaharap
    Mga isusuot (wear): outfit.js. Ang hat na sprout/bow/cap/headphones/crown ay nandito (setGear).
    Sariling disenyo (gawa sa code), walang kinopyang character. */
@@ -76,10 +76,13 @@ export function createTigo(opts = {}) {
   open.scale.set(1, 0.8, 0.4); open.position.set(0, -0.18, 0.02); open.visible = false; face.add(open);
 
   // ---------- kamay at paa ----------
-  const limbs = [];
-  [[-0.74, 0.92, -1], [0.74, 0.92, 1]].forEach(([x, y, s]) => {
-    const a = new THREE.Mesh(geo(new THREE.CapsuleGeometry(0.09, 0.22, 6, 12)), skin);
-    a.position.set(x, y, 0.05); a.rotation.z = s * 0.5; a.castShadow = true; body.add(a); limbs.push(a);
+  // braso: umiikot mula sa balikat (pivot); may kamao sa dulo. Ang hawak (hand anchor) ay nasa kamao ng kanang braso.
+  const limbs = [], fists = [];
+  [[-0.68, 1.08, -1], [0.68, 1.08, 1]].forEach(([x, y, s]) => {
+    const pv = new THREE.Group(); pv.position.set(x, y, 0.05); pv.rotation.z = s * 0.5; body.add(pv);
+    const a = new THREE.Mesh(geo(new THREE.CapsuleGeometry(0.085, 0.2, 6, 12)), skin); a.position.y = -0.17; a.castShadow = true; pv.add(a);
+    const fist = new THREE.Mesh(geo(new THREE.SphereGeometry(0.105, 16, 12)), skin); fist.position.y = -0.36; fist.scale.set(1, 0.92, 1); fist.castShadow = true; pv.add(fist);
+    limbs.push(pv); fists.push(fist);
   });
   const feet = [-0.32, 0.32].map((x) => {
     const f = new THREE.Mesh(geo(new THREE.SphereGeometry(0.17, 18, 12)), fold);
@@ -134,7 +137,9 @@ export function createTigo(opts = {}) {
   anchors.hat.position.y = 1.72; body.add(anchors.hat);
   face.add(anchors.face);
   anchors.body.position.set(0, 0.72, 0.41); body.add(anchors.body);
-  anchors.hand.position.set(0.9, 0.66, 0.16); body.add(anchors.hand);
+  // hawak: nasa kamao ng kanang braso; ang gamit ay laging patayo (kinokontra ang ikot ng braso)
+  anchors.hand.position.set(0, -0.36, 0.02); limbs[1].add(anchors.hand);
+  anchors.hand.rotation.order = "ZYX"; // kabaligtaran ng ikot ng braso (XYZ) → laging patayo ang hawak
   const worn = {};
   function wear(slot, id) {
     if (slot === "hat") {
@@ -192,6 +197,8 @@ export function createTigo(opts = {}) {
     const beat = t * 7.5;
     if (mv === "dance") { y += Math.abs(Math.sin(beat)) * 0.16; body.rotation.z = Math.sin(beat) * 0.2; }
     if (mv === "cheer") y += Math.max(0, Math.sin(t * 9)) * 0.3;
+    if (mv === "budots") { y += Math.abs(Math.sin(t * 9)) * 0.1; body.rotation.z = Math.sin(t * 4.5) * 0.26; }
+    if (mv === "robot") { const q = Math.floor(t * 4); y += (q % 2) * 0.05; body.rotation.z = [0, 0.12, 0, -0.12][q % 4]; }
     rig.position.y = y;
     // lakad: salitan ang paa (taas + abante), kumekembot nang kaunti ang katawan
     st.walkT += dt * (6 + st.walk * 8) * (st.walk > 0.05 ? 1 : 0);
@@ -215,13 +222,33 @@ export function createTigo(opts = {}) {
     const swing = st.walk > 0.05 ? Math.sin(st.walkT) * 0.5 : 0;
     limbs[0].rotation.z = -0.5 + (st.mood === "happy" && !st.asleep && !swing ? Math.sin(t * 3) * 0.15 : 0);
     limbs[0].rotation.x = swing;
-    limbs[1].rotation.z = 0.5 - (st.jump > 0 ? 0.9 : worn.hand ? 0.25 : st.mood === "happy" && !st.asleep ? Math.sin(t * 3 + 1) * 0.15 : 0);
-    limbs[1].rotation.x = worn.hand ? 0 : -swing;
+    limbs[1].rotation.z = worn.hand ? 0.32 + (st.jump > 0 ? 0.5 : 0) : 0.5 - (st.jump > 0 ? 0.9 : st.mood === "happy" && !st.asleep ? Math.sin(t * 3 + 1) * 0.15 : 0);
+    limbs[1].rotation.x = worn.hand ? -0.55 - swing * 0.25 : -swing; // hawak: braso pasulong, parang totoong may hawak
     if (mv === "dance") {
       limbs[0].rotation.z = -1.3 + Math.sin(beat) * 0.9; limbs[1].rotation.z = 1.3 + Math.sin(beat) * 0.9; limbs[0].rotation.x = limbs[1].rotation.x = 0;
       feet.forEach((f, i) => { f.position.y = 0.1 + Math.max(0, Math.sin(beat + i * Math.PI)) * 0.12; });
+    } else if (mv === "budots") {
+      // Budots: lupaypay na kamay na kumakaway-kaway, tuhod na bumabagsak-bagsak, kembot
+      const b = t * 9;
+      limbs[0].rotation.z = -0.9 + Math.sin(b) * 1.1; limbs[1].rotation.z = 0.9 + Math.sin(b + Math.PI) * 1.1;
+      limbs[0].rotation.x = Math.sin(b * 0.5) * 0.9; limbs[1].rotation.x = -Math.sin(b * 0.5) * 0.9;
+      body.rotation.y = Math.sin(t * 4.5) * 0.35;
+      feet.forEach((f, i) => { f.position.y = 0.1 + Math.max(0, Math.sin(b + i * Math.PI)) * 0.1; f.rotation.y = Math.sin(t * 4.5) * 0.4; });
+    } else if (mv === "robot") {
+      // Robot: putol-putol na galaw, parang makina
+      const q = Math.floor(t * 4) % 8;
+      limbs[0].rotation.z = [-1.57, -1.57, -0.3, -2.7, -1.57, -0.3, -1.57, -2.7][q]; limbs[1].rotation.z = [1.57, 0.3, 1.57, 2.7, 0.3, 1.57, 2.7, 1.57][q];
+      limbs[0].rotation.x = [0, -1.2, 0, 0, -1.2, 0, 0, 0][q]; limbs[1].rotation.x = [0, 0, -1.2, 0, 0, -1.2, 0, 0][q];
+      body.rotation.y = [0, 0.45, 0, -0.45, 0, 0.45, 0, -0.45][q];
+      feet.forEach((f, i) => { f.position.y = 0.1 + (q % 2 === i ? 0.08 : 0); });
     } else if (mv === "highfive") { limbs[1].rotation.z = 2.7; limbs[1].rotation.x = -0.3; }
     else if (mv === "cheer") { limbs[0].rotation.z = -2.6 + Math.sin(t * 9) * 0.2; limbs[1].rotation.z = 2.6 - Math.sin(t * 9) * 0.2; }
+    // ang hawak ay laging patayo at gumagalaw kasama ng kamay (wagayway ng flag, lobo, atbp.)
+    if (worn.hand) {
+      anchors.hand.rotation.set(-limbs[1].rotation.x, 0, -limbs[1].rotation.z);
+      anchors.hand.children.forEach((c) => { if (c.userData.tick) c.userData.tick(t, st.walk); });
+    }
+    anchors.body.children.forEach((c) => { if (c.userData.tick) c.userData.tick(t, st.walk); });
     // malungkot = medyo nakayuko
     body.rotation.x += ((mv === "bow" ? 0.55 : st.mood === "sad" || st.mood === "sick" || st.asleep ? 0.12 : 0) - body.rotation.x) * (mv === "bow" ? 0.15 : 0.05);
     // Zzz

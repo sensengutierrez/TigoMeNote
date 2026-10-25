@@ -4,6 +4,8 @@
    Sukat ng katawan ni Tigo (pet-model.js): lapad 1.32, taas 1.5 (y 0.2–1.7), kapal 0.82 (z ±0.41).
    Ang posisyon dito ay relative sa anchor ng model. Sariling disenyo lahat. */
 import * as THREE from "../../vendor/three/three.module.min.js";
+import { RoundedBoxGeometry } from "../../vendor/three/RoundedBoxGeometry.js";
+// May galaw ang ilang gamit: group.userData.tick(t, walk) → tinatawag ng pet-model bawat frame (wagayway ng flag, ugoy ng cape, atbp.)
 
 const M = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.5, ...o });
 const add = (g, mesh, x = 0, y = 0, z = 0) => { mesh.position.set(x, y, z); mesh.castShadow = true; g.add(mesh); return mesh; };
@@ -110,24 +112,56 @@ const BUILD = {
     add(g, new THREE.Mesh(sphere(0.05), m), 0, -0.2, 0.05);
     [-1, 1].forEach((s) => { const w = add(g, new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.18, 4), m), s * 0.11, -0.2, 0.03); w.rotation.z = -s * Math.PI / 2; });
   },
+  // Hoodie: tela na bumabalot sa ibabang katawan (may rib sa laylayan), hood sa likod, tali at kangaroo pocket
   hoodie(g) {
-    const m = M(0xff8a3d, { roughness: 0.85 });
-    const band = add(g, new THREE.Mesh(new THREE.CylinderGeometry(0.72, 0.72, 0.62, 32, 1, true), m), 0, -0.45, -0.41); band.scale.set(1, 1, 0.66); band.material.side = THREE.DoubleSide;
-    const hood = add(g, new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.12, 10, 32), m), 0, 0, -0.41); hood.rotation.x = Math.PI / 2; hood.scale.set(1.2, 0.8, 1);
-    const pocket = add(g, new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.18, 0.04), M(0xe56a1f)), 0, -0.62, 0.06);
-    [-0.1, 0.1].forEach((x) => add(g, new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.25, 6), M(0xffffff)), x, -0.15, 0.08));
-    return pocket;
+    const m = M(0xff8a3d, { roughness: 0.92 }), dark = M(0xe0661f, { roughness: 0.95 }), cord = M(0xffffff, { roughness: 0.6 });
+    // katawan ni Tigo: lapad 1.32, kapal 0.82 → bahagyang mas malaki para "nakasuot"
+    // mula laylayan (-0.56) hanggang balikat (0.3) — sa ilalim ng bibig
+    add(g, new THREE.Mesh(new RoundedBoxGeometry(1.4, 0.86, 0.9, 5, 0.3), m), 0, -0.13, -0.41);
+    add(g, new THREE.Mesh(new RoundedBoxGeometry(1.42, 0.1, 0.92, 3, 0.05), dark), 0, -0.53, -0.41); // rib sa laylayan
+    const hood = add(g, new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), m), 0, 0.3, -0.87); hood.rotation.x = -1.3; hood.scale.set(1.2, 1, 0.5);
+    const neck = add(g, new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.055, 10, 36), dark), 0, 0.3, -0.41); neck.rotation.x = Math.PI / 2; neck.scale.set(1.13, 0.74, 1);
+    const zip = add(g, new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.5, 0.012), dark), 0, 0.02, 0.05);
+    [-0.12, 0.12].forEach((x) => { add(g, new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.24, 6), cord), x, 0.17, 0.055); add(g, new THREE.Mesh(sphere(0.024, 8), cord), x, 0.04, 0.055); });
+    const pk = add(g, new THREE.Mesh(new RoundedBoxGeometry(0.7, 0.24, 0.05, 2, 0.03), dark), 0, -0.3, 0.05);
+    zip.castShadow = false;
+    return pk;
   },
+  // Cape: telang umuugoy kapag naglalakad
   cape(g) {
-    const s = new THREE.Shape(); s.moveTo(-0.55, 0); s.lineTo(0.55, 0); s.lineTo(0.75, -1.1); s.quadraticCurveTo(0, -1.25, -0.75, -1.1); s.closePath();
-    const c = add(g, new THREE.Mesh(new THREE.ShapeGeometry(s), M(0xd62839, { side: THREE.DoubleSide, roughness: 0.6 })), 0, 0.05, -0.88); c.rotation.x = 0.18;
-    add(g, new THREE.Mesh(sphere(0.06), M(0xffd23f, { metalness: 0.6 })), 0, -0.02, 0.05);
+    const geo = new THREE.PlaneGeometry(1.3, 1.1, 10, 10), pos = geo.attributes.position, base = Float32Array.from(pos.array);
+    for (let i = 0; i < pos.count; i++) { const x = base[i * 3], y = base[i * 3 + 1]; base[i * 3] = x * (1 + (0.55 - y) * 0.2); }
+    pos.array.set(base);
+    const c = add(g, new THREE.Mesh(geo, M(0xd62839, { side: THREE.DoubleSide, roughness: 0.65 })), 0, -0.05, -0.88);
+    add(g, new THREE.Mesh(sphere(0.07), M(0xffd23f, { metalness: 0.7, roughness: 0.25 })), 0, 0.42, 0.04);
+    const tie = add(g, new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.025, 8, 36, Math.PI), M(0xffd23f, { metalness: 0.6 })), 0, 0.46, -0.41); tie.rotation.x = Math.PI / 2; tie.scale.set(1.1, 0.74, 1);
+    g.userData.tick = (t, walk) => {
+      const a = pos.array, k = 0.05 + walk * 0.18;
+      for (let i = 0; i < pos.count; i++) { const x = base[i * 3], y = base[i * 3 + 1], d = (0.55 - y); a[i * 3 + 2] = -d * d * (0.12 + walk * 0.35) + Math.sin(t * 4 + x * 3 + y * 2) * k * d * 0.4; }
+      pos.needsUpdate = true; geo.computeVertexNormals();
+    };
   },
+  // Backpack: bag sa likod na may flap, bulsa, zipper at strap sa balikat na nakadikit sa katawan
   backpack(g) {
-    const m = M(0xffc04d, { roughness: 0.7 });
-    add(g, new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.85, 0.32), m), 0, -0.5, -0.98);
-    add(g, new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.32, 0.1), M(0xe9a21f)), 0, -0.7, -1.18);
-    [-0.4, 0.4].forEach((x) => add(g, new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.7, 0.06), M(0x9b6b1a)), x, -0.4, 0.04));
+    const m = M(0xffb020, { roughness: 0.75 }), dark = M(0xd98a10, { roughness: 0.8 }), strapM = M(0x7a4f1d, { roughness: 0.6 }), metal = M(0xcfd4da, { metalness: 0.8, roughness: 0.3 });
+    // bag (likod: z ng katawan = -0.82 mula sa anchor)
+    add(g, new THREE.Mesh(new RoundedBoxGeometry(0.86, 0.92, 0.34, 4, 0.12), m), 0, -0.12, -1.0);
+    add(g, new THREE.Mesh(new RoundedBoxGeometry(0.88, 0.3, 0.38, 3, 0.1), dark), 0, 0.22, -1.0); // flap
+    add(g, new THREE.Mesh(new RoundedBoxGeometry(0.56, 0.34, 0.12, 3, 0.06), dark), 0, -0.32, -1.2); // bulsa sa harap ng bag
+    add(g, new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.015, 0.02), metal), 0, -0.2, -1.265); // zipper
+    add(g, new THREE.Mesh(sphere(0.03, 8), metal), 0.2, -0.2, -1.27);
+    // hawakan sa itaas
+    const h = add(g, new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.022, 8, 16, Math.PI), strapM), 0, 0.37, -0.98); h.rotation.y = Math.PI / 2;
+    // strap: mula sa itaas ng bag → paikot sa gilid ng balikat → pababa sa harap (nakadikit sa katawan, hindi lumalampas sa paa)
+    [-1, 1].forEach((sd) => {
+      // itaas: likod ng bag → ibabaw ng balikat (lampas sa braso) → harap, nakadikit sa katawan
+      const up = [[sd * 0.3, 0.32, -0.86], [sd * 0.58, 0.5, -0.78], [sd * 0.71, 0.53, -0.41], [sd * 0.63, 0.5, -0.04], [sd * 0.46, 0.34, 0.035], [sd * 0.4, 0.1, 0.04], [sd * 0.4, -0.06, 0.04]];
+      // ibaba: buckle → gilid (ilalim ng braso) → ilalim ng bag
+      const lo = [[sd * 0.4, -0.06, 0.04], [sd * 0.53, -0.16, 0.0], [sd * 0.66, -0.22, -0.12], [sd * 0.71, -0.26, -0.41], [sd * 0.62, -0.32, -0.74], [sd * 0.34, -0.4, -0.86]];
+      add(g, new THREE.Mesh(tube(up, 0.032), strapM), 0, 0, 0);
+      add(g, new THREE.Mesh(tube(lo, 0.024), strapM), 0, 0, 0);
+      add(g, new THREE.Mesh(new RoundedBoxGeometry(0.1, 0.07, 0.04, 2, 0.015), metal), sd * 0.4, -0.06, 0.06); // buckle
+    });
   },
   lei(g) {
     const cols = [0xff4f8b, 0xffd23f, 0xff7a59, 0xffffff];
@@ -143,15 +177,27 @@ const BUILD = {
     add(g, new THREE.Mesh(sphere(0.12), M(0xff9ec7)), 0, 0.24, 0); add(g, new THREE.Mesh(sphere(0.1), M(0xfff1c1)), 0, 0.36, 0);
   },
   balloon(g) {
-    add(g, new THREE.Mesh(tube([[0, 0, 0], [0.05, 0.4, 0], [-0.03, 0.8, 0], [0, 1.1, 0]], 0.006), M(0xffffff)), 0, 0, 0);
-    const b = add(g, new THREE.Mesh(sphere(0.24), new THREE.MeshPhysicalMaterial({ color: 0xff3d5a, roughness: 0.15, clearcoat: 1 })), 0, 1.3, 0); b.scale.y = 1.15;
+    const fl = new THREE.Group(); g.add(fl);
+    add(fl, new THREE.Mesh(tube([[0, 0, 0], [0.05, 0.4, 0], [-0.03, 0.8, 0], [0, 1.08, 0]], 0.006), M(0xffffff)), 0, 0, 0);
+    const b = add(fl, new THREE.Mesh(sphere(0.24, 28), new THREE.MeshPhysicalMaterial({ color: 0xff3d5a, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.1 })), 0, 1.32, 0); b.scale.y = 1.15;
+    add(fl, new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.06, 8), M(0xff3d5a)), 0, 1.06, 0).rotation.x = Math.PI;
+    g.userData.tick = (t, walk) => { fl.rotation.z = Math.sin(t * 1.6) * 0.08 + walk * 0.15; fl.rotation.x = Math.sin(t * 1.1) * 0.05 + walk * 0.25; };
   },
   "flag-ph"(g) { flag(g, "ph"); },
   "flag-bh"(g) { flag(g, "bh"); },
+  // Payong: tangkay na dumadaan sa kamao, J na hawakan sa ibaba, 8 tela na may tadyang (ribs)
   umbrella(g) {
-    add(g, new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 1.1, 8), M(0x444444)), 0, 0.5, 0);
-    const top = add(g, new THREE.Mesh(new THREE.ConeGeometry(0.75, 0.32, 8, 1, true), M(0x5ec8f2, { side: THREE.DoubleSide })), 0, 1.1, 0);
-    top.castShadow = true;
+    const shaft = M(0x3a3a40, { metalness: 0.5, roughness: 0.35 });
+    add(g, new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1.25, 8), shaft), 0, 0.5, 0);
+    const hk = add(g, new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.022, 8, 16, Math.PI), M(0x6b3e1f)), 0.07, -0.13, 0); hk.rotation.z = Math.PI;
+    const can = new THREE.Group(); can.position.y = 1.12; g.add(can);
+    const cols = [0x5ec8f2, 0xffffff];
+    for (let i = 0; i < 8; i++) {
+      const seg = new THREE.Mesh(new THREE.SphereGeometry(0.78, 6, 6, (i / 8) * Math.PI * 2, Math.PI / 4, 0, Math.PI / 2.6), M(cols[i % 2], { side: THREE.DoubleSide, roughness: 0.6 }));
+      seg.scale.y = 0.55; seg.castShadow = true; can.add(seg);
+    }
+    add(can, new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.12, 8), shaft), 0, 0.46, 0);
+    g.userData.tick = (t, walk) => { can.rotation.z = Math.sin(t * 2.2) * 0.04 * (1 + walk * 2); };
   },
   guitar(g) {
     const wood = M(0xc8833f, { roughness: 0.5 });
@@ -167,8 +213,10 @@ const BUILD = {
     add(g, new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 0.04, bevelEnabled: true, bevelSize: 0.01, bevelThickness: 0.01 }), M(0xffd23f, { emissive: 0x806000, emissiveIntensity: 0.8 })), 0, 0.68, -0.02);
   },
 };
+// Flag: poste na dumadaan sa kamao + telang wumawagayway
 function flag(g, kind) {
-  add(g, new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.9, 8), M(0xdddddd, { metalness: 0.5 })), 0, 0.4, 0);
+  add(g, new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 1.15, 8), M(0xdddddd, { metalness: 0.6, roughness: 0.3 })), 0, 0.42, 0);
+  add(g, new THREE.Mesh(sphere(0.035, 10), M(0xf4c342, { metalness: 0.8, roughness: 0.2 })), 0, 1.01, 0);
   const cv = document.createElement("canvas"); cv.width = 96; cv.height = 64; const x = cv.getContext("2d");
   if (kind === "ph") {
     x.fillStyle = "#0038a8"; x.fillRect(0, 0, 96, 32); x.fillStyle = "#ce1126"; x.fillRect(0, 32, 96, 32);
@@ -179,7 +227,14 @@ function flag(g, kind) {
     for (let i = 0; i < 5; i++) { x.lineTo(40, 6.4 + i * 12.8); x.lineTo(28, 12.8 + i * 12.8); } x.lineTo(0, 64); x.fill();
   }
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
-  add(g, new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.3), new THREE.MeshStandardMaterial({ map: tex, side: THREE.DoubleSide, roughness: 0.8 })), 0.23, 0.7, 0);
+  const geo = new THREE.PlaneGeometry(0.52, 0.34, 12, 6), pos = geo.attributes.position, base = Float32Array.from(pos.array);
+  const cloth = add(g, new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: tex, side: THREE.DoubleSide, roughness: 0.85 })), 0.27, 0.8, 0);
+  cloth.castShadow = true;
+  g.userData.tick = (t, walk) => {
+    const a = pos.array, sp = 5 + walk * 6;
+    for (let i = 0; i < pos.count; i++) { const x = base[i * 3] + 0.26; a[i * 3 + 2] = Math.sin(t * sp - x * 9) * 0.045 * x * 3; a[i * 3 + 1] = base[i * 3 + 1] - x * x * 0.12; }
+    pos.needsUpdate = true; geo.computeVertexNormals();
+  };
 }
 
 const ANCHOR = { hat: "hat", face: "face", body: "body", hand: "hand" };

@@ -40,6 +40,11 @@ Virtual pet ng TigoMeNote (parang Tamagotchi pero sariling character): si **Tigo
 - Desktop: hila ng mouse = ikot, wheel = zoom, Q/E = ikot. Ang lakad (joystick/WASD) ay ayon sa direksyon ng camera.
 - 3D na langit: ulap at araw (araw), buwan at bituin (gabi at Moon base).
 
+## 📸 Photo at 💃 Dance (`photo.js`, `pet-scene.js`)
+- 📸 Photo: `sc.snapshot()` (≥1080px) + frame (pangalan, level, petsa, bisita, TigoMeNote) → ⬇ Save · ↗ Share · 📤 Share to Explore (lazy-load ng post-composer). Pagka-level up: 📸 → 🎉 Lv N (banner na "Level N!").
+- 💃 Dance → 🪩 Groove · 🕺 Budots · 🤖 Robot (`sc.dance(kind)`, 5 s). Sasabay ang bisita at buddy; naglakad = tigil.
+- Hawak: kamao ng kanang braso (`anchors.hand`), laging patayo; `userData.tick(t, walk)` sa outfit = wagayway/ugoy.
+
 ## Bahay (`room.js`, `furniture.js`, `room-ui.js`)
 - Pasok: lumakad sa pinto ng bahay kubo, o 🏠 House / 🏠 Go inside. Labas: 🚪 Go outside o lumakad sa pinto ng kwarto.
 - Kwarto 6×5 na walang kisame; ang dingding na nakaharang sa camera ay bumababa. May bintana, pinto, doormat at ilaw (mas maliwanag sa gabi).
@@ -67,6 +72,7 @@ Virtual pet ng TigoMeNote (parang Tamagotchi pero sariling character): si **Tigo
 - Susunod sa APK: paalala kapag gutom/malungkot si Tigo (push), at widget sa home screen.
 
 ## Hindi pa na-test
+- Photo/Dance (mock): hindi pa nasubukan ang Share to Explore hanggang sa totoong upload, ang ↗ Share sa totoong phone/APK, ang litrato na may totoong bisita (pangalan sa frame), at bilis ng mas mataas na resolution sa mahinang phone.
 - Camera/bahay (test_house 32/32, mock): hindi pa nasubukan sa totoong phone ang dalawang joystick nang sabay, bilis ng 3D sa loob ng bahay na maraming gamit, at ang "room" sa totoong server.
 - Mock lang ang UI (test_tigo 41/41 + test_games: boses, sound settings, Pac-Tigo, Racing; keyboard, joystick, jump, closet/buy, journey, Coin Rush, bahay kubo, sayaw/Hi-5/Habulan/Ikot, full screen, 2D fallback). Hindi pa nasubukan: totoong server (pet-fast v2 na-deploy, wala pang totoong tawag), Gather ng dalawang totoong phone, landscape lock sa totoong phone, at bilis ng 3D sa mahinang phone.
 

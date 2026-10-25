@@ -336,3 +336,35 @@ body.tg-full, body.tg-game { overflow: hidden; }
   .tg-act span { font-size: 22px; }
 }
 @media (prefers-reduced-motion: reduce) { .tg-stat.low .tg-bar i, .tg-count.pop { animation: none; } }
+
+/* ---------- 📸 litrato (tigo/photo.js) ---------- */
+.tg-flash { position: absolute; inset: 0; z-index: 9; background: #fff; pointer-events: none; animation: tg-flash .6s ease-out forwards; border-radius: inherit; }
+@keyframes tg-flash { 0% { opacity: .95; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .tg-flash { animation-duration: .2s; } }
+.tg-photo { display: grid; place-items: center; }
+.tg-photo-img { display: block; width: auto; max-width: 100%; height: auto; max-height: max(160px, min(62vh, 560px, calc(100dvh - 210px))); object-fit: contain; border-radius: 14px; background: #0d0f14; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+.tg-photo-modal .modal-foot { flex-wrap: wrap; gap: 8px; }
+.tg-photo-modal .modal-foot .btn { flex: 1 1 auto; }
+.tg-dbtn.lvshare, .tg-act.lvshare { background: linear-gradient(135deg, #ffd23f, #ff8a3d); color: #3b1d00; animation: tg-pulse 1.6s ease-in-out infinite; }
+@keyframes tg-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,170,40,.55); } 50% { box-shadow: 0 0 0 6px rgba(255,170,40,0); } }
+@media (prefers-reduced-motion: reduce) { .tg-dbtn.lvshare, .tg-act.lvshare { animation: none; } }
+
+/* ---------- 💃 Dance (3 sayaw) ---------- */
+.tg-dance.on { background: #b9a2ff; color: #fff; box-shadow: 0 0 0 4px rgba(185,162,255,.35); }
+.tg-dance-row { display: flex; gap: 6px; padding: 5px; border-radius: 18px; background: rgba(255,255,255,.9); box-shadow: 0 4px 16px rgba(0,0,0,.18); }
+.tg-dance-row.hidden { display: none !important; }
+.tg-dance-row button { display: grid; justify-items: center; align-content: center; gap: 1px; width: 50px; height: 48px; padding: 0; border: 0; border-radius: 13px; background: transparent; color: #1b1b1f; font: inherit; font-size: 21px; line-height: 1.05; cursor: pointer; }
+.tg-dance-row button small { font-size: 9px; font-weight: 800; }
+.tg-dance-row button:hover, .tg-dance-row button:active { background: #efe9ff; }
+/* desktop: nasa hanay ng buttons; ang 3 sayaw ay lumalabas sa itaas */
+.tg-stage:not(.ui-game) .tg-btns { position: absolute; }
+.tg-stage:not(.ui-game) .tg-dance-row { position: absolute; right: 0; bottom: 56px; }
+/* phone / landscape: 💃 sa itaas ng ✋ Stop; ang 3 sayaw ay pahalang sa kaliwa nito */
+.tg-stage.ui-game .tg-btns { height: 204px; }
+.tg-stage.ui-game .tg-dance { right: 12px; bottom: 144px; width: 50px; height: 50px; }
+.tg-stage.ui-game .tg-dance-row { right: 70px; bottom: 140px; }
+.tg-stage.playing .tg-dance, .tg-stage.playing .tg-dance-row { display: none !important; }
+/* walang patong: habang bukas ang 3 sayaw, nakatago ang Play together bar; nakatago ang 💃 habang may sheet o nag-aayos ng gamit */
+.tg-stage:has(.tg-dance-row:not(.hidden)) .tg-together { display: none !important; }
+.tg-stage.sheet-open .tg-dance, .tg-stage.sheet-open .tg-dance-row,
+.tg-stage:has(.tg-room-bar:not(.hidden)) .tg-dance, .tg-stage:has(.tg-room-bar:not(.hidden)) .tg-dance-row { display: none !important; }

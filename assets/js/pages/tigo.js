@@ -108,6 +108,20 @@
     if (p.asleep) { toast("Tigo is already sleeping 🌙"); return; }
     act("sleep");
   });
+  // ---------- 💃 Dance: pindot → 3 sayaw (Groove · Budots · Robot) ----------
+  var DANCE_NAME = { dance: "🪩 Groove", budots: "🕺 Budots", robot: "🤖 Robot" };
+  function danceRow(open) {
+    $("tgDanceRow").classList.toggle("hidden", !open); $("tgDance").setAttribute("aria-expanded", String(!!open)); $("tgDance").classList.toggle("on", !!open);
+  }
+  $("tgDance").addEventListener("click", function () { danceRow($("tgDanceRow").classList.contains("hidden")); });
+  $("tgDanceRow").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-dance]"); if (!b || !sc) return;
+    if ((live() || {}).asleep) { toast("Shh… Tigo is sleeping. Wake Tigo first."); return; }
+    if (playing) return;
+    var sec = sc.dance(b.dataset.dance); if (!sec) return;
+    danceRow(false); toast(DANCE_NAME[b.dataset.dance] + "! 🎶"); say("dance");
+    if (voice) voice.sfx("go");
+  });
   // ---------- laki ni Tigo (naka-save sa device) ----------
   var SIZE_KEY = "tmnTigoSize";
   function loadSize() { try { var v = parseFloat(localStorage.getItem(SIZE_KEY)); return v >= 0.5 && v <= 1.3 ? v : 1; } catch (e) { return 1; } }
@@ -279,7 +293,34 @@
     } catch (e) { toast(e.message); }
     finally { busy = false; }
   }
+  // ---------- 📸 litrato (tigo/photo.js) ----------
+  function photo(level) {
+    if (!sc) { toast("Photos need 3D (WebGL) on this device."); return; }
+    if (playing) { toast("Finish the game first 🎮"); return; }
+    var p = live() || pet, names = Object.keys(visitors).map(function (k) { return visitors[k].petName; }).filter(Boolean);
+    if (voice) voice.sfx("pop");
+    mod("photo").then(function (P) { return P.takePhoto({ sc: sc, stage: $("stage"), pet: { name: p.name, level: p.level }, friends: names, place: sc.inRoom() ? "house" : "island", level: level || 0, toast: toast }); })
+      .then(function (f) { if (f && level) shareLevelChip(0); })
+      .catch(function () { toast("Couldn't take the photo. Try again."); });
+  }
+  // pagka-level up: ang 📸 button ay nagiging "🎉 Lv N" (mga 45s) → tap = litrato na may Level banner, pang-share
+  var lvPending = 0, lvTimer = null;
+  function photoBtns() { return [$("tgPhoto")].concat([].slice.call(document.querySelectorAll('.tg-act[data-a="photo"]'))); }
+  function shareLevelChip(n) {
+    lvPending = n || 0; clearTimeout(lvTimer);
+    photoBtns().forEach(function (b) {
+      var side = b.classList.contains("tg-act");
+      b.classList.toggle("lvshare", !!n);
+      b.innerHTML = n ? (side ? "<span>🎉</span>Share Lv " + n : "🎉<small>Lv " + n + "</small>") : (side ? "<span>📸</span>Photo" : "📸<small>Photo</small>");
+      b.setAttribute("aria-label", n ? "Share Level " + n + " photo" : "Photo");
+    });
+    if (n) {
+      var d = $("tgPhoto"); try { d.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {}
+      lvTimer = setTimeout(function () { shareLevelChip(0); }, 45000);
+    }
+  }
   function levelUp(n) {
+    shareLevelChip(n);
     if (sc) { sc.effect("stars"); sc.main.spin(); sc.main.setGlow(!!pet.glow); }
     if (navigator.vibrate) try { navigator.vibrate([80, 60, 80]); } catch (e) {}
  say("level"); if (voice) voice.sfx("level");
@@ -346,6 +387,7 @@
     if (a === "games") return openGames();
     if (a === "journey") return openJourney();
     if (a === "house") return goHome();
+    if (a === "photo") return photo(lvPending);
     act(a);
   }
   $("tgSide").addEventListener("click", function (e) { var b = e.target.closest(".tg-act[data-a]"); if (b && !b.disabled) doAction(b.dataset.a); });
@@ -407,7 +449,7 @@
       if (sc) {
         if (sc.inRoom() && !(live() || {}).asleep) sc.leaveRoom();
         if (!visitors[b.dataset.gather]) {
-          var v0 = visitors[b.dataset.gather] = sc.add({ color: f.pet.color });
+          var v0 = visitors[b.dataset.gather] = sc.add({ color: f.pet.color }); v0.petName = f.pet.name;
           var o = f.pet.outfit || (f.pet.gear && f.pet.gear !== "none" ? { hat: f.pet.gear } : {});
           ["hat", "face", "body", "hand"].forEach(function (s) { if (o[s]) v0.wear(s, o[s]); });
           v0.setGlow(!!f.pet.glow);
