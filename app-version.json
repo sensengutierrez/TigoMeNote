@@ -8,5 +8,15 @@
     "size": 3847493,
     "sha256": "df9b229f580ec7a158ac69a1006d00356cc9e0b80f86d0fb139d74f300a13929",
     "date": "2026-10-25"
+  },
+  "chat": {
+    "name": "TigoMeNote Chat",
+    "id": "com.tigomenote.chat",
+    "version": "0.11.18",
+    "code": 11018,
+    "url": "https://github.com/sensengutierrez/TigoMeNote/releases/download/chat-v0.11.18/TigoMeNoteChat.apk",
+    "size": 3994949,
+    "sha256": "f20f6fad3841eb8a82931256dc89c2218153ed7149014c60a17de8777752995f",
+    "date": "2026-10-25"
   }
 }
