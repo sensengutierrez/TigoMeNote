@@ -2,7 +2,7 @@
 
 Daily notes, photos at videos. Private sa device mo, i-share lang ang gusto mong makita ng iba.
 
-**Live:** https://sensengutierrez.github.io/TigoMeNote/
+**Live:** https://tigomenote.com/ (dati: sensengutierrez.github.io/TigoMeNote/, kusang nagre-redirect)
 
 ## Features
 - **Daily** – notes at photos ng araw mo (naka-save sa device)
