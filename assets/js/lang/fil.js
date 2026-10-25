@@ -1539,5 +1539,17 @@ TMN_I18N.register("fil", {
   "Philippines ⇄ here": "Pinas ⇄ dito",
   "Philippines ⇄ abroad": "Pinas ⇄ abroad",
   "Android only": "Android lang",
-  "Downloaded? Tap the notification, or open": "Na-download na? I-tap ang notification, o buksan ang"
+  "Downloaded? Tap the notification, or open": "Na-download na? I-tap ang notification, o buksan ang",
+  "New version available": "May bagong version",
+  "Install the new version to keep using the app.": "I-install ang bagong version para magamit ulit ang app.",
+  "⬇ Install new version": "⬇ I-install ang bagong version",
+  "Download in Chrome instead": "I-download na lang sa Chrome",
+  "Opening the download in Chrome…": "Binubuksan ang download sa Chrome…",
+  "Downloading…": "Nagda-download…",
+  "Install": "I-install",
+  "Tap Install on the next screen. Your data stays.": "I-tap ang Install sa susunod na screen. Hindi mawawala ang data mo.",
+  "⬇ Try again": "⬇ Subukan ulit",
+  "Download failed. Check your internet, or download in Chrome.": "Hindi natuloy ang download. Tingnan ang internet, o i-download sa Chrome.",
+  "Allow \"Install unknown apps\" for {x}, then come back and tap Install again.": "I-allow ang \"Install unknown apps\" para sa {x}, tapos bumalik at i-tap ulit ang Install.",
+  "Downloading… {n}%": "Nagda-download… {n}%"
 });

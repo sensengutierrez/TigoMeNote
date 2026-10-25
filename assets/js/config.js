@@ -13,7 +13,7 @@
 
   window.TMN_CONFIG = Object.freeze({
     appName: "TigoMeNote",
-    version: "0.11.21",
+    version: "0.11.22",
     root: root,
     supabaseUrl: SUPABASE_URL,
     // Public key lang ito (ligtas sa browser). Gagamitin sa Realtime ng messenger.
@@ -57,7 +57,8 @@
     // Mga app (APK) at Get app page. app-version.json = ginagawa ng .github/workflows/apk.yml tuwing may bagong release
     apps: Object.freeze({
       getPage: root + "get/",
-      publicGet: "https://tigomenote.com/get/",   // laman ng QR (assets/img/qr-get.svg ← tools/make-qr.py)
+      publicGet: "https://tigomenote.com/get/",
+      remoteVersion: "https://tigomenote.com/app-version.json",   // APK: para sa auto-update (app-update.js)   // laman ng QR (assets/img/qr-get.svg ← tools/make-qr.py)
       versionJson: root + "app-version.json"
     }),
     // Emergency hotlines na lumalabas sa SOS (country code → numero)

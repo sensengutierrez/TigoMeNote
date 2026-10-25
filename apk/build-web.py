@@ -2,7 +2,7 @@
    python3 apk/build-web.py main
    - Kasama: app/, assets/, legal/, login.html, manifest (walang sw.js: sa APK, native ang push at nasa phone na ang files)
    - index.html = apk/start.html: opening animation ni Tigo, tapos unang page ng app (apk/<app>/app.json "home") o Login
-   - Isinisingit ang assets/js/app-mode.js sa bawat page (APK lang)."""
+   - Isinisingit ang assets/js/app-mode.js at app-update.js (auto-update) sa bawat page (APK lang)."""
 import json, os, re, shutil, sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 app = sys.argv[1] if len(sys.argv) > 1 else "main"
@@ -29,6 +29,7 @@ for base, _, files in os.walk(out):
         p = os.path.join(base, f); s = open(p, encoding="utf-8").read()
         rel = os.path.relpath(os.path.join(out, "assets/js/app-mode.js"), base).replace(os.sep, "/")
         tag = f'<script src="{rel}?v={ver}&app={meta["id"]}"></script>'
+        tag += "\n  " + f'<script src="{rel.replace("app-mode.js", "app-update.js")}?v={ver}" defer></script>'
         if "app-mode.js" in s: continue
         s = re.sub(r"(<meta name=\"viewport\"[^>]*>)", r"\1\n  " + tag, s, count=1) if 'name="viewport"' in s else s.replace("</head>", tag + "\n</head>", 1)
         open(p, "w", encoding="utf-8").write(s); n += 1

@@ -1373,5 +1373,17 @@ TMN_I18N.register("ar", {
   "Philippines ⇄ here": "الفلبين ⇄ هنا",
   "Philippines ⇄ abroad": "الفلبين ⇄ الخارج",
   "Android only": "أندرويد فقط",
-  "Downloaded? Tap the notification, or open": "تم التنزيل؟ اضغط الإشعار، أو افتح"
+  "Downloaded? Tap the notification, or open": "تم التنزيل؟ اضغط الإشعار، أو افتح",
+  "New version available": "يتوفر إصدار جديد",
+  "Install the new version to keep using the app.": "ثبّت الإصدار الجديد لمتابعة استخدام التطبيق.",
+  "⬇ Install new version": "⬇ ثبّت الإصدار الجديد",
+  "Download in Chrome instead": "نزّله من Chrome بدلاً من ذلك",
+  "Opening the download in Chrome…": "جارٍ فتح التنزيل في Chrome…",
+  "Downloading…": "جارٍ التنزيل…",
+  "Install": "تثبيت",
+  "Tap Install on the next screen. Your data stays.": "اضغط تثبيت في الشاشة التالية. تبقى بياناتك.",
+  "⬇ Try again": "⬇ حاول مرة أخرى",
+  "Download failed. Check your internet, or download in Chrome.": "فشل التنزيل. تحقق من الإنترنت أو نزّله من Chrome.",
+  "Allow \"Install unknown apps\" for {x}, then come back and tap Install again.": "اسمح بـ \"تثبيت التطبيقات غير المعروفة\" لـ {x}، ثم ارجع واضغط تثبيت مرة أخرى.",
+  "Downloading… {n}%": "جارٍ التنزيل… {n}%"
 });

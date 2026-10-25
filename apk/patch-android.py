@@ -31,7 +31,18 @@ for d in os.listdir(src):
 java = os.path.join(AND, "app/src/main/java", *pkg.split("."), "MainActivity.java")
 open(java, "w").write(f'''package {pkg};
 
+import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.database.Cursor;
+import android.os.Build;
+import android.os.Environment;
+import android.provider.Settings;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
+import java.io.File;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -71,6 +82,7 @@ public class MainActivity extends BridgeActivity {{
         ViewCompat.requestApplyInsets(wv);
         wv.addJavascriptInterface(new Bars(), "TMNNative");
         wv.addJavascriptInterface(new Apps(), "TMNApps");
+        wv.addJavascriptInterface(new Update(), "TMNUpdate");
     }}
 
     // Ibang TigoMeNote app: naka-install ba? buksan · at link na bubuksan sa Chrome (hal. download page)
@@ -90,6 +102,73 @@ public class MainActivity extends BridgeActivity {{
             Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url)); i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             try {{ startActivity(i); }} catch (Exception e) {{ }}
         }}
+    }}
+
+    // Update ng app: i-download ang bagong APK (DownloadManager) → buksan ang installer ng Android
+    // window.TMNUpdate.canInstall() · allowInstall() · install(url) · progress() → -1 wala, 0–100 %, 101 tapos, -2 palpak
+    private long dlId = -1;
+    public class Update {{
+        @JavascriptInterface
+        public boolean canInstall() {{
+            return Build.VERSION.SDK_INT < 26 || getPackageManager().canRequestPackageInstalls();
+        }}
+        @JavascriptInterface
+        public void allowInstall() {{
+            if (Build.VERSION.SDK_INT < 26) return;
+            Intent i = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName()));
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {{ startActivity(i); }} catch (Exception e) {{ }}
+        }}
+        @JavascriptInterface
+        public boolean install(final String url) {{
+            try {{
+                final File f = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "update.apk");
+                if (f.exists()) f.delete();
+                final DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+                DownloadManager.Request r = new DownloadManager.Request(Uri.parse(url))
+                    .setTitle(getApplicationInfo().loadLabel(getPackageManager()) + " update")
+                    .setMimeType("application/vnd.android.package-archive")
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+                    .setDestinationUri(Uri.fromFile(f));
+                dlId = dm.enqueue(r);
+                ContextCompat.registerReceiver(MainActivity.this, new BroadcastReceiver() {{
+                    @Override
+                    public void onReceive(Context c, Intent in) {{
+                        if (in.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -2) != dlId) return;
+                        try {{ unregisterReceiver(this); }} catch (Exception e) {{ }}
+                        openInstaller(f);
+                    }}
+                }}, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), ContextCompat.RECEIVER_EXPORTED);
+                return true;
+            }} catch (Exception e) {{ return false; }}
+        }}
+        @JavascriptInterface
+        public int progress() {{
+            if (dlId < 0) return -1;
+            DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+            try (Cursor q = dm.query(new DownloadManager.Query().setFilterById(dlId))) {{
+                if (q == null || !q.moveToFirst()) return -2;
+                int st = q.getInt(q.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+                if (st == DownloadManager.STATUS_SUCCESSFUL) return 101;
+                if (st == DownloadManager.STATUS_FAILED) return -2;
+                long done = q.getLong(q.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+                long all = q.getLong(q.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+                return all > 0 ? (int) (done * 100 / all) : 0;
+            }} catch (Exception e) {{ return -2; }}
+        }}
+        @JavascriptInterface
+        public void reopen() {{
+            File f = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "update.apk");
+            if (f.exists()) runOnUiThread(() -> openInstaller(f));
+        }}
+    }}
+    private void openInstaller(File f) {{
+        try {{
+            Uri u = FileProvider.getUriForFile(this, getPackageName() + ".tmnupdate", f);
+            Intent i = new Intent(Intent.ACTION_VIEW).setDataAndType(u, "application/vnd.android.package-archive");
+            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+        }} catch (Exception e) {{ }}
     }}
 
     // window.TMNNative.setBars("#ffffff", false) — kulay sa likod ng status/navigation bar + kulay ng icons (app-mode.js)
@@ -135,12 +214,21 @@ open(g, "w").write(s)
 m = os.path.join(AND, "app/src/main/AndroidManifest.xml"); s = open(m).read()
 s = re.sub(r'android:configChanges="([^"]*)"', lambda k: 'android:configChanges="' + (k.group(1) if "density" in k.group(1) else k.group(1) + "|density") + '"', s, count=1)
 # permissions: camera (litrato/video, video call), mic (voice, video), location (Safety, weather, Explore), notifications, vibrate
-PERMS = ["CAMERA", "RECORD_AUDIO", "MODIFY_AUDIO_SETTINGS", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "POST_NOTIFICATIONS", "VIBRATE"]
+PERMS = ["REQUEST_INSTALL_PACKAGES", "CAMERA", "RECORD_AUDIO", "MODIFY_AUDIO_SETTINGS", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "POST_NOTIFICATIONS", "VIBRATE"]
 add = "".join(f'    <uses-permission android:name="android.permission.{p}" />\n' for p in PERMS if f"android.permission.{p}\"" not in s)
 add += '    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <uses-feature android:name="android.hardware.location.gps" android:required="false" />\n'
 # para makita ng app kung naka-install ang ibang TigoMeNote app (Android 11+)
 add += '    <queries>\n' + "".join(f'        <package android:name="{p}" />\n' for p in ("com.tigomenote.app", "com.tigomenote.chat", "com.tigomenote.tigo")) + '    </queries>\n'
 if "<queries>" not in s: s = s.replace("</manifest>", add + "</manifest>", 1)
+# FileProvider para sa update.apk (sariling authority: <pkg>.tmnupdate)
+if ".tmnupdate" not in s:
+    s = s.replace("</application>", '''    <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.tmnupdate"
+            android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/tmn_update_paths" />
+        </provider>
+    </application>''', 1)
+os.makedirs(os.path.join(res, "xml"), exist_ok=True)
+open(os.path.join(res, "xml", "tmn_update_paths.xml"), "w").write('<?xml version="1.0" encoding="utf-8"?>\n<paths>\n    <external-files-path name="updates" path="Download/" />\n</paths>\n')
 if app == "tigo" and "screenOrientation" not in s:
     s = s.replace('android:name=".MainActivity"', 'android:name=".MainActivity"\n            android:screenOrientation="sensorLandscape"', 1)
 open(m, "w").write(s)

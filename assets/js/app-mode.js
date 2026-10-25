@@ -34,6 +34,7 @@
   };
 
   function closeTop() {
+    if (window.TMN_UPDATE && TMN_UPDATE.open()) return true;   // may update: hindi puwedeng isara
     var bds = document.querySelectorAll(".modal-backdrop");
     if (bds.length) {
       var x = bds[bds.length - 1].querySelector(".modal-head .icon-btn");
