@@ -36,7 +36,16 @@
 
   // ---------- Android: pinakabagong APK ----------
   function mb(n) { return (n / 1048576).toFixed(1) + " MB"; }
-  fetch(A.versionJson + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (v) {
+  // Kung wala pa ang file sa tigomenote.com/dl (hal. hindi pa tapos ang deploy) → GitHub link muna
+  function pick(app) {
+    if (!app.github) return Promise.resolve(app);
+    return fetch(app.url, { method: "HEAD", cache: "no-store" }).then(function (r) { return r.ok ? app : Object.assign({}, app, { url: app.github }); })
+      .catch(function () { return Object.assign({}, app, { url: app.github }); });
+  }
+  fetch(A.versionJson + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (v0) {
+    var keys = Object.keys(v0);
+    return Promise.all(keys.map(function (k) { return pick(v0[k]); })).then(function (list) { var v = {}; keys.forEach(function (k, i) { v[k] = list[i]; }); return v; });
+  }).then(function (v) {
     var m = v.main; if (!m || !m.url) throw new Error();
     var a = document.getElementById("apkBtn"); a.href = dl(m.url);
     document.getElementById("apkMeta").textContent = "Version " + m.version + " · " + mb(m.size) + (m.date ? " · " + m.date : "");
