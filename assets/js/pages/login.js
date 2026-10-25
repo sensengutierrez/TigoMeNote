@@ -25,7 +25,7 @@
   function nextUrl() {
     var n = params.get("next") || "";
     if (n && n.charAt(0) === "/" && n.charAt(1) !== "/" && n.indexOf("login.html") === -1) return n;
-    return C.root + "app/home.html";
+    return C.root + ({ chat: "app/messages.html", tigo: "app/tigo.html" }[window.TMN_APP_ID] || "app/home.html"); // APK: sariling unang page
   }
 
   // Naka-login na? Diretso sa app.

@@ -1,0 +1,13 @@
+{
+  "name": "tigomenote-chat",
+  "private": true,
+  "description": "TigoMeNote Chat APK (Capacitor). Binubuo ng .github/workflows/apk.yml — hindi kailangan i-install sa PC.",
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/splash-screen": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0"
+  }
+}

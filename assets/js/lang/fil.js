@@ -1530,5 +1530,7 @@ TMN_I18N.register("fil", {
   "Available": "Available na",
   "Coming soon": "Malapit na",
   "Version {x} · {y}": "Version {x} · {y}",
-  "Couldn't load the download. Check your internet and refresh.": "Hindi ma-load ang download. Tingnan ang internet at i-refresh."
+  "Couldn't load the download. Check your internet and refresh.": "Hindi ma-load ang download. Tingnan ang internet at i-refresh.",
+  "Same account in every app. Install the ones you want.": "Iisang account sa lahat ng app. I-install ang gusto mo.",
+  "⬇ Download": "⬇ I-download"
 });

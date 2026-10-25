@@ -8,6 +8,8 @@
    Extra helpers: TMN_UI.toast("Saved"), TMN_UI.setBadge("messages", 3), TMN_UI.esc(text) */
 (function () {
   var C = window.TMN_CONFIG, NAV = window.TMN_NAV, I = window.TMN_ICON;
+  // Ibang APK (hal. TigoMeNote Chat) = sariling menu (nav-items.js → apps)
+  if (window.TMN_APP_ID && NAV.apps && NAV.apps[window.TMN_APP_ID]) NAV = Object.assign({}, NAV, NAV.apps[window.TMN_APP_ID]);
   var body = document.body;
   var pageId = body.dataset.page || "";
 
@@ -36,7 +38,7 @@
 
   // ---------- pieces ----------
   function brand() {
-    return '<a class="brand" href="' + url("app/home.html") + '"><span class="brand-mark">T</span><span>Tigo<b>Me</b>Note</span></a>';
+    return '<a class="brand" href="' + url(NAV.main[0].href) + '"><span class="brand-mark">T</span><span>Tigo<b>Me</b>Note</span></a>';
   }
   function navLink(item) {
     var active = item.id === pageId;

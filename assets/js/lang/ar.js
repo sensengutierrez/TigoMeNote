@@ -1364,5 +1364,7 @@ TMN_I18N.register("ar", {
   "Available": "متاح",
   "Coming soon": "قريباً",
   "Version {x} · {y}": "الإصدار {x} · {y}",
-  "Couldn't load the download. Check your internet and refresh.": "تعذّر تحميل الرابط. تحقق من الإنترنت وحدّث الصفحة."
+  "Couldn't load the download. Check your internet and refresh.": "تعذّر تحميل الرابط. تحقق من الإنترنت وحدّث الصفحة.",
+  "Same account in every app. Install the ones you want.": "حساب واحد في كل التطبيقات. ثبّت ما تريد.",
+  "⬇ Download": "⬇ تنزيل"
 });

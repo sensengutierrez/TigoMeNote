@@ -32,3 +32,5 @@
 .ga-tag { flex: none; font-size: 12px !important; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: rgba(0,0,0,.06); color: var(--text-2) !important; }
 .ga-tag.ok { background: rgba(61,214,192,.18); color: #0f8f7d !important; }
 @media (max-width: 520px) { .ga-qr-row { justify-content: center; } .l-nav-actions .js-open { display: none; } }
+.ga-family-sub { margin: -6px 0 10px; }
+.ga-tag-btn { flex: none; }

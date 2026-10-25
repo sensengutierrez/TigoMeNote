@@ -411,3 +411,13 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "lagay mo na sa web ung GET APP tapos merron QR instruction at para sa ios pano mag kakaroon notify".
 - **Files:** `get/index.html`, `assets/js/pages/get.js`, `assets/css/pages/get.css`, `app-version.json`, `tools/make-qr.py`, `assets/img/qr-get.svg`, `assets/img/app-*.png`, `config.js` (apps), `nav-items.js` (web: true), `app-shell.js`, `index.html`, `css/shell.css`, `css/pages/legal.css`, `css/pages/auth.css`, `css/pages/landing.css`, `.github/workflows/apk.yml`, `lang/fil.js`, `lang/ar.js`
 - **Paano:** test_get 13/13 (Android, iPhone, computer, 360px; walang horizontal scroll). Ang test_ui (register flow) ay sira na bago pa ito (luma ang test).
+
+## 2026-10-25 · #50 TigoMeNote Chat APK (`com.tigomenote.chat`)
+- **Ano:**
+  - **Hiwalay na app para sa Messages:** bumubukas diretso sa Chats (o Login), at may sariling menu: Chats · Notifications · Profile · Settings (walang Daily, Tigo, Get app). Iisang code at account.
+  - **Per-app menu:** `nav-items.js → apps.chat`; ang `app-mode.js?app=chat` ang nagsasabi kung aling APK (`window.TMN_APP_ID`). Login → babalik sa unang page ng app.
+  - **Build:** sabay nang ginagawa ng GitHub Actions ang main at chat (matrix); Release `chat-v<version>` → `TigoMeNoteChat.apk`. Pareho ang signing key (iisang password).
+  - **Get app:** sa listahan ng apps, "Available" (o ⬇ Download sa Android) kapag may APK na sa `app-version.json`.
+- **Bakit:** Ayon kay Bench: "gawan mona ng apk ung chat".
+- **Files:** `apk/chat/` (app.json, capacitor.config.json, package.json), `apk/main/app.json`, `apk/build-web.py`, `apk/update-version.py`, `.github/workflows/apk.yml`, `assets/js/app-mode.js`, `assets/js/nav-items.js`, `components/app-shell.js`, `pages/login.js`, `get/index.html`, `pages/get.js`, `css/pages/get.css`, `lang/fil.js`, `lang/ar.js`
+- **Paano:** test_chatapp 6/6 (simulated na APK: Login → Chats, 4 tabs, walang zoom); test_get 13/13; test_tabs 48/48. Wala pang push sa APK (Firebase) at hindi pa binubuksan ng main app ang Chat app (kailangan ng native na check kung naka-install).

@@ -165,7 +165,8 @@ Storage bucket: **`profile-media`** (public na view, 3 MB/file, jpeg/webp). Uplo
 ## APK — `apk/`
 | File | Ano |
 |---|---|
-| `apk/main/` | Capacitor config + package.json ng TigoMeNote APK (`com.tigomenote.app`) |
+| `apk/main/` · `apk/chat/` | Capacitor config, package.json at app.json (unang page) ng TigoMeNote (`com.tigomenote.app`) at TigoMeNote Chat (`com.tigomenote.chat`) |
+| `apk/update-version.py` | Isinusulat ang bagong APK sa `app-version.json` (CI) |
 | `apk/build-web.py` / `patch-android.py` | Kopya ng site + app-mode.js · icons, textZoom, version sa android project |
 | `apk/res/<app>/` | Android icons, splash, notification icon (gawa ng tools/make-icons.py) |
 | `assets/js/app-mode.js` | APK lang: walang zoom, Back button, status bar, `TMN_APP` |

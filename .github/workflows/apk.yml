@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
     inputs:
       app:
-        description: "Aling app (main | tigo | chat)"
-        default: main
+        description: "Aling app (main | chat | tigo); blangko = lahat"
+        default: ""
   push:
     branches: [main]
     paths: ["apk/**", "assets/js/config.js", ".github/workflows/apk.yml"]
@@ -22,8 +22,12 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(github.event.inputs.app && format('["{0}"]', github.event.inputs.app) || '["main","chat"]') }}
     env:
-      APP: ${{ github.event.inputs.app || 'main' }}
+      APP: ${{ matrix.app }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -93,18 +97,13 @@ jobs:
         if: env.SIGN == 'release'
         run: |
           NAME=$(python3 -c "import json;print(json.load(open('apk/$APP/capacitor.config.json'))['appName'].replace(' ',''))")
-          python3 - <<PY
-          import json, os, hashlib, datetime
-          p = "app-version.json"
-          d = json.load(open(p)) if os.path.exists(p) else {}
-          cfg = json.load(open("apk/$APP/capacitor.config.json"))
-          f = "out/$NAME.apk"; a, b, c = (int(x) for x in "$VER".split("."))
-          d["$APP"] = {"name": cfg["appName"], "id": cfg["appId"], "version": "$VER", "code": a * 1000000 + b * 1000 + c,
-                       "url": "https://github.com/${{ github.repository }}/releases/download/$APP-v$VER/$NAME.apk",
-                       "size": os.path.getsize(f), "sha256": hashlib.sha256(open(f, "rb").read()).hexdigest(),
-                       "date": datetime.date.today().isoformat()}
-          json.dump(d, open(p, "w"), indent=2); open(p, "a").write("\n")
-          PY
           git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app-version.json
-          git diff --cached --quiet || { git commit -m "app-version.json: $APP $VER" && git pull --rebase && git push; }
+          for TRY in 1 2 3 4 5; do
+            git pull -q --rebase origin main
+            python3 apk/update-version.py "$APP" "$VER" "out/$NAME.apk" "${{ github.repository }}"
+            git add app-version.json
+            git diff --cached --quiet && break
+            git commit -q -m "app-version.json: $APP $VER"
+            if git push -q; then break; fi
+            git reset -q --hard HEAD~1; sleep $((TRY * 3))
+          done

@@ -40,5 +40,22 @@ window.TMN_NAV = {
   topbar: ["tigo", "notifications"],
 
   // Alin sa main ang lalabas sa bottom tabs ng phone (max 5)
-  tabs: ["home", "gallery", "share", "safety", "profile"]
+  tabs: ["home", "gallery", "share", "safety", "profile"],
+
+  // Sariling menu ng ibang APK (window.TMN_APP_ID, galing sa app-mode.js). Hindi kasama = gamitin ang menu sa itaas.
+  apps: {
+    chat: {
+      main: [
+        { id: "messages", label: "Chats",    icon: "chat", href: "app/messages.html" },
+        { id: "notifications", label: "Notifications", icon: "bell", href: "app/notifications.html" },
+        { id: "profile",  label: "Profile",  icon: "user", href: "app/profile.html" },
+        { id: "settings", label: "Settings", icon: "gear", href: "app/settings.html" }
+      ],
+      more: [
+        { id: "policies", label: "Policies", icon: "info", href: "legal/index.html" }
+      ],
+      topbar: ["notifications"],
+      tabs: ["messages", "notifications", "profile", "settings"]
+    }
+  }
 };
