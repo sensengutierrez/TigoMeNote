@@ -98,6 +98,12 @@
   }
   $("fileInput").addEventListener("change", function () { upload(this.files); this.value = ""; });
   $("camInput").addEventListener("change", function () { upload(this.files); this.value = ""; });
+  // 📷 Camera = sariling camera (live filters, photo/video) — iba sa Upload (pili sa files). Kung walang camera API: camera ng phone.
+  $("camBtn").addEventListener("click", function (e) {
+    if (!(window.TMN_CAMERA && TMN_CAMERA.supported())) return;   // input na may capture ang bahala
+    e.preventDefault();
+    TMN_CAMERA.open({ mode: "photo", onCapture: function (file) { upload([file]); } });
+  });
 
   // Drag & drop (desktop)
   var dz = $("dropZone"), depth = 0;

@@ -485,3 +485,9 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "pag me bagong update dapat di mag work ung apps dapat papadownload nya ung bagong download, tapos me lalabas na install new version tapos direct download na".
 - **Files:** `assets/js/app-update.js`, `apk/patch-android.py`, `apk/build-web.py`, `assets/js/app-mode.js`, `css/base.css`, `config.js` (apps.remoteVersion, 0.11.22), `lang/fil.js`, `lang/ar.js`
 - **Paano:** test_update 7/7 (simulated: harang, download sa loob ng app, Install, walang permission, parehong version = walang harang).
+
+## 2026-10-25 · #58 Gallery: magkaiba na ang 📷 Camera at ⬆ Upload
+- **Ano:** Ang **Camera** sa Gallery ay ang sariling camera ng app (live filters, harap/likod, photo) gaya ng sa Share; ang **Upload** ay pili ng files. Kung walang camera API ang device, camera ng phone (input na may capture) ang gagamitin. Version 0.11.23 — ito rin ang unang test ng auto-update sa phone.
+- **Bakit:** Ayon kay Bench (screenshot ng Gallery sa APK): "Same lang sila ng function 😂 camera at upload".
+- **Files:** `app/gallery.html` (camera.css, camera.js), `assets/js/pages/gallery.js`, `config.js` (0.11.23)
+- **Paano:** test_galcam 1/1 (fake na camera), test_gallery 51/51.
