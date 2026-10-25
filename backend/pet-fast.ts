@@ -6,10 +6,11 @@
 //                          room { room: { wall, floor, items: [{ id, x, z, r }] } } → ayos ng loob ng bahay (gamit na pag-aari lang)
 // Kaligtasan: ang "nearby" ay para lang sa magkaibigan (mutual follow o Family/Friends circle), kapag NAKA-ON sa dalawa,
 //             distansya lang ang ibinabalik (hindi ang lokasyon), at nawawala pagkalipas ng 20 minuto.
-// Files: index.ts + webpush.ts (para sa push ng "bumisita ang Tigo ni …").
+// Files: index.ts + webpush.ts + push.ts (para sa push ng "bumisita ang Tigo ni …").
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import { sendPush, type Vapid } from "./webpush.ts";
+import { type Vapid } from "./webpush.ts";
+import { deliver } from "./push.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 
@@ -349,12 +350,8 @@ async function nearby(p: any, me: any) {
 let vapid: Vapid | null = null;
 async function pushTo(uid: string, data: Record<string, unknown>) {
   if (!vapid) { const { data: v } = await db.from("app_keys").select("value").eq("name", "vapid").maybeSingle(); vapid = v ? (v.value as Vapid) : null; }
-  if (!vapid) return;
-  const { data: subs } = await db.from("push_subs").select("*").eq("user_id", uid).eq("kind", "webpush");
-  await Promise.allSettled((subs ?? []).map(async (s) => {
-    const st = await sendPush({ endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth }, data, vapid!, { ttl: 3600, urgency: "normal" });
-    if (st === 404 || st === 410) await db.from("push_subs").delete().eq("id", s.id);
-  }));
+  const { data: subs } = await db.from("push_subs").select("*").eq("user_id", uid);
+  if (subs && subs.length) await deliver(db, subs, data, vapid, { cat: "tigo", ttl: 3600, urgency: "normal" });
 }
 
 // "Gather": magkasama ang dalawang Tigo; parehong sasaya (isang beses bawat araw bawat magkaibigan)

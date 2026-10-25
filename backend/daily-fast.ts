@@ -2,11 +2,12 @@
 // Isang trabaho lang: i-save ang reminders/alarms at ipadala ang push sa phone sa tamang oras.
 // Actions (session token): list, save, remove, done, snooze
 // Action ng cron (bawat minuto, sql/050): due  ← key galing sa app_keys "cron_daily" (hindi service key)
-// Files: index.ts + webpush.ts (parehong folder sa deploy). VAPID: app_keys "vapid" (ginawa ng safety-fast).
+// Files: index.ts + webpush.ts + push.ts (parehong folder sa deploy). VAPID: app_keys "vapid"; FCM: secret FCM_SERVICE_ACCOUNT.
 // Ang Daily notes ay HINDI dumadaan dito (nasa device lang).
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import { sendPush, type Vapid } from "./webpush.ts";
+import { type Vapid } from "./webpush.ts";
+import { deliver } from "./push.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 const MAX_ACTIVE = 100;
@@ -130,7 +131,7 @@ async function due(p: any) {
     vapid = v ? (v.value as Vapid) : null;
   }
   const users = [...new Set(rows.map((r) => r.user_id))];
-  const { data: subs } = vapid ? await db.from("push_subs").select("*").in("user_id", users).eq("kind", "webpush") : { data: [] };
+  const { data: subs } = await db.from("push_subs").select("*").in("user_id", users);
   let sent = 0;
   await Promise.allSettled(rows.map(async (r) => {
     const mine = (subs ?? []).filter((s) => s.user_id === r.user_id);
@@ -138,16 +139,8 @@ async function due(p: any) {
       type: r.kind, id: r.id, title: (r.kind === "alarm" ? "⏰ " : "🔔 ") + r.title,
       body: r.note || (r.kind === "alarm" ? "Alarm" : "Reminder"), url: "app/home.html?reminder=" + r.id,
     };
-    for (const s of mine) {
-      try {
-        const st = await Promise.race([
-          sendPush({ endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth }, payload, vapid!, { ttl: 1800, urgency: "high" }),
-          new Promise<number>((_, rej) => setTimeout(() => rej(new Error("timeout")), 8000)),
-        ]);
-        if (st === 404 || st === 410) await db.from("push_subs").delete().eq("id", s.id);
-        else if (st < 400) sent++;
-      } catch (e) { console.error("reminder push failed", String(e)); }
-    }
+    try { sent += await deliver(db, mine, payload, vapid, { cat: "daily", ttl: 1800, urgency: "high" }); }
+    catch (e) { console.error("reminder push failed", String(e)); }
     // Hindi umuulit: markahan na naipadala. Umuulit: ilipat sa susunod na oras.
     const nx = nextDue(r.due_at, r.repeat);
     await db.from("reminders").update(nx ? { due_at: nx, sent_at: null } : { sent_at: nowIso() }).eq("id", r.id);

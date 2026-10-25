@@ -491,3 +491,18 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench (screenshot ng Gallery sa APK): "Same lang sila ng function 😂 camera at upload".
 - **Files:** `app/gallery.html` (camera.css, camera.js), `assets/js/pages/gallery.js`, `config.js` (0.11.23)
 - **Paano:** test_galcam 1/1 (fake na camera), test_gallery 51/51.
+
+## 2026-10-25 · #59 Push sa apps (Firebase): messages → Chat app, likes/comments/follows → TigoMeNote app
+- **Ano:**
+  - Server: bagong `backend/push.ts` (`deliver()`): iisang daan para sa web push at FCM (Firebase HTTP v1, token mula sa secret `FCM_SERVICE_ACCOUNT`).
+    - messages → TigoMeNote Chat app; kung wala → TigoMeNote app; kung wala pareho → web.
+    - social at daily → TigoMeNote app; kung wala → web. tigo → Tigo app → TigoMeNote app → web. safety (SOS, invites) → lahat ng device.
+    - Patay na token (UNREGISTERED/404) → binubura ang push_subs.
+  - Ginagamit na ng notify-fast, safety-fast, pet-fast at daily-fast (lahat naka-deploy). `push_subs.app` (sql/083) = tigomenote | messenger | tigo.
+  - APK: plugin `@capacitor/push-notifications`; `apk/add-firebase.py` isinusulat ang google-services.json mula sa GitHub secret `GOOGLE_SERVICES_JSON` (kung kasama ang package ng app), default icon ic_stat_tigo at kulay.
+  - app-mode.js: `TMN_APP.pushToken({ask})` (permission → channels: messages, social, safety, reminders, tigo → token); pindot sa notification → bubuksan ang page (data.url); lumalabas din habang bukas ang app.
+  - push-setup.js: sa APK, ipinapadala ang token kasama ang `app`; tahimik na sync pagbukas (kapag pinayagan na; isang beses bawat araw o kapag nagbago ang token).
+  - Version 0.11.24.
+- **Bakit:** Ayon kay Bench: hiwalay ang notifications ng Messenger at ng follow/like sa apps; ginawa ni Bench ang Firebase project at ang dalawang secret.
+- **Files:** `backend/push.ts`, `backend/notify-fast.ts`, `backend/safety-fast.ts`, `backend/pet-fast.ts`, `backend/daily-fast.ts`, `sql/083-push-app.sql`, `apk/add-firebase.py`, `.github/workflows/apk.yml`, `apk/main|chat/package.json`, `apk/main|chat/capacitor.config.json`, `assets/js/app-mode.js`, `assets/js/push-setup.js`, `assets/js/native-bridge.js`, `config.js` (0.11.24)
+- **Paano:** unit test ng routing at JWT (mock), test_fcm 9/9 (simulated na plugin: walang tanong pagbukas, Turn on → permission → token → subscribe app=messenger, pindot → page, walang ulit sa parehong araw), dry run ng add-firebase.py (pekeng config). Hindi pa nasubukan sa totoong phone.

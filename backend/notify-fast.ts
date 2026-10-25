@@ -1,5 +1,5 @@
 // TigoMeNote · notify-fast (Supabase Edge Function, verify_jwt = off)
-// Notifications (activity) ng user at ang settings nito. Files: index.ts + webpush.ts (parehong folder sa deploy).
+// Notifications (activity) ng user at ang settings nito. Files: index.ts + webpush.ts + push.ts (parehong folder sa deploy).
 // Actions (kailangan ng session token):
 //   list, count, seen, prefs, setPrefs
 // Action na pang-server lang (x-internal-key = service role key, galing sa notify.ts):
@@ -8,12 +8,13 @@
 // Ang mga notification ay ginagawa ng posts-fast, social-fast at moderation-fast gamit ang notify.ts.
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import { makeVapid, sendPush, type Vapid } from "./webpush.ts";
+import { makeVapid, type Vapid } from "./webpush.ts";
+import { deliver, type Cat } from "./push.ts";
 
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const db = createClient(Deno.env.get("SUPABASE_URL")!, SERVICE_KEY, { auth: { persistSession: false } });
 
-const SITE = "https://sensengutierrez.github.io/TigoMeNote/";
+const SITE = "https://tigomenote.com/";
 const BUCKET = "post-media";
 const LIST_LIMIT = 150;
 const KEEP_DAYS = 90;
@@ -69,24 +70,12 @@ async function getVapid(): Promise<Vapid> {
   const { data: again } = await db.from("app_keys").select("value").eq("name", "vapid").single();
   return (vapid = again!.value as Vapid);
 }
-async function pushTo(userId: string, data: Record<string, unknown>) {
+// Web push at FCM (Android app) — push.ts ang pumipili ng device (messages → Chat app, iba → TigoMeNote app, wala → web)
+async function pushTo(userId: string, data: Record<string, unknown>, cat: Cat = "social") {
   const { data: subs } = await db.from("push_subs").select("*").eq("user_id", userId);
   if (!subs || !subs.length) return 0;
-  const v = await getVapid();
-  let sent = 0;
-  await Promise.allSettled(subs.map(async (s) => {
-    if (s.kind !== "webpush") return; // FCM (APK): kapag may Firebase project na
-    try {
-      const st = await Promise.race([
-        sendPush({ endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth }, data, v, { ttl: 6 * 3600, urgency: "normal" }),
-        new Promise<number>((_, rej) => setTimeout(() => rej(new Error("timeout")), 8000)),
-      ]);
-      if (st === 404 || st === 410) await db.from("push_subs").delete().eq("id", s.id);
-      else if (st >= 400) await db.from("push_subs").update({ fail_count: (s.fail_count || 0) + 1 }).eq("id", s.id);
-      else { sent++; await db.from("push_subs").update({ last_ok_at: nowIso(), fail_count: 0 }).eq("id", s.id); }
-    } catch (e) { console.error("push failed", String(e)); }
-  }));
-  return sent;
+  const v = subs.some((s) => s.kind === "webpush") ? await getVapid() : null;
+  return deliver(db, subs, data, v, { cat, ttl: 6 * 3600, urgency: cat === "messages" ? "high" : "normal" });
 }
 // Oras ngayon sa timezone ng user ("HH:MM")
 function hhmm(tz: string) {
@@ -129,7 +118,7 @@ async function pushRaw(p: any) {
   const to = (Array.isArray(p.to) ? p.to : []).map(String).slice(0, 100);
   const cat = CATS.includes(p.category) ? String(p.category) : null;
   let sent = 0;
-  for (const uid of to) if (await allowed(uid, cat)) sent += await pushTo(uid, { ...(p.data ?? {}) });
+  for (const uid of to) if (await allowed(uid, cat)) sent += await pushTo(uid, { ...(p.data ?? {}) }, cat === "messages" ? "messages" : "social");
   return reply({ ok: true, sent });
 }
 // deno-lint-ignore no-explicit-any

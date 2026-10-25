@@ -5,7 +5,7 @@
      TMN_APP.startBackgroundLocation()/stopBackgroundLocation()
      TMN_APP.alarmStart(title, body)  → malakas na alarm kahit naka-silent
      TMN_APP.alarmStop()
-     TMN_APP.pushToken()              → Promise<string>  (FCM token)
+     TMN_APP.pushToken({ ask })       → Promise<string|null>  (FCM token; ask = hihingi ng permission)
      TMN_APP.sendSms(numbers[], text) → SMS kahit walang internet
      TMN_APP.saveFile(path, base64, mime) → Promise<uri>  (path = "TigoMeNote/Location/x.zip", sa Documents ng phone)
      TMN_APP.appName                  → "tigomenote" o "messenger" (aling APK ang nagbukas ng page)
@@ -137,7 +137,7 @@
     canSms: canSms, sendSms: sendSms,
     background: background,
     saveFile: APP && APP.saveFile ? saveFile : null,
-    pushToken: function () { return APP && APP.pushToken ? APP.pushToken() : Promise.resolve(null); },
+    pushToken: function (o) { return APP && APP.pushToken ? APP.pushToken(o) : Promise.resolve(null); },
     country: country, emergencyNumber: emergencyNumber, directionsUrl: directionsUrl
   };
 })();

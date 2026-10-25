@@ -17,13 +17,56 @@
   var vp = document.querySelector('meta[name="viewport"]');
   if (vp) vp.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover");
 
-  // tulay papunta sa native (dadagdagan: FCM push, location sa background, SMS, files)
+  // ---------- push (Firebase): token ng phone na ito para sa server ----------
+  // pushToken()            → token kung pinayagan na (walang tanong) · null kung hindi
+  // pushToken({ ask: true }) → hihingi muna ng permission (Android 13+)
+  // Mga channel (Settings → Notifications ng app): pareho ang id sa backend/push.ts
+  var PN = P.PushNotifications, tokP = null, waiters = [];
+  var CHANNELS = [
+    { id: "messages", name: "Messages", description: "New messages and calls", importance: 5, vibration: true },
+    { id: "social", name: "Likes, comments and follows", description: "Activity on your posts and profile", importance: 3 },
+    { id: "safety", name: "Safety and SOS", description: "SOS alerts and circle invites", importance: 5, vibration: true },
+    { id: "reminders", name: "Reminders and alarms", description: "Your Daily reminders", importance: 5, vibration: true },
+    { id: "tigo", name: "Tigo", description: "Your Tigo and friends' Tigo", importance: 3 }
+  ];
+  function done(t) { var w = waiters; waiters = []; w.forEach(function (f) { f(t); }); }
+  if (PN && PN.addListener) {
+    PN.addListener("registration", function (t) { done(t && t.value ? t.value : null); });
+    PN.addListener("registrationError", function () { done(null); });
+    // pinindot ang notification → buksan ang tamang page
+    PN.addListener("pushNotificationActionPerformed", function (a) {
+      var d = (a && a.notification && a.notification.data) || {}, u = String(d.url || "");
+      if (!u || /^[a-z]+:/i.test(u) || u.indexOf("//") === 0) return;
+      var root = (window.TMN_CONFIG && TMN_CONFIG.root) || "/";
+      location.href = root + u.replace(/^\/+/, "");
+    });
+  }
+  function pushToken(opts) {
+    if (!PN || !PN.checkPermissions) return Promise.resolve(null);
+    if (tokP) return tokP;
+    var ask = !!(opts && opts.ask);
+    return PN.checkPermissions().then(function (p) {
+      if (p.receive === "granted" || !ask || p.receive === "denied") return p;
+      return PN.requestPermissions();
+    }).then(function (p) {
+      if (!p || p.receive !== "granted") return null;
+      if (PN.createChannel) CHANNELS.forEach(function (c) { PN.createChannel(c).catch(function () {}); });
+      tokP = new Promise(function (res) {
+        waiters.push(res);
+        setTimeout(function () { res(null); }, 15000);
+        PN.register().catch(function () { res(null); });
+      }).then(function (t) { if (!t) tokP = null; return t; });
+      return tokP;
+    }).catch(function () { tokP = null; return null; });
+  }
+
+  // tulay papunta sa native (dadagdagan: location sa background, SMS, files)
   // ibang TigoMeNote app: naka-install? buksan · kung wala → download page (sa Chrome) habang wala pa sa Play Store
   var PKG = { messenger: "com.tigomenote.chat", chat: "com.tigomenote.chat", tigomenote: "com.tigomenote.app", main: "com.tigomenote.app", tigo: "com.tigomenote.tigo" };
   var NA = window.TMNApps;
   window.TMN_APP = window.TMN_APP || {
     appName: APP_ID === "chat" ? "messenger" : APP_ID === "tigo" ? "tigo" : "tigomenote",
-    pushToken: function () { return Promise.resolve(null); },
+    pushToken: pushToken,
     hasApp: function (name) { try { return !!(NA && NA.hasApp(PKG[name] || name)); } catch (e) { return false; } },
     openApp: function (name) { try { return !!(NA && NA.openApp(PKG[name] || name)); } catch (e) { return false; } },
     installApp: function () {

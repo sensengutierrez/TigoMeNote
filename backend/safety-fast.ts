@@ -2,17 +2,18 @@
 // Safety: Family/Friends circle, Locate (location 30 araw), SOS, at push notifications.
 // Actions: circle, invite, respond, update, remove, pause, ping, history, clearHistory, exportHistory,
 //          sos, sosUpdate, sosEnd, alerts, ack, pushKey, subscribe, unsubscribe, testPush
-// Kailangan ng session token (x-session-token). Files: index.ts + webpush.ts (parehong folder sa deploy).
-// Push: web push (VAPID, key ay ginagawa dito at naka-save sa app_keys). "fcm" = naka-abang para sa APK.
+// Kailangan ng session token (x-session-token). Files: index.ts + webpush.ts + push.ts (parehong folder sa deploy).
+// Push: web push (VAPID, key ay ginagawa dito at naka-save sa app_keys) at FCM (Android app; push.ts, secret FCM_SERVICE_ACCOUNT).
 // Patakaran: laging invite + accept; Locate lang kung pinayagan; SOS ay nakikita ng buong circle;
 //            Teen na may guardian ay hindi puwedeng mag-pause o mag-off ng sharing sa guardian (hanggang 18).
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import { makeVapid, sendPush, type Vapid } from "./webpush.ts";
+import { makeVapid, type Vapid } from "./webpush.ts";
+import { deliver } from "./push.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 
-const SITE = "https://sensengutierrez.github.io/TigoMeNote/";
+const SITE = "https://tigomenote.com/";
 const KEEP_DAYS = 30;            // location history
 const MEMBER_HISTORY_HOURS = 24; // gaano katagal na daan ng ibang member ang makikita
 const MAX_LINKS = 100;
@@ -114,27 +115,14 @@ async function getVapid(): Promise<Vapid> {
   const { data: again } = await db.from("app_keys").select("value").eq("name", "vapid").single();
   return (vapid = again!.value as Vapid);
 }
-// Ipadala sa lahat ng device ng mga user na ito. Hindi naghihintay nang lampas 8 s bawat isa.
+// Ipadala sa lahat ng device ng mga user na ito (app at web — push.ts, cat "safety"). Hindi naghihintay nang lampas 8 s bawat isa.
 async function pushTo(userIds: string[], data: Record<string, unknown>, urgency = "high") {
   const ids = [...new Set(userIds)].filter(Boolean);
   if (!ids.length) return 0;
   const { data: subs } = await db.from("push_subs").select("*").in("user_id", ids);
   if (!subs || !subs.length) return 0;
-  const v = await getVapid();
-  let sent = 0;
-  await Promise.allSettled(subs.map(async (s) => {
-    if (s.kind !== "webpush") return; // FCM (APK): idadagdag kapag may Firebase project na
-    try {
-      const st = await Promise.race([
-        sendPush({ endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth }, data, v, { ttl: data.type === "sos" ? 86400 : 3600, urgency }),
-        new Promise<number>((_, rej) => setTimeout(() => rej(new Error("timeout")), 8000)),
-      ]);
-      if (st === 404 || st === 410) await db.from("push_subs").delete().eq("id", s.id);
-      else if (st >= 400) await db.from("push_subs").update({ fail_count: (s.fail_count || 0) + 1 }).eq("id", s.id);
-      else { sent++; await db.from("push_subs").update({ last_ok_at: nowIso(), fail_count: 0 }).eq("id", s.id); }
-    } catch (e) { console.error("push failed", String(e)); }
-  }));
-  return sent;
+  const v = subs.some((s) => s.kind === "webpush") ? await getVapid() : null;
+  return deliver(db, subs, data, v, { cat: "safety", ttl: data.type === "sos" ? 86400 : 3600, urgency });
 }
 // deno-lint-ignore no-explicit-any
 const nameOf = (u: any) => u.display_name || "@" + u.username;
@@ -393,7 +381,8 @@ async function subscribe(p: any, me: any) {
     const { data: old } = await db.from("push_subs").select("id").eq("user_id", me.id).order("created_at", { ascending: true }).limit(1);
     if (old && old[0]) await db.from("push_subs").delete().eq("id", old[0].id);
   }
-  const { error } = await db.from("push_subs").upsert({ user_id: me.id, kind, endpoint, p256dh: p.p256dh ?? null, auth: p.auth ?? null, fail_count: 0 }, { onConflict: "endpoint" });
+  const app = kind === "fcm" && ["tigomenote", "messenger", "tigo"].includes(String(p.app)) ? String(p.app) : kind === "fcm" ? "tigomenote" : null;
+  const { error } = await db.from("push_subs").upsert({ user_id: me.id, kind, endpoint, app, p256dh: p.p256dh ?? null, auth: p.auth ?? null, fail_count: 0 }, { onConflict: "endpoint" });
   if (error) throw error;
   return reply({ ok: true });
 }

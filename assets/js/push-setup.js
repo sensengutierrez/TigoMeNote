@@ -2,7 +2,7 @@
    TMN_PUSH.status()  → Promise<"on" | "off" | "denied" | "unsupported" | "ios-home">
    TMN_PUSH.enable()  → hihingi ng permission, mag-subscribe, ipapadala sa server (safety-fast)
    TMN_PUSH.disable() · TMN_PUSH.test()
-   Sa APK: FCM token mula sa TMN_NATIVE.pushToken() ang ipapadala (kind "fcm").
+   Sa APK: FCM token mula sa TMN_NATIVE.pushToken() ang ipapadala (kind "fcm", app = tigomenote | messenger | tigo).
    Kusang nire-register ang sw.js at nire-refresh ang subscription isang beses bawat araw. */
 (function () {
   var C = window.TMN_CONFIG, N = window.TMN_NATIVE;
@@ -39,9 +39,10 @@
 
   async function enable() {
     if (N && N.isApp) {
-      var tok = await N.pushToken();
-      if (!tok) throw new Error("Allow notifications for TigoMeNote in your phone settings.");
-      await TMN_API.call("safety", "subscribe", { kind: "fcm", endpoint: tok });
+      var tok = await N.pushToken({ ask: true });
+      if (!tok) throw new Error("Allow notifications for this app in your phone settings (Settings → Apps → Notifications).");
+      await TMN_API.call("safety", "subscribe", { kind: "fcm", endpoint: tok, app: N.appName });
+      try { localStorage.setItem(SYNC_KEY, tok.slice(-24) + "|" + Date.now()); } catch (e) {}
       return "on";
     }
     if (!supported()) {
@@ -81,7 +82,20 @@
       if (sub && Date.now() - last > 86400000) { await send(sub); localStorage.setItem(SYNC_KEY, String(Date.now())); }
     } catch (e) {}
   }
-  if (supported()) { register().catch(function () {}); setTimeout(quietSync, 4000); }
+  // APK: kapag pinayagan na, ipadala ang token (bago o luma na isang araw) — walang tanong sa user
+  async function quietSyncApp() {
+    if (!window.TMN_TOKEN || !navigator.onLine) return;
+    try {
+      var tok = await N.pushToken();
+      if (!tok) return;
+      var last = String(localStorage.getItem(SYNC_KEY) || "").split("|");
+      if (last[0] === tok.slice(-24) && Date.now() - Number(last[1] || 0) < 86400000) return;
+      await TMN_API.call("safety", "subscribe", { kind: "fcm", endpoint: tok, app: N.appName });
+      localStorage.setItem(SYNC_KEY, tok.slice(-24) + "|" + Date.now());
+    } catch (e) {}
+  }
+  if (N && N.isApp) setTimeout(quietSyncApp, 3000);
+  else if (supported()) { register().catch(function () {}); setTimeout(quietSync, 4000); }
 
   window.TMN_PUSH = { status: status, enable: enable, disable: disable, test: test, register: register, isIOS: isIOS, standalone: standalone };
 })();
