@@ -3,19 +3,19 @@
    const rig = createCameraRig({ camera, el, blocked, claim, stick })
      rig.update(dt, focus{x,y,z}, base)  → bawat frame; base = layo ng camera para kasya ang mundo
      rig.yaw()                           → kung saan nakaharap ang camera (para sa direksyon ng lakad)
-     rig.setView(id) / rig.next() → id   → "follow" | "top" | "close"
-     rig.zoomStep() → "near" | "mid" | "far"  (button 🔍)
+     rig.setView(id) / rig.next() → id   → isang button lang (parang MIR4): "follow" → "wide" → "top" → "close" → …
      rig.view() · rig.zoom() · rig.dispose()
-   Phone: stick() = joystick sa kanan (kaliwa/kanan = ikot 360°, taas/baba = tingala sa langit o tingin mula sa itaas);
-          dalawang daliri sa screen (pinch) = zoom. Ang isang daliri sa screen ay HINDI umiikot (tap lang).
+   Phone: swipe sa gitna ng screen = ikot (kaliwa/kanan, 360°) at taas/baba (pataas = tingala sa langit);
+          dalawang daliri (pinch) = zoom. stick() = (opsyonal) joystick ng camera.
    Desktop: hila ng mouse = ikot; wheel = zoom; Q / E = ikot sa keyboard.
    blocked() = true kapag may laro (ang laro ang may hawak ng camera). claim(e) = true kapag iba ang gagamit ng hila (hal. paglipat ng gamit sa bahay). */
 export const VIEWS = {
   follow: { elev: 0.32, zoom: 1, name: "Follow view", icon: "🎥" },
+  wide: { elev: 0.42, zoom: 1.9, name: "Wide view", icon: "🔭" },
   top: { elev: 1.42, zoom: 1.2, name: "Top view", icon: "🗺️" },
   close: { elev: 0.16, zoom: 0.4, name: "Close-up", icon: "🔍" },
 };
-const ORDER = ["follow", "top", "close"];
+const ORDER = ["follow", "wide", "top", "close"];
 const ELEV_MIN = -0.9, ELEV_MAX = 1.5, LOW = 0.07; // sa ilalim ng LOW = tumitingala
 const ZOOM_MIN = 0.28, ZOOM_MAX = 2.4;
 
@@ -27,7 +27,7 @@ export function createCameraRig({ camera, el, blocked = () => false, claim = () 
   const keys = new Set();
 
   function down(e) {
-    if (blocked() || e.button > 0 || e.target.closest("button, a, input, .tg-pad, .tg-together, .tg-room-bar")) return;
+    if (blocked() || e.button > 0 || e.target.closest("button, a, input, select, .tg-pad, .tg-together, .tg-room-bar, .tg-dock, .tg-btns, .tg-sheet, .tg-top")) return;
     if (claim(e)) return;
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY });
     if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y) || 1; zoom0 = goal.zoom; }
@@ -41,10 +41,9 @@ export function createCameraRig({ camera, el, blocked = () => false, claim = () 
       goal.zoom = clampZ(zoom0 * pinch0 / (Math.hypot(a.x - b.x, a.y - b.y) || 1)); s.zoom = goal.zoom;
       dragged = true; return;
     }
-    if (e.pointerType !== "mouse") return; // phone: joystick ang pang-ikot
     if (!dragged && Math.hypot(e.clientX - p.sx, e.clientY - p.sy) < 6) return;
     if (!dragged) { dragged = true; try { el.setPointerCapture(e.pointerId); } catch (er) {} }
-    const k = 2 * Math.PI / Math.max(320, el.clientWidth); // isang buong lapad ng screen ≈ isang ikot
+    const k = (e.pointerType === "mouse" ? 2 : 2.6) * Math.PI / Math.max(320, el.clientWidth); // isang swipe sa buong lapad ≈ isang ikot
     goal.yaw -= dx * k; s.yaw = goal.yaw;
     goal.elev = Math.max(ELEV_MIN, Math.min(ELEV_MAX, goal.elev + dy * 0.0055)); s.elev = goal.elev;
   }

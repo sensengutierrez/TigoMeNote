@@ -355,3 +355,15 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "merron ba tayo sariling sound invented" → "sunod muna ung sound maker".
 - **Files:** `components/sound-maker.js`, `pages/sound-maker.js`, `app/sound-maker.html`, `css/sound-maker.css` (bago), `sounds.js` (ensure, fromRecipe, preview, position), `components/sound-picker.js`, `components/stories.js`, `nav-items.js`, `config.js` (fn sounds, 0.11.15), `app/explore.html`, `gallery.html`, `home.html`, `share.html`, `backend/sounds-fast.ts` (bago, v1), `backend/sound-recipe.ts` (bago), `backend/posts-fast.ts` (v14), `backend/social-fast.ts` (v11), `sql/066-user-sounds.sql`, `lang/fil.js`, `lang/ar.js`
 - **Paano:** Recipe lang ang naka-save (walang audio file, tipid sa Free plan). Kapag ginamit sa post/status, kinukuha ng server ang recipe sa `user_sounds` at kinokopya sa `sound` ng post, kaya tumutugtog pa rin kahit burahin ang tunog.
+
+## 2026-10-25 · #45 Tigo parang totoong mobile game: game buttons, swipe camera, lahat nasa loob ng laro (portrait at landscape)
+- **Ano:**
+  - **Kontrol:** kaliwa = joystick (D-pad); kanan = ⤒ Jump (malaki), 🏃 Run (toggle; Shift sa keyboard), ✋ Stop (hinto agad, haharap sa camera) at 🎥 Camera (isang button lang, parang MIR4: Follow → Wide → Top → Close-up). Wala nang pangalawang joystick.
+  - **Camera:** swipe sa gitna ng screen = ikot 360° (kaliwa/kanan) at pataas = tingala sa langit, pababa = mula sa itaas; pinch = zoom.
+  - **Lahat nasa loob ng laro (phone):** mini stats (🍙🎈⚡🫧), menu bar (Feed, Play, Clean, Sleep, Closet, Games, House, Journey, Sound, Full; « = itago), at Go inside / Go outside / Decorate ay nasa menu bar din. Ang Closet at Decorate ay bumubukas sa loob ng laro (sheet); ▾ = minimize para makapaglaro habang bukas, ✕ = sara.
+  - **Landscape sa phone/APK:** kusang buong screen na laro (walang top bar at tabs); ang sheet ay nasa kanan para kita pa rin ang joystick. Portrait: kasya ang buong laro sa screen (hindi na kailangang mag-scroll para sa mga button).
+  - **Full screen:** buong page na (hindi lang ang stage), kaya nakikita pa rin ang Feed, Games, Sound at iba pang menu.
+  - **Ayos:** ang puso kapag hinawakan si Tigo ay hindi na baliktad 😄; ang toast ay hindi na humahaba kapag bukas ang Dance bar.
+- **Bakit:** Ayon kay Bench: "gawin mo sana ung joystick ganto… run, jump, stop parang isang game… pag naka land scape… lahat ng process nya kasama… ung pag zoom at focus isang botton lang same sa mir4… swipe swipe sa gitna… always check ung overlap… pag hindi naka land scape check padin" at "ayusin mo din ung puso… baliktad".
+- **Files:** `app/tigo.html`, `css/pages/tigo.css`, `pages/tigo.js`, `tigo/camera-rig.js`, `tigo/controls.js`, `tigo/pet-scene.js`, `lang/fil.js`, `lang/ar.js`, `config.js` (0.11.16)
+- **Paano:** May overlap test (test_layout: 390×844, 360×740, 844×390, 740×360, desktop) na sinusuri na walang nagpapatong at nasa loob ng screen ang lahat, kasama habang nasa bahay, nagde-decorate, naka-minimize ang sheet at may Closet.

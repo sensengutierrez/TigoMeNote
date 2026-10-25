@@ -7,23 +7,23 @@
   <title>Tigo · TigoMeNote</title>
   <link rel="manifest" href="../manifest.webmanifest">
   <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
-  <script src="../assets/js/theme.js?v=0.11.15"></script>
-  <script src="../assets/js/look-tigo.js?v=0.11.15"></script>
-  <script src="../assets/js/appearance.js?v=0.11.15"></script>
-  <script src="../assets/js/config.js?v=0.11.15"></script>
-  <script src="../assets/js/i18n.js?v=0.11.15"></script>
-  <script src="../assets/js/auth-guard.js?v=0.11.15"></script>
+  <script src="../assets/js/theme.js?v=0.11.16"></script>
+  <script src="../assets/js/look-tigo.js?v=0.11.16"></script>
+  <script src="../assets/js/appearance.js?v=0.11.16"></script>
+  <script src="../assets/js/config.js?v=0.11.16"></script>
+  <script src="../assets/js/i18n.js?v=0.11.16"></script>
+  <script src="../assets/js/auth-guard.js?v=0.11.16"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="../assets/css/tokens.css?v=0.11.15">
-  <link rel="stylesheet" href="../assets/css/base.css?v=0.11.15">
-  <link rel="stylesheet" href="../assets/css/components.css?v=0.11.15">
-  <link rel="stylesheet" href="../assets/css/shell.css?v=0.11.15">
-  <link rel="stylesheet" href="../assets/css/look.css?v=0.11.15">
-  <link rel="stylesheet" href="../assets/css/safety.css?v=0.11.15">
-  <link rel="stylesheet" href="../assets/css/pages/tigo.css?v=0.11.15">
+  <link rel="stylesheet" href="../assets/css/tokens.css?v=0.11.16">
+  <link rel="stylesheet" href="../assets/css/base.css?v=0.11.16">
+  <link rel="stylesheet" href="../assets/css/components.css?v=0.11.16">
+  <link rel="stylesheet" href="../assets/css/shell.css?v=0.11.16">
+  <link rel="stylesheet" href="../assets/css/look.css?v=0.11.16">
+  <link rel="stylesheet" href="../assets/css/safety.css?v=0.11.16">
+  <link rel="stylesheet" href="../assets/css/pages/tigo.css?v=0.11.16">
 </head>
 <body data-page="tigo" data-title="Tigo">
   <main id="page" class="page tg-page">
@@ -39,14 +39,31 @@
           </span>
         </div>
         <div class="tg-xp" aria-label="Level progress"><span id="tgXp"></span></div>
-        <button type="button" class="tg-full tg-sound-btn" id="tgSound" aria-label="Sound settings">🔊</button>
-        <button type="button" class="tg-full" id="tgFull" aria-pressed="false" aria-label="Full screen (landscape)">⛶</button>
-        <div class="tg-doorbar hidden" id="tgDoorBar" role="group" aria-label="House"></div>
-        <div class="tg-pad" id="tgPad" aria-label="Walk" role="presentation"><span class="knob"></span></div>
-        <div class="tg-pad tg-look" id="tgLook" aria-label="Look around" role="presentation"><span class="knob">👀</span></div>
+        <div class="tg-mini" id="tgMini" aria-label="Tigo's needs">
+          <span data-s="hunger" title="Food">🍙<i><b></b></i></span><span data-s="joy" title="Fun">🎈<i><b></b></i></span>
+          <span data-s="energy" title="Energy">⚡<i><b></b></i></span><span data-s="clean" title="Clean">🫧<i><b></b></i></span>
+        </div>
+        <nav class="tg-dock" id="tgDock" aria-label="Tigo menu">
+          <span class="tg-dock-ctx" id="tgDoorBar" role="group" aria-label="House"></span>
+          <span class="tg-dock-acts">
+            <button type="button" class="tg-dbtn" data-a="feed" title="Feed">🍽️<small>Feed</small></button>
+            <button type="button" class="tg-dbtn" data-a="play" title="Play">⚽<small>Play</small></button>
+            <button type="button" class="tg-dbtn" data-a="clean" title="Clean">🛁<small>Clean</small></button>
+            <button type="button" class="tg-dbtn" data-a="sleep" id="tgDockSleep" title="Sleep">🌙<small>Sleep</small></button>
+            <button type="button" class="tg-dbtn" data-a="closet" title="Closet">👗<small>Closet</small></button>
+            <button type="button" class="tg-dbtn" data-a="games" title="Games">🎮<small>Games</small></button>
+            <button type="button" class="tg-dbtn" data-a="house" title="House">🏠<small>House</small></button>
+            <button type="button" class="tg-dbtn" data-a="journey" title="Journey">🗺️<small>Journey</small></button>
+            <button type="button" class="tg-dbtn" id="tgSound" aria-label="Sound settings" title="Sound">🔊<small>Sound</small></button>
+            <button type="button" class="tg-dbtn" id="tgFull" aria-pressed="false" aria-label="Full screen (landscape)" title="Full screen">⛶<small>Full</small></button>
+          </span>
+          <button type="button" class="tg-dock-min" id="tgDockMin" aria-expanded="true" aria-label="Hide menu">«</button>
+        </nav>
+        <div class="tg-pad" id="tgPad" aria-label="Walk" role="presentation"><i class="ar u"></i><i class="ar r"></i><i class="ar d"></i><i class="ar l"></i><span class="knob"></span></div>
         <div class="tg-btns" role="group" aria-label="Controls">
-          <button type="button" class="tg-cbtn" id="tgView" aria-label="Camera view: Follow" title="Camera view">🎥</button>
-          <button type="button" class="tg-cbtn" id="tgZoom" aria-label="Zoom" title="Zoom">🔍</button>
+          <button type="button" class="tg-gbtn tg-cam" id="tgView" aria-label="Camera: Follow view" title="Camera">🎥</button>
+          <button type="button" class="tg-gbtn tg-stop" id="tgStop" aria-label="Stop" title="Stop">✋<small>Stop</small></button>
+          <button type="button" class="tg-gbtn tg-run" id="tgRun" aria-pressed="false" aria-label="Run" title="Run (Shift)">🏃<small>Run</small></button>
           <button type="button" class="tg-jump" id="tgJump" aria-label="Jump">⤒</button>
         </div>
         <div class="tg-together hidden" id="tgTogether" role="group" aria-label="Play together">
@@ -56,6 +73,10 @@
           <button type="button" data-t="spin" title="Ikot (spin together)">🔄<small>Ikot</small></button>
           <button type="button" data-t="bow" title="Bow">🙇<small>Bow</small></button>
         </div>
+        <section class="tg-sheet hidden" id="tgSheet" aria-labelledby="tgSheetTitle">
+          <div class="tg-sheet-head"><b id="tgSheetTitle"></b><button type="button" data-sheet="min" aria-label="Minimize">▾</button><button type="button" data-sheet="close" aria-label="Close">✕</button></div>
+          <div class="tg-sheet-body" id="tgSheetBody"></div>
+        </section>
         <div class="tg-toast" id="tgToast" aria-live="polite"></div>
       </section>
 
@@ -95,22 +116,22 @@
       </div>
     </div>
   </main>
-  <script src="../assets/js/icons.js?v=0.11.15"></script>
-  <script src="../assets/js/nav-items.js?v=0.11.15"></script>
-  <script src="../assets/js/components/app-shell.js?v=0.11.15"></script>
-  <script src="../assets/js/api.js?v=0.11.15"></script>
-  <script src="../assets/js/moderation-check.js?v=0.11.15"></script>
-  <script src="../assets/js/components/mod-guard.js?v=0.11.15"></script>
-  <script src="../assets/js/components/modal.js?v=0.11.15"></script>
-  <script src="../assets/js/post-queue.js?v=0.11.15"></script>
-  <script src="../assets/js/native-bridge.js?v=0.11.15"></script>
-  <script src="../assets/js/push-setup.js?v=0.11.15"></script>
-  <script src="../assets/js/components/sos-overlay.js?v=0.11.15"></script>
-  <script src="../assets/js/safety-watch.js?v=0.11.15"></script>
-  <script src="../assets/js/location-share.js?v=0.11.15"></script>
-  <script src="../assets/js/wellbeing.js?v=0.11.15"></script>
-  <script src="../assets/js/notif-badge.js?v=0.11.15"></script>
-  <script src="../assets/js/stickers.js?v=0.11.15"></script>
-  <script src="../assets/js/pages/tigo.js?v=0.11.15"></script>
+  <script src="../assets/js/icons.js?v=0.11.16"></script>
+  <script src="../assets/js/nav-items.js?v=0.11.16"></script>
+  <script src="../assets/js/components/app-shell.js?v=0.11.16"></script>
+  <script src="../assets/js/api.js?v=0.11.16"></script>
+  <script src="../assets/js/moderation-check.js?v=0.11.16"></script>
+  <script src="../assets/js/components/mod-guard.js?v=0.11.16"></script>
+  <script src="../assets/js/components/modal.js?v=0.11.16"></script>
+  <script src="../assets/js/post-queue.js?v=0.11.16"></script>
+  <script src="../assets/js/native-bridge.js?v=0.11.16"></script>
+  <script src="../assets/js/push-setup.js?v=0.11.16"></script>
+  <script src="../assets/js/components/sos-overlay.js?v=0.11.16"></script>
+  <script src="../assets/js/safety-watch.js?v=0.11.16"></script>
+  <script src="../assets/js/location-share.js?v=0.11.16"></script>
+  <script src="../assets/js/wellbeing.js?v=0.11.16"></script>
+  <script src="../assets/js/notif-badge.js?v=0.11.16"></script>
+  <script src="../assets/js/stickers.js?v=0.11.16"></script>
+  <script src="../assets/js/pages/tigo.js?v=0.11.16"></script>
 </body>
 </html>

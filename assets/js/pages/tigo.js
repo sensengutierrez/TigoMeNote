@@ -1,7 +1,10 @@
 /* TigoMeNote · pages/tigo.js (app/tigo.html) — alagaan si Tigo (3D), lakad/takbo, closet, laro, journey, at kaibigang malapit
    3D: tigo/pet-scene.js (+ pet-model, backdrops, buddies, outfit, camera-rig, sky-dome, room, furniture).
-   Kontrol: tigo/controls.js — kaliwang joystick = lakad, kanang joystick = camera (360° / tingala); 🎥 View, 🔍 Zoom, ⤒ Jump.
-   Bahay: lumakad sa pinto o pindutin ang 🏠 House → loob ng bahay; 🛠 Decorate = tigo/room-ui.js.
+   Kontrol: tigo/controls.js — joystick = lakad; ⤒ Jump · 🏃 Run · ✋ Stop · 🎥 Camera (Follow → Wide → Top → Close-up);
+            swipe sa gitna = ikot 360° / tingala (camera-rig.js); pinch = zoom.
+   Game UI (phone/tablet, "ui-game"): menu (dock), mini stats at sheet (Closet, Decorate) ay nasa LOOB ng laro;
+            landscape sa phone/APK o Full screen = buong screen na laro ("game").
+   Bahay: lumakad sa pinto o 🏠 House → loob ng bahay; 🛠 Decorate = tigo/room-ui.js.
    UI: tigo/closet-ui.js, tigo/games-ui.js (Coin Rush, Pac-Tigo, Racing), tigo/journey-ui.js. Walang WebGL → 2D na sticker.
    Boses: tigo/voice.js + tigo/talk.js (nagsasalita parang baby; ⚙️ = Sound settings, naka-save sa device).
    Server: pet-fast (get, act, style, wear, buy, game, nearby, gather, visits). Stats: kinukuwenta rin dito para gumalaw ang bars. */
@@ -35,7 +38,9 @@
       bar.style.width = v + "%"; s.classList.toggle("low", v < 25); s.setAttribute("aria-label", s.textContent.trim() + " " + v + "%");
     });
     var sb = $("sleepBtn"); sb.innerHTML = p.asleep ? "<span>☀️</span>Wake up" : "<span>🌙</span>Sleep"; sb.dataset.a = p.asleep ? "wake" : "sleep";
-    document.querySelectorAll(".tg-act").forEach(function (b) { if (["feed", "play", "games"].indexOf(b.dataset.a) >= 0) b.disabled = !!p.asleep; });
+    var ds = $("tgDockSleep"); ds.innerHTML = p.asleep ? "☀️<small>Wake</small>" : "🌙<small>Sleep</small>"; ds.dataset.a = p.asleep ? "wake" : "sleep";
+    document.querySelectorAll(".tg-act, .tg-dbtn[data-a]").forEach(function (b) { if (["feed", "play", "games"].indexOf(b.dataset.a) >= 0) b.disabled = !!p.asleep; });
+    document.querySelectorAll("#tgMini [data-s]").forEach(function (m) { var v = p[m.dataset.s]; m.querySelector("b").style.width = v + "%"; m.classList.toggle("low", v < 25); m.title = m.title.split(" ")[0] + " " + v + "%"; });
     $("stage").classList.toggle("night", !!p.asleep); paintSky(p);
     if (sc) { sc.main.setMood(p.mood); sc.main.sleep(p.asleep); sc.night(p.asleep, !firstNight); firstNight = false; }
   }
@@ -60,14 +65,15 @@
       dress(pet.outfit, pet.color); paint();
       var cv = $("tgCanvas");
       ctl = c.createControls({
-        stage: $("stage"), pad: $("tgPad"), lookPad: $("tgLook"), jumpBtn: $("tgJump"),
+        stage: $("stage"), pad: $("tgPad"), jumpBtn: $("tgJump"), runBtn: $("tgRun"), stopBtn: $("tgStop"),
+        onStop: function () { if (gameJump) return; sc.stop(); },
         onJump: function () { if (gameJump) return gameJump(); if (!sc.isInside()) { sc.jump(); if (voice) voice.sfx("jump"); } },
         onTap: function (e) {
           var r = cv.getBoundingClientRect();
           if (!playing && sc.pick(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1))) act("pet");
         },
       });
-      sc.setInput(ctl.state); sc.setLook(ctl.look);
+      sc.setInput(ctl.state); sc.setRun(ctl.running);
       cv.addEventListener("pointermove", function (e) {
         if (e.pointerType !== "mouse") return;
         var r = cv.getBoundingClientRect();
@@ -78,21 +84,43 @@
     startVoice();
   }
   // ---------- camera: View at Zoom ----------
-  var VIEW = { follow: ["🎥", "Follow view"], top: ["🗺️", "Top view"], close: ["🔍", "Close-up"] };
+  // isang button lang (parang MIR4): Follow → Wide → Top → Close-up
+  var VIEW = { follow: ["🎥", "Follow view"], wide: ["🔭", "Wide view"], top: ["🗺️", "Top view"], close: ["🔍", "Close-up"] };
   $("tgView").addEventListener("click", function () {
     if (!sc) return; var v = sc.rig.next(), x = VIEW[v];
-    this.textContent = x[0]; this.setAttribute("aria-label", "Camera view: " + x[1]); toast(x[0] + " " + x[1]);
+    this.textContent = x[0]; this.setAttribute("aria-label", "Camera: " + x[1]); toast(x[0] + " " + x[1]);
   });
-  $("tgZoom").addEventListener("click", function () {
-    if (!sc) return; var z = sc.rig.zoomStep();
-    toast(z === "near" ? "🔍 Zoom in" : z === "far" ? "🔭 Zoom out" : "🎯 Normal");
+  // ---------- game UI: phone/tablet (lahat nasa loob ng laro) at landscape (buong screen) ----------
+  var mqUI = matchMedia("(max-width: 999px), (pointer: coarse)"), mqLand = matchMedia("(pointer: coarse) and (orientation: landscape)");
+  function uiGame() { return mqUI.matches || $("stage").classList.contains("full"); }
+  function layout() {
+    var st = $("stage"), g = mqLand.matches || st.classList.contains("full");
+    st.classList.toggle("ui-game", mqUI.matches || g); st.classList.toggle("game", g); document.body.classList.toggle("tg-game", g);
+  }
+  [mqUI, mqLand].forEach(function (m) { if (m.addEventListener) m.addEventListener("change", layout); });
+  layout();
+  $("tgDockMin").addEventListener("click", function () {
+    var on = $("stage").classList.toggle("dock-min"); this.setAttribute("aria-expanded", String(!on)); this.setAttribute("aria-label", on ? "Show menu" : "Hide menu");
+  });
+  $("tgDock").addEventListener("click", function (e) { var b = e.target.closest(".tg-dbtn[data-a]"); if (b && !b.disabled) doAction(b.dataset.a); });
+  // Sheet sa loob ng laro (Closet, Decorate): ▾ = minimize, ✕ = sara
+  var sheetClose = null;
+  function openSheet(title, onClose) {
+    var sh = $("tgSheet"); if (sheetClose) sheetClose();
+    $("tgSheetTitle").textContent = title; sh.classList.remove("hidden", "min"); $("stage").classList.add("sheet-open");
+    sheetClose = onClose; return $("tgSheetBody");
+  }
+  function closeSheet() { $("tgSheet").classList.add("hidden"); $("tgSheet").classList.remove("min"); $("stage").classList.remove("sheet-open"); $("tgSheetBody").innerHTML = ""; sheetClose = null; }
+  $("tgSheet").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-sheet]"); if (!b) return;
+    if (b.dataset.sheet === "min") { var m = $("tgSheet").classList.toggle("min"); b.setAttribute("aria-label", m ? "Expand" : "Minimize"); }
+    else if (sheetClose) sheetClose();
   });
   // ---------- bahay: pasok, labas, Decorate ----------
   function doorBar(st) {
     var bar = $("tgDoorBar");
-    if (st === "near") bar.innerHTML = '<button type="button" class="go" data-door="in">🏠 Go inside</button>';
-    else if (st === "room") bar.innerHTML = '<button type="button" data-door="out">🚪 Go outside</button><button type="button" class="go" data-door="decor">🛠 Decorate</button>';
-    bar.classList.toggle("hidden", !st || playing);
+    bar.innerHTML = playing ? "" : st === "near" ? '<button type="button" class="tg-dbtn wide go" data-door="in">🏠 Go inside</button>'
+      : st === "room" ? '<button type="button" class="tg-dbtn wide" data-door="out">🚪 Go outside</button><button type="button" class="tg-dbtn wide go" data-door="decor">🛠 Decorate</button>' : "";
   }
   $("tgDoorBar").addEventListener("click", function (e) {
     var b = e.target.closest("[data-door]"); if (!b || !sc) return;
@@ -106,20 +134,21 @@
     if (sc.inRoom()) return;
     if ((live() || {}).asleep) { toast("Tigo is already sleeping inside 🌙"); return; }
     sc.enterRoom();
-    if (matchMedia("(max-width: 999px)").matches) $("stage").scrollIntoView({ behavior: "smooth", block: "start" });
+    if (uiGame()) $("stage").scrollIntoView({ behavior: "smooth", block: "start" });
   }
   async function openDecor() {
     if (decor || !sc || !sc.inRoom()) return;
     if (closet) closet.close();
     var r = await mod("room-ui");
     document.body.classList.add("tg-closet-on");
+    var inGame = uiGame();
     decor = r.openRoomEditor({
-      host: $("tgSide"), stage: $("stage"), canvas: $("tgCanvas"), sc: sc, pet: pet, esc: UI.esc,
+      host: inGame ? openSheet("🏠 Decorate", function () { if (decor) decor.close(); }) : $("tgSide"), stage: $("stage"), canvas: $("tgCanvas"), sc: sc, pet: pet, esc: UI.esc,
       call: function (a, b) { return TMN_API.call("pet", a, b); },
       onPet: function (p) { pet = p; paint(); },
-      onClose: function () { decor = null; document.body.classList.remove("tg-closet-on"); },
+      onClose: function () { decor = null; document.body.classList.remove("tg-closet-on"); if (inGame) closeSheet(); },
     });
-    if (matchMedia("(max-width: 999px)").matches) $("stage").scrollIntoView({ behavior: "smooth", block: "start" });
+    if (inGame) $("stage").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   // ---------- boses ni Tigo ----------
@@ -215,14 +244,15 @@
     if (decor) decor.close();
     var c = await mod("closet-ui");
     document.body.classList.add("tg-closet-on");
+    var inGame = uiGame();
     closet = c.openCloset({
-      host: $("tgSide"), pet: pet, esc: UI.esc,
+      host: inGame ? openSheet("👗 Closet", function () { if (closet) closet.close(); }) : $("tgSide"), pet: pet, esc: UI.esc,
       call: function (a, b) { return TMN_API.call("pet", a, b); },
       onPreview: function (o, color) { dress(o, color); if (sc) sc.jump(); },
       onPet: function (p) { pet = p; paint(); },
-      onClose: function () { closet = null; document.body.classList.remove("tg-closet-on"); },
+      onClose: function () { closet = null; document.body.classList.remove("tg-closet-on"); if (inGame) closeSheet(); },
     });
-    if (matchMedia("(max-width: 999px)").matches) $("stage").scrollIntoView({ behavior: "smooth", block: "start" });
+    if (inGame) $("stage").scrollIntoView({ behavior: "smooth", block: "start" });
   }
   async function openJourney() {
     var j = await mod("journey-ui");
@@ -240,7 +270,8 @@
     if (p.energy < 12) { toast("Tigo is too tired to play. Let Tigo sleep."); return; }
     playing = true;
     if (decor) decor.close();
-    $("tgDoorBar").classList.add("hidden");
+    if (closet) closet.close();
+    $("tgDoorBar").innerHTML = "";
     $("stage").scrollIntoView({ behavior: "smooth", block: "center" });
     var g = await mod("games-ui");
     if (talk) talk.idle(false);
@@ -257,16 +288,15 @@
       if (r.levelUp) levelUp(r.levelUp);
     } catch (e) { toast(e.message); }
   }
-  $("tgSide").addEventListener("click", function (e) {
-    var b = e.target.closest(".tg-act[data-a]"); if (!b || b.disabled) return;
-    var a = b.dataset.a;
+  function doAction(a) {
     if (a === "feed") return feedMenu();
     if (a === "closet") return openCloset();
     if (a === "games") return openGames();
     if (a === "journey") return openJourney();
     if (a === "house") return goHome();
     act(a);
-  });
+  }
+  $("tgSide").addEventListener("click", function (e) { var b = e.target.closest(".tg-act[data-a]"); if (b && !b.disabled) doAction(b.dataset.a); });
   $("tgName").addEventListener("click", openCloset);
   $("tgCoinsBtn").addEventListener("click", openGames);
   $("tgSound").addEventListener("click", soundSheet);
@@ -274,15 +304,17 @@
   // ---------- full screen / landscape ----------
   $("tgFull").addEventListener("click", async function () {
     var st = $("stage"), on = !st.classList.contains("full");
-    st.classList.toggle("full", on); document.body.classList.toggle("tg-full", on);
+    st.classList.toggle("full", on); document.body.classList.toggle("tg-full", on); layout();
     this.setAttribute("aria-pressed", on);
     try {
-      if (on) { if (st.requestFullscreen) await st.requestFullscreen(); if (screen.orientation && screen.orientation.lock) await screen.orientation.lock("landscape"); }
+      // buong page ang full screen (hindi lang ang stage) para makita pa rin ang mga sheet at menu (Feed, Games, Sound)
+      var de = document.documentElement;
+      if (on) { if (de.requestFullscreen) await de.requestFullscreen(); if (screen.orientation && screen.orientation.lock) await screen.orientation.lock("landscape"); }
       else { if (document.fullscreenElement) await document.exitFullscreen(); if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }
     } catch (e) { /* ok lang kung hindi suportado */ }
   });
   document.addEventListener("fullscreenchange", function () {
-    if (!document.fullscreenElement && $("stage").classList.contains("full")) { $("stage").classList.remove("full"); document.body.classList.remove("tg-full"); $("tgFull").setAttribute("aria-pressed", "false"); }
+    if (!document.fullscreenElement && $("stage").classList.contains("full")) { $("stage").classList.remove("full"); document.body.classList.remove("tg-full"); $("tgFull").setAttribute("aria-pressed", "false"); layout(); }
   });
 
   // ---------- magkakalapit na kaibigan ----------
@@ -376,7 +408,7 @@
     setInterval(paint, 30000);
     var h = new Date().getHours(), touch = matchMedia("(pointer: coarse)").matches;
     setTimeout(function () { toast((h < 12 ? "Good morning" : h < 18 ? "Hi" : "Good evening") + "! " + pet.name + " missed you 💛"); }, 900);
-    setTimeout(function () { toast(touch ? "Tip: left stick = walk · right stick = look around 👀" : "Tip: W A S D to walk · drag to look around · Q / E to turn"); }, 4200);
+    setTimeout(function () { toast(touch ? "Tip: stick = walk · swipe = look around 👀" : "Tip: W A S D to walk · Shift to run · drag to look around"); }, 4200);
   }
   init();
 })();

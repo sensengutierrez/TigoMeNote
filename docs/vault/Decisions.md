@@ -95,6 +95,9 @@ updated: 2026-10-24
 | 2026-10-24 | Ayos ng bahay sa `pets.room` (jsonb), walang bagong table | Isang row bawat user; validated ng pet-fast |
 | 2026-10-24 | Sound Maker = recipe (JSON) na tinutugtog ng device, hindi audio file | Walang storage/egress; pareho ang tunog sa lahat ng device |
 | 2026-10-24 | Recipe ng sariling tunog ay kinokopya sa post/status (galing sa server, hindi sa browser) | Tumutugtog kahit burahin; hindi madadaya ang pangalan/may-ari |
+| 2026-10-25 | Tigo sa phone = game UI (lahat ng function sa loob ng stage); landscape = buong screen na laro | Ayon kay Bench; hindi maiiwan sa ibaba ang mga function (para sa APK) |
+| 2026-10-25 | Camera: swipe sa gitna + isang camera button (4 view); pinalitan ang pangalawang joystick | Parang MIR4; mas maluwag ang screen |
+| 2026-10-25 | Full screen = buong page (documentElement), hindi ang stage lang | Nakikita pa rin ang mga modal (Feed, Games, Sound) |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

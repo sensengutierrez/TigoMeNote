@@ -1276,5 +1276,17 @@ TMN_I18N.register("ar", {
   "You can keep up to 30 sounds. Delete one first.": "يمكنك الاحتفاظ بـ30 صوتاً فقط. احذف واحداً أولاً.",
   "Sound not found.": "الصوت غير موجود.",
   "Pinoy acoustic": "أكوستيك فلبيني",
-  "Calm": "هادئ"
+  "Calm": "هادئ",
+  "Wide view": "عرض واسع",
+  "Hide menu": "إخفاء القائمة",
+  "Show menu": "إظهار القائمة",
+  "Expand": "توسيع",
+  "Tip: stick = walk · swipe = look around 👀": "نصيحة: العصا = مشي · اسحب = انظر حولك 👀",
+  "Tip: W A S D to walk · Shift to run · drag to look around": "نصيحة: W A S D للمشي · Shift للركض · اسحب للنظر حولك",
+  "Tigo menu": "قائمة تيغو",
+  "Controls": "التحكم",
+  "Wake": "استيقظ",
+  "Full": "كامل",
+  "Run (Shift)": "ركض (Shift)",
+  "Camera: Follow view": "الكاميرا: عرض المتابعة"
 });

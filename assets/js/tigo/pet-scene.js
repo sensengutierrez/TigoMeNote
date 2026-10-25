@@ -10,7 +10,8 @@
      sc.enterRoom() / sc.leaveRoom() / sc.inRoom() → loob ng bahay (room.js); sc.room() = ang kwarto (para sa room-ui.js)
      sc.setRoom({ wall, floor, items }) → ayos ng kwarto (galing sa server)
      sc.rig                      → camera (camera-rig.js): next() view, zoomStep(), yaw()
-     sc.setLook(fn)              → fn() = { x, y } galing sa kanang joystick (camera)
+     sc.setLook(fn)              → fn() = { x, y } (opsyonal na joystick ng camera; ang swipe ay nasa camera-rig.js)
+     sc.setRun(fn)               → fn() = true kapag tumatakbo (🏃 Run) · sc.stop() = hinto agad, haharap sa camera
      sc.ray(x, y) → Raycaster    · sc.setClaim(fn) → kung may ibang gagamit ng hila sa screen (paglipat ng gamit)
      opts.onDoor(state)          → "near" (malapit sa pinto sa labas) | "room" (nasa loob) | null
      sc.add(opts) / remove(t)    → bisita (Tigo ng kaibigan); sumusunod siya kay Tigo habang naglalakad
@@ -166,7 +167,7 @@ export function createScene(canvas, opts = {}) {
   }
 
   // ---------- galaw ----------
-  let input = () => ({ x: 0, z: 0 });
+  let input = () => ({ x: 0, z: 0 }), running = () => false;
   let auto = null; // { x, z, done } — kusang lakad (papunta sa bahay)
   let isNight = false, inside = false; // inside = tulog sa kama (hindi gumagalaw)
   let inRoom = false, room = null, roomData = null, doorState = null;
@@ -198,7 +199,7 @@ export function createScene(canvas, opts = {}) {
       const i = input(), y = rig.yaw(), c = Math.cos(y), s_ = Math.sin(y);
       ix = i.x * c + i.z * s_; iz = -i.x * s_ + i.z * c;
     }
-    const speed = 2.1;
+    const speed = 2.1 * (!sg && !auto && running() ? 1.75 : 1);
     me.vx += (ix * speed - me.vx) * Math.min(1, dt * 10); me.vz += (iz * speed - me.vz) * Math.min(1, dt * 10);
     const v = Math.hypot(me.vx, me.vz);
     if (v > 0.05) {
@@ -335,7 +336,7 @@ export function createScene(canvas, opts = {}) {
       const a = Math.random() * Math.PI * 2;
       if (free) m.position.set(base.x, base.y, base.z);
       else m.position.set(base.x + (kind === "food" ? (i - 1) * 0.25 : Math.cos(a) * 0.5), kind === "food" ? 2.6 + i * 0.3 : 1 + Math.random() * 0.8, base.z + 0.6 + Math.sin(a) * 0.3);
-      if (kind === "hearts") m.rotation.z = Math.PI;
+      // ang puso ay nakatayo na (lobes sa itaas, tulis sa ibaba); huwag baligtarin
       scene.add(m);
       const v = free ? new THREE.Vector3(Math.cos(a) * 1.4, 1 + Math.random(), Math.sin(a) * 1.4) : new THREE.Vector3((Math.random() - 0.5) * 0.6, kind === "food" ? -2.2 : 0.8 + Math.random() * 0.6, 0);
       fx.push({ m, kind, life: kind === "ball" ? 2.4 : kind === "sparkle" ? 0.5 : 1.6 + Math.random() * 0.6, v, t0: 0, target: main.group.position });
@@ -429,6 +430,12 @@ export function createScene(canvas, opts = {}) {
     room() { return inRoom ? room : null; },
     setRoom(d) { roomData = d || null; if (room) ensureRoom(); },
     setLook(fn) { look2 = fn || (() => null); },
+    setRun(fn) { running = fn || (() => false); },
+    stop() {
+      if (game || inside) return;
+      auto = null; me.vx = me.vz = 0; main.walk(0); main.face(rig.yaw());
+      if (show) { [main].concat(friends.map((f) => f.t)).forEach((p) => { p.move(null); p.walk(0); }); show = null; }
+    },
     setClaim(fn) { claim = fn || (() => false); },
     ray(x, y) { const r = new THREE.Raycaster(); r.setFromCamera(new THREE.Vector2(x, y), camera); return r; },
     headScreen() {

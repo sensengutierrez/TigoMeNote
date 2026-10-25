@@ -1440,5 +1440,18 @@ TMN_I18N.register("fil", {
   "You can keep up to 30 sounds. Delete one first.": "Hanggang 30 tunog lang. Magbura muna ng isa.",
   "Sound not found.": "Hindi makita ang tunog.",
   "Pinoy acoustic": "Pinoy acoustic",
-  "Calm": "Kalmado"
+  "Calm": "Kalmado",
+  "Wide view": "Malawak na view",
+  "Camera": "Camera",
+  "Hide menu": "Itago ang menu",
+  "Show menu": "Ipakita ang menu",
+  "Expand": "Palakihin",
+  "Tip: stick = walk · swipe = look around 👀": "Tip: stick = lakad · swipe = tingin-tingin 👀",
+  "Tip: W A S D to walk · Shift to run · drag to look around": "Tip: W A S D = lakad · Shift = takbo · hilahin = tingin-tingin",
+  "Tigo menu": "Menu ni Tigo",
+  "Controls": "Kontrol",
+  "Wake": "Gising",
+  "Full": "Buo",
+  "Run (Shift)": "Takbo (Shift)",
+  "Camera: Follow view": "Camera: Sunod na view"
 });

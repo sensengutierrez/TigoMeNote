@@ -33,7 +33,8 @@ Virtual pet ng TigoMeNote (parang Tamagotchi pero sariling character): si **Tigo
 - 🔊 Sound settings: Tigo talks, style, voice volume, pitch, game sounds, chatty. Naka-save sa device (`tmnTigoSound`). Nagsisimula lang ang tunog pagkatapos ng unang tap/key (patakaran ng browser).
 
 ## Camera (`camera-rig.js`, `sky-dome.js`)
-- Phone: kaliwang joystick = lakad; kanang joystick = camera (ikot 360°, taas = tingala, baba = mula sa itaas). Sa gilid: ⤒ Jump, 🎥 View (Follow / Top view / Close-up), 🔍 Zoom (normal / malayo / malapit). Pinch = zoom.
+- Phone: joystick (D-pad) = lakad; kanan: ⤒ Jump, 🏃 Run, ✋ Stop, 🎥 Camera (isang button: Follow → Wide → Top → Close-up). Swipe sa gitna = ikot 360° at tingala; pinch = zoom.
+- Game UI sa phone: mini stats + menu bar (lahat ng action, « = itago) + sheet para sa Closet/Decorate (▾ minimize, ✕ sara). Landscape = buong screen na laro (sheet sa kanan).
 - Desktop: hila ng mouse = ikot, wheel = zoom, Q/E = ikot. Ang lakad (joystick/WASD) ay ayon sa direksyon ng camera.
 - 3D na langit: ulap at araw (araw), buwan at bituin (gabi at Moon base).
 
