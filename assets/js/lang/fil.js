@@ -1535,5 +1535,7 @@ TMN_I18N.register("fil", {
   "⬇ Download": "⬇ I-download",
   "Open this page in Chrome": "Buksan ang page na ito sa Chrome",
   "Downloads don't work inside this app's browser.": "Hindi gumagana ang download sa browser ng app na ito.",
-  "Open in Chrome": "Buksan sa Chrome"
+  "Open in Chrome": "Buksan sa Chrome",
+  "Philippines ⇄ here": "Pinas ⇄ dito",
+  "Philippines ⇄ abroad": "Pinas ⇄ abroad"
 });

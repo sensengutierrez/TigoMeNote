@@ -47,7 +47,14 @@
   }
 
   // kulay ng status bar ayon sa theme (DARK = puting text)
-  function bar() { try { if (P.StatusBar && P.StatusBar.setStyle) P.StatusBar.setStyle({ style: document.documentElement.dataset.theme === "dark" ? "DARK" : "LIGHT" }); } catch (e) {} }
+  function bar() {
+    var dark = document.documentElement.dataset.theme === "dark";
+    var m = document.querySelector('meta[name="theme-color"]'), color = (m && m.getAttribute("content")) || (dark ? "#0e0e10" : "#ffffff");
+    try {
+      if (window.TMNNative && TMNNative.setBars) TMNNative.setBars(color, dark);   // MainActivity (patch-android.py)
+      else if (P.StatusBar && P.StatusBar.setStyle) P.StatusBar.setStyle({ style: dark ? "DARK" : "LIGHT" });
+    } catch (e) {}
+  }
   document.addEventListener("tmn:theme", bar);
   function ready() {
     bar();

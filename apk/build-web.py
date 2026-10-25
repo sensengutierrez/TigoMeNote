@@ -1,7 +1,7 @@
 """TigoMeNote · apk/build-web.py — kinokopya ang site papunta sa apk/<app>/www (laman ng APK)
    python3 apk/build-web.py main
    - Kasama: app/, assets/, legal/, login.html, manifest (walang sw.js: sa APK, native ang push at nasa phone na ang files)
-   - index.html = apk/start.html (diretso sa unang page ng app — apk/<app>/app.json "home" — o Login)
+   - index.html = apk/start.html: opening animation ni Tigo, tapos unang page ng app (apk/<app>/app.json "home") o Login
    - Isinisingit ang assets/js/app-mode.js sa bawat page (APK lang)."""
 import json, os, re, shutil, sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -13,7 +13,13 @@ for d in ("app", "assets", "legal"):
 for f in ("login.html", "manifest.webmanifest"):
     shutil.copy(os.path.join(ROOT, f), out)
 meta = json.load(open(os.path.join(ROOT, "apk", app, "app.json")))   # {"id": "chat", "home": "app/messages.html"}
-start = open(os.path.join(ROOT, "apk", "start.html")).read().replace("app/home.html", meta["home"])
+sys.path.insert(0, os.path.join(ROOT, "tools", "brand")); import logo   # ang logo para sa opening animation
+mark = logo.mark(app)
+for part in (logo.face(256, 262, 1), logo.face(256, 266, 1.05, blush=True), logo.DOTS.format(ink="#1b1b1f")):
+    if part in mark: mark = mark.replace(part, '<g class="eyes">' + part + "</g>")
+word = {"main": "Tigo<b>Me</b>Note", "chat": "TigoMeNote <b>Chat</b>", "tigo": "<b>Tigo</b>"}.get(app, "TigoMeNote")
+start = (open(os.path.join(ROOT, "apk", "start.html")).read().replace("app/home.html", meta["home"])
+         .replace("__BG__", meta.get("splash", "#141418")).replace("__MARK__", mark).replace("__WORD__", word))
 open(os.path.join(out, "index.html"), "w").write(start)
 ver = re.search(r'version:\s*"([^"]+)"', open(os.path.join(ROOT, "assets/js/config.js")).read()).group(1)
 n = 0

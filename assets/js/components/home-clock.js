@@ -1,4 +1,4 @@
-/* TigoMeNote · components/home-clock.js — "Pinas ⇄ dito": dalawang orasan para sa pamilyang magkalayo
+/* TigoMeNote · components/home-clock.js — "Philippines ⇄ here": dalawang orasan para sa pamilyang magkalayo
      TMN_HOMECLOCK.mount(el)
    Laging may 🇵🇭 Philippines. Ang isa: oras ng device mo (hal. 🇧🇭 Bahrain); kung nasa Pinas ka, Bahrain ang ipapakita.
    May hint kung magandang oras tumawag (8 AM – 10 PM sa kabila). */
@@ -19,7 +19,7 @@
     function paint() {
       var far = mine === PH ? other : PH, h = hourIn(far);
       var ok = h >= 8 && h < 22;
-      el.innerHTML = '<h3 class="side-title">Pinas ⇄ ' + (mine === PH ? "abroad" : "here") + "</h3>" +
+      el.innerHTML = '<h3 class="side-title">' + (mine === PH ? "Philippines ⇄ abroad" : "Philippines ⇄ here") + "</h3>" +
         '<div class="hc">' +
           '<div class="hc-c"><span class="hc-f">🇵🇭</span><b translate="no">' + t(PH) + '</b><span class="faint small">Philippines · ' + d(PH) + "</span></div>" +
           '<div class="hc-c"><span class="hc-f">' + on[0] + '</span><b translate="no">' + t(other) + '</b><span class="faint small">' + on[1] + " · " + d(other) + "</span></div></div>" +

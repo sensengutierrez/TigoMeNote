@@ -1369,5 +1369,7 @@ TMN_I18N.register("ar", {
   "⬇ Download": "⬇ تنزيل",
   "Open this page in Chrome": "افتح هذه الصفحة في Chrome",
   "Downloads don't work inside this app's browser.": "التنزيل لا يعمل داخل متصفح هذا التطبيق.",
-  "Open in Chrome": "افتح في Chrome"
+  "Open in Chrome": "افتح في Chrome",
+  "Philippines ⇄ here": "الفلبين ⇄ هنا",
+  "Philippines ⇄ abroad": "الفلبين ⇄ الخارج"
 });

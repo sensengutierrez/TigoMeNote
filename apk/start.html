@@ -4,12 +4,34 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>TigoMeNote</title>
-  <style>html,body{margin:0;height:100%;background:#141418}</style>
-  <!-- APK: unang page. Naka-login → Home; hindi pa → Login. -->
+  <!-- APK: unang page. Animation ni Tigo (mga 1 segundo) → Home ng app kung naka-login, kung hindi → Login.
+       Ang "app/home.html" ay pinapalitan ng apk/build-web.py ayon sa app (hal. app/messages.html sa Chat). -->
+  <style>
+    html, body { margin: 0; height: 100%; background: __BG__; overflow: hidden; }
+    body { display: grid; place-items: center; font-family: "Bricolage Grotesque", system-ui, sans-serif; }
+    .wrap { display: grid; justify-items: center; gap: 18px; }
+    .logo { width: 132px; height: 132px; animation: pop .7s cubic-bezier(.2, 1.5, .4, 1) both; }
+    .eyes { transform-origin: 256px 262px; animation: blink .26s ease-in-out .62s 1 both; }
+    .word { color: #fff; font-size: 26px; font-weight: 800; letter-spacing: -.4px; opacity: 0; animation: up .45s ease-out .32s both; }
+    .word b { color: #ff8a6a; font-weight: 800; }
+    .out { animation: out .25s ease-in forwards; }
+    @keyframes pop { 0% { transform: scale(.3) rotate(-14deg); opacity: 0; } 60% { opacity: 1; } 100% { transform: scale(1) rotate(0); } }
+    @keyframes blink { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(.1); } }
+    @keyframes up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    @keyframes out { to { opacity: 0; transform: scale(1.06); } }
+    @media (prefers-reduced-motion: reduce) { .logo, .eyes, .word { animation-duration: .01s; animation-delay: 0s; } }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="wrap">
+    <svg class="logo" viewBox="0 0 512 512" aria-hidden="true">__MARK__</svg>
+    <div class="word">__WORD__</div>
+  </div>
   <script>
     var t = null; try { t = localStorage.getItem("tmnToken"); } catch (e) {}
-    location.replace(t ? "app/home.html" : "login.html");
+    var go = t ? "app/home.html" : "login.html";
+    setTimeout(function () { document.getElementById("wrap").className = "wrap out"; }, 950);
+    setTimeout(function () { location.replace(go); }, 1180);
   </script>
-</head>
-<body></body>
+</body>
 </html>
