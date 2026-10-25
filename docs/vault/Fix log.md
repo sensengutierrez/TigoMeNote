@@ -49,6 +49,7 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-10-24 · Wellbeing: "Cannot read properties of undefined (reading 'sleep')" kapag walang `state` ang naka-cache → guard sa `apply()` (`wellbeing.js`)
 - 2026-10-24 · Feed: kailangan pa ring mag-scroll sa video kahit 560px na → ang video na walang w/h ay square (1:1) kaya laging pinakamataas, at mas mataas ang buong post kaysa sa screen → iisang taas na batay sa screen (`100dvh − 320px`, 220–460px) at `contain` sa photo at video (`social.css`, `post-card.js`)
 - 2026-10-24 · Light mode na may picture na background: hindi mabasa ang "Your notes for today…" at iba pang text sa ibabaw ng picture → walang card sa likod ng mga ito → halo (text-shadow na kulay ng page) + mas madilim na kulay ng text (`look.css`)
+- 2026-10-25 · Build APK 0.11.24 bumagsak ("resource color/tmn_splash_bg not found") → ang bagong `apk/add-firebase.py` ay sumulat sa parehong `values/tmn_colors.xml` ng splash color kaya nabura ito → sariling file na `values/tmn_notify.xml`. Dagdag: ang Gradle error ay lumalabas na ngayon bilang annotation sa Actions (`apk.yml`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.
