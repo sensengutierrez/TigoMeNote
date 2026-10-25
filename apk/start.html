@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>TigoMeNote</title>
+  <style>html,body{margin:0;height:100%;background:#141418}</style>
+  <!-- APK: unang page. Naka-login → Home; hindi pa → Login. -->
+  <script>
+    var t = null; try { t = localStorage.getItem("tmnToken"); } catch (e) {}
+    location.replace(t ? "app/home.html" : "login.html");
+  </script>
+</head>
+<body></body>
+</html>

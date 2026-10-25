@@ -57,3 +57,8 @@ img { -webkit-user-drag: none; }
 [dir="rtl"] .brand { direction: ltr; }
 /* Laman ng users (pwedeng English/Tagalog sa Arabic na page): sariling direksyon bawat talata */
 .pc-caption, .pv-cap, .sx-cbody, .sx-bio, .profile-bio, .st-cap, .q-title, .profile-name, .pc-who b, .sx-user b { unicode-bidi: plaintext; }
+
+/* ---------- APK "app mode" (app-mode.js): parang app, hindi website ---------- */
+.in-app body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.in-app input, .in-app textarea, .in-app [contenteditable], .in-app .selectable { -webkit-user-select: text; user-select: text; }
+.in-app img { -webkit-user-drag: none; }
