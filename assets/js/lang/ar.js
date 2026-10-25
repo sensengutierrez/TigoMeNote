@@ -1371,5 +1371,6 @@ TMN_I18N.register("ar", {
   "Downloads don't work inside this app's browser.": "التنزيل لا يعمل داخل متصفح هذا التطبيق.",
   "Open in Chrome": "افتح في Chrome",
   "Philippines ⇄ here": "الفلبين ⇄ هنا",
-  "Philippines ⇄ abroad": "الفلبين ⇄ الخارج"
+  "Philippines ⇄ abroad": "الفلبين ⇄ الخارج",
+  "Android only": "أندرويد فقط"
 });

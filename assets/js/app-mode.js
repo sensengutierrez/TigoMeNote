@@ -58,6 +58,13 @@
   document.addEventListener("tmn:theme", bar);
   function ready() {
     bar();
+    // version ng app sa ibaba ng menu (para malaman kung updated)
+    var foot = document.querySelector(".drawer-foot"), C = window.TMN_CONFIG;
+    if (foot && C && !foot.querySelector(".app-ver")) {
+      var v = document.createElement("p"); v.className = "app-ver faint small";
+      v.textContent = { main: "TigoMeNote", chat: "TigoMeNote Chat", tigo: "Tigo" }[APP_ID] + " app · v" + C.version;
+      foot.appendChild(v);
+    }
     if (P.SplashScreen && P.SplashScreen.hide) setTimeout(function () { P.SplashScreen.hide(); }, 150);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ready); else ready();

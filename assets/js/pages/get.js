@@ -39,13 +39,12 @@
     var m = v.main; if (!m || !m.url) throw new Error();
     var a = document.getElementById("apkBtn"); a.href = dl(m.url);
     document.getElementById("apkMeta").textContent = "Version " + m.version + " · " + mb(m.size) + (m.date ? " · " + m.date : "");
-    // Listahan ng apps: may APK na → Available (+ Download sa Android)
+    // Listahan ng apps: bawat app na may APK = sariling ⬇ Download (lahat ng device; sa iPhone: "Android only")
     document.querySelectorAll(".ga-app[data-app]").forEach(function (row) {
       var a = v[row.dataset.app], tag = row.querySelector(".ga-tag"); if (!a || !a.url) return;
-      if (isAndroid) {
-        var link = document.createElement("a"); link.className = "btn btn-primary btn-sm ga-tag-btn"; link.href = dl(a.url); link.rel = "noopener";
-        link.textContent = "⬇ Download"; link.title = "Version " + a.version + " · " + mb(a.size); tag.replaceWith(link);
-      } else { tag.textContent = "Available"; tag.classList.add("ok"); }
+      if (isIOS) { tag.textContent = "Android only"; return; }
+      var link = document.createElement("a"); link.className = "btn btn-primary btn-sm ga-tag-btn"; link.href = dl(a.url); link.rel = "noopener";
+      link.innerHTML = "⬇ Download <small>" + mb(a.size) + "</small>"; link.title = a.name + " · Version " + a.version; tag.replaceWith(link);
     });
   }).catch(function () {
     document.getElementById("apkMeta").textContent = "Couldn't load the download. Check your internet and refresh.";

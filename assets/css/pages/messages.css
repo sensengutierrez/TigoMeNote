@@ -189,3 +189,46 @@ body.msg-gate .inbox { display: none; }
 .ch-gif { position: relative; display: block; width: min(240px, 60vw); border-radius: 16px; overflow: hidden; background: var(--surface-2); }
 .ch-gif img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ch-gif-tag { position: absolute; left: 8px; bottom: 8px; font-size: 10px; font-weight: 800; color: #fff; background: rgba(0,0,0,.5); padding: 1px 6px; border-radius: 6px; }
+
+/* ---------- Messenger look (kulay ng TigoMeNote Chat: teal → blue) ----------
+   Iisang itsura sa web, TigoMeNote APK at TigoMeNote Chat APK. */
+:root { --mc-a: #2fc6c9; --mc-b: #2f8dff; --mc-grad: linear-gradient(135deg, var(--mc-a), var(--mc-b)); --mc-soft: rgba(47, 160, 230, .10); }
+.ib-head h1 { font-size: 30px; letter-spacing: -.6px; }
+.ib-head [data-new-chat] { width: 42px; height: 42px; border-radius: 50%; background: var(--mc-grad); color: #fff; box-shadow: 0 6px 16px rgba(47, 141, 255, .3); }
+.ib-tabs button[aria-pressed="true"] { color: var(--mc-b); }
+.ib-tabs .dot-count, .ib-item .dot-count { background: var(--mc-grad); }
+.ib-item { padding: 10px 12px; border-radius: 18px; }
+.ib-item:hover, .ib-item.active { background: var(--mc-soft); }
+.ib-item > .avatar { --size: 54px !important; }
+.ib-stack { width: 54px; height: 54px; }
+.ib-stack .avatar { --size: 38px !important; }
+.inbox .avatar:not(:has(img)), .ch .avatar:not(:has(img)) { background: var(--mc-grad); color: #fff; }
+.ib-item:nth-child(4n+2) .avatar:not(:has(img)) { background: linear-gradient(135deg, #ff9a6b, #ff5a7a); }
+.ib-item:nth-child(4n+3) .avatar:not(:has(img)) { background: linear-gradient(135deg, #b48bff, #6f7bff); }
+.ib-item:nth-child(4n+4) .avatar:not(:has(img)) { background: linear-gradient(135deg, #ffc84d, #ff8a3d); }
+.ib-stack .avatar { box-shadow: 0 0 0 2px var(--surface); }
+.ib-top b { font-size: 16px; }
+.ib-item.unread .ib-last { color: var(--text); font-weight: 700; }
+.ib-item.unread .ib-time { color: var(--mc-b); font-weight: 700; }
+
+.ch-head { padding: 8px 10px; background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.ch-who .avatar { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--mc-a); }
+.ch-list { background: linear-gradient(180deg, var(--mc-soft), transparent 260px), var(--bg); padding-left: 10px; padding-right: 10px; }
+.ch-day { padding: 4px 12px; border-radius: 999px; background: var(--surface); box-shadow: 0 1px 4px rgba(0, 0, 0, .06); }
+.ch-sys { padding: 4px 12px; border-radius: 999px; background: var(--surface-2); }
+.ch-bubble { padding: 9px 14px; border-radius: 20px; background: var(--surface); box-shadow: 0 1px 3px rgba(0, 0, 0, .07); border: 1px solid var(--line); }
+.ch-row.mine .ch-bubble { background: var(--mc-grad); color: #fff; border-color: transparent; box-shadow: 0 3px 10px rgba(47, 141, 255, .25); }
+.ch-row.mine .ch-bubble .ch-text a { color: #fff; }
+.ch-row.mine .ch-loc .faint { color: rgba(255, 255, 255, .85); }
+.ch-bubble.k-photo, .ch-row.mine .ch-bubble.k-photo { border: 0; box-shadow: none; }
+.ch-photo img { border-radius: 18px; }
+.ch-rx { box-shadow: 0 1px 4px rgba(0, 0, 0, .12); }
+.ch-compose { gap: 6px; padding: 8px 10px calc(10px + env(safe-area-inset-bottom)); border-top: 0; background: var(--surface); box-shadow: 0 -4px 18px rgba(0, 0, 0, .05); }
+.ch-compose > .icon-btn:not(.ch-send) { color: var(--mc-b); }
+.ch-input { background: var(--surface-2); border: 1px solid transparent; }
+.ch-input:focus { border-color: var(--mc-a); background: var(--surface); box-shadow: 0 0 0 3px var(--mc-soft); }
+.ch-send { width: 44px; height: 44px; border-radius: 50%; background: var(--mc-grad); color: #fff; box-shadow: 0 4px 12px rgba(47, 141, 255, .35); flex: none; }
+.ch-send:active { transform: scale(.92); }
+.ch-dots i { background: var(--mc-b); }
+.ch-pin { background: var(--mc-soft); border-bottom-color: transparent; }
+.ch-pin .ic { color: var(--mc-b); }
