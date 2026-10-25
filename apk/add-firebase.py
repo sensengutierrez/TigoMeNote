@@ -29,7 +29,7 @@ if "google-services" not in root_gradle:
 open(os.path.join(AND, "app", "google-services.json"), "w").write(raw)
 
 os.makedirs(os.path.join(res, "values"), exist_ok=True)
-open(os.path.join(res, "values", "tmn_colors.xml"), "w").write(
+open(os.path.join(res, "values", "tmn_notify.xml"), "w").write(
     f'<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="tmn_notify">{COLOR}</color>\n</resources>\n')
 m = os.path.join(AND, "app/src/main/AndroidManifest.xml"); s = open(m).read()
 if "default_notification_icon" not in s:
