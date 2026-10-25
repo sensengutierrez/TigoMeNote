@@ -1,0 +1,40 @@
+# TigoMeNote · Deploy site (GitHub Pages) — ang site + pinakabagong APK sa tigomenote.com/dl/
+# Settings → Pages → Source: GitHub Actions. Tumatakbo kapag may push sa main, pagkatapos ng "Build APK", o manual.
+# Ang APK ay kinukuha sa GitHub Releases habang nagde-deploy (hindi naka-save sa repo, kaya hindi lumalaki ang repo).
+name: Deploy site
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: ["Build APK"]
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main }
+      - name: APK files → dl/
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          mkdir -p dl
+          python3 -c "import json;[print(k+'-v'+v['version']) for k,v in json.load(open('app-version.json')).items()]" | while read TAG; do
+            gh release download "$TAG" -R "${{ github.repository }}" -p "*.apk" -D dl --clobber || echo "::warning::walang APK sa $TAG"
+          done
+          ls -la dl
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: . }
+      - id: deployment
+        uses: actions/deploy-pages@v4

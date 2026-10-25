@@ -1538,5 +1538,6 @@ TMN_I18N.register("fil", {
   "Open in Chrome": "Buksan sa Chrome",
   "Philippines ⇄ here": "Pinas ⇄ dito",
   "Philippines ⇄ abroad": "Pinas ⇄ abroad",
-  "Android only": "Android lang"
+  "Android only": "Android lang",
+  "Downloaded? Tap the notification, or open": "Na-download na? I-tap ang notification, o buksan ang"
 });

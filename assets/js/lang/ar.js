@@ -1372,5 +1372,6 @@ TMN_I18N.register("ar", {
   "Open in Chrome": "افتح في Chrome",
   "Philippines ⇄ here": "الفلبين ⇄ هنا",
   "Philippines ⇄ abroad": "الفلبين ⇄ الخارج",
-  "Android only": "أندرويد فقط"
+  "Android only": "أندرويد فقط",
+  "Downloaded? Tap the notification, or open": "تم التنزيل؟ اضغط الإشعار، أو افتح"
 });

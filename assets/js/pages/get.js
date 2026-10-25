@@ -19,7 +19,8 @@
     var u = new URL(url, location.href);
     return "intent://" + u.host + u.pathname + u.search + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" + encodeURIComponent(u.href) + ";end";
   }
-  function dl(url) { return inApp ? chrome(url) : url; }
+  // Sa Android: laging sa Chrome mismo ang download (sa browser ng ibang app / Custom Tab, madalas natitigil sa "Downloading…")
+  function dl(url) { return isAndroid ? chrome(url) : url; }
   if (inApp) {
     document.getElementById("inApp").hidden = false;
     document.getElementById("inAppBtn").href = chrome(location.href);

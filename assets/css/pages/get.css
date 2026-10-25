@@ -44,3 +44,4 @@
   .ga-app > div { flex: 1 1 150px; }
   .ga-tag-btn { margin-left: 68px; }
 }
+.ga-after { margin: 2px 0 0; color: var(--text-2); }
