@@ -448,3 +448,12 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "sabay mo nadin ung messenger pangit haha", "bakit walang seperate download pag click ko ung available" at screenshot ng Chat app na natatakpan pa ang itaas ("Taas din ng messenger" — naayos na sa 0.11.19; kailangang i-install ang bagong Chat APK).
 - **Files:** `css/pages/messages.css`, `get/index.html`, `pages/get.js`, `css/pages/get.css`, `css/pages/profile.css`, `assets/js/app-mode.js`, `css/base.css`, `lang/fil.js`, `lang/ar.js`, `config.js` (0.11.20)
 - **Paano:** test_messages 86/86, test_profile 32/32, test_get 17/17, test_chatapp 7/7.
+
+## 2026-10-25 · #54 APK download mula sa tigomenote.com/dl (hindi na GitHub)
+- **Ano:**
+  - **`.github/workflows/pages.yml` (Deploy site):** dine-deploy ang site sa GitHub Pages gamit ang Actions; habang nagde-deploy, kinukuha ang pinakabagong APK ng bawat app sa GitHub Releases at inilalagay sa `dl/` → `tigomenote.com/dl/TigoMeNote.apk` at `tigomenote.com/dl/TigoMeNoteChat.apk`. Walang APK na naka-save sa repo. Tumatakbo sa bawat push at pagkatapos ng "Build APK".
+  - **`app-version.json`:** `url` = tigomenote.com/dl/…?v=<version>; `github` = lumang link (backup).
+  - **Get app sa Android:** laging sa Chrome mismo bumubukas ang download (sa Custom Tab o browser ng ibang app, natitigil sa "Downloading…"); may paalala na "Files → Downloads".
+- **Bakit:** Ayon kay Bench (screenshot ng github.com na nakatigil sa "Downloading…"): "Ayusin mo download pag dito sa site na to di ma download".
+- **Files:** `.github/workflows/pages.yml`, `apk/update-version.py`, `get/index.html`, `pages/get.js`, `css/pages/get.css`, `lang/fil.js`, `lang/ar.js`
+- **Paano:** Kailangang naka-**Settings → Pages → Source: GitHub Actions** (kung hindi, papalitan ng branch deploy ang site na walang dl/). test_get 17/17.
