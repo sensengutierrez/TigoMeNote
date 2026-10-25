@@ -1,23 +1,23 @@
-/* TigoMeNote · pages/messages.js (app/messages.html) — inbox ng Tigo Messenger
+/* TigoMeNote · pages/messages.js (app/messages.html) — inbox ng TigoMeNote Chat
    Chats at Message requests, search, bagong chat/group, at ang bukas na chat (components/chat-view.js).
    Desktop: listahan sa kaliwa, chat sa kanan. Phone: listahan, tapos buong screen ang chat.
    Links: messages.html?c=<chat id> (buksan ang chat) · messages.html?to=<user id> (magsimula ng chat)
-   Sa TigoMeNote APK: hindi dito ang chat; kailangan ang hiwalay na Tigo Messenger app (bubuksan o ipapa-install). */
+   Sa TigoMeNote APK: hindi dito ang chat; kailangan ang hiwalay na TigoMeNote Chat app (bubuksan o ipapa-install). */
 (function () {
   var UI = window.TMN_UI, I = window.TMN_ICON, esc = UI.esc, N = window.TMN_NATIVE || {};
   var $ = function (id) { return document.getElementById(id); };
   var params = new URLSearchParams(location.search);
   var me = window.TMN_USER || {};
 
-  // ---------- APK: hiwalay na Tigo Messenger ----------
+  // ---------- APK: hiwalay na TigoMeNote Chat ----------
   if (N.isApp && N.appName !== "messenger") {
     document.body.classList.add("msg-gate");
     var gate = $("msgGate");
     gate.classList.remove("hidden");
     N.messenger.installed().then(function (yes) {
-      $("gateTitle").textContent = yes ? "Opening Tigo Messenger…" : "Get Tigo Messenger";
-      $("gateText").textContent = yes ? "Your chats open in the Tigo Messenger app." : "Chats on your phone are in a separate app, Tigo Messenger. Same account, no new sign-up.";
-      $("gateBtn").innerHTML = I(yes ? "chat" : "download", "ic-sm") + (yes ? "Open Tigo Messenger" : "Install Tigo Messenger");
+      $("gateTitle").textContent = yes ? "Opening TigoMeNote Chat…" : "Get TigoMeNote Chat";
+      $("gateText").textContent = yes ? "Your chats open in the TigoMeNote Chat app." : "Chats on your phone are in a separate app, TigoMeNote Chat. Same account, no new sign-up.";
+      $("gateBtn").innerHTML = I(yes ? "chat" : "download", "ic-sm") + (yes ? "Open TigoMeNote Chat" : "Install TigoMeNote Chat");
       $("gateBtn").onclick = function () { if (yes) N.messenger.open(location.search); else N.messenger.install(); };
       if (yes) N.messenger.open(location.search);
     });
@@ -37,7 +37,7 @@
     return d.toLocaleDateString(loc, { month: "short", day: "numeric" });
   }
   function emptyThread() {
-    return '<div class="empty thread-empty"><div class="empty-art">' + I("chat", "ic-lg") + "</div><h3>Tigo Messenger</h3>" +
+    return '<div class="empty thread-empty"><div class="empty-art">' + I("chat", "ic-lg") + "</div><h3>TigoMeNote Chat</h3>" +
       "<p>Chat with friends and groups. Send photos, share and pin your location, and react to messages.</p>" +
       '<button class="btn btn-primary" type="button" data-new-chat>' + I("edit", "ic-sm") + "New message</button></div>";
   }

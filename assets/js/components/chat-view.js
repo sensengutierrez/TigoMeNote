@@ -1,4 +1,4 @@
-/* TigoMeNote · components/chat-view.js — isang chat (Tigo Messenger)
+/* TigoMeNote · components/chat-view.js — isang chat (TigoMeNote Chat)
    Text, photo, location (may mapa), reactions, pin, Seen, "typing…", message requests, at group settings.
    var v = TMN_CHAT.mount(el, chatId, { onBack, onChange })  → v.destroy()
    Server: messages-fast. Real-time: realtime.js (kung hindi konektado, nagpo-poll bawat 4 s).

@@ -31,7 +31,9 @@ for d in os.listdir(src):
 java = os.path.join(AND, "app/src/main/java", *pkg.split("."), "MainActivity.java")
 open(java, "w").write(f'''package {pkg};
 
+import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -68,6 +70,26 @@ public class MainActivity extends BridgeActivity {{
         }});
         ViewCompat.requestApplyInsets(wv);
         wv.addJavascriptInterface(new Bars(), "TMNNative");
+        wv.addJavascriptInterface(new Apps(), "TMNApps");
+    }}
+
+    // Ibang TigoMeNote app: naka-install ba? buksan · at link na bubuksan sa Chrome (hal. download page)
+    public class Apps {{
+        @JavascriptInterface
+        public boolean hasApp(String pkg) {{
+            try {{ getPackageManager().getPackageInfo(pkg, 0); return true; }} catch (Exception e) {{ return false; }}
+        }}
+        @JavascriptInterface
+        public boolean openApp(String pkg) {{
+            Intent i = getPackageManager().getLaunchIntentForPackage(pkg);
+            if (i == null) return false;
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); startActivity(i); return true;
+        }}
+        @JavascriptInterface
+        public void openUrl(String url) {{
+            Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url)); i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {{ startActivity(i); }} catch (Exception e) {{ }}
+        }}
     }}
 
     // window.TMNNative.setBars("#ffffff", false) — kulay sa likod ng status/navigation bar + kulay ng icons (app-mode.js)
@@ -112,6 +134,13 @@ open(g, "w").write(s)
 # 4) manifest
 m = os.path.join(AND, "app/src/main/AndroidManifest.xml"); s = open(m).read()
 s = re.sub(r'android:configChanges="([^"]*)"', lambda k: 'android:configChanges="' + (k.group(1) if "density" in k.group(1) else k.group(1) + "|density") + '"', s, count=1)
+# permissions: camera (litrato/video, video call), mic (voice, video), location (Safety, weather, Explore), notifications, vibrate
+PERMS = ["CAMERA", "RECORD_AUDIO", "MODIFY_AUDIO_SETTINGS", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "POST_NOTIFICATIONS", "VIBRATE"]
+add = "".join(f'    <uses-permission android:name="android.permission.{p}" />\n' for p in PERMS if f"android.permission.{p}\"" not in s)
+add += '    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <uses-feature android:name="android.hardware.location.gps" android:required="false" />\n'
+# para makita ng app kung naka-install ang ibang TigoMeNote app (Android 11+)
+add += '    <queries>\n' + "".join(f'        <package android:name="{p}" />\n' for p in ("com.tigomenote.app", "com.tigomenote.chat", "com.tigomenote.tigo")) + '    </queries>\n'
+if "<queries>" not in s: s = s.replace("</manifest>", add + "</manifest>", 1)
 if app == "tigo" and "screenOrientation" not in s:
     s = s.replace('android:name=".MainActivity"', 'android:name=".MainActivity"\n            android:screenOrientation="sensorLandscape"', 1)
 open(m, "w").write(s)

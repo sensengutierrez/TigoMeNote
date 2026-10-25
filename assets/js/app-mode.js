@@ -18,9 +18,19 @@
   if (vp) vp.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover");
 
   // tulay papunta sa native (dadagdagan: FCM push, location sa background, SMS, files)
+  // ibang TigoMeNote app: naka-install? buksan · kung wala → download page (sa Chrome) habang wala pa sa Play Store
+  var PKG = { messenger: "com.tigomenote.chat", chat: "com.tigomenote.chat", tigomenote: "com.tigomenote.app", main: "com.tigomenote.app", tigo: "com.tigomenote.tigo" };
+  var NA = window.TMNApps;
   window.TMN_APP = window.TMN_APP || {
     appName: APP_ID === "chat" ? "messenger" : APP_ID === "tigo" ? "tigo" : "tigomenote",
-    pushToken: function () { return Promise.resolve(null); }
+    pushToken: function () { return Promise.resolve(null); },
+    hasApp: function (name) { try { return !!(NA && NA.hasApp(PKG[name] || name)); } catch (e) { return false; } },
+    openApp: function (name) { try { return !!(NA && NA.openApp(PKG[name] || name)); } catch (e) { return false; } },
+    installApp: function () {
+      var url = (window.TMN_CONFIG && TMN_CONFIG.apps && TMN_CONFIG.apps.publicGet) || "https://tigomenote.com/get/";
+      if (NA && NA.openUrl) NA.openUrl(url); else location.href = url;
+      return true;
+    }
   };
 
   function closeTop() {
