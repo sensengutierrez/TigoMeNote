@@ -12,6 +12,18 @@
   var ua = navigator.userAgent;
   var isIOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   var isAndroid = /Android/i.test(ua);
+  // Browser sa loob ng ibang app (WebView): "; wv)" o mga kilalang app. Hindi dito gumagana ang download ng APK.
+  var inApp = isAndroid && /; wv\)|FBAN|FBAV|Instagram|Line\/|MicroMessenger|Snapchat|TikTok|GSA\//.test(ua);
+  // Android intent: buksan ang https link sa Chrome (kung walang Chrome → fallback na link sa default browser)
+  function chrome(url) {
+    var u = new URL(url, location.href);
+    return "intent://" + u.host + u.pathname + u.search + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" + encodeURIComponent(u.href) + ";end";
+  }
+  function dl(url) { return inApp ? chrome(url) : url; }
+  if (inApp) {
+    document.getElementById("inApp").hidden = false;
+    document.getElementById("inAppBtn").href = chrome(location.href);
+  }
 
   // ---------- tabs ----------
   function show(tab) {
@@ -25,13 +37,13 @@
   function mb(n) { return (n / 1048576).toFixed(1) + " MB"; }
   fetch(A.versionJson + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (v) {
     var m = v.main; if (!m || !m.url) throw new Error();
-    var a = document.getElementById("apkBtn"); a.href = m.url;
+    var a = document.getElementById("apkBtn"); a.href = dl(m.url);
     document.getElementById("apkMeta").textContent = "Version " + m.version + " · " + mb(m.size) + (m.date ? " · " + m.date : "");
     // Listahan ng apps: may APK na → Available (+ Download sa Android)
     document.querySelectorAll(".ga-app[data-app]").forEach(function (row) {
       var a = v[row.dataset.app], tag = row.querySelector(".ga-tag"); if (!a || !a.url) return;
       if (isAndroid) {
-        var link = document.createElement("a"); link.className = "btn btn-primary btn-sm ga-tag-btn"; link.href = a.url; link.rel = "noopener";
+        var link = document.createElement("a"); link.className = "btn btn-primary btn-sm ga-tag-btn"; link.href = dl(a.url); link.rel = "noopener";
         link.textContent = "⬇ Download"; link.title = "Version " + a.version + " · " + mb(a.size); tag.replaceWith(link);
       } else { tag.textContent = "Available"; tag.classList.add("ok"); }
     });

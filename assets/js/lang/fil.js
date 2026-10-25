@@ -1532,5 +1532,8 @@ TMN_I18N.register("fil", {
   "Version {x} · {y}": "Version {x} · {y}",
   "Couldn't load the download. Check your internet and refresh.": "Hindi ma-load ang download. Tingnan ang internet at i-refresh.",
   "Same account in every app. Install the ones you want.": "Iisang account sa lahat ng app. I-install ang gusto mo.",
-  "⬇ Download": "⬇ I-download"
+  "⬇ Download": "⬇ I-download",
+  "Open this page in Chrome": "Buksan ang page na ito sa Chrome",
+  "Downloads don't work inside this app's browser.": "Hindi gumagana ang download sa browser ng app na ito.",
+  "Open in Chrome": "Buksan sa Chrome"
 });

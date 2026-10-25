@@ -421,3 +421,9 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "gawan mona ng apk ung chat".
 - **Files:** `apk/chat/` (app.json, capacitor.config.json, package.json), `apk/main/app.json`, `apk/build-web.py`, `apk/update-version.py`, `.github/workflows/apk.yml`, `assets/js/app-mode.js`, `assets/js/nav-items.js`, `components/app-shell.js`, `pages/login.js`, `get/index.html`, `pages/get.js`, `css/pages/get.css`, `lang/fil.js`, `lang/ar.js`
 - **Paano:** test_chatapp 6/6 (simulated na APK: Login → Chats, 4 tabs, walang zoom); test_get 13/13; test_tabs 48/48. Wala pang push sa APK (Firebase) at hindi pa binubuksan ng main app ang Chat app (kailangan ng native na check kung naka-install).
+
+## 2026-10-25 · #51 Get app: "Open in Chrome" kapag nasa browser ng ibang app
+- **Ano:** Sa Android na nakabukas sa loob ng ibang app (Claude, Messenger, Instagram…; WebView na "; wv)"), may dilaw na banner na **Open in Chrome**, at ang mga Download button ay dumadaan sa Chrome (Android intent na may fallback sa default browser). Sa Chrome mismo, diretso pa rin ang link.
+- **Bakit:** Ayon kay Bench: "ang prob sa link, di sya direct sa apps ng google chrome" — gumagana ang GitHub links (302 → APK) pero hindi nagda-download sa browser sa loob ng app.
+- **Files:** `get/index.html`, `assets/js/pages/get.js`, `assets/css/pages/get.css`, `lang/fil.js`, `lang/ar.js`
+- **Paano:** test_get 16/16 (pati WebView at Chrome).

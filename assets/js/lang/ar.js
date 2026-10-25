@@ -1366,5 +1366,8 @@ TMN_I18N.register("ar", {
   "Version {x} · {y}": "الإصدار {x} · {y}",
   "Couldn't load the download. Check your internet and refresh.": "تعذّر تحميل الرابط. تحقق من الإنترنت وحدّث الصفحة.",
   "Same account in every app. Install the ones you want.": "حساب واحد في كل التطبيقات. ثبّت ما تريد.",
-  "⬇ Download": "⬇ تنزيل"
+  "⬇ Download": "⬇ تنزيل",
+  "Open this page in Chrome": "افتح هذه الصفحة في Chrome",
+  "Downloads don't work inside this app's browser.": "التنزيل لا يعمل داخل متصفح هذا التطبيق.",
+  "Open in Chrome": "افتح في Chrome"
 });

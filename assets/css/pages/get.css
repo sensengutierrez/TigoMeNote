@@ -34,3 +34,8 @@
 @media (max-width: 520px) { .ga-qr-row { justify-content: center; } .l-nav-actions .js-open { display: none; } }
 .ga-family-sub { margin: -6px 0 10px; }
 .ga-tag-btn { flex: none; }
+.ga-inapp { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 18px; background: #fff4d6; color: #3b2a00; border: 1px solid #ffd76b; }
+.ga-inapp[hidden] { display: none; }
+.ga-inapp > div { flex: 1; display: grid; gap: 2px; min-width: 0; }
+.ga-inapp span { font-size: 13px; opacity: .85; }
+.ga-inapp .btn { flex: none; }
