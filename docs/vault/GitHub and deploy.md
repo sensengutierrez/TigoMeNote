@@ -17,10 +17,10 @@ updated: 2026-10-23
 ## APK (`.github/workflows/apk.yml`)
 - Capacitor 8; ang android project ay ginagawa sa GitHub Actions bawat build (`apk/<app>/`: package.json, capacitor.config.json). Hindi kailangan ng Android Studio.
 - `apk/build-web.py` → kinokopya ang site sa `www` + isinisingit ang `assets/js/app-mode.js` (walang zoom, Back button, status bar). `apk/patch-android.py` → icons, textZoom 100, version.
-- Signing: secret na **APK_KEYSTORE_PASSWORD** (sa GitHub secrets lang). Unang build → `apk/keys/release.p12` (naka-commit, naka-lock sa password). Huwag burahin ang key o kalimutan ang password.
+- Signing: secret na **APK_KEYSTORE_PASSWORD** (sa GitHub secrets lang, nilagay ni Bench 2026-10-25). Ang key ay ginagawa mula sa password tuwing build (`apk/derive-key.py`, RSA 3072, laging pareho); walang key file sa repo (bawal ang `*.p12`). `apk/keys/cert-sha256.txt` = public fingerprint na chine-check bawat build. Huwag kalimutan o palitan ang password.
 - Labas: Artifacts (14 araw) at GitHub Release `main-v<version>` → `TigoMeNote.apk`.
 - Icons: `python3 tools/make-icons.py` (logo sa `tools/brand/logo.py`).
-- Pagkatapos ng unang build, may commit ang bot (signing key) → `git pull --rebase` bago mag-push.
+- Pagkatapos ng unang release build, may commit ang bot (cert-sha256.txt) → `git pull --rebase` bago mag-push.
 
 ## Tandaan
 - Isang GitHub.com account lang ang naka-sign in sa GitHub Desktop. Para sa Lalabella, mag-switch o gawing collaborator ang isang account.

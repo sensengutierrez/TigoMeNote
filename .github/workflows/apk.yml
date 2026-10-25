@@ -1,6 +1,7 @@
 # TigoMeNote · Build APK (Capacitor) — gumagawa ng APK sa GitHub, walang kailangang i-install sa PC
 # Kusang tumatakbo kapag nagbago ang apk/** o ang version sa config.js; puwede ring manual (Actions → Build APK → Run).
-# Signing: secret na APK_KEYSTORE_PASSWORD (≥20 characters). Sa unang build, gagawa ng apk/keys/release.p12 at ise-save sa repo.
+# Signing: secret na APK_KEYSTORE_PASSWORD (≥20 characters). Ang key ay ginagawa mula sa password tuwing build (apk/derive-key.py);
+#          walang key file sa repo. Ang SHA-256 ng certificate (public) ay nasa apk/keys/cert-sha256.txt para siguradong pareho.
 #          Kapag walang secret: debug APK lang (pang-test, nasa Artifacts).
 # Release: "app-v<version>" sa GitHub Releases, may TigoMeNote.apk (link para sa Get app page).
 name: Build APK
@@ -29,6 +30,8 @@ jobs:
         with: { node-version: 22 }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 21 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
       - name: Version
         run: echo "VER=$(grep -oP 'version:\s*"\K[^"]+' assets/js/config.js)" >> $GITHUB_ENV
       - name: Capacitor + web files
@@ -42,12 +45,14 @@ jobs:
         run: |
           if [ -z "$PW" ]; then echo "::warning::Walang APK_KEYSTORE_PASSWORD secret → debug APK lang"; echo "SIGN=debug" >> $GITHUB_ENV; exit 0; fi
           if [ ${#PW} -lt 20 ]; then echo "::error::APK_KEYSTORE_PASSWORD dapat 20+ characters"; exit 1; fi
-          if [ ! -f apk/keys/release.p12 ]; then
-            keytool -genkeypair -storetype PKCS12 -keystore apk/keys/release.p12 -alias tigomenote -keyalg RSA -keysize 4096 -validity 36500 \
-              -storepass "$PW" -keypass "$PW" -dname "CN=TigoMeNote, O=TigoMeNote, C=BH"
-            echo "NEWKEY=1" >> $GITHUB_ENV
+          pip install --quiet "cryptography==44.0.3"
+          FP=$(PW="$PW" python3 apk/derive-key.py "$RUNNER_TEMP/release.p12")
+          echo "KS=$RUNNER_TEMP/release.p12" >> $GITHUB_ENV
+          if [ -f apk/keys/cert-sha256.txt ]; then
+            [ "$FP" = "$(tr -d '[:space:]' < apk/keys/cert-sha256.txt)" ] || { echo "::error::Iba ang signing key sa dati (nagbago ba ang APK_KEYSTORE_PASSWORD?)"; exit 1; }
+          else
+            echo "$FP" > apk/keys/cert-sha256.txt; echo "NEWKEY=1" >> $GITHUB_ENV
           fi
-          keytool -list -keystore apk/keys/release.p12 -storepass "$PW" > /dev/null
           echo "SIGN=release" >> $GITHUB_ENV
       - name: Build
         run: |
@@ -61,17 +66,17 @@ jobs:
           if [ "$SIGN" = release ]; then
             BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
             $BT/zipalign -p -f 4 apk/$APP/android/app/build/outputs/apk/release/app-release-unsigned.apk out/aligned.apk
-            $BT/apksigner sign --ks apk/keys/release.p12 --ks-key-alias tigomenote --ks-pass env:PW --key-pass env:PW --out out/$NAME.apk out/aligned.apk
+            $BT/apksigner sign --ks "$KS" --ks-type PKCS12 --ks-key-alias tigomenote --ks-pass env:PW --key-pass env:PW --out out/$NAME.apk out/aligned.apk
             $BT/apksigner verify out/$NAME.apk && rm out/aligned.apk
           else
             cp apk/$APP/android/app/build/outputs/apk/debug/app-debug.apk out/$NAME-debug.apk
           fi
           ls -la out
-      - name: Save new signing key to repo
+      - name: Save certificate fingerprint (public)
         if: env.NEWKEY == '1'
         run: |
           git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add apk/keys/release.p12 && git commit -m "APK signing key (naka-lock sa APK_KEYSTORE_PASSWORD) [skip ci]" && git push
+          git add apk/keys/cert-sha256.txt && git commit -m "APK signing certificate fingerprint [skip ci]" && git push
       - uses: actions/upload-artifact@v4
         with:
           name: "${{ env.APP }}-apk-${{ env.VER }}"
