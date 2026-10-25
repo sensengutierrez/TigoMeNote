@@ -388,3 +388,12 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "medyo real, para di pangit tingnan", "ung pag hawak ng flag… dapat real na hawak", "mag lagay kadin ng tap to photo… pwede top to share para sa explore… pag ng level pwede sya i share" at "dance botton… pag click ng botton me 3 bottons pwede mag dance".
 - **Files:** `tigo/pet-model.js`, `tigo/outfit.js`, `tigo/buddies.js`, `tigo/pet-scene.js` (snapshot, dance), `tigo/photo.js` (bago), `pages/tigo.js`, `app/tigo.html`, `css/pages/tigo.css`, `lang/fil.js`, `lang/ar.js`, `config.js` (0.11.18)
 - **Paano:** Ang post maker (composer, sounds, emoji) ay ini-load lang kapag pinindot ang Share to Explore, kaya hindi bumibigat ang Tigo page. test_photo 18/18; test_layout 139/139 (may 💃 row, sa loob ng bahay, portrait, landscape, desktop); test_tigo 41/41, test_house 33/33, test_games 10/10, test_posts 41/41.
+
+## 2026-10-25 · #48 Domain tigomenote.com, logo A, at simula ng APK
+- **Ano:**
+  - **Domain:** `tigomenote.com` (Cloudflare Registrar). DNS: 4 A record ng GitHub Pages + `www` CNAME (DNS only). May `CNAME` file; naka-Enforce HTTPS.
+  - **Logo A (note na may mukha):** TigoMeNote (coral na note sa itim), Tigo (cream na note sa orange + bituin), Chat (bubble na may tupi sa teal–blue). Web icons, favicon.svg, notification badge, at Android adaptive + monochrome icons + splash para sa 3 app.
+  - **APK (Capacitor 8):** `com.tigomenote.app`. Binubuo ng GitHub Actions; app mode = walang zoom (textZoom 100), Back button na nagsasara muna ng modal/sheet, status bar ayon sa theme, Home o Login agad.
+- **Bakit:** Ayon kay Bench: "hindi web design ang atake ng apk… pag ng zoom 80 eh liliit din", "gawan mo ng unique design na logo" (pinili ang A), at "bili nako domain".
+- **Files:** `CNAME`, `tools/brand/logo.py`, `tools/make-icons.py`, `assets/img/*`, `apk/` (main config, start.html, build-web.py, patch-android.py, res/), `.github/workflows/apk.yml`, `assets/js/app-mode.js`, `assets/css/base.css`, lahat ng page (favicon)
+- **Paano:** Sa server (notify-fast, safety-fast) ay luma pa ang SITE para sa VAPID subject; papalitan sa susunod na deploy (walang epekto sa push). Sa APK, wala pang push hanggang Firebase (FCM).

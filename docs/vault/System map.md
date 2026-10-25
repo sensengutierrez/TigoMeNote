@@ -161,9 +161,17 @@ Storage bucket: **`profile-media`** (public na view, 3 MB/file, jpeg/webp). Uplo
 
 `users` ay may `email` at `email_verified_at` (sql/007), `banner_url`, `avatar_path`, `banner_path` (sql/015), `loc_paused` (sql/023), `birthdate`, `private_account` (sql/024), `strikes` (sql/026). Ang `posts`, `post_comments`, `stories` ay may `hidden_at` (sql/026). Status: Unverified → Active / Pending / Inactive.
 
+## APK — `apk/`
+| File | Ano |
+|---|---|
+| `apk/main/` | Capacitor config + package.json ng TigoMeNote APK (`com.tigomenote.app`) |
+| `apk/build-web.py` / `patch-android.py` | Kopya ng site + app-mode.js · icons, textZoom, version sa android project |
+| `apk/res/<app>/` | Android icons, splash, notification icon (gawa ng tools/make-icons.py) |
+| `assets/js/app-mode.js` | APK lang: walang zoom, Back button, status bar, `TMN_APP` |
+
 ## Tools
 `tools/cache-bust.py` — naglalagay ng `?v=<version>` (galing sa `config.js`) sa lahat ng sariling `.js`/`.css` sa HTML. Patakbuhin tuwing release.
-`tools/make-icons.py` — gumagawa ng app icons sa `assets/img/`.
+`tools/make-icons.py` — gumagawa ng lahat ng icon (web `assets/img/` + Android `apk/res/<app>/`) mula sa logo sa `tools/brand/logo.py`.
 `tools/build-moderation-client.mjs` — kinokopya ang CORE ng `backend/moderation.ts` papuntang `assets/js/moderation-check.js`. Patakbuhin (`node tools/build-moderation-client.mjs`) tuwing babaguhin ang rules.
 
 ## External (libre, walang key)
