@@ -1,0 +1,7 @@
+-- TigoMeNote · 087 · vault sync: Tigo update screen — record lang; napatakbo na
+insert into brain_notes (title, body, tags, updated_by) values ($v$Fix log$v$, '', '{}', 'claude') on conflict (lower(title)) do update set body = replace(brain_notes.body, $v$- 2026-10-31 · Messenger (phone): kapag may background (Settings → Look), lumiliit ang bukas na chat at ang sulatan ng message (hindi na full screen) → ang `backdrop-filter` (blur) ng `.card` ay ginagawang "kahon" ng `position: fixed` na chat → walang blur sa `.inbox.card` sa phone (`messages.css`). Version 0.11.25
+
+$v$, $v$- 2026-10-31 · Messenger (phone): kapag may background (Settings → Look), lumiliit ang bukas na chat at ang sulatan ng message (hindi na full screen) → ang `backdrop-filter` (blur) ng `.card` ay ginagawang "kahon" ng `position: fixed` na chat → walang blur sa `.inbox.card` sa phone (`messages.css`). Version 0.11.25
+- 2026-10-31 · Tigo app (≤0.11.27, landscape): hindi kasya ang "Install new version" at nagfo-force close habang nag-a-update → naayos na sa 0.11.28 ang laki (kasya na) at may WebView crash guard (galing sa ibang thread). Dagdag dito: tumitigil ang 3D ng Tigo habang bukas ang update screen (event `tmn:upd`, `app-update.js`, `pet-scene.js`) para may memory ang download; kasama sa susunod na version. Ang naka-install na ≤0.11.27 ay kailangang i-update nang manual isang beses (Get app sa Chrome)
+
+$v$), updated_by = 'claude', updated_at = now();

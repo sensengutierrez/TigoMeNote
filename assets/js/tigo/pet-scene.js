@@ -472,8 +472,10 @@ export function createScene(canvas, opts = {}) {
   setBackdrop(opts.backdrop || "island");
   resize(); loop();
   const ro = new ResizeObserver(resize); ro.observe(canvas);
-  function vis() { if (document.hidden) cancelAnimationFrame(raf); else { clock.getDelta(); cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); } }
+  // Tigil ang 3D kapag nakatago ang app o bukas ang "Install new version" (para may memory ang download at hindi mag-crash)
+  function vis() { if (document.hidden || document.documentElement.classList.contains("upd-open")) cancelAnimationFrame(raf); else { clock.getDelta(); cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); } }
   document.addEventListener("visibilitychange", vis);
+  document.addEventListener("tmn:upd", vis);
 
   return {
     main, add, remove, effect, night, renderer, scene, setBackdrop, setBuddy,
@@ -527,7 +529,7 @@ export function createScene(canvas, opts = {}) {
       return ray.intersectObject(main.group, true).length > 0;
     },
     dispose() {
-      alive = false; cancelAnimationFrame(raf); ro.disconnect(); document.removeEventListener("visibilitychange", vis);
+      alive = false; cancelAnimationFrame(raf); ro.disconnect(); document.removeEventListener("visibilitychange", vis); document.removeEventListener("tmn:upd", vis);
       pets.forEach((p) => p.dispose()); if (buddy) buddy.dispose(); if (place) place.dispose();
       rig.dispose(); sky.dispose(); if (room) room.dispose();
       disp.forEach((d) => d.dispose()); zGeo.dispose(); zMat.dispose(); renderer.dispose();

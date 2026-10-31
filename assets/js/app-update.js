@@ -51,6 +51,7 @@
       "</div>";
     document.body.appendChild(box);
     document.documentElement.classList.add("upd-open");
+    document.dispatchEvent(new Event("tmn:upd")); // hal. Tigo 3D: tumitigil habang nag-a-update
     box.querySelector(".upd-go").addEventListener("click", start);
     box.querySelector(".upd-alt").addEventListener("click", chrome);
   }
