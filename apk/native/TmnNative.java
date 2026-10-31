@@ -36,6 +36,7 @@ import org.json.JSONObject;
 /** window.Capacitor.Plugins.TmnNative — Gallery ng phone (MediaStore) at music player (MusicEngine). */
 @CapacitorPlugin(name = "TmnNative", permissions = {
     @Permission(alias = "media33", strings = { Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO }),
+    @Permission(alias = "audio33", strings = { Manifest.permission.READ_MEDIA_AUDIO }),
     @Permission(alias = "media", strings = { Manifest.permission.READ_EXTERNAL_STORAGE })
 })
 public class TmnNative extends Plugin {
@@ -197,35 +198,42 @@ public class TmnNative extends Plugin {
             int added = 0, skipped = 0;
             for (Uri u : uris) {
                 try {
-                    String id = "m" + Long.toString(System.currentTimeMillis(), 36) + Integer.toString((int) (Math.random() * 46656), 36);
+                    if (Build.VERSION.SDK_INT < 29) { skipped++; continue; }
+                    ContentResolver cr = getContext().getContentResolver();
                     String nm = null;
-                    try (Cursor c = getContext().getContentResolver().query(u, new String[] { "_display_name" }, null, null, null)) { if (c != null && c.moveToFirst()) nm = c.getString(0); }
-                    if (nm == null) nm = "Song";
-                    String ext = nm.contains(".") ? nm.substring(nm.lastIndexOf('.')) : ".mp3";
-                    File out = new File(eng().musicDir(), id + ext);
-                    try (InputStream in = getContext().getContentResolver().openInputStream(u); OutputStream os = new FileOutputStream(out)) {
+                    try (Cursor c = cr.query(u, new String[] { "_display_name" }, null, null, null)) { if (c != null && c.moveToFirst()) nm = c.getString(0); }
+                    if (nm == null) nm = "Song_" + System.currentTimeMillis() + ".mp3";
+                    String mime = cr.getType(u); if (mime == null || !mime.startsWith("audio")) mime = "audio/mpeg";
+                    android.content.ContentValues v = new android.content.ContentValues();
+                    v.put(MediaStore.MediaColumns.DISPLAY_NAME, nm); v.put(MediaStore.MediaColumns.MIME_TYPE, mime);
+                    v.put(MediaStore.MediaColumns.RELATIVE_PATH, "Music/TigoMeNote"); v.put(MediaStore.MediaColumns.IS_PENDING, 1);
+                    Uri dest = cr.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, v);
+                    if (dest == null) { skipped++; continue; }
+                    try (InputStream in = cr.openInputStream(u); OutputStream os = cr.openOutputStream(dest)) {
                         byte[] b = new byte[64 * 1024]; int n; while ((n = in.read(b)) > 0) os.write(b, 0, n);
-                    }
-                    MusicEngine.Track t = new MusicEngine.Track(); t.id = id; t.file = out.getAbsolutePath();
-                    String title = null, artist = null; long dur = 0;
-                    try {
-                        MediaMetadataRetriever mr = new MediaMetadataRetriever(); mr.setDataSource(t.file);
-                        title = mr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE); artist = mr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-                        String d = mr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION); if (d != null) dur = Long.parseLong(d);
-                        mr.release();
-                    } catch (Exception e) { }
-                    String base = nm.replaceAll("\\.[A-Za-z0-9]{2,5}$", "").replace('_', ' ').trim();
-                    if ((title == null || title.trim().isEmpty()) && base.contains(" - ")) { artist = artist != null && !artist.isEmpty() ? artist : base.substring(0, base.indexOf(" - ")); title = base.substring(base.indexOf(" - ") + 3); }
-                    t.name = title != null && !title.trim().isEmpty() ? title.trim() : base; t.artist = artist != null ? artist.trim() : ""; t.dur = dur / 1000;
-                    eng().add(t); added++;
+                    } catch (Exception e) { cr.delete(dest, null, null); skipped++; continue; }
+                    android.content.ContentValues done = new android.content.ContentValues(); done.put(MediaStore.MediaColumns.IS_PENDING, 0);
+                    cr.update(dest, done, null, null);
+                    added++;
                 } catch (Exception e) { skipped++; }
             }
             JSObject o = new JSObject(); o.put("added", added); o.put("skipped", skipped); call.resolve(o);
         }).start();
     }
 
+    // Permiso para makita ang kanta na idinagdag ng ibang TigoMeNote app (Android 13+: Music and audio)
+    private boolean audioOk() {
+        if (Build.VERSION.SDK_INT >= 33) return getPermissionState("audio33") == PermissionState.GRANTED;
+        return Build.VERSION.SDK_INT < 23 || getPermissionState("media") == PermissionState.GRANTED;
+    }
+    @PluginMethod public void musicRequest(PluginCall call) {
+        if (audioOk()) { JSObject o = new JSObject(); o.put("granted", true); call.resolve(o); return; }
+        requestPermissionForAlias(Build.VERSION.SDK_INT >= 33 ? "audio33" : "media", call, "audioDone");
+    }
+    @PermissionCallback private void audioDone(PluginCall call) { JSObject o = new JSObject(); o.put("granted", audioOk()); call.resolve(o); }
+
     @PluginMethod public void musicList(PluginCall call) throws Exception {
-        JSObject o = new JSObject(); o.put("tracks", new JSArray(eng().listJson().toString())); o.put("state", new JSObject(eng().stateJson().toString())); call.resolve(o);
+        JSObject o = new JSObject(); o.put("access", audioOk()); o.put("tracks", new JSArray(eng().listJson().toString())); o.put("state", new JSObject(eng().stateJson().toString())); call.resolve(o);
     }
     @PluginMethod public void musicState(PluginCall call) throws Exception { call.resolve(new JSObject(eng().stateJson().toString())); }
     @PluginMethod public void musicPlay(PluginCall call) { eng().playId(call.getString("id", "")); call.resolve(); }
@@ -238,6 +246,17 @@ public class TmnNative extends Plugin {
     @PluginMethod public void musicMove(PluginCall call) { eng().move(call.getString("id", ""), call.getInt("dir", 0)); call.resolve(); }
     @PluginMethod public void musicSet(PluginCall call) {
         eng().setModes(call.hasOption("shuffle") ? call.getBoolean("shuffle") : null, call.getString("repeat"));
+        call.resolve();
+    }
+
+    // ================= Upload keep-alive =================
+    /** on = may naka-pilang posts → panatilihing buhay ang app (foreground service). */
+    @PluginMethod public void syncKeep(PluginCall call) {
+        try {
+            Intent i = new Intent(getContext(), UploadKeepService.class);
+            if (call.getBoolean("on", false)) androidx.core.content.ContextCompat.startForegroundService(getContext(), i);
+            else getContext().stopService(i);
+        } catch (Exception e) { }
         call.resolve();
     }
 }

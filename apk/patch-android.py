@@ -189,7 +189,7 @@ public class MainActivity extends BridgeActivity {{
 
 # 2a) Native: music player (service, notification, lock screen, widget) at Gallery ng phone — apk/native/
 jdir = os.path.dirname(java)
-for f in ("MusicEngine.java", "MusicService.java", "MusicWidget.java", "TmnNative.java"):
+for f in ("MusicEngine.java", "MusicService.java", "MusicWidget.java", "UploadKeepService.java", "TmnNative.java"):
     open(os.path.join(jdir, f), "w").write(open(os.path.join(ROOT, "apk/native", f)).read().replace("__PKG__", pkg))
 nres = os.path.join(ROOT, "apk/native/res")
 for d in os.listdir(nres):
@@ -230,7 +230,7 @@ open(g, "w").write(s)
 m = os.path.join(AND, "app/src/main/AndroidManifest.xml"); s = open(m).read()
 s = re.sub(r'android:configChanges="([^"]*)"', lambda k: 'android:configChanges="' + (k.group(1) if "density" in k.group(1) else k.group(1) + "|density") + '"', s, count=1)
 # permissions: camera (litrato/video, video call), mic (voice, video), location (Safety, weather, Explore), notifications, vibrate
-PERMS = ["REQUEST_INSTALL_PACKAGES", "CAMERA", "RECORD_AUDIO", "MODIFY_AUDIO_SETTINGS", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "POST_NOTIFICATIONS", "VIBRATE", "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_MEDIA_PLAYBACK", "WAKE_LOCK", "READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO", "READ_EXTERNAL_STORAGE"]
+PERMS = ["REQUEST_INSTALL_PACKAGES", "CAMERA", "RECORD_AUDIO", "MODIFY_AUDIO_SETTINGS", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "POST_NOTIFICATIONS", "VIBRATE", "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_MEDIA_PLAYBACK", "WAKE_LOCK", "READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO", "READ_MEDIA_AUDIO", "READ_EXTERNAL_STORAGE", "FOREGROUND_SERVICE_DATA_SYNC"]
 add = "".join(f'    <uses-permission android:name="android.permission.{p}" />\n' for p in PERMS if f"android.permission.{p}\"" not in s)
 add += '    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <uses-feature android:name="android.hardware.location.gps" android:required="false" />\n'
 # para makita ng app kung naka-install ang ibang TigoMeNote app (Android 11+)
@@ -239,6 +239,7 @@ if "<queries>" not in s: s = s.replace("</manifest>", add + "</manifest>", 1)
 # FileProvider para sa update.apk (sariling authority: <pkg>.tmnupdate)
 if "MusicService" not in s:
     s = s.replace("</application>", f'''    <service android:name=".MusicService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
+        <service android:name=".UploadKeepService" android:exported="false" android:foregroundServiceType="dataSync" />
         <receiver android:name=".MusicWidget" android:exported="false" android:label="Tigo music">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/tmn_widget_music_info" />

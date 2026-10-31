@@ -35,9 +35,9 @@ public final class MusicEngine {
     public static final String ACT = "tmn.music.";
 
     public static final class Track {
-        public String id, name, artist, file; public long dur;
+        public String id, name, artist, uri; public long dur;
         JSONObject json() {
-            try { return new JSONObject().put("id", id).put("name", name).put("artist", artist).put("file", file).put("dur", dur); }
+            try { return new JSONObject().put("id", id).put("name", name).put("artist", artist).put("uri", uri).put("dur", dur); }
             catch (Exception e) { return new JSONObject(); }
         }
     }
@@ -63,43 +63,74 @@ public final class MusicEngine {
     }
 
     // ---------- playlist ----------
+    // Ang mga kanta ay nasa phone: Music/TigoMeNote (MediaStore) — kaya NAKIKITA ng TigoMeNote at Chat ang parehong playlist.
+    // Sa loob ng app lang ang order, pangalan at "tinago" (music/prefs.json).
+    private final List<String> order = new ArrayList<>();
+    private final org.json.JSONObject names = new org.json.JSONObject();
+    private final java.util.Set<String> hidden = new java.util.HashSet<>();
     private File dir() { File d = new File(ctx.getFilesDir(), "music"); d.mkdirs(); return d; }
-    private File listFile() { return new File(dir(), "list.json"); }
+    private File prefsFile() { return new File(dir(), "prefs.json"); }
     private synchronized void load() {
-        tracks.clear();
         try {
-            File f = listFile(); if (!f.exists()) return;
+            File f = prefsFile(); if (!f.exists()) return;
             byte[] b = new byte[(int) f.length()]; try (FileInputStream in = new FileInputStream(f)) { in.read(b); }
             JSONObject o = new JSONObject(new String(b, "UTF-8"));
             shuffle = o.optBoolean("shuffle", false); repeat = o.optString("repeat", "all");
-            JSONArray a = o.optJSONArray("tracks");
-            for (int i = 0; a != null && i < a.length(); i++) {
-                JSONObject j = a.getJSONObject(i); Track t = new Track();
-                t.id = j.getString("id"); t.name = j.optString("name", "Song"); t.artist = j.optString("artist", "");
-                t.file = j.getString("file"); t.dur = j.optLong("dur", 0);
-                if (new File(t.file).exists()) tracks.add(t);
-            }
+            JSONArray a = o.optJSONArray("order"); for (int i = 0; a != null && i < a.length(); i++) order.add(a.getString(i));
+            a = o.optJSONArray("hidden"); for (int i = 0; a != null && i < a.length(); i++) hidden.add(a.getString(i));
+            JSONObject n = o.optJSONObject("names"); if (n != null) { java.util.Iterator<String> k = n.keys(); while (k.hasNext()) { String key = k.next(); names.put(key, n.getString(key)); } }
         } catch (Exception e) { }
     }
     private synchronized void save() {
         try {
-            JSONArray a = new JSONArray(); for (Track t : tracks) a.put(t.json());
-            JSONObject o = new JSONObject().put("tracks", a).put("shuffle", shuffle).put("repeat", repeat);
-            try (FileOutputStream out = new FileOutputStream(listFile())) { out.write(o.toString().getBytes("UTF-8")); }
+            JSONArray oa = new JSONArray(); for (Track t : tracks) oa.put(t.id);
+            JSONArray ha = new JSONArray(); for (String h : hidden) ha.put(h);
+            JSONObject o = new JSONObject().put("order", oa).put("hidden", ha).put("names", names).put("shuffle", shuffle).put("repeat", repeat);
+            try (FileOutputStream out = new FileOutputStream(prefsFile())) { out.write(o.toString().getBytes("UTF-8")); }
         } catch (Exception e) { }
     }
-    public synchronized JSONArray listJson() { JSONArray a = new JSONArray(); for (Track t : tracks) a.put(t.json()); return a; }
-    public synchronized void add(Track t) { tracks.add(t); save(); }
-    public File musicDir() { return dir(); }
+    /** Basahin ulit ang Music/TigoMeNote (kasama ang idinagdag ng ibang TigoMeNote app, kung may permiso). */
+    public synchronized void sync() {
+        String curId = idx >= 0 && idx < tracks.size() ? tracks.get(idx).id : null;
+        List<Track> found = new ArrayList<>();
+        if (Build.VERSION.SDK_INT >= 29) {
+            android.net.Uri base = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+            String[] cols = { android.provider.MediaStore.Audio.Media._ID, android.provider.MediaStore.Audio.Media.TITLE, android.provider.MediaStore.Audio.Media.ARTIST,
+                android.provider.MediaStore.Audio.Media.DURATION, android.provider.MediaStore.Audio.Media.DISPLAY_NAME, android.provider.MediaStore.Audio.Media.DATE_ADDED };
+            try (android.database.Cursor c = ctx.getContentResolver().query(base, cols, android.provider.MediaStore.MediaColumns.RELATIVE_PATH + " LIKE ?", new String[] { "Music/TigoMeNote%" }, android.provider.MediaStore.Audio.Media.DATE_ADDED + " ASC")) {
+                while (c != null && c.moveToNext()) {
+                    Track t = new Track(); long id = c.getLong(0);
+                    t.id = "a" + id; t.uri = android.content.ContentUris.withAppendedId(base, id).toString();
+                    String title = c.getString(1), disp = c.getString(4);
+                    t.name = title != null && !title.trim().isEmpty() ? title.trim() : (disp != null ? disp.replaceAll("\\.[A-Za-z0-9]{2,5}$", "") : "Song");
+                    String ar = c.getString(2); t.artist = ar == null || ar.equals("<unknown>") ? "" : ar.trim();
+                    t.dur = c.getLong(3) / 1000;
+                    if (hidden.contains(t.id)) continue;
+                    String rn = names.optString(t.id, ""); if (!rn.isEmpty()) t.name = rn;
+                    found.add(t);
+                }
+            } catch (Exception e) { }
+        }
+        // order: ayon sa naka-save, ang bago ay sa dulo
+        List<Track> sorted = new ArrayList<>();
+        for (String id : order) for (Track t : found) if (t.id.equals(id)) { sorted.add(t); break; }
+        for (Track t : found) if (!sorted.contains(t)) sorted.add(t);
+        tracks.clear(); tracks.addAll(sorted);
+        idx = -1; if (curId != null) for (int i = 0; i < tracks.size(); i++) if (tracks.get(i).id.equals(curId)) idx = i;
+        if (idx < 0 && mp != null) stopPlayer();
+    }
+    public synchronized JSONArray listJson() { sync(); JSONArray a = new JSONArray(); for (Track t : tracks) a.put(t.json()); return a; }
     public synchronized void remove(String id) {
         int i = indexOf(id); if (i < 0) return;
+        Track t = tracks.get(i);
         boolean cur = i == idx;
-        if (cur) stopPlayer();
-        Track t = tracks.remove(i); new File(t.file).delete();
-        if (cur) idx = -1; else if (i < idx) idx--;
+        if (cur) { stopPlayer(); idx = -1; }
+        // buburahin ang file kung kaya (sariling file); kung hindi (galing sa ibang app) itatago na lang dito
+        try { if (ctx.getContentResolver().delete(android.net.Uri.parse(t.uri), null, null) <= 0) hidden.add(id); } catch (Exception e) { hidden.add(id); }
+        names.remove(id); tracks.remove(i); if (!cur && i < idx) idx--;
         save(); changed();
     }
-    public synchronized void rename(String id, String name) { int i = indexOf(id); if (i >= 0 && name != null && !name.trim().isEmpty()) { tracks.get(i).name = name.trim(); save(); changed(); } }
+    public synchronized void rename(String id, String name) { int i = indexOf(id); if (i >= 0 && name != null && !name.trim().isEmpty()) { tracks.get(i).name = name.trim(); try { names.put(id, name.trim()); } catch (Exception e) { } save(); changed(); } }
     public synchronized void move(String id, int dir) {
         int i = indexOf(id), j = i + dir; if (i < 0 || j < 0 || j >= tracks.size()) return;
         Track a = tracks.get(i); tracks.set(i, tracks.get(j)); tracks.set(j, a);
@@ -120,7 +151,7 @@ public final class MusicEngine {
             mp = new MediaPlayer();
             mp.setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build());
             mp.setWakeMode(ctx, android.os.PowerManager.PARTIAL_WAKE_LOCK);
-            mp.setDataSource(t.file); mp.prepare();
+            mp.setDataSource(ctx, android.net.Uri.parse(t.uri)); mp.prepare();
             mp.setOnCompletionListener(m -> onDone());
             mp.setOnErrorListener((m, w, e) -> { onDone(); return true; });
             focus();

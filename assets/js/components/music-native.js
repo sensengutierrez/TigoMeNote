@@ -3,7 +3,7 @@
      TMN_MUSIC_NATIVE.mount(el)   → pareho ng itsura ng music-player.js, pero ang tugtog ay nasa Android (TmnNative):
    • tuloy-tuloy kahit lumipat ng page, i-minimize, o naka-lock ang phone
    • notification + controls sa lock screen (MediaSession) at widget sa home screen (Prev / Play-Pause / Next)
-   • ang mga kanta ay kinokopya sa loob ng app (hindi ina-upload); bawat app (TigoMeNote at Chat) ay may sariling playlist
+   • ang mga kanta ay nasa phone (Music/TigoMeNote), hindi ina-upload; PAREHO ang playlist ng TigoMeNote at Chat
    Kailangan: modal.js */
 (function () {
   var Cap = window.Capacitor;
@@ -20,12 +20,12 @@
   function mount(el) {
     var N = plug(), UI = window.TMN_UI;
     var tracks = [], st = { id: "", playing: false, active: false, pos: 0, dur: 0, shuffle: false, repeat: "all" };
-    var timer = 0, seeking = false;
+    var timer = 0, seeking = false, access = true;
 
     el.innerHTML =
       '<div class="mu-head"><h3>' + I("music", "ic-sm") + 'My music</h3>' +
         '<button type="button" class="btn btn-ghost btn-sm mu-addbtn">' + I("plus", "ic-sm") + 'Add songs</button></div>' +
-      '<p class="faint small mu-note">Only you can hear this. Songs stay inside this app on your phone and are not uploaded.</p>' +
+      '<p class="faint small mu-note">Only you can hear this. Songs are saved on your phone (Music › TigoMeNote) and are not uploaded. TigoMeNote and Chat share the same playlist.</p>' +
       '<div class="mu-now hidden">' +
         '<div class="mu-now-info"><b class="mu-title"></b><span class="faint small mu-artist"></span></div>' +
         '<div class="mu-seek"><span class="faint small mu-cur" translate="no">0:00</span><input type="range" class="mu-bar" min="0" max="1000" value="0" aria-label="Seek"><span class="faint small mu-dur" translate="no">0:00</span></div>' +
@@ -36,6 +36,7 @@
           '<button type="button" class="icon-btn mu-next" aria-label="Next">' + I("chevronR") + "</button>" +
           '<button type="button" class="icon-btn mu-repeat" aria-label="Repeat" title="Repeat">↻<small></small></button>' +
         "</div></div>" +
+      '<button type="button" class="btn btn-ghost btn-sm mu-access hidden">Show songs added in my other TigoMeNote app</button>' +
       '<ol class="mu-list"></ol>' +
       '<p class="faint small mu-empty">Add MP3 or other songs from your phone to make your playlist.</p>' +
       '<p class="faint small mu-tip">' + I("info", "ic-sm") + " Keeps playing on every page, when you minimize and when the phone is locked. Long-press your home screen → Widgets → Tigo music to add the player widget.</p>";
@@ -70,7 +71,8 @@
     function paint() { paintList(); paintNow(); paintTime(); }
 
     async function refresh() {
-      try { var r = await N.musicList(); tracks = r.tracks || []; st = r.state || st; } catch (e) {}
+      try { var r = await N.musicList(); tracks = r.tracks || []; st = r.state || st; access = r.access !== false; } catch (e) {}
+      $(".mu-access").classList.toggle("hidden", access);
       paint();
     }
     async function poll() {
@@ -92,6 +94,7 @@
     el.addEventListener("click", function (e) {
       var b = e.target.closest("button"); if (!b) return;
       if (b.classList.contains("mu-addbtn")) return add();
+      if (b.classList.contains("mu-access")) { N.musicRequest().then(refresh, refresh); return; }
       if (b.classList.contains("mu-play")) return act(function () { return N.musicToggle(); });
       if (b.classList.contains("mu-next")) return act(function () { return N.musicNext(); });
       if (b.classList.contains("mu-prev")) return act(function () { return N.musicPrev(); });

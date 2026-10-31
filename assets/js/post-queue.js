@@ -243,7 +243,19 @@
 
   async function badge() {
     if (!window.TMN_UI || !TMN_UI.setBadge) return;
-    try { var n = (await getAll()).filter(function (e) { return e.status !== "done"; }).length; TMN_UI.setBadge("profile", n); } catch (e) {}
+    try {
+      var all = await getAll(), n = all.filter(function (e) { return e.status !== "done"; }).length;
+      TMN_UI.setBadge("profile", n);
+      keepAlive(all.filter(function (e) { return e.status === "queued" || e.status === "uploading"; }).length);
+    } catch (e) {}
+  }
+  // APK: habang may naka-pilang posts, panatilihing buhay ang app (foreground service) para tumuloy ang upload kahit naka-minimize / naka-lock
+  var keepOn = null;
+  function keepAlive(n) {
+    var Cap = window.Capacitor, P = Cap && Cap.isNativePlatform && Cap.isNativePlatform() && Cap.Plugins && Cap.Plugins.TmnNative;
+    if (!P || !P.syncKeep) return;
+    var on = n > 0; if (on === keepOn) return; keepOn = on;
+    try { P.syncKeep({ on: on }).catch(function () {}); } catch (e) {}
   }
 
   async function retry(id) { var e = (await getAll()).filter(function (x) { return x.id === id; })[0]; if (!e) return; e.status = "queued"; e.attempts = 0; e.lastTry = 0; await put(e); emit(); process(); }
