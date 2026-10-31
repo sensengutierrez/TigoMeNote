@@ -1,4 +1,8 @@
 {
+  "0.11.30": [
+    "Tigo: the menu, needs bars and size slider no longer overlap on small or landscape screens",
+    "Tigo: if the app closes by itself, it switches to lighter 3D and sends us the reason so we can fix it"
+  ],
   "0.11.29": [
     "Updates start downloading by themselves when you open the app — just tap Install",
     "Tigo pauses the 3D while updating, so the app doesn't close during the download"

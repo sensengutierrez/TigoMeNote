@@ -165,6 +165,35 @@
   }
   [mqUI, mqLand].forEach(function (m) { if (m.addEventListener) m.addEventListener("change", layout); });
   layout();
+  // Buong screen na laro: isinasalansan ang menu sa ilalim ng stats, at ang laki-slider sa ilalim ng menu
+  // (sinusukat, para hindi magpatong kahit malaki ang font o mababa ang screen ng phone)
+  function stack() {
+    var st = $("stage"), mini = $("tgMini"), dock = $("tgDock"), size = $("tgSize"), pad = st.querySelector(".tg-pad");
+    var on = st.classList.contains("game");
+    [dock, size].forEach(function (e) { if (e) e.style.top = ""; });
+    if (size) { size.style.bottom = ""; size.style.left = ""; var tr = size.querySelector(".tg-size-track"); if (tr) tr.style.height = ""; }
+    if (!on || !mini || !dock) return;
+    var top0 = st.getBoundingClientRect().top;
+    var mb = mini.getBoundingClientRect().bottom - top0;
+    if (mb > 0) dock.style.top = Math.round(mb + 6) + "px";
+    if (!size || getComputedStyle(size).display === "none") return;
+    var db = dock.getBoundingClientRect().bottom - top0, y = Math.round(db + 10);
+    var lim = (pad ? pad.getBoundingClientRect().top - top0 : st.clientHeight) - 12;
+    size.style.top = y + "px"; size.style.bottom = "auto";
+    var t = size.querySelector(".tg-size-track");
+    if (t) t.style.height = Math.max(40, Math.min(110, lim - y - 30)) + "px";
+    if (lim - y < 70 && pad) {           // walang lugar sa itaas ng joystick → sa tabi nito
+      var pr = pad.getBoundingClientRect(), sr = st.getBoundingClientRect();
+      size.style.top = "auto"; size.style.left = Math.round(pr.right - sr.left + 10) + "px";
+      size.style.bottom = Math.round(sr.bottom - pr.bottom + 4) + "px";
+      if (t) t.style.height = "64px";
+    } else size.style.left = "";
+  }
+  var stackT = 0; function restack() { clearTimeout(stackT); stackT = setTimeout(stack, 60); }
+  if (window.ResizeObserver) { var ro = new ResizeObserver(restack); ["stage", "tgMini", "tgDock"].forEach(function (id) { if ($(id)) ro.observe($(id)); }); }
+  window.addEventListener("resize", restack);
+  [mqUI, mqLand].forEach(function (m) { if (m.addEventListener) m.addEventListener("change", restack); });
+  restack();
   $("tgDockMin").addEventListener("click", function () {
     var on = $("stage").classList.toggle("dock-min"); this.setAttribute("aria-expanded", String(!on)); this.setAttribute("aria-label", on ? "Show menu" : "Hide menu");
   });

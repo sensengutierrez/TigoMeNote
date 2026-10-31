@@ -512,3 +512,9 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: "Hndi ba auto na ung update pag open ng apps, tapos dapat lumabas ung details ng bagong patch para makita anung bago sa new version". Hindi kayang mag-install nang tahimik ng sideload na APK (Android ang nagtatanong); sa Play Store lang iyon.
 - **Files:** `assets/js/app-update.js`, `assets/js/tigo/pet-scene.js`, `whatsnew.json`, `config.js` (0.11.29)
 - **Paano:** test_autoupd 5/5 (may permission → kusang download → Install; walang permission → hinihintay ang tap; What's new lumalabas), test_tigoupd 3/3 (kasya sa landscape, tumitigil ang 3D).
+
+## 2026-10-31 · #61 Crash report ng apps + Tigo layout sa maliit na landscape
+- **Ano:** Crash report (native → crash-fast → `app_crashes`, 30 araw), magaan na 3D pagkatapos ng crash, at hindi na nagpapatong ang menu/stats/slider ng Tigo. Version 0.11.30.
+- **Bakit:** Ayon kay Bench (screenshot ng Tigo app): "ganto padin kase at ng force closed".
+- **Files:** `apk/patch-android.py`, `backend/crash-fast.ts`, `sql/089-app-crashes.sql`, `assets/js/app-mode.js`, `assets/js/tigo/pet-scene.js`, `assets/js/pages/tigo.js`, `config.js` (fn.crash, 0.11.30), `whatsnew.json`
+- **Paano:** test_crash 5/5 (report naipapadala nang isang beses, lite 3D 1x, walang report kung walang crash), sukat ng layout sa 909×414, 727×320 (malaking stats), 640×300: walang patong. Java ng MainActivity: walang syntax error (javac). Hindi pa nasubukan sa totoong phone.

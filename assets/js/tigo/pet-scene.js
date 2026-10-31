@@ -35,10 +35,12 @@ import { createSky, skyColors } from "./sky-dome.js";
 import { buildRoom, ROOM } from "./room.js";
 
 export function createScene(canvas, opts = {}) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "low-power" });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.TMN_IN_APP ? 1.5 : 2)); // APK: mas magaan sa memory
+  // Magaan na 3D (walang anino at antialias, 1x) kapag nag-crash ang app sa nakaraang 7 araw (app-mode.js → tmnLite3d)
+  let lite = false; try { lite = Date.now() - Number(localStorage.getItem("tmnLite3d") || 0) < 7 * 86_400_000; } catch (e) {}
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !lite, alpha: true, powerPreference: "low-power" });
+  renderer.setPixelRatio(lite ? 1 : Math.min(window.devicePixelRatio || 1, window.TMN_IN_APP ? 1.5 : 2)); // APK: mas magaan sa memory
   canvas.addEventListener("webglcontextlost", function (e) { e.preventDefault(); }); // huwag mag-crash; kusang babalik ang three.js
-  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.enabled = !lite; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 

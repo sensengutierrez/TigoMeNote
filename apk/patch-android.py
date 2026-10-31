@@ -31,7 +31,13 @@ for d in os.listdir(src):
 java = os.path.join(AND, "app/src/main/java", *pkg.split("."), "MainActivity.java")
 open(java, "w").write(f'''package {pkg};
 
+import android.app.ActivityManager;
 import android.app.DownloadManager;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -64,6 +70,13 @@ public class MainActivity extends BridgeActivity {{
     private static long lastGone = 0; private static int goneCount = 0;
     @Override
     public void onCreate(Bundle savedInstanceState) {{
+        // Crash report: isinusulat ang dahilan sa tmn-crash.txt; ipinapadala ng app-mode.js sa susunod na bukas (crash-fast)
+        final Thread.UncaughtExceptionHandler prev = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {{
+            StringWriter sw = new StringWriter(); e.printStackTrace(new PrintWriter(sw));
+            saveCrash("crash", "thread=" + t.getName() + "\\n" + sw);
+            if (prev != null) prev.uncaughtException(t, e);
+        }});
         registerPlugin(TmnNative.class);   // Gallery ng phone + music player (apk/native/*.java)
         super.onCreate(savedInstanceState);
         final WebView wv = getBridge().getWebView();
@@ -87,6 +100,7 @@ public class MainActivity extends BridgeActivity {{
         wv.addJavascriptInterface(new Bars(), "TMNNative");
         wv.addJavascriptInterface(new Apps(), "TMNApps");
         wv.addJavascriptInterface(new Update(), "TMNUpdate");
+        wv.addJavascriptInterface(new Crash(), "TMNCrash");
         // Kapag namatay ang WebView (kulang sa memory, hal. 3D game): huwag i-force close ang app — buksan ulit ang screen (hanggang 3 beses kada minuto)
         getBridge().setWebViewClient(new BridgeWebViewClient(getBridge()) {{
             @Override
@@ -94,6 +108,7 @@ public class MainActivity extends BridgeActivity {{
                 long now = System.currentTimeMillis();
                 if (now - lastGone > 60000) goneCount = 0;
                 lastGone = now; goneCount++;
+                saveCrash("webview", (Build.VERSION.SDK_INT >= 26 ? "didCrash=" + detail.didCrash() + " priority=" + detail.rendererPriorityAtExit() : "") + " count=" + goneCount + " url=" + view.getUrl());
                 if (goneCount <= 3) runOnUiThread(() -> recreate()); else runOnUiThread(() -> finish());
                 return true;
             }}
@@ -184,6 +199,33 @@ public class MainActivity extends BridgeActivity {{
             i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(i);
         }} catch (Exception e) {{ }}
+    }}
+
+    private void saveCrash(String kind, String body) {{
+        try {{
+            File f = new File(getFilesDir(), "tmn-crash.txt");
+            if (f.length() > 20000) return;
+            ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+            ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo(); if (am != null) am.getMemoryInfo(mi);
+            String head = "kind=" + kind + "\\ntime=" + System.currentTimeMillis() + "\\ndevice=" + Build.MANUFACTURER + " " + Build.MODEL
+                + "\\nandroid=" + Build.VERSION.RELEASE + " (sdk " + Build.VERSION.SDK_INT + ")"
+                + "\\nmemClass=" + (am != null ? am.getMemoryClass() : -1) + "MB availMem=" + (mi.availMem / 1048576) + "MB lowMemory=" + mi.lowMemory + "\\n";
+            FileWriter w = new FileWriter(f, true);
+            w.write(head + (body.length() > 6000 ? body.substring(0, 6000) : body) + "\\n---\\n"); w.close();
+        }} catch (Throwable x) {{ }}
+    }}
+    // window.TMNCrash.take() → huling crash report (text) at binubura; "" kung wala
+    public class Crash {{
+        @JavascriptInterface
+        public String take() {{
+            File f = new File(getFilesDir(), "tmn-crash.txt");
+            if (!f.exists()) return "";
+            try {{
+                FileInputStream in = new FileInputStream(f); ByteArrayOutputStream out = new ByteArrayOutputStream();
+                byte[] b = new byte[4096]; int n; while ((n = in.read(b)) > 0) out.write(b, 0, n); in.close();
+                f.delete(); return out.toString("UTF-8");
+            }} catch (Exception e) {{ f.delete(); return ""; }}
+        }}
     }}
 
     // window.TMNNative.setBars("#ffffff", false) — kulay sa likod ng status/navigation bar + kulay ng icons (app-mode.js)
