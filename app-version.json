@@ -24,12 +24,12 @@
   "tigo": {
     "name": "Tigo",
     "id": "com.tigomenote.tigo",
-    "version": "0.11.33",
-    "code": 11033,
-    "url": "https://tigomenote.com/dl/Tigo.apk?v=0.11.33",
-    "github": "https://github.com/sensengutierrez/TigoMeNote/releases/download/tigo-v0.11.33/Tigo.apk",
-    "size": 5494518,
-    "sha256": "ec545e6cff11344a7c8b9e65e01f927de10a7ad336d1ef713839f09ec7e2730e",
+    "version": "0.11.34",
+    "code": 11034,
+    "url": "https://tigomenote.com/dl/Tigo.apk?v=0.11.34",
+    "github": "https://github.com/sensengutierrez/TigoMeNote/releases/download/tigo-v0.11.34/Tigo.apk",
+    "size": 5569816,
+    "sha256": "7f4eb969fdd8643224128a1636d118ffc6e7216a5632062d17bc89ac6ed6a781",
     "date": "2026-10-31"
   }
 }
