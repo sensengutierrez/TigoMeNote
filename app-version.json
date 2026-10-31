@@ -20,5 +20,16 @@
     "size": 5298430,
     "sha256": "9cded4c73c4932d21cab9d46a0900177f9ca8db2fe9f0ceaa7a280781028a0c7",
     "date": "2026-10-31"
+  },
+  "tigo": {
+    "name": "Tigo",
+    "id": "com.tigomenote.tigo",
+    "version": "0.11.25",
+    "code": 11025,
+    "url": "https://tigomenote.com/dl/Tigo.apk?v=0.11.25",
+    "github": "https://github.com/sensengutierrez/TigoMeNote/releases/download/tigo-v0.11.25/Tigo.apk",
+    "size": 5273854,
+    "sha256": "c534fd4e86cd1fa353b08d7056b16c2d592e4a84cd1dd3e634deca615e998d87",
+    "date": "2026-10-31"
   }
 }
