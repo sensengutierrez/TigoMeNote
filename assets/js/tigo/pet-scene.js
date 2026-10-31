@@ -36,7 +36,8 @@ import { buildRoom, ROOM } from "./room.js";
 
 export function createScene(canvas, opts = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "low-power" });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.TMN_IN_APP ? 1.5 : 2)); // APK: mas magaan sa memory
+  canvas.addEventListener("webglcontextlost", function (e) { e.preventDefault(); }); // huwag mag-crash; kusang babalik ang three.js
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
   renderer.outputColorSpace = THREE.SRGBColorSpace;

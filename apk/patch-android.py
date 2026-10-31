@@ -56,9 +56,12 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import android.webkit.RenderProcessGoneDetail;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebViewClient;
 
 public class MainActivity extends BridgeActivity {{
+    private static long lastGone = 0; private static int goneCount = 0;
     @Override
     public void onCreate(Bundle savedInstanceState) {{
         registerPlugin(TmnNative.class);   // Gallery ng phone + music player (apk/native/*.java)
@@ -84,6 +87,17 @@ public class MainActivity extends BridgeActivity {{
         wv.addJavascriptInterface(new Bars(), "TMNNative");
         wv.addJavascriptInterface(new Apps(), "TMNApps");
         wv.addJavascriptInterface(new Update(), "TMNUpdate");
+        // Kapag namatay ang WebView (kulang sa memory, hal. 3D game): huwag i-force close ang app — buksan ulit ang screen (hanggang 3 beses kada minuto)
+        getBridge().setWebViewClient(new BridgeWebViewClient(getBridge()) {{
+            @Override
+            public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {{
+                long now = System.currentTimeMillis();
+                if (now - lastGone > 60000) goneCount = 0;
+                lastGone = now; goneCount++;
+                if (goneCount <= 3) runOnUiThread(() -> recreate()); else runOnUiThread(() -> finish());
+                return true;
+            }}
+        }});
     }}
 
     // Ibang TigoMeNote app: naka-install ba? buksan · at link na bubuksan sa Chrome (hal. download page)

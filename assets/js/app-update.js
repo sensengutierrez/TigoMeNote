@@ -10,13 +10,22 @@
   var URL_V = (C.apps && C.apps.remoteVersion) || "https://tigomenote.com/app-version.json";
   var NAMES = { main: "TigoMeNote", chat: "TigoMeNote Chat", tigo: "Tigo" };
   var code = function (v) { var p = String(v || "0.0.0").split(".").map(Number); return (p[0] || 0) * 1000000 + (p[1] || 0) * 1000 + (p[2] || 0); };
-  var mine = code(C.version), box = null, info = null, timer = null;
+  var mine = code(C.version), box = null, info = null, timer = null, notes = [];
+  var URL_N = URL_V.replace(/app-version\.json.*$/, "whatsnew.json");
 
   function check() {
     if (box || !navigator.onLine) return;
     fetch(URL_V + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
       var a = v && v[APP_ID];
-      if (a && a.url && (a.code || code(a.version)) > mine) { info = a; show(); }
+      if (a && a.url && (a.code || code(a.version)) > mine) {
+        info = a;
+        // Ano ang bago (whatsnew.json): mga version na mas bago sa nakalagay sa phone na ito
+        fetch(URL_N + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }).then(function (n) {
+          notes = Object.keys(n || {}).filter(function (k) { return code(k) > mine && code(k) <= (a.code || code(a.version)); })
+            .sort(function (x, y) { return code(y) - code(x); }).slice(0, 4).map(function (k) { return { v: k, items: n[k] || [] }; });
+          show();
+        });
+      }
     }).catch(function () {});
   }
 
@@ -32,6 +41,9 @@
         '<h2 id="updT">New version available</h2>' +
         '<p class="upd-sub">' + NAMES[APP_ID] + " " + info.version + mb + "</p>" +
         '<p class="upd-txt">Install the new version to keep using the app.</p>' +
+        (notes.length ? '<div class="upd-new"><b>What’s new</b>' + notes.map(function (n) {
+          return '<p class="upd-v">' + n.v + "</p><ul>" + n.items.map(function (t) { return "<li>" + String(t).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }) + "</li>"; }).join("") + "</ul>";
+        }).join("") + "</div>" : "") +
         '<div class="upd-bar hidden"><i></i></div>' +
         '<p class="upd-msg small" aria-live="polite"></p>' +
         '<button type="button" class="btn btn-primary btn-lg upd-go">⬇ Install new version</button>' +

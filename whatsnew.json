@@ -1,0 +1,18 @@
+{
+  "0.11.28": [
+    "Update screen: fits small / landscape screens and shows what's new",
+    "Tigo: fewer force-closes (the app now reopens the screen instead of closing)",
+    "Chat is see-through over your wallpaper; Gallery Camera button matches Upload",
+    "Sign-in now lasts 1 year until you sign out"
+  ],
+  "0.11.27": [
+    "Music: TigoMeNote and Chat share one playlist (Music › TigoMeNote)",
+    "Tap Tigo in TigoMeNote: opens the Tigo app, or the download page if it isn't installed",
+    "Posts keep uploading while the app is minimized"
+  ],
+  "0.11.26": [
+    "Music player: keeps playing on every page and when the phone is locked, with notification, lock screen controls and a home screen widget",
+    "Gallery: your phone folders appear in the app; pick photos and videos to Post or schedule",
+    "New Tigo app (game) on the Get page"
+  ]
+}
