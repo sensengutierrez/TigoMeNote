@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: ${{ fromJSON(github.event.inputs.app && format('["{0}"]', github.event.inputs.app) || '["main","chat"]') }}
+        app: ${{ fromJSON(github.event.inputs.app && format('["{0}"]', github.event.inputs.app) || '["main","chat","tigo"]') }}
     env:
       APP: ${{ matrix.app }}
     steps:
