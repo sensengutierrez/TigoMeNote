@@ -12,6 +12,8 @@
   var PREF = "tmnMusicPrefs";
 
   function mount(el) {
+    // Sa APK: native player (tuloy kahit lumipat ng page / naka-lock, may widget) — components/music-native.js
+    if (window.TMN_MUSIC_NATIVE && TMN_MUSIC_NATIVE.available()) return TMN_MUSIC_NATIVE.mount(el);
     var DB = window.TMN_MUSICDB, UI = window.TMN_UI;
     var audio = new Audio(); audio.preload = "auto";
     var tracks = [], cur = -1, url = null, order = [];

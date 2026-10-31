@@ -61,6 +61,7 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {{
     @Override
     public void onCreate(Bundle savedInstanceState) {{
+        registerPlugin(TmnNative.class);   // Gallery ng phone + music player (apk/native/*.java)
         super.onCreate(savedInstanceState);
         final WebView wv = getBridge().getWebView();
         WebSettings s = wv.getSettings();
@@ -186,6 +187,21 @@ public class MainActivity extends BridgeActivity {{
 }}
 ''')
 
+# 2a) Native: music player (service, notification, lock screen, widget) at Gallery ng phone — apk/native/
+jdir = os.path.dirname(java)
+for f in ("MusicEngine.java", "MusicService.java", "MusicWidget.java", "TmnNative.java"):
+    open(os.path.join(jdir, f), "w").write(open(os.path.join(ROOT, "apk/native", f)).read().replace("__PKG__", pkg))
+nres = os.path.join(ROOT, "apk/native/res")
+for d in os.listdir(nres):
+    os.makedirs(os.path.join(res, d), exist_ok=True)
+    for f in os.listdir(os.path.join(nres, d)): shutil.copy(os.path.join(nres, d, f), os.path.join(res, d, f))
+os.makedirs(os.path.join(res, "values"), exist_ok=True)
+open(os.path.join(res, "values", "tmn_widget.xml"), "w").write('<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <string name="tmn_widget_desc">Music player: previous, play/pause, next</string>\n</resources>\n')
+gr = os.path.join(AND, "app/build.gradle"); g0 = open(gr).read()
+if "androidx.media:media" not in g0:
+    g0 = g0.replace("dependencies {", 'dependencies {\n    implementation "androidx.media:media:1.7.0"', 1)
+    open(gr, "w").write(g0)
+
 # 2b) Splash (Android 12+): solid na kulay ng app + icon, walang kulay-abong background
 splash_bg = meta.get("splash", "#141418")
 vals = os.path.join(res, "values"); os.makedirs(vals, exist_ok=True)
@@ -214,13 +230,20 @@ open(g, "w").write(s)
 m = os.path.join(AND, "app/src/main/AndroidManifest.xml"); s = open(m).read()
 s = re.sub(r'android:configChanges="([^"]*)"', lambda k: 'android:configChanges="' + (k.group(1) if "density" in k.group(1) else k.group(1) + "|density") + '"', s, count=1)
 # permissions: camera (litrato/video, video call), mic (voice, video), location (Safety, weather, Explore), notifications, vibrate
-PERMS = ["REQUEST_INSTALL_PACKAGES", "CAMERA", "RECORD_AUDIO", "MODIFY_AUDIO_SETTINGS", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "POST_NOTIFICATIONS", "VIBRATE"]
+PERMS = ["REQUEST_INSTALL_PACKAGES", "CAMERA", "RECORD_AUDIO", "MODIFY_AUDIO_SETTINGS", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "POST_NOTIFICATIONS", "VIBRATE", "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_MEDIA_PLAYBACK", "WAKE_LOCK", "READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO", "READ_EXTERNAL_STORAGE"]
 add = "".join(f'    <uses-permission android:name="android.permission.{p}" />\n' for p in PERMS if f"android.permission.{p}\"" not in s)
 add += '    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <uses-feature android:name="android.hardware.location.gps" android:required="false" />\n'
 # para makita ng app kung naka-install ang ibang TigoMeNote app (Android 11+)
 add += '    <queries>\n' + "".join(f'        <package android:name="{p}" />\n' for p in ("com.tigomenote.app", "com.tigomenote.chat", "com.tigomenote.tigo")) + '    </queries>\n'
 if "<queries>" not in s: s = s.replace("</manifest>", add + "</manifest>", 1)
 # FileProvider para sa update.apk (sariling authority: <pkg>.tmnupdate)
+if "MusicService" not in s:
+    s = s.replace("</application>", f'''    <service android:name=".MusicService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
+        <receiver android:name=".MusicWidget" android:exported="false" android:label="Tigo music">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/tmn_widget_music_info" />
+        </receiver>
+    </application>''', 1)
 if ".tmnupdate" not in s:
     s = s.replace("</application>", '''    <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.tmnupdate"
             android:exported="false" android:grantUriPermissions="true">

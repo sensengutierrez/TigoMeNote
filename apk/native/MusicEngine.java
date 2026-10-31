@@ -1,0 +1,247 @@
+package __PKG__;
+
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
+import android.widget.RemoteViews;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+/** TigoMeNote music: playlist (nasa loob ng app), MediaPlayer, notification, lock screen (MediaSession) at widget. */
+public final class MusicEngine {
+    public static final String CH = "tmn_music";
+    public static final int NID = 4711;
+    public static final String ACT = "tmn.music.";
+
+    public static final class Track {
+        public String id, name, artist, file; public long dur;
+        JSONObject json() {
+            try { return new JSONObject().put("id", id).put("name", name).put("artist", artist).put("file", file).put("dur", dur); }
+            catch (Exception e) { return new JSONObject(); }
+        }
+    }
+
+    private static MusicEngine I;
+    public static synchronized MusicEngine get(Context c) { if (I == null) I = new MusicEngine(c.getApplicationContext()); return I; }
+
+    private final Context ctx;
+    private final Handler main = new Handler(Looper.getMainLooper());
+    private final List<Track> tracks = new ArrayList<>();
+    private MediaPlayer mp;
+    private int idx = -1;
+    private boolean shuffle = false;
+    private String repeat = "all";
+    private MediaSessionCompat session;
+    private MusicService service;
+    private AudioManager am;
+    private AudioFocusRequest focusReq;
+
+    private MusicEngine(Context c) {
+        ctx = c; am = (AudioManager) c.getSystemService(Context.AUDIO_SERVICE);
+        load();
+    }
+
+    // ---------- playlist ----------
+    private File dir() { File d = new File(ctx.getFilesDir(), "music"); d.mkdirs(); return d; }
+    private File listFile() { return new File(dir(), "list.json"); }
+    private synchronized void load() {
+        tracks.clear();
+        try {
+            File f = listFile(); if (!f.exists()) return;
+            byte[] b = new byte[(int) f.length()]; try (FileInputStream in = new FileInputStream(f)) { in.read(b); }
+            JSONObject o = new JSONObject(new String(b, "UTF-8"));
+            shuffle = o.optBoolean("shuffle", false); repeat = o.optString("repeat", "all");
+            JSONArray a = o.optJSONArray("tracks");
+            for (int i = 0; a != null && i < a.length(); i++) {
+                JSONObject j = a.getJSONObject(i); Track t = new Track();
+                t.id = j.getString("id"); t.name = j.optString("name", "Song"); t.artist = j.optString("artist", "");
+                t.file = j.getString("file"); t.dur = j.optLong("dur", 0);
+                if (new File(t.file).exists()) tracks.add(t);
+            }
+        } catch (Exception e) { }
+    }
+    private synchronized void save() {
+        try {
+            JSONArray a = new JSONArray(); for (Track t : tracks) a.put(t.json());
+            JSONObject o = new JSONObject().put("tracks", a).put("shuffle", shuffle).put("repeat", repeat);
+            try (FileOutputStream out = new FileOutputStream(listFile())) { out.write(o.toString().getBytes("UTF-8")); }
+        } catch (Exception e) { }
+    }
+    public synchronized JSONArray listJson() { JSONArray a = new JSONArray(); for (Track t : tracks) a.put(t.json()); return a; }
+    public synchronized void add(Track t) { tracks.add(t); save(); }
+    public File musicDir() { return dir(); }
+    public synchronized void remove(String id) {
+        int i = indexOf(id); if (i < 0) return;
+        boolean cur = i == idx;
+        if (cur) stopPlayer();
+        Track t = tracks.remove(i); new File(t.file).delete();
+        if (cur) idx = -1; else if (i < idx) idx--;
+        save(); changed();
+    }
+    public synchronized void rename(String id, String name) { int i = indexOf(id); if (i >= 0 && name != null && !name.trim().isEmpty()) { tracks.get(i).name = name.trim(); save(); changed(); } }
+    public synchronized void move(String id, int dir) {
+        int i = indexOf(id), j = i + dir; if (i < 0 || j < 0 || j >= tracks.size()) return;
+        Track a = tracks.get(i); tracks.set(i, tracks.get(j)); tracks.set(j, a);
+        if (idx == i) idx = j; else if (idx == j) idx = i;
+        save();
+    }
+    public synchronized void setModes(Boolean sh, String rp) { if (sh != null) shuffle = sh; if (rp != null) repeat = rp; save(); }
+    private int indexOf(String id) { for (int i = 0; i < tracks.size(); i++) if (tracks.get(i).id.equals(id)) return i; return -1; }
+
+    // ---------- playback ----------
+    private void stopPlayer() { if (mp != null) { try { mp.stop(); } catch (Exception e) { } mp.release(); mp = null; } }
+    public synchronized void playId(String id) { int i = indexOf(id); if (i >= 0) play(i); }
+    public synchronized void play(int i) {
+        if (i < 0 || i >= tracks.size()) return;
+        stopPlayer(); idx = i;
+        Track t = tracks.get(i);
+        try {
+            mp = new MediaPlayer();
+            mp.setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build());
+            mp.setWakeMode(ctx, android.os.PowerManager.PARTIAL_WAKE_LOCK);
+            mp.setDataSource(t.file); mp.prepare();
+            mp.setOnCompletionListener(m -> onDone());
+            mp.setOnErrorListener((m, w, e) -> { onDone(); return true; });
+            focus();
+            mp.start();
+        } catch (Exception e) { stopPlayer(); idx = -1; }
+        ensureService(); changed();
+    }
+    private void onDone() {
+        synchronized (this) {
+            if ("one".equals(repeat) && idx >= 0) { play(idx); return; }
+            int n = nextIndex(1);
+            if (n >= 0) play(n); else { stopPlayer(); changed(); }
+        }
+    }
+    private int nextIndex(int dir) {
+        if (tracks.isEmpty()) return -1;
+        if (shuffle && dir > 0) { if (tracks.size() == 1) return 0; int r; do { r = new Random().nextInt(tracks.size()); } while (r == idx); return r; }
+        int n = idx + dir;
+        if (n >= tracks.size()) return "all".equals(repeat) ? 0 : -1;
+        if (n < 0) return "all".equals(repeat) ? tracks.size() - 1 : 0;
+        return n;
+    }
+    public synchronized void next() { int n = nextIndex(1); if (n >= 0) play(n); }
+    public synchronized void prev() { if (mp != null && mp.getCurrentPosition() > 3000) { mp.seekTo(0); changed(); return; } int n = nextIndex(-1); if (n >= 0) play(n); }
+    public synchronized void pause() { if (mp != null && mp.isPlaying()) { mp.pause(); changed(); } }
+    public synchronized void resume() { if (mp != null && !mp.isPlaying()) { focus(); mp.start(); ensureService(); changed(); } }
+    public synchronized void toggle() {
+        if (mp == null) { if (!tracks.isEmpty()) play(idx >= 0 ? idx : 0); return; }
+        if (mp.isPlaying()) pause(); else resume();
+    }
+    public synchronized void seek(int ms) { if (mp != null) { mp.seekTo(Math.max(0, ms)); changed(); } }
+    public synchronized boolean isPlaying() { try { return mp != null && mp.isPlaying(); } catch (Exception e) { return false; } }
+    public synchronized boolean hasTrack() { return idx >= 0 && idx < tracks.size() && mp != null; }
+    public synchronized int pos() { try { return mp != null ? mp.getCurrentPosition() : 0; } catch (Exception e) { return 0; } }
+    public synchronized int dur() { try { return mp != null ? mp.getDuration() : 0; } catch (Exception e) { return 0; } }
+    public synchronized Track cur() { return idx >= 0 && idx < tracks.size() ? tracks.get(idx) : null; }
+    public synchronized JSONObject stateJson() {
+        try {
+            Track t = cur();
+            return new JSONObject().put("id", t != null ? t.id : "").put("playing", isPlaying()).put("active", hasTrack())
+                .put("pos", pos()).put("dur", dur()).put("shuffle", shuffle).put("repeat", repeat);
+        } catch (Exception e) { return new JSONObject(); }
+    }
+
+    private void focus() {
+        try {
+            AudioManager.OnAudioFocusChangeListener l = ch -> { if (ch == AudioManager.AUDIOFOCUS_LOSS || ch == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) pause(); };
+            if (Build.VERSION.SDK_INT >= 26) {
+                focusReq = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                    .setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build())
+                    .setOnAudioFocusChangeListener(l).build();
+                am.requestAudioFocus(focusReq);
+            } else am.requestAudioFocus(l, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        } catch (Exception e) { }
+    }
+
+    // ---------- service / notification / widget ----------
+    void attach(MusicService s, MediaSessionCompat ms) { service = s; session = ms; }
+    void detach() { service = null; session = null; }
+    private void ensureService() {
+        try { ContextCompat.startForegroundService(ctx, new Intent(ctx, MusicService.class)); } catch (Exception e) { }
+    }
+    private void changed() {
+        main.post(() -> {
+            if (service != null) service.refresh(); else updateWidgets();
+        });
+    }
+    void updateSession(MediaSessionCompat s) {
+        Track t = cur(); if (s == null) return;
+        MediaMetadataCompat.Builder m = new MediaMetadataCompat.Builder();
+        if (t != null) m.putString(MediaMetadataCompat.METADATA_KEY_TITLE, t.name).putString(MediaMetadataCompat.METADATA_KEY_ARTIST, t.artist.isEmpty() ? "My music" : t.artist).putLong(MediaMetadataCompat.METADATA_KEY_DURATION, dur());
+        s.setMetadata(m.build());
+        long acts = PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS | PlaybackStateCompat.ACTION_SEEK_TO;
+        s.setPlaybackState(new PlaybackStateCompat.Builder().setActions(acts)
+            .setState(!hasTrack() ? PlaybackStateCompat.STATE_STOPPED : isPlaying() ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED, pos(), isPlaying() ? 1f : 0f).build());
+    }
+    private PendingIntent act(Context c, String a, int code) {
+        Intent i = new Intent(c, MusicService.class).setAction(ACT + a);
+        int fl = PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT;
+        return Build.VERSION.SDK_INT >= 26 ? PendingIntent.getForegroundService(c, code, i, fl) : PendingIntent.getService(c, code, i, fl);
+    }
+    private PendingIntent open(Context c) {
+        Intent i = c.getPackageManager().getLaunchIntentForPackage(c.getPackageName());
+        if (i == null) i = new Intent();
+        return PendingIntent.getActivity(c, 0, i, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+    private int res(Context c, String name, String type) { return c.getResources().getIdentifier(name, type, c.getPackageName()); }
+
+    Notification build(Context c, MediaSessionCompat s) {
+        Track t = cur(); boolean p = isPlaying();
+        NotificationCompat.Builder b = new NotificationCompat.Builder(c, CH)
+            .setSmallIcon(res(c, "tmn_ic_music", "drawable"))
+            .setContentTitle(t != null ? t.name : "My music")
+            .setContentText(t != null && !t.artist.isEmpty() ? t.artist : "TigoMeNote")
+            .setContentIntent(open(c)).setOnlyAlertOnce(true).setShowWhen(false)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC).setOngoing(p)
+            .addAction(android.R.drawable.ic_media_previous, "Previous", act(c, "prev", 1))
+            .addAction(p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play, p ? "Pause" : "Play", act(c, "toggle", 2))
+            .addAction(android.R.drawable.ic_media_next, "Next", act(c, "next", 3))
+            .setDeleteIntent(act(c, "stop", 4));
+        androidx.media.app.NotificationCompat.MediaStyle st = new androidx.media.app.NotificationCompat.MediaStyle().setShowActionsInCompactView(0, 1, 2);
+        if (s != null) st.setMediaSession(s.getSessionToken());
+        b.setStyle(st);
+        return b.build();
+    }
+
+    public void updateWidgets() {
+        try {
+            AppWidgetManager m = AppWidgetManager.getInstance(ctx);
+            int[] ids = m.getAppWidgetIds(new ComponentName(ctx, MusicWidget.class));
+            if (ids == null || ids.length == 0) return;
+            Track t = cur(); boolean p = isPlaying();
+            RemoteViews v = new RemoteViews(ctx.getPackageName(), res(ctx, "tmn_widget_music", "layout"));
+            v.setTextViewText(res(ctx, "tmn_w_title", "id"), t != null ? t.name : "My music");
+            v.setTextViewText(res(ctx, "tmn_w_artist", "id"), t != null ? (t.artist.isEmpty() ? "TigoMeNote" : t.artist) : "Tap ▶ to play your playlist");
+            v.setImageViewResource(res(ctx, "tmn_w_play", "id"), p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+            v.setOnClickPendingIntent(res(ctx, "tmn_w_prev", "id"), act(ctx, "prev", 11));
+            v.setOnClickPendingIntent(res(ctx, "tmn_w_play", "id"), act(ctx, "toggle", 12));
+            v.setOnClickPendingIntent(res(ctx, "tmn_w_next", "id"), act(ctx, "next", 13));
+            v.setOnClickPendingIntent(res(ctx, "tmn_w_root", "id"), open(ctx));
+            m.updateAppWidget(ids, v);
+        } catch (Exception e) { }
+    }
+}
