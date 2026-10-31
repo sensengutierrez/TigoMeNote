@@ -28,6 +28,7 @@
       { id: "rounded", name: "Rounded" },
       { id: "soft", name: "Soft" },
       { id: "crisp", name: "Crisp" },
+      { id: "glossy", name: "Glossy" },
     ],
   };
   var DEF = { accent: "coral", size: "m", style: "rounded" };

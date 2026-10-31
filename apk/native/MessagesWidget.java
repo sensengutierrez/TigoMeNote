@@ -25,8 +25,11 @@ import java.util.TimeZone;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** TigoMeNote Chat: Messages widget — malaking orasan (TextClock), gumagalaw na si Tigo (ViewFlipper na parang flipbook),
- *  at maliit na speech bubble ng pinakabagong HINDI pa nababasang message ("Claire · haha sige"). Walang bago → "No new messages".
+/** TigoMeNote Chat: Messages widget — orasan (TextClock), panahon (temperatura, humidity, hangin) at si Tigo na 3D na
+ *  sumasabay sa panahon (araw: naka-shades · gabi: tulog · ulap · lamig/hangin: bonnet at scarf, nanginginig ·
+ *  ulan: kapote at payong · kidlat: takot), at maliit na speech bubble ng pinakabagong HINDI pa nababasang message.
+ *  Kulay ng widget ay ayon sa panahon. Tatlong laki: buo (4×2+), katamtaman (4×1) at maliit (2×2) — puwedeng i-resize.
+ *  Panahon: Open-Meteo (walang key); lokasyon mula sa internet (IP), walang GPS permission. Update bawat 30 min.
  *  Kinukuha mismo ng widget ang inbox (messages-fast "inbox") gamit ang session token na ibinigay ng app (TMNWidget.setAuth).
  *  Nag-a-update: bawat 15 minuto (AlarmManager), kapag umalis/bumalik sa Chat app, at kapag pinindot ang ↻.
  *  Pindot sa bubble = bukas ang chat na iyon; pindot sa orasan/Tigo = Chats. */
@@ -38,6 +41,7 @@ public class MessagesWidget extends AppWidgetProvider {
     @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { schedule(c, true); render(c); fetch(c, goAsync()); }
     @Override public void onEnabled(Context c) { schedule(c, true); render(c); }
     @Override public void onDisabled(Context c) { schedule(c, false); }
+    @Override public void onAppWidgetOptionsChanged(Context c, AppWidgetManager m, int id, android.os.Bundle o) { render(c); }
     // bawat 15 minuto (hindi ginigising ang phone; sabay sa ibang alarm para tipid sa baterya)
     static void schedule(Context c, boolean on) {
         try {
@@ -55,9 +59,9 @@ public class MessagesWidget extends AppWidgetProvider {
     static void fetch(final Context c, final PendingResult pr) {
         final SharedPreferences sp = c.getSharedPreferences(PREF, 0);
         final String tok = sp.getString("token", ""), url = sp.getString("url", "");
-        if (tok.isEmpty() || url.isEmpty()) { if (pr != null) pr.finish(); return; }
         new Thread(() -> {
-            try {
+            weather(sp);
+            if (!tok.isEmpty() && !url.isEmpty()) try {
                 HttpURLConnection h = (HttpURLConnection) new URL(url).openConnection();
                 h.setConnectTimeout(10000); h.setReadTimeout(15000); h.setRequestMethod("POST"); h.setDoOutput(true);
                 h.setRequestProperty("Content-Type", "text/plain;charset=UTF-8");
@@ -122,6 +126,72 @@ public class MessagesWidget extends AppWidgetProvider {
         } catch (Exception e) { return ""; }
     }
 
+    // ---------- panahon ----------
+    static String get(String u) throws Exception {
+        HttpURLConnection h = (HttpURLConnection) new URL(u).openConnection();
+        h.setConnectTimeout(8000); h.setReadTimeout(10000);
+        InputStream in = h.getInputStream();
+        ByteArrayOutputStream bo = new ByteArrayOutputStream(); byte[] b = new byte[4096]; int n;
+        while ((n = in.read(b)) > 0) bo.write(b, 0, n);
+        in.close(); return bo.toString("UTF-8");
+    }
+    /** Kumukuha ng panahon kapag lampas 30 min na (lokasyon mula sa IP, naka-save nang 6 na oras). */
+    static void weather(SharedPreferences sp) {
+        long now = System.currentTimeMillis();
+        if (now - sp.getLong("wx_at", 0) < 30 * 60000L) return;
+        try {
+            double lat = Double.longBitsToDouble(sp.getLong("loc_lat", 0)), lon = Double.longBitsToDouble(sp.getLong("loc_lon", 0));
+            String city = sp.getString("loc_city", "");
+            if (now - sp.getLong("loc_at", 0) > 6 * 3600000L || (lat == 0 && lon == 0)) {
+                try {
+                    JSONObject g = new JSONObject(get("https://get.geojs.io/v1/ip/geo.json"));
+                    lat = Double.parseDouble(g.getString("latitude")); lon = Double.parseDouble(g.getString("longitude")); city = g.optString("city", "");
+                } catch (Exception e) {
+                    JSONObject g = new JSONObject(get("https://ipapi.co/json/"));
+                    lat = g.getDouble("latitude"); lon = g.getDouble("longitude"); city = g.optString("city", "");
+                }
+                sp.edit().putLong("loc_lat", Double.doubleToLongBits(lat)).putLong("loc_lon", Double.doubleToLongBits(lon)).putString("loc_city", city).putLong("loc_at", now).apply();
+            }
+            JSONObject cur = new JSONObject(get(String.format(Locale.US,
+                "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day&timezone=auto", lat, lon))).getJSONObject("current");
+            sp.edit().putInt("wx_code", cur.optInt("weather_code")).putFloat("wx_temp", (float) cur.optDouble("temperature_2m"))
+                .putInt("wx_hum", cur.optInt("relative_humidity_2m")).putFloat("wx_wind", (float) cur.optDouble("wind_speed_10m"))
+                .putBoolean("wx_day", cur.optInt("is_day", 1) == 1).putLong("wx_at", now).apply();
+        } catch (Exception e) { }
+    }
+    /** Mood ni Tigo ayon sa panahon: sun · night · cloud · cold · rain · storm */
+    static String mood(int code, float temp, float wind, boolean day) {
+        if (code >= 95) return "storm";
+        if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return "rain";
+        if ((code >= 71 && code <= 77) || code == 85 || code == 86 || wind >= 30 || temp <= 15) return "cold";
+        if (!day) return "night";
+        return code <= 1 ? "sun" : "cloud";
+    }
+    static String label(int code, boolean day) {
+        if (code == 0) return day ? "Sunny" : "Clear night";
+        if (code == 1) return day ? "Mostly sunny" : "Mostly clear";
+        if (code == 2) return "Partly cloudy";
+        if (code == 3) return "Cloudy";
+        if (code == 45 || code == 48) return "Foggy";
+        if (code >= 51 && code <= 57) return "Drizzle";
+        if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) return "Rainy";
+        if ((code >= 71 && code <= 77) || code == 85 || code == 86) return "Snow";
+        if (code >= 95) return "Thunderstorm";
+        return "";
+    }
+    static final String[] MOODS = { "sun", "night", "cloud", "cold", "rain", "storm" };
+    static int frames(String mood) { return "night".equals(mood) ? 2 : 3; }
+
+    /** Laki ng widget: "l" buo · "m" isang hilera (mababa) · "s" maliit (makitid) */
+    static String size(AppWidgetManager m, int id) {
+        try {
+            android.os.Bundle o = m.getAppWidgetOptions(id);
+            int w = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 300), h = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 180);
+            if (w < 230) return "s";
+            return h < 150 ? "m" : "l";
+        } catch (Exception e) { return "l"; }
+    }
+
     static void render(Context c) {
         try {
             AppWidgetManager m = AppWidgetManager.getInstance(c);
@@ -133,33 +203,64 @@ public class MessagesWidget extends AppWidgetProvider {
             int total = sp.getInt("total", 0);
             JSONObject hot = null;   // pinakabagong chat na may hindi pa nababasa (hindi naka-mute)
             for (int k = 0; k < chats.length() && hot == null; k++) { JSONObject x = chats.getJSONObject(k); if (x.optInt("unread", 0) > 0 && !x.optBoolean("muted")) hot = x; }
-            RemoteViews v = new RemoteViews(c.getPackageName(), res(c, "tmn_widget_msgs", "layout"));
-            v.setOnClickPendingIntent(res(c, "tmn_m_head", "id"), open(c, "app/messages.html", 100));
-            v.setOnClickPendingIntent(res(c, "tmn_m_tigo", "id"), open(c, "app/messages.html", 103));
-            Intent r = new Intent(c, MessagesWidget.class).setAction(ACTION_REFRESH);
-            v.setOnClickPendingIntent(res(c, "tmn_m_refresh", "id"), PendingIntent.getBroadcast(c, 101, r, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
-            v.setTextViewText(res(c, "tmn_m_total", "id"), total > 99 ? "99+ new" : total + " new");
-            v.setViewVisibility(res(c, "tmn_m_total", "id"), !out && total > 0 ? View.VISIBLE : View.GONE);
-            // si Tigo: masaya at kumakaway kapag may bagong message
-            v.setViewVisibility(res(c, "tmn_m_happy", "id"), hot != null ? View.VISIBLE : View.GONE);
-            v.setViewVisibility(res(c, "tmn_m_calm", "id"), hot != null ? View.GONE : View.VISIBLE);
-            int from = res(c, "tmn_m_from", "id"), msg = res(c, "tmn_m_msg", "id"), bub = res(c, "tmn_m_bubble", "id");
-            if (hot != null) {
-                String when = when(hot.optString("at")), txt = hot.optString("text");
-                v.setTextViewText(from, hot.optString("name") + (when.isEmpty() ? "" : " · " + when));
-                v.setViewVisibility(from, View.VISIBLE);
-                v.setTextViewText(msg, txt.isEmpty() ? "New message" : txt);
-                v.setTextColor(msg, 0xFF1B1B1F);
-                v.setInt(bub, "setBackgroundResource", res(c, "tmn_w_bubble", "drawable"));
-                v.setOnClickPendingIntent(bub, open(c, "app/messages.html?c=" + hot.optString("id"), 110));
-            } else {
-                v.setViewVisibility(from, View.GONE);
-                v.setTextViewText(msg, out ? "Sign in to TigoMeNote Chat to see new messages." : "No new messages ✨");
-                v.setTextColor(msg, 0xCCFFFFFF);
-                v.setInt(bub, "setBackgroundResource", res(c, "tmn_w_bubble_quiet", "drawable"));
-                v.setOnClickPendingIntent(bub, open(c, "app/messages.html", 111));
+            boolean hasWx = sp.getLong("wx_at", 0) > 0;
+            int code = sp.getInt("wx_code", 1); float temp = sp.getFloat("wx_temp", 30), wind = sp.getFloat("wx_wind", 0);
+            boolean day = hasWx ? sp.getBoolean("wx_day", true) : true;
+            int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
+            if (!hasWx) day = hour >= 6 && hour < 18;
+            String md = hasWx ? mood(code, temp, wind, day) : (day ? "sun" : "night");
+            String city = sp.getString("loc_city", "");
+            for (int id : ids) {
+                String sz = size(m, id);
+                RemoteViews v = new RemoteViews(c.getPackageName(), res(c, "s".equals(sz) ? "tmn_widget_msgs_s" : "m".equals(sz) ? "tmn_widget_msgs_m" : "tmn_widget_msgs", "layout"));
+                v.setInt(res(c, "tmn_m_root", "id"), "setBackgroundResource", res(c, "tmn_wbg_" + md, "drawable"));
+                // si Tigo (3D) ayon sa panahon — flipbook
+                int fl = res(c, "tmn_m_wx", "id");
+                v.removeAllViews(fl);
+                int n = frames(md);
+                int[] order = n == 2 ? new int[] { 1, 1, 2 } : new int[] { 1, 2, 1, 3 };
+                for (int f : order) {
+                    RemoteViews fr = new RemoteViews(c.getPackageName(), res(c, "tmn_w_frame", "layout"));
+                    fr.setImageViewResource(res(c, "tmn_w_frame_img", "id"), res(c, "tmn_wx_" + md + f, "drawable"));
+                    v.addView(fl, fr);
+                }
+                // panahon
+                v.setTextViewText(res(c, "tmn_m_temp", "id"), hasWx ? Math.round(temp) + "°" : "—°");
+                String lab = hasWx ? label(code, day) : "Weather";
+                v.setTextViewText(res(c, "tmn_m_cond", "id"), lab + (city.isEmpty() || "s".equals(sz) ? "" : " · " + city));
+                v.setTextViewText(res(c, "tmn_m_hum", "id"), hasWx ? "💧 " + sp.getInt("wx_hum", 0) + "%   🌬 " + Math.round(wind) + " km/h" : "Updating…");
+                // mga pindot
+                v.setOnClickPendingIntent(res(c, "tmn_m_head", "id"), open(c, "app/messages.html", 100));
+                v.setOnClickPendingIntent(res(c, "tmn_m_tigo", "id"), open(c, "app/messages.html", 103));
+                Intent r = new Intent(c, MessagesWidget.class).setAction(ACTION_REFRESH);
+                v.setOnClickPendingIntent(res(c, "tmn_m_refresh", "id"), PendingIntent.getBroadcast(c, 101, r, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
+                v.setTextViewText(res(c, "tmn_m_total", "id"), total > 99 ? "99+ new" : total + " new");
+                v.setViewVisibility(res(c, "tmn_m_total", "id"), !out && total > 0 ? View.VISIBLE : View.GONE);
+                int from = res(c, "tmn_m_from", "id"), msg = res(c, "tmn_m_msg", "id"), bub = res(c, "tmn_m_bubble", "id");
+                boolean big = "l".equals(sz);
+                if (hot != null) {
+                    String when = when(hot.optString("at")), txt = hot.optString("text");
+                    if (txt.isEmpty()) txt = "New message";
+                    if (big) {
+                        v.setTextViewText(from, hot.optString("name") + (when.isEmpty() ? "" : " · " + when));
+                        v.setViewVisibility(from, View.VISIBLE);
+                        v.setTextViewText(msg, txt);
+                    } else {
+                        v.setViewVisibility(from, View.GONE);
+                        v.setTextViewText(msg, hot.optString("name") + ": " + txt);
+                    }
+                    v.setTextColor(msg, 0xFF1B1B1F);
+                    v.setInt(bub, "setBackgroundResource", res(c, "tmn_w_bubble", "drawable"));
+                    v.setOnClickPendingIntent(bub, open(c, "app/messages.html?c=" + hot.optString("id"), 110));
+                } else {
+                    v.setViewVisibility(from, View.GONE);
+                    v.setTextViewText(msg, out ? "Sign in to see new messages" : "No new messages ✨");
+                    v.setTextColor(msg, 0xE6FFFFFF);
+                    v.setInt(bub, "setBackgroundResource", res(c, "tmn_w_bubble_quiet", "drawable"));
+                    v.setOnClickPendingIntent(bub, open(c, "app/messages.html", 111));
+                }
+                m.updateAppWidget(id, v);
             }
-            m.updateAppWidget(ids, v);
         } catch (Exception e) { }
     }
 }

@@ -291,3 +291,31 @@ body.msg-gate .inbox { display: none; }
 .ct-msg { margin: 8px 0 0; min-height: 1em; }
 @media (max-width: 360px) { .ct-grid { grid-template-columns: repeat(2, 1fr); } }
 .ct-prev:not([data-ctheme]) { background: var(--surface-2); }
+
+/* ---------- Bubble: gaano kalinaw at glossy (chat-theme.js; pareho sa lahat ng nasa chat) ----------
+   Ang kulay ng bubble ay inilipat sa ::before (may opacity) para malinaw ang wallpaper pero buo pa rin ang text.
+   ::after = kintab (glossy). */
+.ch.ct-alpha .ch-bubble:not(.k-photo):not(.k-sticker):not(.k-gif),
+.ch.ct-gloss .ch-bubble:not(.k-photo):not(.k-sticker):not(.k-gif) { isolation: isolate; }
+.ch.ct-alpha .ch-bubble:not(.k-photo):not(.k-sticker):not(.k-gif) { background: transparent !important; border-color: rgba(255, 255, 255, .28) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(1.25); backdrop-filter: blur(10px) saturate(1.25); }
+.ch.ct-alpha .ch-bubble:not(.k-photo):not(.k-sticker):not(.k-gif)::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
+  background: var(--ct-other, var(--surface)); opacity: var(--ct-ba, 1); }
+.ch.ct-alpha .ch-row.mine .ch-bubble:not(.k-photo):not(.k-sticker):not(.k-gif)::before { background: var(--mc-grad); }
+.ch.ct-alpha .ch-row:not(.mine) .ch-bubble .ch-text { text-shadow: 0 0 1px color-mix(in srgb, var(--ct-other, var(--surface)) 60%, transparent); }
+.ch.ct-gloss .ch-bubble:not(.k-photo):not(.k-sticker):not(.k-gif)::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .42), rgba(255, 255, 255, .10) 46%, rgba(255, 255, 255, 0) 54%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), inset 0 -1px 0 rgba(0, 0, 0, .06); }
+.ch.ct-gloss:not(.ct-alpha) .ch-row:not(.mine) .ch-bubble:not(.k-photo):not(.k-sticker):not(.k-gif)::after { background: linear-gradient(180deg, rgba(255, 255, 255, .55), rgba(255, 255, 255, 0) 55%); }
+:root[data-theme="dark"] .ch.ct-gloss .ch-row:not(.mine) .ch-bubble:not(.k-photo):not(.k-sticker):not(.k-gif)::after { background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0) 55%); }
+/* picker: Bubbles */
+.ct-bub { display: grid; gap: 10px; margin-top: 16px; padding: 12px; border-radius: 16px; background: var(--surface-2); }
+.ct-bub-row { display: flex; align-items: center; gap: 10px; }
+.ct-bub-row > b, .ct-bub-row > span:first-child { flex: 1; }
+.ct-alpha-in { width: 100%; accent-color: var(--mc-b); }
+.ct-bub-ends { display: flex; justify-content: space-between; margin-top: -6px; }
+.ct-bub-prev { display: grid; gap: 6px; height: auto; min-height: 0; padding: 12px; border-radius: 12px; background: linear-gradient(135deg, #6a8caf, #c98bb9 55%, #f3b88b); }
+.ct-bub-prev.has-photo { background: linear-gradient(rgba(0, 0, 0, .16), rgba(0, 0, 0, .16)), var(--ct-wp) center / cover no-repeat; }
+.ct-bub-prev .ch-bubble { justify-self: start; cursor: default; font-size: 13px; padding: 6px 12px; }
+.ct-bub-prev .ch-row { display: grid; }
+.ct-bub-prev .ch-row.mine .ch-bubble { justify-self: end; }

@@ -54,6 +54,7 @@
 
     function paintList() {
       $(".mu-empty").classList.toggle("hidden", !!tracks.length);
+      list.classList.toggle("mu-long", tracks.length > 6);
       list.innerHTML = tracks.map(function (t, i) {
         return '<li class="mu-item' + (i === cur ? " on" : "") + '" data-i="' + i + '">' +
           '<button type="button" class="mu-pick" data-a="play">' + (i === cur && !audio.paused ? '<span class="mu-eq"><i></i><i></i><i></i></span>' : '<span class="mu-n" translate="no">' + (i + 1) + "</span>") +

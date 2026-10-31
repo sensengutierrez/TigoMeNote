@@ -186,6 +186,17 @@ public final class MusicEngine {
             ensureService(); changed();
         }
     }
+    /** ✕ sa notification: hinto at alis ang notification (nananatili ang playlist; ▶ ulit sa app o widget). */
+    public synchronized void close() { pausedByFocus = false; stopPlayer(); changed(); }
+    // si Tigo (3D) bilang larawan ng kanta: sa notification, lock screen at media panel
+    private android.graphics.Bitmap artPlay, artRest;
+    android.graphics.Bitmap art(boolean playing) {
+        try {
+            if (artPlay == null) artPlay = android.graphics.BitmapFactory.decodeResource(ctx.getResources(), res(ctx, "tmn_tigo_music1", "drawable"));
+            if (artRest == null) artRest = android.graphics.BitmapFactory.decodeResource(ctx.getResources(), res(ctx, "tmn_tigo_rest", "drawable"));
+        } catch (Exception e) { }
+        return playing ? artPlay : artRest;
+    }
     public synchronized void toggle() {
         if (mp == null) { if (!tracks.isEmpty()) play(idx >= 0 ? idx : 0); return; }
         if (mp.isPlaying()) userPause(); else resume();
@@ -241,9 +252,12 @@ public final class MusicEngine {
         Track t = cur(); if (s == null) return;
         MediaMetadataCompat.Builder m = new MediaMetadataCompat.Builder();
         if (t != null) m.putString(MediaMetadataCompat.METADATA_KEY_TITLE, t.name).putString(MediaMetadataCompat.METADATA_KEY_ARTIST, t.artist.isEmpty() ? "My music" : t.artist).putLong(MediaMetadataCompat.METADATA_KEY_DURATION, dur());
+        android.graphics.Bitmap a = art(isPlaying()); if (a != null) m.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, a);
         s.setMetadata(m.build());
         long acts = PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS | PlaybackStateCompat.ACTION_SEEK_TO;
-        s.setPlaybackState(new PlaybackStateCompat.Builder().setActions(acts)
+        s.setPlaybackState(new PlaybackStateCompat.Builder().setActions(acts | PlaybackStateCompat.ACTION_STOP)
+            // Android 13+: ang media controls ay galing sa session — kaya nandito rin ang ✕ (Close)
+            .addCustomAction(new PlaybackStateCompat.CustomAction.Builder("tmn_close", "Close", res(ctx, "tmn_ic_close", "drawable")).build())
             .setState(!hasTrack() ? PlaybackStateCompat.STATE_STOPPED : isPlaying() ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED, pos(), isPlaying() ? 1f : 0f).build());
     }
     private PendingIntent act(Context c, String a, int code) {
@@ -262,15 +276,19 @@ public final class MusicEngine {
         Track t = cur(); boolean p = isPlaying();
         NotificationCompat.Builder b = new NotificationCompat.Builder(c, CH)
             .setSmallIcon(res(c, "tmn_ic_music", "drawable"))
+            .setLargeIcon(art(p)).setColor(0xFF7B3FA0).setColorized(true)
+            .setSubText(p ? "♪ Tigo is dancing" : "Tigo is resting")
             .setContentTitle(t != null ? t.name : "My music")
             .setContentText(t != null && !t.artist.isEmpty() ? t.artist : "TigoMeNote")
             .setContentIntent(open(c)).setOnlyAlertOnce(true).setShowWhen(false)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC).setOngoing(p)
-            .addAction(android.R.drawable.ic_media_previous, "Previous", act(c, "prev", 1))
-            .addAction(p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play, p ? "Pause" : "Play", act(c, "toggle", 2))
-            .addAction(android.R.drawable.ic_media_next, "Next", act(c, "next", 3))
+            .addAction(res(c, "tmn_ic_prev", "drawable"), "Previous", act(c, "prev", 1))
+            .addAction(res(c, p ? "tmn_ic_pause" : "tmn_ic_play", "drawable"), p ? "Pause" : "Play", act(c, "toggle", 2))
+            .addAction(res(c, "tmn_ic_next", "drawable"), "Next", act(c, "next", 3))
+            .addAction(res(c, "tmn_ic_close", "drawable"), "Close", act(c, "close", 5))
             .setDeleteIntent(act(c, "stop", 4));
-        androidx.media.app.NotificationCompat.MediaStyle st = new androidx.media.app.NotificationCompat.MediaStyle().setShowActionsInCompactView(0, 1, 2);
+        androidx.media.app.NotificationCompat.MediaStyle st = new androidx.media.app.NotificationCompat.MediaStyle().setShowActionsInCompactView(0, 1, 2)
+            .setShowCancelButton(true).setCancelButtonIntent(act(c, "close", 6));
         if (s != null) st.setMediaSession(s.getSessionToken());
         b.setStyle(st);
         return b.build();
@@ -281,20 +299,24 @@ public final class MusicEngine {
         try {
             AppWidgetManager m = AppWidgetManager.getInstance(ctx);
             int[] ids = m.getAppWidgetIds(new ComponentName(ctx, MusicWidget.class));
-            if (ids == null || ids.length == 0) return;
-            RemoteViews v = new RemoteViews(ctx.getPackageName(), res(ctx, "tmn_widget_music", "layout"));
+            if (ids == null) return;
             int d = dur(), ps = pos();
-            v.setProgressBar(res(ctx, "tmn_w_prog", "id"), 1000, d > 0 ? (int) (ps * 1000L / d) : 0, false);
-            m.partiallyUpdateAppWidget(ids, v);
+            for (int id : ids) {   // bawat widget ay may sariling ayos (laki)
+                RemoteViews v = new RemoteViews(ctx.getPackageName(), layout(m, id));
+                v.setProgressBar(res(ctx, "tmn_w_prog", "id"), 1000, d > 0 ? (int) (ps * 1000L / d) : 0, false);
+                m.partiallyUpdateAppWidget(id, v);
+            }
         } catch (Exception e) { }
     }
+    private int layout(AppWidgetManager m, int id) { return res(ctx, "s".equals(MusicWidget.size(m, id)) ? "tmn_widget_music_s" : "tmn_widget_music", "layout"); }
     public void updateWidgets() {
         try {
             AppWidgetManager m = AppWidgetManager.getInstance(ctx);
             int[] ids = m.getAppWidgetIds(new ComponentName(ctx, MusicWidget.class));
             if (ids == null || ids.length == 0) return;
             Track t = cur(); boolean p = isPlaying();
-            RemoteViews v = new RemoteViews(ctx.getPackageName(), res(ctx, "tmn_widget_music", "layout"));
+            for (int id : ids) {
+            RemoteViews v = new RemoteViews(ctx.getPackageName(), layout(m, id));
             v.setTextViewText(res(ctx, "tmn_w_title", "id"), t != null ? t.name : "My music");
             v.setTextViewText(res(ctx, "tmn_w_artist", "id"), t != null ? (t.artist.isEmpty() ? "TigoMeNote" : t.artist) : "Tap ▶ to play your playlist");
             v.setImageViewResource(res(ctx, "tmn_w_play", "id"), res(ctx, p ? "tmn_ic_pause" : "tmn_ic_play", "drawable"));
@@ -308,7 +330,8 @@ public final class MusicEngine {
             v.setOnClickPendingIntent(res(ctx, "tmn_w_play", "id"), act(ctx, "toggle", 12));
             v.setOnClickPendingIntent(res(ctx, "tmn_w_next", "id"), act(ctx, "next", 13));
             v.setOnClickPendingIntent(res(ctx, "tmn_w_root", "id"), open(ctx));
-            m.updateAppWidget(ids, v);
+            m.updateAppWidget(id, v);
+            }
         } catch (Exception e) { }
     }
 }

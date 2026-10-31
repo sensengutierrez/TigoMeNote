@@ -1,7 +1,8 @@
 /* TigoMeNote · components/chat-theme.js — theme at wallpaper ng isang chat (pareho sa lahat ng nasa chat)
-     TMN_CHAT_THEME.apply(root, chat)        → ilapat sa .ch (data-ctheme + wallpaper); chat = { theme, wallpaper: { key, url } | null }
+     TMN_CHAT_THEME.apply(root, chat)        → ilapat sa .ch (data-ctheme + wallpaper + bubble); chat = { theme, wallpaper: { key, url } | null, bubble: { alpha, gloss } }
      TMN_CHAT_THEME.picker(chatId, chat, onDone) → sheet: pumili ng theme, magpalit o mag-alis ng wallpaper
-   Server: messages-fast (theme, wallpaper, upload kind "wallpaper"). Ang listahan ng theme ay kapareho ng THEMES sa backend.
+   Bubble: gaano kalinaw (alpha 15–100, para kita ang wallpaper) at glossy — pareho sa lahat; messages-fast "bubble".
+   Server: messages-fast (theme, wallpaper, bubble, upload kind "wallpaper"). Ang listahan ng theme ay kapareho ng THEMES sa backend.
    Ang kulay ng bawat theme ay nasa assets/css/pages/messages.css (.ch[data-ctheme="…"]). */
 (function () {
   var THEMES = [
@@ -27,6 +28,13 @@
       if (root._wpKey !== wp.key) { root._wpKey = wp.key; root.style.setProperty("--ct-wp", 'url("' + String(wp.url).replace(/["\\\n]/g, "") + '")'); }
       root.classList.add("has-wp");
     } else { root._wpKey = null; root.style.removeProperty("--ct-wp"); root.classList.remove("has-wp"); }
+    bubble(root, chat.bubble);
+  }
+  function bubble(root, b) {
+    var a = b && b.alpha != null ? Math.max(15, Math.min(100, Number(b.alpha) || 100)) : 100;
+    root.classList.toggle("ct-alpha", a < 100);
+    root.classList.toggle("ct-gloss", !!(b && b.gloss));
+    if (a < 100) root.style.setProperty("--ct-ba", String(a / 100)); else root.style.removeProperty("--ct-ba");
   }
 
   function shrink(file) {
@@ -57,9 +65,36 @@
       '<div class="ct-wp-acts"><label class="btn btn-ghost">' + I("image", "ic-sm") + (chat.wallpaper ? "Change photo" : "Choose photo") +
         '<input type="file" accept="image/*" class="sr-only ct-file"></label>' +
         (chat.wallpaper ? '<button type="button" class="btn btn-ghost" data-wp="remove">' + I("trash", "ic-sm") + "Remove</button>" : "") + "</div>" +
+      '<div class="ct-bub"><div class="ct-bub-row"><b>Bubbles</b><span class="faint small ct-bub-val"></span></div>' +
+        '<div class="ct-bub-prev ch"><div class="ch-row"><span class="ch-bubble"><span class="ch-text">Hi! 👋</span></span></div>' +
+          '<div class="ch-row mine"><span class="ch-bubble"><span class="ch-text">Kita na ang wallpaper ✨</span></span></div></div>' +
+        '<input type="range" class="ct-alpha-in" min="15" max="100" step="5" aria-label="Bubble see-through">' +
+        '<div class="ct-bub-ends faint small"><span>See-through</span><span>Solid</span></div>' +
+        '<div class="ct-bub-row"><span>✨ Glossy</span><button type="button" class="set-switch ct-gloss-sw" role="switch" aria-label="Glossy bubbles"><i></i></button></div></div>' +
       '<p class="faint small ct-msg" aria-live="polite"></p>';
     var m = TMN_MODAL.open({ title: "Theme & wallpaper", size: "sm", cls: "modal-sheet", body: body });
     var msg = body.querySelector(".ct-msg"), busy = false;
+    // Bubbles: preview agad (dito at sa chat sa likod), save pagkatapos ng 600 ms
+    var b0 = chat.bubble || { alpha: 100, gloss: false }, bs = { alpha: b0.alpha != null ? b0.alpha : 100, gloss: !!b0.gloss };
+    var prev = body.querySelector(".ct-bub-prev"), rng = body.querySelector(".ct-alpha-in"), gsw = body.querySelector(".ct-gloss-sw"), live = document.querySelector(".ch:not(.ct-bub-prev)");
+    if (chat.theme && chat.theme !== "default") prev.setAttribute("data-ctheme", chat.theme);
+    if (chat.wallpaper && chat.wallpaper.url) { prev.classList.add("has-photo"); prev.style.setProperty("--ct-wp", 'url("' + String(chat.wallpaper.url).replace(/["\\\n]/g, "") + '")'); }
+    var saveT = 0;
+    function paintBub() {
+      rng.value = bs.alpha; gsw.setAttribute("aria-checked", String(bs.gloss));
+      body.querySelector(".ct-bub-val").textContent = (bs.alpha >= 100 ? "Solid" : bs.alpha + "%") + (bs.gloss ? " · Glossy" : "");
+      bubble(prev, bs); if (live) bubble(live, bs);
+    }
+    function saveBub() {
+      clearTimeout(saveT);
+      saveT = setTimeout(async function () {
+        try { await TMN_API.call("messages", "bubble", { id: chatId, alpha: bs.alpha, gloss: bs.gloss }); chat.bubble = { alpha: bs.alpha, gloss: bs.gloss }; msg.textContent = "Bubbles saved for everyone in this chat."; }
+        catch (err) { msg.textContent = err.message; }
+      }, 600);
+    }
+    rng.addEventListener("input", function () { bs.alpha = Number(rng.value); paintBub(); saveBub(); });
+    gsw.addEventListener("click", function () { bs.gloss = !bs.gloss; paintBub(); saveBub(); });
+    paintBub();
     function done() { m.close(); if (onDone) onDone(); }
     body.addEventListener("click", async function (e) {
       var b = e.target.closest("[data-t]");
@@ -92,5 +127,5 @@
     });
   }
 
-  window.TMN_CHAT_THEME = { THEMES: THEMES, apply: apply, picker: picker };
+  window.TMN_CHAT_THEME = { THEMES: THEMES, apply: apply, bubble: bubble, picker: picker };
 })();

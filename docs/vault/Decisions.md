@@ -98,6 +98,11 @@ updated: 2026-10-24
 | 2026-10-25 | Tigo sa phone = game UI (lahat ng function sa loob ng stage); landscape = buong screen na laro | Ayon kay Bench; hindi maiiwan sa ibaba ang mga function (para sa APK) |
 | 2026-10-25 | Camera: swipe sa gitna + isang camera button (4 view); pinalitan ang pangalawang joystick | Parang MIR4; mas maluwag ang screen |
 | 2026-10-25 | Full screen = buong page (documentElement), hindi ang stage lang | Nakikita pa rin ang mga modal (Feed, Games, Sound) |
+| 2026-11-01 | Si Tigo sa widgets at music notification = 3D na larawan (render mula sa pet-model.js, tools/make-widget-3d.py) | Hindi kaya ng widget ang live 3D; pareho pa rin ang itsura sa Tigo app. Login: 2D (magaan) |
+| 2026-11-01 | Panahon sa Messages widget: lokasyon mula sa IP (geojs/ipapi) + Open-Meteo, bawat 30 min | Walang GPS permission at walang API key; sapat ang lungsod para sa panahon |
+| 2026-11-01 | Bubble ng chat (linaw + glossy) pareho sa lahat ng nasa chat (`conversations.bubble_alpha/bubble_gloss`), walang system message | Kasama ng theme/wallpaper; slider kaya hindi dapat mag-spam ng message |
+| 2026-11-01 | Tigo app: laging buong screen (status bar nakatago) at ⛶ → ✕ Exit; sa website/TigoMeNote may Full pa rin | Ayon kay Bench |
+| 2026-11-01 | Edge functions (messages-fast, pet-fast) dine-deploy bilang maliit na `index.ts` na nag-i-import ng code mula sa GitHub sa eksaktong commit (raw.githubusercontent.com/…/<sha>/backend/…) | Public ang repo; pareho ang deployed at ang nasa repo, at hindi na kailangang kopyahin ang buong code sa deploy. Laging naka-pin sa commit, hindi sa branch |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

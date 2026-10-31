@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Messages widget (KATAMTAMAN, mababa: 4×1 / 3×1) — isang hilera. Pareho ang mga id sa tmn_widget_msgs.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/tmn_m_root" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:gravity="center_vertical"
+    android:paddingStart="6dp" android:paddingEnd="8dp" android:paddingTop="4dp" android:paddingBottom="4dp" android:background="@drawable/tmn_wbg_sun">
+    <FrameLayout android:id="@+id/tmn_m_tigo" android:layout_width="62dp" android:layout_height="62dp">
+            <ViewFlipper android:id="@+id/tmn_m_wx" android:layout_width="match_parent" android:layout_height="match_parent" android:autoStart="true" android:flipInterval="700">
+                <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/tmn_wx_sun1" android:contentDescription="Tigo" />
+            </ViewFlipper>
+        </FrameLayout>
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="4dp" android:orientation="vertical">
+        <LinearLayout android:id="@+id/tmn_m_head" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+            <TextClock android:layout_width="wrap_content" android:layout_height="wrap_content" android:format12Hour="h:mm" android:format24Hour="HH:mm"
+                android:includeFontPadding="false" android:textColor="#FFFFFFFF" android:textSize="22sp" android:textStyle="bold" />
+            <TextView android:id="@+id/tmn_m_temp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp"
+                android:includeFontPadding="false" android:text="—°" android:textColor="#FFFFFFFF" android:textSize="17sp" android:textStyle="bold" />
+            <TextView android:id="@+id/tmn_m_hum" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:singleLine="true" android:ellipsize="end"
+                    android:text="Updating…" android:textColor="#D9FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/tmn_m_total" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp"
+                android:paddingStart="7dp" android:paddingEnd="7dp" android:paddingTop="1dp" android:paddingBottom="1dp" android:background="@drawable/tmn_w_chip"
+                android:textColor="#FFFFFFFF" android:textSize="11sp" android:textStyle="bold" android:visibility="gone" />
+        </LinearLayout>
+        <TextView android:id="@+id/tmn_m_cond" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end"
+                    android:text="Weather" android:textColor="#FFFFFFFF" android:textSize="12sp" android:textStyle="bold" android:visibility="gone" />
+        <LinearLayout android:id="@+id/tmn_m_bubble" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp"
+        android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="10dp" android:paddingEnd="6dp" android:paddingTop="7dp" android:paddingBottom="7dp"
+        android:background="@drawable/tmn_w_bubble_quiet">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+            <TextView android:id="@+id/tmn_m_from" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end"
+                android:textColor="#FF1C6E86" android:textSize="12sp" android:textStyle="bold" android:visibility="gone" />
+            <TextView android:id="@+id/tmn_m_msg" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:text="No new messages" android:textColor="#E6FFFFFF" android:textSize="12sp" />
+        </LinearLayout>
+        <ImageButton android:id="@+id/tmn_m_refresh" android:layout_width="24dp" android:layout_height="24dp" android:layout_marginStart="4dp" android:padding="5dp"
+            android:scaleType="fitCenter" android:background="@android:color/transparent" android:contentDescription="Refresh" android:src="@android:drawable/ic_popup_sync" />
+    </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

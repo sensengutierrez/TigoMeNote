@@ -1,4 +1,15 @@
 {
+  "0.11.34": [
+    "Tigo is now 3D in the widgets and music notification",
+    "Messages widget: weather with temperature and humidity, and Tigo dresses for it (shades, umbrella and raincoat, beanie and scarf, scared of thunder)",
+    "Widgets can be resized smaller (music down to 2×1)",
+    "Music notification: ✕ to close, with Tigo dancing",
+    "Chat: make bubbles see-through and glossy (in Theme & wallpaper)",
+    "Settings: new Glossy style",
+    "Daily: choose any two countries for the clocks, and swap them",
+    "Tigo app: full screen, ✕ Exit button, smaller house buttons, energy lasts longer",
+    "Profile: long playlists scroll inside the music card"
+  ],
   "0.11.33": [
     "Music: switching to the next song now plays (no more silence after the first song)",
     "New music widget and player — Tigo dances while your music plays",

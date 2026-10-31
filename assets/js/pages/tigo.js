@@ -214,8 +214,9 @@
   // ---------- bahay: pasok, labas, Decorate ----------
   function doorBar(st) {
     var bar = $("tgDoorBar");
-    bar.innerHTML = playing ? "" : st === "near" ? '<button type="button" class="tg-dbtn wide go" data-door="in">🏠 Go inside</button>'
-      : st === "room" ? '<button type="button" class="tg-dbtn wide" data-door="out">🚪 Go outside</button><button type="button" class="tg-dbtn wide go" data-door="decor">🛠 Decorate</button>' : "";
+    // maliit na icon lang (may maliit na label) para hindi sakop ang screen
+    bar.innerHTML = playing ? "" : st === "near" ? '<button type="button" class="tg-dbtn go" data-door="in" aria-label="Go inside" title="Go inside">🏠<small>Inside</small></button>'
+      : st === "room" ? '<button type="button" class="tg-dbtn" data-door="out" aria-label="Go outside" title="Go outside">🚪<small>Outside</small></button><button type="button" class="tg-dbtn go" data-door="decor" aria-label="Decorate" title="Decorate">🛠<small>Decor</small></button>' : "";
   }
   $("tgDoorBar").addEventListener("click", function (e) {
     var b = e.target.closest("[data-door]"); if (!b || !sc) return;
@@ -389,7 +390,7 @@
     if (playing) return;
     var p = live();
     if (p.asleep) { toast("Shh… Tigo is sleeping."); return; }
-    if (p.energy < 12) { toast("Tigo is too tired to play. Let Tigo sleep."); return; }
+    if (p.energy < 8) { toast("Tigo is too tired to play. Let Tigo sleep."); return; }
     playing = true;
     if (decor) decor.close();
     if (closet) closet.close();
@@ -424,8 +425,19 @@
   $("tgCoinsBtn").addEventListener("click", openGames);
   $("tgSound").addEventListener("click", soundSheet);
 
-  // ---------- full screen / landscape ----------
-  $("tgFull").addEventListener("click", async function () {
+  // ---------- Tigo app: laging buong screen (walang status bar), at ang ⛶ ay nagiging ✕ Exit ----------
+  var N = window.TMNNative, inTigoApp = window.TMN_APP_ID === "tigo" && N && N.setImmersive;
+  if (inTigoApp) {
+    var immersive = function () { try { N.setImmersive(true); } catch (e) {} };
+    immersive();
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) setTimeout(immersive, 300); });
+    var xb = $("tgFull");
+    xb.id = "tgExit"; xb.removeAttribute("aria-pressed"); xb.setAttribute("aria-label", "Exit Tigo"); xb.title = "Exit";
+    xb.innerHTML = "✕<small>Exit</small>"; xb.classList.add("tg-exit");
+    xb.addEventListener("click", function () { try { N.exitApp(); } catch (e) {} });
+  }
+  // ---------- full screen / landscape (website at TigoMeNote app) ----------
+  if (!inTigoApp) $("tgFull").addEventListener("click", async function () {
     var st = $("stage"), on = !st.classList.contains("full");
     st.classList.toggle("full", on); document.body.classList.toggle("tg-full", on); layout();
     this.setAttribute("aria-pressed", on);
@@ -437,7 +449,7 @@
     } catch (e) { /* ok lang kung hindi suportado */ }
   });
   document.addEventListener("fullscreenchange", function () {
-    if (!document.fullscreenElement && $("stage").classList.contains("full")) { $("stage").classList.remove("full"); document.body.classList.remove("tg-full"); $("tgFull").setAttribute("aria-pressed", "false"); layout(); }
+    if (!inTigoApp && !document.fullscreenElement && $("stage").classList.contains("full")) { $("stage").classList.remove("full"); document.body.classList.remove("tg-full"); $("tgFull").setAttribute("aria-pressed", "false"); layout(); }
   });
 
   // ---------- magkakalapit na kaibigan ----------

@@ -1,0 +1,136 @@
+<!doctype html>
+<!-- TigoMeNote · tools/widget3d — gumagawa ng 3D na larawan ni Tigo para sa widgets at music notification
+     Ginagamit ng tools/make-widget-3d.py (headless Chromium): window.renderFrame(name) → PNG (data URL), transparent.
+     Si Tigo mismo ay galing sa assets/js/tigo/pet-model.js (pareho sa Tigo app). Ang ulan, hangin at kidlat ay dito lang. -->
+<meta charset="utf-8">
+<title>Tigo widget frames</title>
+<style>html,body{margin:0;background:#888}canvas{display:block}</style>
+<canvas id="c"></canvas>
+<script type="module">
+import * as THREE from "../../assets/vendor/three/three.module.min.js";
+import { createTigo } from "../../assets/js/tigo/pet-model.js";
+
+const SIZE = 256;
+const canvas = document.getElementById("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(SIZE, SIZE); renderer.setClearColor(0x000000, 0);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.08;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+scene.add(new THREE.HemisphereLight(0xfff4e8, 0x8a7a9a, 1.25));
+const key = new THREE.DirectionalLight(0xffffff, 2.3); key.position.set(3, 6, 5); scene.add(key);
+const rim = new THREE.DirectionalLight(0xffb08a, 1.3); rim.position.set(-4, 3, -4); scene.add(rim);
+const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
+
+// ---------- dagdag sa eksena: ulan, hangin, kidlat, anino ----------
+const fx = new THREE.Group(); scene.add(fx);
+const M = (o) => new THREE.MeshBasicMaterial(o);
+function shadow() {
+  const m = new THREE.Mesh(new THREE.CircleGeometry(0.85, 32), M({ color: 0x000000, transparent: true, opacity: 0.18 }));
+  m.rotation.x = -Math.PI / 2; m.position.y = 0.005; m.scale.set(1, 0.6, 1); fx.add(m);
+}
+function rain(seed) {
+  const mat = M({ color: 0x7fc8ff, transparent: true, opacity: 0.85 });
+  let s = seed * 9301 + 49297;
+  const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+  for (let i = 0; i < 26; i++) {
+    const d = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.32, 6), mat);
+    d.position.set(-1.9 + rnd() * 3.8, 0.2 + ((rnd() + seed * 0.33) % 1) * 2.9, -0.6 + rnd() * 1.4);
+    d.rotation.z = 0.18;
+    if (Math.abs(d.position.x) < 0.9 && d.position.y > 0.4 && d.position.z > -0.6) d.position.x += d.position.x < 0 ? -0.9 : 0.9;   // hindi tumatama kay Tigo (may payong)
+    fx.add(d);
+  }
+}
+function wind(k) {
+  const mat = M({ color: 0xffffff, transparent: true, opacity: 0.9 });
+  const mat2 = M({ color: 0xd8f1ff, transparent: true, opacity: 0.75 });
+  [[2.15, 0.55], [1.55, 0.75], [0.95, 0.5]].forEach(([y, len], i) => {
+    const x0 = -2.2 + ((k * 0.22 + i * 0.15) % 0.5);
+    const curve = new THREE.CatmullRomCurve3([0, 1, 2, 3].map((j) => new THREE.Vector3(x0 + j * 0.3 * len, y + Math.sin(j * 1.3 + k + i) * 0.07, 0.6)));
+    fx.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 16, 0.028, 6), i === 1 ? mat : mat2));
+  });
+}
+function bolt(x) {
+  const sh = new THREE.Shape();
+  [[0, 0], [0.22, 0], [0.08, 0.32], [0.28, 0.32], [-0.08, 0.9], [0.02, 0.48], [-0.16, 0.48]].forEach(([a, b], i) => i ? sh.lineTo(a, b) : sh.moveTo(a, b));
+  const m = new THREE.Mesh(new THREE.ShapeGeometry(sh), M({ color: 0xffd23f, side: THREE.DoubleSide }));
+  m.scale.setScalar(1.1); m.rotation.z = Math.PI; m.position.set(x, 3.1, 0.3); fx.add(m);
+}
+function clouds(dark) {
+  const mat = new THREE.MeshStandardMaterial({ color: dark ? 0x7d7f99 : 0xffffff, roughness: 1 });
+  const g = new THREE.Group();
+  [[0, 0, 0.32], [0.35, 0.05, 0.26], [-0.33, -0.02, 0.24], [0.12, 0.2, 0.25]].forEach(([x, y, r]) => { const s = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), mat); s.position.set(x, y, 0); g.add(s); });
+  g.position.set(-1.0, 2.85, -0.4); g.scale.setScalar(0.9); fx.add(g);
+}
+function sun() {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 16), M({ color: 0xffc23d })));
+  for (let i = 0; i < 8; i++) { const r = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.16, 0.02), M({ color: 0xffb020 })); const a = i / 8 * Math.PI * 2; r.position.set(Math.cos(a) * 0.45, Math.sin(a) * 0.45, 0); r.rotation.z = a - Math.PI / 2; g.add(r); }
+  g.position.set(-1.05, 2.9, -0.5); fx.add(g);
+}
+function moon() {
+  const g = new THREE.Group();
+  const m = new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 16), M({ color: 0xfff1b8 })); g.add(m);
+  g.position.set(-1.05, 2.9, -0.5); fx.add(g);
+  [[-0.2, 3.2], [0.6, 3.0], [1.3, 3.25]].forEach(([x, y]) => { const s = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), M({ color: 0xfff6d5 })); s.position.set(x, y, -0.6); fx.add(s); });
+}
+
+// ---------- isang frame ----------
+let tigo = null;
+function fresh() {
+  if (tigo) { scene.remove(tigo.group); tigo.dispose(); }
+  fx.clear();
+  const rnd = Math.random; Math.random = () => 0.0; tigo = createTigo({ color: "coral" }); Math.random = rnd;
+  scene.add(tigo.group);
+  tigo.group.position.set(0, 0, 0); tigo.group.rotation.set(0, 0, 0);
+  return tigo;
+}
+function steps(n, t0, dt = 1 / 60) { for (let i = 0; i < n; i++) tigo.update(dt, t0 + i * dt); }
+function lidsClosed() { let n = 0; tigo.group.traverse((o) => { if (o.isMesh && o.visible && o.geometry.type === "TubeGeometry" && o.parent && o.parent.parent) n++; }); return n >= 2; }
+function blinkAt(t0) { for (let i = 0; i < 400; i++) { tigo.update(1 / 60, t0 + i / 60); if (lidsClosed()) return; } }
+function raincoat() {
+  tigo.wear("body", "hoodie");
+  tigo.group.traverse((o) => { if (o.isMesh && o.material && o.material.color && o.parent && o.parent.parent && o.material.roughness >= 0.9) { const h = o.material.color.getHexString(); if (h === "ff8a3d" || h === "e0661f") { o.material = o.material.clone(); o.material.color.setHex(h === "ff8a3d" ? 0xffd23f : 0xf2b705); o.material.roughness = 0.35; } } });
+}
+
+const view = { def: [[1.25, 1.75, 5.6], [0, 1.15, 0]], wide: [[0.95, 2.05, 7.6], [0.2, 1.55, 0]] };
+const FRAMES = {
+  idle()    { tigo.setMood("happy"); steps(20, 0.4); },
+  blink()   { tigo.setMood("happy"); blinkAt(0.4); },
+  look()    { tigo.setMood("ok"); tigo.lookAt(0.9, 0.5); steps(60, 1.2); },
+  wave()    { tigo.setMood("happy"); tigo.move("highfive", 10); steps(10, 0.7); },
+  excited() { tigo.setMood("happy"); tigo.jump(); steps(21, 0.2); },
+  music1()  { tigo.setGear("headphones"); tigo.setMood("happy"); tigo.move("dance", 10); steps(4, (Math.PI * 1.5) / 7.5); },
+  music2()  { tigo.setGear("headphones"); tigo.setMood("happy"); tigo.move("dance", 10); steps(4, (Math.PI * 0.5) / 7.5 + 0.42); },
+  music3()  { tigo.setGear("headphones"); tigo.setMood("happy"); tigo.move("dance", 10); steps(4, (Math.PI * 0.5) / 7.5); },
+  rest()    { tigo.setGear("headphones"); tigo.sleep(true); steps(30, 0.9); },
+  // ---- panahon (Messages widget) ----
+  wx_sun1()   { sun(); tigo.wear("face", "shades"); tigo.setMood("happy"); steps(20, 0.4); },
+  wx_sun2()   { sun(); tigo.wear("face", "shades"); tigo.setMood("happy"); tigo.move("highfive", 10); steps(10, 0.7); },
+  wx_sun3()   { sun(); tigo.wear("face", "shades"); tigo.setMood("happy"); tigo.jump(); steps(21, 0.2); },
+  wx_night1() { moon(); tigo.sleep(true); steps(30, 0.9); },
+  wx_night2() { moon(); tigo.sleep(true); steps(30, 1.9); },
+  wx_cloud1() { clouds(false); tigo.setMood("ok"); tigo.lookAt(0.8, 0.9); steps(60, 0.5); },
+  wx_cloud2() { clouds(false); tigo.setMood("ok"); tigo.lookAt(-0.3, 0.2); steps(60, 1.5); },
+  wx_cloud3() { clouds(false); tigo.setMood("ok"); blinkAt(0.4); },
+  wx_cold1()  { wind(0); tigo.wear("hat", "beanie"); tigo.wear("body", "scarf"); tigo.setMood("sad"); steps(20, 0.4); tigo.group.rotation.z = 0.05; tigo.group.position.x = -0.04; },
+  wx_cold2()  { wind(1); tigo.wear("hat", "beanie"); tigo.wear("body", "scarf"); tigo.setMood("sad"); steps(20, 0.4); tigo.group.rotation.z = -0.05; tigo.group.position.x = 0.04; },
+  wx_cold3()  { wind(2); tigo.wear("hat", "beanie"); tigo.wear("body", "scarf"); tigo.setMood("sad"); blinkAt(0.4); },
+  wx_rain1()  { clouds(true); rain(0); raincoat(); tigo.wear("hand", "umbrella"); tigo.setMood("ok"); steps(20, 0.4); },
+  wx_rain2()  { clouds(true); rain(1); raincoat(); tigo.wear("hand", "umbrella"); tigo.setMood("ok"); steps(20, 1.1); },
+  wx_rain3()  { clouds(true); rain(2); raincoat(); tigo.wear("hand", "umbrella"); tigo.setMood("ok"); blinkAt(0.4); },
+  wx_storm1() { clouds(true); bolt(1.25); tigo.setMood("sad"); tigo.move("cheer", 10); steps(6, 0.17); tigo.group.position.x = -0.05; },
+  wx_storm2() { clouds(true); rain(1); tigo.setMood("sad"); tigo.move("cheer", 10); steps(6, 0.5); tigo.group.position.x = 0.05; tigo.group.rotation.z = -0.04; },
+  wx_storm3() { clouds(true); bolt(-0.55); tigo.setMood("sad"); tigo.lookAt(0.8, 0.8); tigo.move("cheer", 10); steps(30, 0.17); },
+};
+window.FRAME_NAMES = Object.keys(FRAMES);
+window.renderFrame = (name) => {
+  fresh(); shadow();
+  FRAMES[name]();
+  const v = name.startsWith("wx_") ? view.wide : view.def;
+  camera.position.set(...v[0]); camera.lookAt(...v[1]);
+  renderer.render(scene, camera);
+  return canvas.toDataURL("image/png");
+};
+window.READY = true;
+</script>

@@ -52,3 +52,9 @@
   background: linear-gradient(135deg, #ff8a5b, #ff4f7b); box-shadow: 0 6px 16px rgba(255,79,123,.45); }
 .mu-play:active { transform: scale(.94); }
 @media (max-width: 380px) { .mu-tigo, .mu-tigo img { width: 80px; height: 80px; } .mu-ctrls { gap: 8px; } }
+
+/* Profile: may pagitan sa Family & Safety; mahabang listahan = scroll sa loob ng card (mga 6 na kanta ang kita) */
+.p-music { margin-bottom: 16px; }
+.mu-list { max-height: 344px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-inline-end: 2px;
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 18px), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 18px), transparent); }
+.mu-list:not(.mu-long) { -webkit-mask-image: none; mask-image: none; }

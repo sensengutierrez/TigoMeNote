@@ -384,3 +384,4 @@ body.tg-full, body.tg-game { overflow: hidden; }
 .tg-pedal.turbo.fire { animation: tg-pop .5s ease; }
 .tg-game.last { border-color: #ff7a2f; }
 @media (orientation: landscape) and (max-height: 520px) { .tg-pedals { bottom: 104px; } .tg-pedal { width: 56px; height: 56px; } }
+.tg-dbtn.tg-exit { background: rgba(255,255,255,.86); color: #d92d20; font-weight: 800; }

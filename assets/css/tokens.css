@@ -92,5 +92,10 @@
 /* UI style: kanto ng cards, buttons at inputs */
 :root[data-ustyle="soft"]  { --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 18px; }
 :root[data-ustyle="crisp"] { --r-sm: 3px; --r-md: 5px; --r-lg: 8px; --r-xl: 10px; --r-full: 10px; }
+/* Glossy: may kintab ang mga box (walang backdrop-filter — para hindi masira ang mga naka-"fixed" sa loob ng card) */
+:root[data-ustyle="glossy"] { --gloss: linear-gradient(180deg, rgba(255, 255, 255, .7), rgba(255, 255, 255, .1) 40%, rgba(255, 255, 255, 0) 60%), linear-gradient(170deg, transparent 45%, color-mix(in srgb, var(--accent) 9%, transparent)); --gloss-edge: rgba(255, 255, 255, .9); }
+:root[data-ustyle="glossy"][data-theme="dark"] { --gloss: linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .03) 40%, rgba(255, 255, 255, 0) 60%), linear-gradient(170deg, transparent 45%, color-mix(in srgb, var(--accent) 12%, transparent)); --gloss-edge: rgba(255, 255, 255, .16); }
+:root[data-ustyle="glossy"] :is(.card, .set-card, .set-preview, .set-style, .hc-c) { background-image: var(--gloss); border-color: color-mix(in srgb, var(--accent) 16%, var(--line)); box-shadow: inset 0 1px 0 var(--gloss-edge), 0 12px 28px -16px color-mix(in srgb, var(--accent) 40%, rgba(0, 0, 0, .35)); }
+:root[data-ustyle="glossy"] :is(.btn-primary, .set-pv-ic, .tabbar .fab, .ch-send) { background-image: linear-gradient(180deg, rgba(255, 255, 255, .32), rgba(255, 255, 255, 0) 55%); }
 /* Laki ng text sa website (sa APK: textZoom ng Android). Ang laman lang ng page, hindi ang menu; hindi sa Tigo (3D). */
 :root[data-tsize] body:not([data-page="tigo"]) #page { zoom: var(--tsize, 1); }

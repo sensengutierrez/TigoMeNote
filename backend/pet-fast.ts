@@ -39,8 +39,9 @@ const SLOTS = ["hat", "face", "body", "hand", "buddy", "backdrop"];
 // Coins bawat bagong level (+ dagdag sa Lv8 at Lv9). Lv10 = golden glow.
 const levelCoins = (l: number) => 20 + (l === 8 ? 100 : l === 9 ? 150 : 0);
 const GAME = { perDay: 10, maxCoins: 30, minGapMs: 20_000, kinds: ["coins", "pac", "race"] }; // bawat laro: 10 beses bawat araw
-// Bawat oras: gaano bumababa (gising / tulog)
-const RATE = { hunger: [6, 3], joy: [4, 2], energy: [5, -14], clean: [3, 1] };
+// Bawat oras: gaano bumababa (gising / tulog). Energy: 2.5/oras gising (dati 5 — masyadong mabilis maubos ayon kay Bench)
+const RATE = { hunger: [6, 3], joy: [4, 2], energy: [2.5, -14], clean: [3, 1] };
+const TIRED = 8;   // mas mababa rito: pagod, bawal maglaro
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -160,8 +161,8 @@ async function act(p: any, me: any) {
       break;
     case "play":
       if (pet.asleep) return fail("Shh… Tigo is sleeping.", 409);
-      if (pet.energy < 12) return fail("Tigo is too tired to play. Let Tigo sleep.", 409);
-      pet.joy = clamp(pet.joy + 18); pet.energy = clamp(pet.energy - 10); pet.hunger = clamp(pet.hunger - 4);
+      if (pet.energy < TIRED) return fail("Tigo is too tired to play. Let Tigo sleep.", 409);
+      pet.joy = clamp(pet.joy + 18); pet.energy = clamp(pet.energy - 5); pet.hunger = clamp(pet.hunger - 4);
       if (count(pet, "play", 15)) pet.xp += 5;
       break;
     case "clean":
@@ -254,7 +255,7 @@ async function room(p: any, me: any) {
 async function game(p: any, me: any) {
   const pet = decay(await load(me.id));
   if (pet.asleep) return fail("Shh… Tigo is sleeping.", 409);
-  if (pet.energy < 12) return fail("Tigo is too tired to play. Let Tigo sleep.", 409);
+  if (pet.energy < TIRED) return fail("Tigo is too tired to play. Let Tigo sleep.", 409);
   const c = pet.counters && pet.counters.day === today() ? pet.counters : {};
   if (c.lastGame && Date.now() - c.lastGame < GAME.minGapMs) return fail("Wait a moment before the next run.", 429);
   const score = Math.max(0, Math.floor(Number(p.score) || 0)), ms = Math.max(0, Number(p.ms) || 0);
@@ -265,7 +266,7 @@ async function game(p: any, me: any) {
   const before = levelOf(pet.xp);
   const won = okRun ? fair : 0;
   pet.coins = (pet.coins ?? 0) + won;
-  pet.joy = clamp(pet.joy + 10); pet.energy = clamp(pet.energy - 8); pet.hunger = clamp(pet.hunger - 5);
+  pet.joy = clamp(pet.joy + 10); pet.energy = clamp(pet.energy - 4); pet.hunger = clamp(pet.hunger - 5);
   if (okRun && score > 0) pet.xp += 4;
   const saved = shape(await store(pet));
   return reply({ ok: true, pet: saved, coins: won, capped: !okRun, levelUp: saved.level > before ? saved.level : null });

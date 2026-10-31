@@ -266,6 +266,20 @@ public class MainActivity extends BridgeActivity {{
             final int z = Math.max(80, Math.min(140, pct));
             runOnUiThread(() -> {{ WebSettings s = getBridge().getWebView().getSettings(); if (s.getTextZoom() != z) s.setTextZoom(z); }});
         }}
+        // Tigo app: buong screen (nakatago ang status at navigation bar; swipe mula sa gilid para lumabas sandali)
+        @JavascriptInterface
+        public void setImmersive(final boolean on) {{
+            runOnUiThread(() -> {{
+                WindowInsetsControllerCompat c = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+                if (on) {{
+                    c.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                    c.hide(WindowInsetsCompat.Type.systemBars());
+                }} else c.show(WindowInsetsCompat.Type.systemBars());
+            }});
+        }}
+        // ✕ Exit (Tigo app): isara ang app
+        @JavascriptInterface
+        public void exitApp() {{ runOnUiThread(() -> finishAndRemoveTask()); }}
         @JavascriptInterface
         public void setBars(final String color, final boolean dark) {{
             runOnUiThread(() -> {{
@@ -288,7 +302,7 @@ for d in os.listdir(nres):
     os.makedirs(os.path.join(res, d), exist_ok=True)
     for f in os.listdir(os.path.join(nres, d)): shutil.copy(os.path.join(nres, d, f), os.path.join(res, d, f))
 os.makedirs(os.path.join(res, "values"), exist_ok=True)
-open(os.path.join(res, "values", "tmn_widget.xml"), "w").write('<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <string name="tmn_widget_desc">Music player: previous, play/pause, next</string>\n    <string name="tmn_widget_msgs_desc">Your latest chats and unread messages</string>\n</resources>\n')
+open(os.path.join(res, "values", "tmn_widget.xml"), "w").write('<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <string name="tmn_widget_desc">Music player: previous, play/pause, next</string>\n    <string name="tmn_widget_msgs_desc">Clock, weather with Tigo, and your newest message</string>\n</resources>\n')
 gr = os.path.join(AND, "app/build.gradle"); g0 = open(gr).read()
 if "androidx.media:media" not in g0:
     g0 = g0.replace("dependencies {", 'dependencies {\n    implementation "androidx.media:media:1.7.0"', 1)

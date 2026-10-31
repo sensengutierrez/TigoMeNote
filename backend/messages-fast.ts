@@ -3,8 +3,9 @@
 // Files: index.ts + moderation.ts (text filter) — parehong folder sa deploy.
 // Actions (kailangan ng session token):
 //   inbox, unread, open, start, group, send, upload, react, pin, read, accept, decline, unsend,
-//   rename, addMembers, removeMember, leave, mute, theme, wallpaper
+//   rename, addMembers, removeMember, leave, mute, theme, wallpaper, bubble
 // Theme at wallpaper ng chat: pareho sa lahat ng nasa chat (conversations.theme / wallpaper_path, sql/093); may system message.
+// Bubble (gaano kalinaw + glossy): conversations.bubble_alpha / bubble_gloss (sql/095); walang system message (slider).
 // Real-time: pagkatapos ng bawat pagbabago, nagpapadala ng "ping" (walang laman ng message) sa
 //   Supabase Realtime channel na lihim (conversations.channel_key). Ang browser ang kukuha ng bago.
 // Push: sa notify-fast (action pushRaw, service key lang), sinusunod ang Messages setting, pause at sleep.
@@ -230,7 +231,7 @@ async function open(p: any, me: any) {
   return reply({
     ok: true,
     chat: { id: c.id, kind: c.kind, title: c.title, channel: c.channel_key, status: m.status, role: m.role, muted: m.muted, created_by: c.created_by,
-      theme: c.theme ?? null, wallpaper: await wallpaperOf(c) },
+      theme: c.theme ?? null, wallpaper: await wallpaperOf(c), bubble: { alpha: c.bubble_alpha ?? 100, gloss: !!c.bubble_gloss } },
     members: members.filter((x) => x.status !== "left").map((x) => ({ ...pub(x.users), role: x.role, status: x.status, last_read_at: x.last_read_at })),
     messages: msgs, pinned: pin, more: (rows ?? []).length === PAGE,
   });
@@ -549,6 +550,18 @@ async function wallpaper(p: any, me: any) {
   later(ping(c.channel_key, "meta", {}));
   return reply({ ok: true });
 }
+// Bubble ng chat: alpha 15..100 at gloss (pareho sa lahat)
+// deno-lint-ignore no-explicit-any
+async function bubble(p: any, me: any) {
+  const m = await membership(String(p.id), me);
+  if (!m || m.status !== "active") return fail("Chat not found.", 404);
+  const a = Math.round(Number(p.alpha));
+  const alpha = Number.isFinite(a) ? Math.max(15, Math.min(100, a)) : 100;
+  const gloss = !!p.gloss;
+  await db.from("conversations").update({ bubble_alpha: alpha === 100 ? null : alpha, bubble_gloss: gloss }).eq("id", m.conversation_id);
+  later(ping(m.conversations.channel_key, "meta", {}));
+  return reply({ ok: true, bubble: { alpha, gloss } });
+}
 // I-mute ang chat (walang push)
 // deno-lint-ignore no-explicit-any
 async function mute(p: any, me: any) {
@@ -586,6 +599,7 @@ Deno.serve(async (req) => {
       case "mute":         return await mute(p, me);
       case "theme":        return await theme(p, me);
       case "wallpaper":    return await wallpaper(p, me);
+      case "bubble":       return await bubble(p, me);
       default:             return fail("Unknown action.");
     }
   } catch (e) {

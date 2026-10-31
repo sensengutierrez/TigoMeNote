@@ -38,7 +38,8 @@ public class MusicService extends Service {
             @Override public void onSkipToNext() { eng.next(); }
             @Override public void onSkipToPrevious() { eng.prev(); }
             @Override public void onSeekTo(long pos) { eng.seek((int) pos); }
-            @Override public void onStop() { eng.userPause(); }
+            @Override public void onStop() { eng.close(); }
+            @Override public void onCustomAction(String action, android.os.Bundle extras) { if ("tmn_close".equals(action)) eng.close(); }
         });
         session.setActive(true);
         eng.attach(this, session);
@@ -52,6 +53,7 @@ public class MusicService extends Service {
             else if ("next".equals(x)) eng.next();
             else if ("prev".equals(x)) eng.prev();
             else if ("stop".equals(x)) eng.userPause();
+            else if ("close".equals(x)) eng.close();
         }
         refresh();
         return START_NOT_STICKY;
@@ -70,7 +72,11 @@ public class MusicService extends Service {
             if (Build.VERSION.SDK_INT >= 29) startForeground(MusicEngine.NID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
             else startForeground(MusicEngine.NID, n);
         } catch (Exception e) { }
-        if (!eng.hasTrack()) { stopForeground(true); stopSelf(); return; }
+        if (!eng.hasTrack()) {   // ✕ o tapos na ang playlist: alisin ang notification
+            stopForeground(true);
+            ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).cancel(MusicEngine.NID);
+            stopSelf(); return;
+        }
         if (eng.isPlaying()) {
             if (!noisyOn) { registerReceiver(noisy, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)); noisyOn = true; }
         } else {
