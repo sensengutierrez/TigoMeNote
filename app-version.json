@@ -13,12 +13,12 @@
   "chat": {
     "name": "TigoMeNote Chat",
     "id": "com.tigomenote.chat",
-    "version": "0.11.28",
-    "code": 11028,
-    "url": "https://tigomenote.com/dl/TigoMeNoteChat.apk?v=0.11.28",
-    "github": "https://github.com/sensengutierrez/TigoMeNote/releases/download/chat-v0.11.28/TigoMeNoteChat.apk",
-    "size": 5418214,
-    "sha256": "7c681dab8eef5107f08105ada102f63593fea30ae4dd43b998f47738b59b8eb4",
+    "version": "0.11.29",
+    "code": 11029,
+    "url": "https://tigomenote.com/dl/TigoMeNoteChat.apk?v=0.11.29",
+    "github": "https://github.com/sensengutierrez/TigoMeNote/releases/download/chat-v0.11.29/TigoMeNoteChat.apk",
+    "size": 5422310,
+    "sha256": "670c5a2db2556a03b123e6946f4a20c7a4e9671b4e37af5679fa25278789a322",
     "date": "2026-10-31"
   },
   "tigo": {
