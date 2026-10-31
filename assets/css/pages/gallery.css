@@ -5,6 +5,9 @@
 .gallery-head .eyebrow { display: inline-flex; align-items: center; gap: 6px; }
 .head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .head-actions label { cursor: pointer; }
+/* Ang "Camera" sa header ay may parehong hugis ng "Upload" (ang .cam-btn ng camera.css ay bilog para sa loob ng camera) */
+.head-actions .cam-btn { display: inline-flex; width: auto; height: 42px; border: 1px solid var(--line); border-radius: var(--r-full); background: transparent; color: inherit; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.head-actions .cam-btn:hover { background: var(--surface-2); }
 
 /* ---------- Albums ---------- */
 .albums-card { padding: 14px; }
@@ -101,7 +104,7 @@
   .album.active { border-color: var(--line); }
   .album-name { max-width: 170px; }
   .storage-card { display: block; }
-  .cam-btn { display: none; }
+  .cam-btn, .head-actions .cam-btn { display: none; }
   .gallery-main { min-height: 0; height: 100%; }
   .g-scroll { overflow-y: auto; padding: 14px; }
   .g-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; }
@@ -110,3 +113,4 @@
   .vw-info { border-left: 1px solid var(--line); overflow-y: auto; padding: 18px; }
 }
 @media (min-width: 1500px) { .g-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
+

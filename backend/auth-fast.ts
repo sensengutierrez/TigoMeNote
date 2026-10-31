@@ -25,7 +25,7 @@ const BREVO_API_KEY = (Deno.env.get("BREVO_API_KEY") ?? "").trim();
 const FROM_EMAIL = (Deno.env.get("MAIL_FROM_EMAIL") ?? SMTP_USER).trim();
 
 const ITERATIONS = 120_000;
-const SESSION_HOURS = 24;
+const SESSION_HOURS = 24 * 365;  // 1 taon; hindi na-logout hangga’t hindi nag-sign out (may DB trigger din na nagse-set nito)
 const MAX_FAILS = 5;
 const LOCK_MINUTES = 30;
 const REG_PER_IP_PER_HOUR = 5;

@@ -34,3 +34,19 @@ html.has-bg:not(.bg-dark) .settings-version {
 }
 html.has-bg .page-head .lead { font-weight: 500; }
 html.has-bg .page-head .eyebrow { font-weight: 700; }
+
+/* Chat (Messages): see-through din para makita ang wallpaper — pareho ng ibang page */
+html.has-bg .inbox-thread,
+html.has-bg .ch,
+html.has-bg .ch-list { background: transparent; }
+html.has-bg .ch-head,
+html.has-bg .ch-compose,
+html.has-bg .ch-req {
+  background: color-mix(in srgb, var(--surface) var(--look-panel, 88%), transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+}
+html.has-bg .ch-compose { box-shadow: none; }
+html.has-bg .ch-input { background: color-mix(in srgb, var(--surface-2) var(--look-panel, 88%), transparent); }
+html.has-bg .ch-input:focus { background: color-mix(in srgb, var(--surface) var(--look-panel, 88%), transparent); }
+html.has-bg .ch-row:not(.mine) .ch-bubble { background: color-mix(in srgb, var(--surface) var(--look-panel, 88%), transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+html.has-bg .ch-day, html.has-bg .ch-sys { background: color-mix(in srgb, var(--surface) var(--look-panel, 88%), transparent); }
