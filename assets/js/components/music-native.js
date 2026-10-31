@@ -26,7 +26,7 @@
       '<div class="mu-head"><h3>' + I("music", "ic-sm") + 'My music</h3>' +
         '<button type="button" class="btn btn-ghost btn-sm mu-addbtn">' + I("plus", "ic-sm") + 'Add songs</button></div>' +
       '<p class="faint small mu-note">Only you can hear this. Songs are saved on your phone (Music › TigoMeNote) and are not uploaded. TigoMeNote and Chat share the same playlist.</p>' +
-      '<div class="mu-now hidden">' +
+      '<div class="mu-now hidden">' + (window.TMN_MUSIC_TIGO ? TMN_MUSIC_TIGO.html() : "") + '<div class="mu-main">' +
         '<div class="mu-now-info"><b class="mu-title"></b><span class="faint small mu-artist"></span></div>' +
         '<div class="mu-seek"><span class="faint small mu-cur" translate="no">0:00</span><input type="range" class="mu-bar" min="0" max="1000" value="0" aria-label="Seek"><span class="faint small mu-dur" translate="no">0:00</span></div>' +
         '<div class="mu-ctrls">' +
@@ -35,7 +35,7 @@
           '<button type="button" class="mu-play" aria-label="Play">' + I("play") + "</button>" +
           '<button type="button" class="icon-btn mu-next" aria-label="Next">' + I("chevronR") + "</button>" +
           '<button type="button" class="icon-btn mu-repeat" aria-label="Repeat" title="Repeat">↻<small></small></button>' +
-        "</div></div>" +
+        "</div></div></div>" +
       '<button type="button" class="btn btn-ghost btn-sm mu-access hidden">Show songs added in my other TigoMeNote app</button>' +
       '<ol class="mu-list"></ol>' +
       '<p class="faint small mu-empty">Add MP3 or other songs from your phone to make your playlist.</p>' +
@@ -63,9 +63,11 @@
       $(".mu-play").innerHTML = I(st.playing ? "pause" : "play"); $(".mu-play").setAttribute("aria-label", st.playing ? "Pause" : "Play");
       $(".mu-shuffle").classList.toggle("on", !!st.shuffle);
       var rp = $(".mu-repeat"); rp.classList.toggle("on", st.repeat !== "off"); rp.querySelector("small").textContent = st.repeat === "one" ? "1" : "";
+      if (window.TMN_MUSIC_TIGO) TMN_MUSIC_TIGO.set(el, !!st.playing);
     }
     function paintTime() {
       if (!seeking && st.dur) bar.value = Math.round(st.pos / st.dur * 1000);
+      bar.style.setProperty("--p", (bar.value / 10) + "%");
       $(".mu-cur").textContent = t2(st.pos / 1000); $(".mu-dur").textContent = t2(st.dur / 1000);
     }
     function paint() { paintList(); paintNow(); paintTime(); }
@@ -87,7 +89,7 @@
     timer = setInterval(poll, 700);
     document.addEventListener("visibilitychange", function () { if (!document.hidden) refresh(); });
 
-    bar.addEventListener("input", function () { seeking = true; });
+    bar.addEventListener("input", function () { seeking = true; bar.style.setProperty("--p", (bar.value / 10) + "%"); });
     bar.addEventListener("change", function () { seeking = false; if (st.dur) N.musicSeek({ ms: Math.round(bar.value / 1000 * st.dur) }).then(poll); });
 
     // Kapag hindi tumugtog: sabihin sa user at i-report (crash-fast, isang beses bawat error) para maayos

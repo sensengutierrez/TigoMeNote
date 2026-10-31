@@ -8,128 +8,145 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
   <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
-  <script src="../assets/js/theme.js?v=0.11.32"></script>
-  <script src="../assets/js/look-tigo.js?v=0.11.32"></script>
-  <script src="../assets/js/appearance.js?v=0.11.32"></script>
-  <script src="../assets/js/config.js?v=0.11.32"></script>
-  <script src="../assets/js/i18n.js?v=0.11.32"></script>
-  <script src="../assets/js/auth-guard.js?v=0.11.32"></script>
+  <script src="../assets/js/theme.js?v=0.11.33"></script>
+  <script src="../assets/js/ui-prefs.js?v=0.11.33"></script>
+  <script src="../assets/js/look-tigo.js?v=0.11.33"></script>
+  <script src="../assets/js/appearance.js?v=0.11.33"></script>
+  <script src="../assets/js/config.js?v=0.11.33"></script>
+  <script src="../assets/js/i18n.js?v=0.11.33"></script>
+  <script src="../assets/js/auth-guard.js?v=0.11.33"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="../assets/css/tokens.css?v=0.11.32">
-  <link rel="stylesheet" href="../assets/css/base.css?v=0.11.32">
-  <link rel="stylesheet" href="../assets/css/components.css?v=0.11.32">
-  <link rel="stylesheet" href="../assets/css/shell.css?v=0.11.32">
-  <link rel="stylesheet" href="../assets/css/look.css?v=0.11.32">
-  <link rel="stylesheet" href="../assets/css/safety.css?v=0.11.32">
-  <link rel="stylesheet" href="../assets/css/pages/settings.css?v=0.11.32">
+  <link rel="stylesheet" href="../assets/css/tokens.css?v=0.11.33">
+  <link rel="stylesheet" href="../assets/css/base.css?v=0.11.33">
+  <link rel="stylesheet" href="../assets/css/components.css?v=0.11.33">
+  <link rel="stylesheet" href="../assets/css/shell.css?v=0.11.33">
+  <link rel="stylesheet" href="../assets/css/look.css?v=0.11.33">
+  <link rel="stylesheet" href="../assets/css/safety.css?v=0.11.33">
+  <link rel="stylesheet" href="../assets/css/pages/settings.css?v=0.11.33">
 </head>
 <body data-page="settings">
-  <main id="page" class="page">
-    <header class="page-head">
-      <div>
+  <main id="page" class="page set-page">
+    <!-- Settings (pages/settings.js): main list + mga page sa loob (#appearance, #language, #background, #privacy, #files) -->
+    <section class="set-pane" data-pane="main">
+      <header class="set-hero">
         <h1>Settings</h1>
+        <p class="lead">Make the app feel like yours.</p>
+      </header>
+
+      <div class="set-card">
+        <div class="set-item set-dark">
+          <span class="set-ic"><i data-icon="moon" data-size="sm"></i></span>
+          <span class="set-txt"><b>Dark mode</b><span class="faint small" id="sDarkSub">Tap to switch the mood</span></span>
+          <button type="button" class="set-switch" id="sDark" role="switch" aria-checked="false" aria-label="Dark mode"><i></i></button>
+        </div>
       </div>
-    </header>
 
-    <div class="settings-grid">
-      <section class="card">
-        <h3 class="set-title">Appearance</h3>
-        <div class="rows">
-          <div class="row set-row">
-            <div class="row-main">
-              <div class="row-title">Theme</div>
-              <div class="row-sub">Plain white, dark, or follow your device.</div>
-            </div>
-            <div class="segmented" id="themeSeg" role="group" aria-label="Theme">
-              <button type="button" data-mode="light"><i data-icon="sun" data-size="sm"></i>Light</button>
-              <button type="button" data-mode="dark"><i data-icon="moon" data-size="sm"></i>Dark</button>
-              <button type="button" data-mode="system"><i data-icon="monitor" data-size="sm"></i>Auto</button>
-            </div>
-          </div>
-          <div class="row set-row">
-            <div class="row-main">
-              <div class="row-title">Language</div>
-              <div class="row-sub">Choose the language of TigoMeNote on this device.</div>
-            </div>
-            <div class="lang-pick" id="langPick" role="radiogroup" aria-label="Language" translate="no"></div>
-          </div>
-          <div class="row set-row set-col">
-            <div class="row-main">
-              <div class="row-title">Background</div>
-              <div class="row-sub">A color or your own photo behind every page. Use different photos for desktop and phone.</div>
-            </div>
-            <div id="lookMount"></div>
-          </div>
-        </div>
-      </section>
+      <p class="set-group">Personalization</p>
+      <div class="set-card">
+          <button type="button" class="set-item" data-go="appearance"><span class="set-ic"><i data-icon="palette" data-size="sm"></i></span><span class="set-txt"><b>Appearance</b><span class="faint small" id="sAppSub"></span></span><i data-icon="chevronR" data-size="sm" class="set-chev"></i></button>
+          <button type="button" class="set-item" data-go="background"><span class="set-ic"><i data-icon="image" data-size="sm"></i></span><span class="set-txt"><b>Background</b><span class="faint small" id="sBgSub">A color or your own photo</span></span><i data-icon="chevronR" data-size="sm" class="set-chev"></i></button>
+          <button type="button" class="set-item" data-go="language"><span class="set-ic"><i data-icon="globe" data-size="sm"></i></span><span class="set-txt"><b>Language</b><span class="faint small" id="sLangSub"></span></span><i data-icon="chevronR" data-size="sm" class="set-chev"></i></button>
+      </div>
 
-      <section class="card">
-        <h3 class="set-title">Notifications</h3>
-        <div class="rows">
-          <a class="row row-link" href="notifications.html?settings=1"><div class="row-main"><div class="row-title">Notification settings</div><div class="row-sub">Push, pause all, sleep mode, and what to notify you about.</div></div><i data-icon="chevronR" data-size="sm"></i></a>
-        </div>
-      </section>
+      <p class="set-group">Alerts</p>
+      <div class="set-card">
+          <a class="set-item" href="notifications.html?settings=1"><span class="set-ic"><i data-icon="bell" data-size="sm"></i></span><span class="set-txt"><b>Notifications</b><span class="faint small">Push, messages, likes and follows, sleep mode</span></span><i data-icon="chevronR" data-size="sm" class="set-chev"></i></a>
+      </div>
 
-      <section class="card">
-        <h3 class="set-title">Files on this device</h3>
-        <div id="filesMount"></div>
-      </section>
+      <p class="set-group">Privacy &amp; security</p>
+      <div class="set-card">
+          <button type="button" class="set-item" data-go="privacy"><span class="set-ic"><i data-icon="shield" data-size="sm"></i></span><span class="set-txt"><b>Sleep, breaks &amp; privacy</b><span class="faint small" id="sPrivSub">Screen time, who can see you, parental supervision</span></span><i data-icon="chevronR" data-size="sm" class="set-chev"></i></button>
+          <button type="button" class="set-item" data-go="files"><span class="set-ic"><i data-icon="folder" data-size="sm"></i></span><span class="set-txt"><b>Files on this device</b><span class="faint small" id="sFilesSub">Photos, notes and music saved on this device</span></span><i data-icon="chevronR" data-size="sm" class="set-chev"></i></button>
+      </div>
 
+      <p class="set-group">Account</p>
+      <div class="set-card">
+        <div class="set-item"><span class="set-ic"><i data-icon="user" data-size="sm"></i></span><span class="set-txt"><b id="sUser"></b><span class="faint small" id="sRole"></span></span></div>
+        <button type="button" class="set-item set-danger" id="sLogout"><span class="set-ic"><i data-icon="logout" data-size="sm"></i></span><span class="set-txt"><b>Log out</b><span class="faint small">You'll be signed out on this device.</span></span></button>
+      </div>
+
+      <p class="set-group">About &amp; policies</p>
+      <div class="set-card">
+          <a class="set-item" href="../legal/guidelines.html"><span class="set-txt"><b>Community Guidelines</b><span class="faint small">What's not allowed: violence, nudity, crime, illegal firearms…</span></span><i data-icon="chevronR" data-size="sm" class="set-chev"></i></a>
+          <a class="set-item" href="../legal/terms.html"><span class="set-txt"><b>Terms of Use</b></span><i data-icon="chevronR" data-size="sm" class="set-chev"></i></a>
+          <a class="set-item" href="../legal/privacy.html"><span class="set-txt"><b>Privacy Policy</b></span><i data-icon="chevronR" data-size="sm" class="set-chev"></i></a>
+          <a class="set-item" href="../legal/copyright.html"><span class="set-txt"><b>Copyright</b></span><i data-icon="chevronR" data-size="sm" class="set-chev"></i></a>
+          <a class="set-item" href="../legal/third-party.html"><span class="set-txt"><b>Third-party software</b></span><i data-icon="chevronR" data-size="sm" class="set-chev"></i></a>
+      </div>
+      <p class="faint small center settings-version" id="sVersion"></p>
+    </section>
+
+    <!-- Appearance: may preview; ang theme color, text size at UI style ay sine-save sa "Review" -->
+    <section class="set-pane" data-pane="appearance" hidden>
+      <header class="set-sub"><button type="button" class="icon-btn set-back" aria-label="Back"><i data-icon="chevronL"></i></button><h2>Appearance</h2></header>
+      <div class="set-preview" aria-hidden="true">
+        <span class="set-pv-ic"><i data-icon="sparkle" data-size="sm"></i></span>
+        <span><b>Weekly summary</b><span class="faint small">Your notes for the week are ready.</span><span class="set-pv-btn">Open</span></span>
+      </div>
+      <p class="set-group">Theme</p>
+      <div class="segmented set-seg" id="themeSeg" role="group" aria-label="Theme">
+        <button type="button" data-mode="light"><i data-icon="sun" data-size="sm"></i>Light</button>
+        <button type="button" data-mode="dark"><i data-icon="moon" data-size="sm"></i>Dark</button>
+        <button type="button" data-mode="system"><i data-icon="monitor" data-size="sm"></i>Auto</button>
+      </div>
+      <p class="set-group">Theme color <span class="set-val" id="vAccent"></span></p>
+      <div class="set-card set-swatches" id="pAccent" role="radiogroup" aria-label="Theme color"></div>
+      <p class="set-group">Text size <span class="set-val" id="vSize"></span></p>
+      <div class="set-card set-sizes" id="pSize" role="radiogroup" aria-label="Text size"></div>
+      <p class="set-group">UI style <span class="set-val" id="vStyle"></span></p>
+      <div class="set-styles" id="pStyle" role="radiogroup" aria-label="UI style"></div>
+      <div class="set-review hidden" id="sReview" role="region" aria-label="Unsaved changes">
+        <span class="set-dot"></span><b id="sCount">1 change</b>
+        <button type="button" class="btn btn-ghost btn-sm" id="sDiscard">Discard</button>
+        <button type="button" class="btn btn-primary btn-sm" id="sReviewBtn">Review</button>
+      </div>
+    </section>
+
+    <section class="set-pane" data-pane="language" hidden>
+      <header class="set-sub"><button type="button" class="icon-btn set-back" aria-label="Back"><i data-icon="chevronL"></i></button><h2>Language</h2></header>
+      <p class="faint small set-note">Choose the language of TigoMeNote on this device.</p>
+      <div class="set-card lang-pick" id="langPick" role="radiogroup" aria-label="Language" translate="no"></div>
+    </section>
+
+    <section class="set-pane" data-pane="background" hidden>
+      <header class="set-sub"><button type="button" class="icon-btn set-back" aria-label="Back"><i data-icon="chevronL"></i></button><h2>Background</h2></header>
+      <p class="faint small set-note">A color or your own photo behind every page. Use different photos for desktop and phone.</p>
+      <div class="set-card set-pad"><div id="lookMount"></div></div>
+    </section>
+
+    <section class="set-pane" data-pane="privacy" hidden>
+      <header class="set-sub"><button type="button" class="icon-btn set-back" aria-label="Back"><i data-icon="chevronL"></i></button><h2>Sleep, breaks &amp; privacy</h2></header>
       <!-- Sleep & breaks, Privacy, Parental supervision (components/wellbeing-settings.js) -->
       <div class="wb-mount" id="wbMount"></div>
+    </section>
 
-      <section class="card">
-        <h3 class="set-title">Account</h3>
-        <div class="rows">
-          <div class="row">
-            <div class="row-main"><div class="row-title">Username</div><div class="row-sub" id="sUser"></div></div>
-          </div>
-          <div class="row">
-            <div class="row-main"><div class="row-title">Role</div><div class="row-sub" id="sRole"></div></div>
-          </div>
-          <div class="row">
-            <div class="row-main"><div class="row-title">Log out</div><div class="row-sub">You'll be signed out on this device.</div></div>
-            <button class="btn btn-danger" type="button" id="sLogout"><i data-icon="logout" data-size="sm"></i>Log out</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="card">
-        <h3 class="set-title">About &amp; policies</h3>
-        <div class="rows">
-          <a class="row row-link" href="../legal/guidelines.html"><div class="row-main"><div class="row-title">Community Guidelines</div><div class="row-sub">What's not allowed: violence, nudity, crime, illegal firearms…</div></div><i data-icon="chevronR" data-size="sm"></i></a>
-          <a class="row row-link" href="../legal/terms.html"><div class="row-main"><div class="row-title">Terms of Use</div></div><i data-icon="chevronR" data-size="sm"></i></a>
-          <a class="row row-link" href="../legal/privacy.html"><div class="row-main"><div class="row-title">Privacy Policy</div></div><i data-icon="chevronR" data-size="sm"></i></a>
-          <a class="row row-link" href="../legal/copyright.html"><div class="row-main"><div class="row-title">Copyright</div></div><i data-icon="chevronR" data-size="sm"></i></a>
-          <a class="row row-link" href="../legal/third-party.html"><div class="row-main"><div class="row-title">Third-party software</div></div><i data-icon="chevronR" data-size="sm"></i></a>
-        </div>
-      </section>
-
-      <p class="faint small center settings-version" id="sVersion"></p>
-    </div>
+    <section class="set-pane" data-pane="files" hidden>
+      <header class="set-sub"><button type="button" class="icon-btn set-back" aria-label="Back"><i data-icon="chevronL"></i></button><h2>Files on this device</h2></header>
+      <div class="set-card set-pad"><div id="filesMount"></div></div>
+    </section>
   </main>
-  <script src="../assets/js/icons.js?v=0.11.32"></script>
-  <script src="../assets/js/nav-items.js?v=0.11.32"></script>
-  <script src="../assets/js/components/app-shell.js?v=0.11.32"></script>
-  <script src="../assets/js/api.js?v=0.11.32"></script>
-  <script src="../assets/js/moderation-check.js?v=0.11.32"></script>
-  <script src="../assets/js/components/mod-guard.js?v=0.11.32"></script>
-  <script src="../assets/js/native-bridge.js?v=0.11.32"></script>
-  <script src="../assets/js/push-setup.js?v=0.11.32"></script>
-  <script src="../assets/js/components/sos-overlay.js?v=0.11.32"></script>
-  <script src="../assets/js/safety-watch.js?v=0.11.32"></script>
-  <script src="../assets/js/location-share.js?v=0.11.32"></script>
-  <script src="../assets/js/wellbeing.js?v=0.11.32"></script>
-  <script src="../assets/js/notif-badge.js?v=0.11.32"></script>
-  <script src="../assets/js/post-queue.js?v=0.11.32"></script>
-  <script src="../assets/js/components/modal.js?v=0.11.32"></script>
-  <script src="../assets/js/components/wellbeing-settings.js?v=0.11.32"></script>
-  <script src="../assets/js/file-save.js?v=0.11.32"></script>
-  <script src="../assets/js/components/files-settings.js?v=0.11.32"></script>
-  <script src="../assets/js/components/appearance-settings.js?v=0.11.32"></script>
-  <script src="../assets/js/pages/settings.js?v=0.11.32"></script>
+  <script src="../assets/js/icons.js?v=0.11.33"></script>
+  <script src="../assets/js/nav-items.js?v=0.11.33"></script>
+  <script src="../assets/js/components/app-shell.js?v=0.11.33"></script>
+  <script src="../assets/js/api.js?v=0.11.33"></script>
+  <script src="../assets/js/moderation-check.js?v=0.11.33"></script>
+  <script src="../assets/js/components/mod-guard.js?v=0.11.33"></script>
+  <script src="../assets/js/native-bridge.js?v=0.11.33"></script>
+  <script src="../assets/js/push-setup.js?v=0.11.33"></script>
+  <script src="../assets/js/components/sos-overlay.js?v=0.11.33"></script>
+  <script src="../assets/js/safety-watch.js?v=0.11.33"></script>
+  <script src="../assets/js/location-share.js?v=0.11.33"></script>
+  <script src="../assets/js/wellbeing.js?v=0.11.33"></script>
+  <script src="../assets/js/notif-badge.js?v=0.11.33"></script>
+  <script src="../assets/js/post-queue.js?v=0.11.33"></script>
+  <script src="../assets/js/components/modal.js?v=0.11.33"></script>
+  <script src="../assets/js/components/wellbeing-settings.js?v=0.11.33"></script>
+  <script src="../assets/js/file-save.js?v=0.11.33"></script>
+  <script src="../assets/js/components/files-settings.js?v=0.11.33"></script>
+  <script src="../assets/js/components/appearance-settings.js?v=0.11.33"></script>
+  <script src="../assets/js/pages/settings.js?v=0.11.33"></script>
 </body>
 </html>

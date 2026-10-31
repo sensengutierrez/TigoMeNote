@@ -179,6 +179,7 @@ public final class MusicEngine {
     public synchronized void next() { int n = nextIndex(1); if (n >= 0) play(n); }
     public synchronized void prev() { if (mp != null && mp.getCurrentPosition() > 3000) { mp.seekTo(0); changed(); return; } int n = nextIndex(-1); if (n >= 0) play(n); }
     public synchronized void pause() { if (mp != null && mp.isPlaying()) { mp.pause(); changed(); } }
+    public synchronized void userPause() { pausedByFocus = false; pause(); }
     public synchronized void resume() {
         if (mp != null && !mp.isPlaying()) {
             try { focus(); mp.start(); lastErr = ""; } catch (Exception e) { lastErr = "resume: " + e; stopPlayer(); play(idx >= 0 ? idx : 0); return; }
@@ -187,7 +188,7 @@ public final class MusicEngine {
     }
     public synchronized void toggle() {
         if (mp == null) { if (!tracks.isEmpty()) play(idx >= 0 ? idx : 0); return; }
-        if (mp.isPlaying()) pause(); else resume();
+        if (mp.isPlaying()) userPause(); else resume();
     }
     public synchronized void seek(int ms) { if (mp != null) { mp.seekTo(Math.max(0, ms)); changed(); } }
     public synchronized boolean isPlaying() { try { return mp != null && mp.isPlaying(); } catch (Exception e) { return false; } }
@@ -203,15 +204,25 @@ public final class MusicEngine {
         } catch (Exception e) { return new JSONObject(); }
     }
 
+    // Audio focus: IISANG listener at IISANG request lang. (Dati, bagong request bawat kanta → natatanggap ng lumang
+    // request ang "LOSS" at pina-pause ang bagong kanta — kaya unang kanta lang ang tumutugtog.)
+    private boolean hasFocus = false, pausedByFocus = false;
+    private final AudioManager.OnAudioFocusChangeListener focusL = ch -> {
+        if (ch == AudioManager.AUDIOFOCUS_LOSS) { hasFocus = false; pausedByFocus = false; pause(); }
+        else if (ch == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) { if (isPlaying()) { pausedByFocus = true; pause(); } }
+        else if (ch == AudioManager.AUDIOFOCUS_GAIN) { hasFocus = true; if (pausedByFocus) { pausedByFocus = false; resume(); } }
+    };
     private void focus() {
+        if (hasFocus) return;
         try {
-            AudioManager.OnAudioFocusChangeListener l = ch -> { if (ch == AudioManager.AUDIOFOCUS_LOSS || ch == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) pause(); };
+            int r;
             if (Build.VERSION.SDK_INT >= 26) {
-                focusReq = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                if (focusReq == null) focusReq = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                     .setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build())
-                    .setOnAudioFocusChangeListener(l).build();
-                am.requestAudioFocus(focusReq);
-            } else am.requestAudioFocus(l, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+                    .setOnAudioFocusChangeListener(focusL).build();
+                r = am.requestAudioFocus(focusReq);
+            } else r = am.requestAudioFocus(focusL, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+            hasFocus = r == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
         } catch (Exception e) { }
     }
 
@@ -265,6 +276,18 @@ public final class MusicEngine {
         return b.build();
     }
 
+    /** Progress lang (partial update) — hindi nire-restart ang sayaw ni Tigo sa widget. */
+    public void updateProgress() {
+        try {
+            AppWidgetManager m = AppWidgetManager.getInstance(ctx);
+            int[] ids = m.getAppWidgetIds(new ComponentName(ctx, MusicWidget.class));
+            if (ids == null || ids.length == 0) return;
+            RemoteViews v = new RemoteViews(ctx.getPackageName(), res(ctx, "tmn_widget_music", "layout"));
+            int d = dur(), ps = pos();
+            v.setProgressBar(res(ctx, "tmn_w_prog", "id"), 1000, d > 0 ? (int) (ps * 1000L / d) : 0, false);
+            m.partiallyUpdateAppWidget(ids, v);
+        } catch (Exception e) { }
+    }
     public void updateWidgets() {
         try {
             AppWidgetManager m = AppWidgetManager.getInstance(ctx);
@@ -274,7 +297,13 @@ public final class MusicEngine {
             RemoteViews v = new RemoteViews(ctx.getPackageName(), res(ctx, "tmn_widget_music", "layout"));
             v.setTextViewText(res(ctx, "tmn_w_title", "id"), t != null ? t.name : "My music");
             v.setTextViewText(res(ctx, "tmn_w_artist", "id"), t != null ? (t.artist.isEmpty() ? "TigoMeNote" : t.artist) : "Tap ▶ to play your playlist");
-            v.setImageViewResource(res(ctx, "tmn_w_play", "id"), p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+            v.setImageViewResource(res(ctx, "tmn_w_play", "id"), res(ctx, p ? "tmn_ic_pause" : "tmn_ic_play", "drawable"));
+            // si Tigo: sumasayaw (ViewFlipper) habang tumutugtog, tulog kapag naka-pause
+            v.setViewVisibility(res(ctx, "tmn_w_dance", "id"), p ? android.view.View.VISIBLE : android.view.View.GONE);
+            v.setViewVisibility(res(ctx, "tmn_w_rest", "id"), p ? android.view.View.GONE : android.view.View.VISIBLE);
+            int d = dur(), ps = pos();
+            v.setProgressBar(res(ctx, "tmn_w_prog", "id"), 1000, d > 0 ? (int) (ps * 1000L / d) : 0, false);
+            v.setOnClickPendingIntent(res(ctx, "tmn_w_tigo", "id"), open(ctx));
             v.setOnClickPendingIntent(res(ctx, "tmn_w_prev", "id"), act(ctx, "prev", 11));
             v.setOnClickPendingIntent(res(ctx, "tmn_w_play", "id"), act(ctx, "toggle", 12));
             v.setOnClickPendingIntent(res(ctx, "tmn_w_next", "id"), act(ctx, "next", 13));

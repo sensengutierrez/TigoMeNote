@@ -36,7 +36,7 @@
       '<div class="mu-head"><h3>' + I("music", "ic-sm") + 'My music</h3>' +
         '<label class="btn btn-ghost btn-sm">' + I("plus", "ic-sm") + 'Add songs<input type="file" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.opus,.flac" multiple class="sr-only mu-add"></label></div>' +
       '<p class="faint small mu-note">Only you can hear this. Songs stay on this device and are not uploaded.</p>' +
-      '<div class="mu-now hidden">' +
+      '<div class="mu-now hidden">' + (window.TMN_MUSIC_TIGO ? TMN_MUSIC_TIGO.html() : "") + '<div class="mu-main">' +
         '<div class="mu-now-info"><b class="mu-title"></b><span class="faint small mu-artist"></span></div>' +
         '<div class="mu-seek"><span class="faint small mu-cur" translate="no">0:00</span><input type="range" class="mu-bar" min="0" max="1000" value="0" aria-label="Seek"><span class="faint small mu-dur" translate="no">0:00</span></div>' +
         '<div class="mu-ctrls">' +
@@ -45,7 +45,7 @@
           '<button type="button" class="mu-play" aria-label="Play">' + I("play") + "</button>" +
           '<button type="button" class="icon-btn mu-next" aria-label="Next">' + I("chevronR") + "</button>" +
           '<button type="button" class="icon-btn mu-repeat" aria-label="Repeat" title="Repeat">↻<small></small></button>' +
-        "</div></div>" +
+        "</div></div></div>" +
       '<ol class="mu-list"></ol>' +
       '<p class="faint small mu-empty">Add MP3 or other songs from your phone or computer to make your playlist.</p>' +
       '<p class="faint small mu-tip">' + I("info", "ic-sm") + " Keeps playing when you minimize. On the website it stops if you open another page; in the TigoMeNote app it will keep playing everywhere.</p>";
@@ -70,6 +70,7 @@
       $(".mu-play").innerHTML = I(audio.paused ? "play" : "pause"); $(".mu-play").setAttribute("aria-label", audio.paused ? "Play" : "Pause");
       $(".mu-shuffle").classList.toggle("on", pref.shuffle);
       var rp = $(".mu-repeat"); rp.classList.toggle("on", pref.repeat !== "off"); rp.querySelector("small").textContent = pref.repeat === "one" ? "1" : "";
+      if (window.TMN_MUSIC_TIGO) TMN_MUSIC_TIGO.set(el, !audio.paused);
     }
     function paint() { paintList(); paintNow(); }
 
@@ -102,12 +103,13 @@
     audio.addEventListener("timeupdate", function () {
       if (!audio.duration) return;
       if (!bar.matches(":active")) bar.value = Math.round(audio.currentTime / audio.duration * 1000);
+      bar.style.setProperty("--p", (bar.value / 10) + "%");
       $(".mu-cur").textContent = t2(audio.currentTime); $(".mu-dur").textContent = t2(audio.duration);
       if ("mediaSession" in navigator && navigator.mediaSession.setPositionState) {
         try { navigator.mediaSession.setPositionState({ duration: audio.duration, position: audio.currentTime, playbackRate: 1 }); } catch (e) {}
       }
     });
-    bar.addEventListener("input", function () { if (audio.duration) audio.currentTime = bar.value / 1000 * audio.duration; });
+    bar.addEventListener("input", function () { bar.style.setProperty("--p", (bar.value / 10) + "%"); if (audio.duration) audio.currentTime = bar.value / 1000 * audio.duration; });
 
     // Lock screen / notification controls ng phone
     function session() {

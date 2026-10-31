@@ -57,6 +57,9 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-10-31 · Update screen: kusang download (0.11.29) ay hindi nag-i-install sa phone ni Bench (manual sa Chrome lang ang gumagana) → walang auto download; ang pangunahing button ay "Download new version" (Chrome), pangalawa ang "Install inside the app" (`app-update.js`, `base.css`)
 - 2026-11-01 · Music (TigoMeNote app): hindi tumutugtog, walang error → tahimik na `catch` sa MusicEngine.play(); hindi pa alam ang dahilan → `lastErr` sa musicState (`error`), toast sa user at report sa crash-fast (`kind=music`, may access/tracks) para makita sa `app_crashes`. Version 0.11.32
 - 2026-11-01 · Tigo Racing: baliktad ang ⚡ arrow (rotation.x −π/2 → nakaturo pabalik) → +π/2 at DoubleSide (`race-game.js`). Pac-Tigo/Racing HUD nasa gitna ng laro sa landscape (top 104px) → itaas-gitna habang naglalaro (`tigo.css`)
+- 2026-11-01 · Music: unang kanta lang ang tumutugtog, tahimik pagpalit → bagong AudioFocusRequest at listener bawat kanta; ang LOSS na dumarating sa lumang listener ay nagpo-pause sa bagong kanta → iisang request at listener (ginawa minsan), `pausedByFocus`, at `userPause()` para sa pindot ng user (`MusicEngine.java`, `MusicService.java`). Version 0.11.33
+- 2026-11-01 · Update: "There was a problem while parsing the package" sa "Install inside the app" → inalis na ang in-app install; "Download new version" sa Chrome lang (`app-update.js`). Version 0.11.33
+- 2026-11-01 · Chat theme: hindi nagbabago ang kulay ng sariling bubble → ang `--mc-grad` ay kinukwenta sa `:root` kaya hindi sumusunod sa `--mc-a/--mc-b` ng theme → idineklara ulit sa `.ch[data-ctheme]` (`messages.css`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

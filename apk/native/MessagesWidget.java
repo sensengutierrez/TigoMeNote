@@ -1,6 +1,8 @@
 package __PKG__;
 
+import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.os.SystemClock;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
@@ -23,16 +25,28 @@ import java.util.TimeZone;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** TigoMeNote Chat: widget ng mga message (3 pinakabagong chat, may bilang ng hindi pa nababasa).
+/** TigoMeNote Chat: Messages widget — malaking orasan (TextClock), gumagalaw na si Tigo (ViewFlipper na parang flipbook),
+ *  at maliit na speech bubble ng pinakabagong HINDI pa nababasang message ("Claire · haha sige"). Walang bago → "No new messages".
  *  Kinukuha mismo ng widget ang inbox (messages-fast "inbox") gamit ang session token na ibinigay ng app (TMNWidget.setAuth).
- *  Nag-a-update: bawat 30 minuto, kapag umalis/bumalik sa Chat app, at kapag pinindot ang ↻. Pindot sa chat = bukas ang chat na iyon. */
+ *  Nag-a-update: bawat 15 minuto (AlarmManager), kapag umalis/bumalik sa Chat app, at kapag pinindot ang ↻.
+ *  Pindot sa bubble = bukas ang chat na iyon; pindot sa orasan/Tigo = Chats. */
 public class MessagesWidget extends AppWidgetProvider {
     public static final String ACTION_REFRESH = "tmn.msgs.refresh";
     static final String PREF = "tmn_widget";
-    static final int ROWS = 3;
+    static final int ROWS = 5;   // ilang chat ang tinatandaan (para mahanap ang may bago)
 
-    @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { render(c); fetch(c, goAsync()); }
-    @Override public void onEnabled(Context c) { render(c); }
+    @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { schedule(c, true); render(c); fetch(c, goAsync()); }
+    @Override public void onEnabled(Context c) { schedule(c, true); render(c); }
+    @Override public void onDisabled(Context c) { schedule(c, false); }
+    // bawat 15 minuto (hindi ginigising ang phone; sabay sa ibang alarm para tipid sa baterya)
+    static void schedule(Context c, boolean on) {
+        try {
+            AlarmManager am = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
+            PendingIntent pi = PendingIntent.getBroadcast(c, 102, new Intent(c, MessagesWidget.class).setAction(ACTION_REFRESH), PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+            am.cancel(pi);
+            if (on) am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + AlarmManager.INTERVAL_FIFTEEN_MINUTES, AlarmManager.INTERVAL_FIFTEEN_MINUTES, pi);
+        } catch (Exception e) { }
+    }
     @Override public void onReceive(Context c, Intent i) {
         super.onReceive(c, i);
         if (ACTION_REFRESH.equals(i.getAction())) { render(c); fetch(c, goAsync()); }
@@ -117,25 +131,33 @@ public class MessagesWidget extends AppWidgetProvider {
             JSONArray chats = new JSONArray(sp.getString("chats", "[]"));
             boolean out = sp.getBoolean("out", false) || sp.getString("token", "").isEmpty();
             int total = sp.getInt("total", 0);
+            JSONObject hot = null;   // pinakabagong chat na may hindi pa nababasa (hindi naka-mute)
+            for (int k = 0; k < chats.length() && hot == null; k++) { JSONObject x = chats.getJSONObject(k); if (x.optInt("unread", 0) > 0 && !x.optBoolean("muted")) hot = x; }
             RemoteViews v = new RemoteViews(c.getPackageName(), res(c, "tmn_widget_msgs", "layout"));
-            v.setTextViewText(res(c, "tmn_m_total", "id"), total > 0 ? total + " unread" : "");
             v.setOnClickPendingIntent(res(c, "tmn_m_head", "id"), open(c, "app/messages.html", 100));
+            v.setOnClickPendingIntent(res(c, "tmn_m_tigo", "id"), open(c, "app/messages.html", 103));
             Intent r = new Intent(c, MessagesWidget.class).setAction(ACTION_REFRESH);
             v.setOnClickPendingIntent(res(c, "tmn_m_refresh", "id"), PendingIntent.getBroadcast(c, 101, r, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
-            String empty = out ? "Sign in to TigoMeNote Chat to see your messages." : chats.length() == 0 ? "No messages yet." : "";
-            v.setTextViewText(res(c, "tmn_m_empty", "id"), empty);
-            v.setViewVisibility(res(c, "tmn_m_empty", "id"), empty.isEmpty() ? View.GONE : View.VISIBLE);
-            for (int k = 0; k < ROWS; k++) {
-                int row = res(c, "tmn_m_row" + k, "id");
-                if (out || k >= chats.length()) { v.setViewVisibility(row, View.GONE); continue; }
-                JSONObject x = chats.getJSONObject(k); int un = x.optInt("unread", 0);
-                v.setViewVisibility(row, View.VISIBLE);
-                v.setTextViewText(res(c, "tmn_m_name" + k, "id"), x.optString("name"));
-                v.setTextViewText(res(c, "tmn_m_text" + k, "id"), x.optString("text").isEmpty() ? " " : x.optString("text"));
-                v.setTextViewText(res(c, "tmn_m_time" + k, "id"), when(x.optString("at")));
-                v.setTextViewText(res(c, "tmn_m_badge" + k, "id"), un > 99 ? "99+" : String.valueOf(un));
-                v.setViewVisibility(res(c, "tmn_m_badge" + k, "id"), un > 0 ? View.VISIBLE : View.GONE);
-                v.setOnClickPendingIntent(row, open(c, "app/messages.html?c=" + x.optString("id"), 110 + k));
+            v.setTextViewText(res(c, "tmn_m_total", "id"), total > 99 ? "99+ new" : total + " new");
+            v.setViewVisibility(res(c, "tmn_m_total", "id"), !out && total > 0 ? View.VISIBLE : View.GONE);
+            // si Tigo: masaya at kumakaway kapag may bagong message
+            v.setViewVisibility(res(c, "tmn_m_happy", "id"), hot != null ? View.VISIBLE : View.GONE);
+            v.setViewVisibility(res(c, "tmn_m_calm", "id"), hot != null ? View.GONE : View.VISIBLE);
+            int from = res(c, "tmn_m_from", "id"), msg = res(c, "tmn_m_msg", "id"), bub = res(c, "tmn_m_bubble", "id");
+            if (hot != null) {
+                String when = when(hot.optString("at")), txt = hot.optString("text");
+                v.setTextViewText(from, hot.optString("name") + (when.isEmpty() ? "" : " · " + when));
+                v.setViewVisibility(from, View.VISIBLE);
+                v.setTextViewText(msg, txt.isEmpty() ? "New message" : txt);
+                v.setTextColor(msg, 0xFF1B1B1F);
+                v.setInt(bub, "setBackgroundResource", res(c, "tmn_w_bubble", "drawable"));
+                v.setOnClickPendingIntent(bub, open(c, "app/messages.html?c=" + hot.optString("id"), 110));
+            } else {
+                v.setViewVisibility(from, View.GONE);
+                v.setTextViewText(msg, out ? "Sign in to TigoMeNote Chat to see new messages." : "No new messages ✨");
+                v.setTextColor(msg, 0xCCFFFFFF);
+                v.setInt(bub, "setBackgroundResource", res(c, "tmn_w_bubble_quiet", "drawable"));
+                v.setOnClickPendingIntent(bub, open(c, "app/messages.html", 111));
             }
             m.updateAppWidget(ids, v);
         } catch (Exception e) { }

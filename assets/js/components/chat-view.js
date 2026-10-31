@@ -3,7 +3,8 @@
    var v = TMN_CHAT.mount(el, chatId, { onBack, onChange })  → v.destroy()
    Server: messages-fast. Real-time: realtime.js (kung hindi konektado, nagpo-poll bawat 4 s).
    Kailangan: api.js, modal.js, realtime.js, post-queue.js (pang-compress ng photo), native-bridge.js,
-              map-view.js (mapa ng location), social-ui.js (profile, report), chat-new.js (add people) */
+              map-view.js (mapa ng location), social-ui.js (profile, report), chat-new.js (add people),
+              chat-theme.js (theme at wallpaper ng chat — pareho sa lahat ng nasa chat) */
 (function () {
   var UI = window.TMN_UI, I = window.TMN_ICON, esc = UI.esc;
   var EMOJIS = ["❤️", "😂", "😮", "😢", "🔥", "👏"];
@@ -189,6 +190,7 @@
         });
         var pend = S.msgs.filter(function (m) { return (m.pending || m.failed) && !r.messages.some(function (x) { return x.client_id && x.client_id === m.client_id; }); });
         S.msgs = Object.keys(byId).map(function (k) { return byId[k]; }).concat(pend).sort(function (a, b) { return a.at < b.at ? -1 : a.at > b.at ? 1 : 0; });
+        if (window.TMN_CHAT_THEME) TMN_CHAT_THEME.apply(root, S.chat);
         paintHead(); paintPin(); paintReq(); render(S.first ? null : "bottom"); S.first = true;
         if (!rt) startLive();
         if (opts.onChange) opts.onChange();
@@ -379,6 +381,7 @@
         if (isAdmin()) h += '<button type="button" class="btn btn-ghost btn-block" data-m="add">' + I("userPlus", "ic-sm") + "Add people</button>";
         h += '<button type="button" class="btn btn-ghost btn-block" data-m="rename">' + I("edit", "ic-sm") + "Rename group</button>";
       }
+      if (window.TMN_CHAT_THEME && c.status === "active") h += '<button type="button" class="btn btn-ghost btn-block" data-m="theme">' + I("palette", "ic-sm") + "Theme & wallpaper</button>";
       h += '<button type="button" class="btn btn-ghost btn-block" data-m="mute">' + I("bell", "ic-sm") + (c.muted ? "Unmute notifications" : "Mute notifications") + "</button>";
       if (c.kind === "dm" && o[0]) h += '<button type="button" class="btn btn-ghost btn-block" data-m="report">' + I("flag", "ic-sm") + "Report account</button>";
       if (c.kind === "group") h += '<button type="button" class="btn btn-danger btn-block" data-m="leave">' + I("logout", "ic-sm") + "Leave group</button>";
@@ -389,6 +392,7 @@
         var a = b.dataset.m;
         try {
           if (a === "profile") { sheet.close(); if (window.TMN_SOCIAL) TMN_SOCIAL.userSheet(o[0].id); }
+          if (a === "theme") { sheet.close(); TMN_CHAT_THEME.picker(id, c, function () { load(); }); }
           if (a === "report") { sheet.close(); TMN_SOCIAL.reportSheet("user", o[0].id, "account"); }
           if (a === "mute") { await TMN_API.call("messages", "mute", { id: id, on: !c.muted }); c.muted = !c.muted; sheet.close(); paintHead(); UI.toast(c.muted ? "Muted." : "Unmuted."); }
           if (a === "rename") {

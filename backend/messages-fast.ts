@@ -3,7 +3,8 @@
 // Files: index.ts + moderation.ts (text filter) — parehong folder sa deploy.
 // Actions (kailangan ng session token):
 //   inbox, unread, open, start, group, send, upload, react, pin, read, accept, decline, unsend,
-//   rename, addMembers, removeMember, leave
+//   rename, addMembers, removeMember, leave, mute, theme, wallpaper
+// Theme at wallpaper ng chat: pareho sa lahat ng nasa chat (conversations.theme / wallpaper_path, sql/093); may system message.
 // Real-time: pagkatapos ng bawat pagbabago, nagpapadala ng "ping" (walang laman ng message) sa
 //   Supabase Realtime channel na lihim (conversations.channel_key). Ang browser ang kukuha ng bago.
 // Push: sa notify-fast (action pushRaw, service key lang), sinusunod ang Messages setting, pause at sleep.
@@ -30,6 +31,8 @@ const isEmoji = (e: unknown) => typeof e === "string" && e.length <= 32 &&
 // Putulin nang hindi nahahati ang emoji (iwas "kahon"/� sa preview)
 const cut = (t: string, n: number) => { const g = Array.from(new Intl.Segmenter("en", { granularity: "grapheme" }).segment(t), (x) => x.segment); return g.length > n ? g.slice(0, n).join("") + "…" : t; };
 const PUB = "id, username, display_name, avatar_url, birthdate, status";
+// Mga theme ng chat (kapareho ng assets/js/components/chat-theme.js). null = default.
+const THEMES: Record<string, string> = { tigo: "Tigo 🧡", ocean: "Ocean 🌊", sunset: "Sunset 🌅", forest: "Forest 🌿", lavender: "Lavender 💜", candy: "Candy 🍬", night: "Night 🌙", sampaguita: "Sampaguita 🌼" };
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -226,10 +229,19 @@ async function open(p: any, me: any) {
   }
   return reply({
     ok: true,
-    chat: { id: c.id, kind: c.kind, title: c.title, channel: c.channel_key, status: m.status, role: m.role, muted: m.muted, created_by: c.created_by },
+    chat: { id: c.id, kind: c.kind, title: c.title, channel: c.channel_key, status: m.status, role: m.role, muted: m.muted, created_by: c.created_by,
+      theme: c.theme ?? null, wallpaper: await wallpaperOf(c) },
     members: members.filter((x) => x.status !== "left").map((x) => ({ ...pub(x.users), role: x.role, status: x.status, last_read_at: x.last_read_at })),
     messages: msgs, pinned: pin, more: (rows ?? []).length === PAGE,
   });
+}
+
+// Wallpaper: signed link (24 oras) + key (para hindi mag-reload ang larawan sa bawat refresh kung pareho)
+// deno-lint-ignore no-explicit-any
+async function wallpaperOf(c: any) {
+  if (!c.wallpaper_path) return null;
+  const { data } = await db.storage.from(BUCKET).createSignedUrl(c.wallpaper_path, 86400);
+  return data ? { key: c.wallpaper_path, url: data.signedUrl } : null;
 }
 
 // Simulan (o buksan ulit) ang 1:1 chat
@@ -284,7 +296,9 @@ async function upload(p: any, me: any) {
   const m = await membership(String(p.id), me);
   if (!m) return fail("Chat not found.", 404);
   if (Number(p.size) > MAX_PHOTO_BYTES) return fail("The photo is too large.", 413);
-  const path = `${m.conversation_id}/${me.id}-${Date.now().toString(36)}${rand()}.jpg`;
+  const wp = p.kind === "wallpaper";
+  if (wp && m.status !== "active") return fail("Accept the chat first.", 403);
+  const path = `${m.conversation_id}/${wp ? "wp-" : ""}${me.id}-${Date.now().toString(36)}${rand()}.jpg`;
   const { data, error } = await db.storage.from(BUCKET).createSignedUploadUrl(path);
   if (error || !data) throw error ?? new Error("signed upload failed");
   return reply({ ok: true, path, url: data.signedUrl });
@@ -502,6 +516,39 @@ async function leave(p: any, me: any) {
   }
   return reply({ ok: true });
 }
+// Theme ng chat (pareho sa lahat ng nasa chat)
+// deno-lint-ignore no-explicit-any
+async function theme(p: any, me: any) {
+  const m = await membership(String(p.id), me);
+  if (!m || m.status !== "active") return fail("Chat not found.", 404);
+  const t = p.theme == null || p.theme === "default" ? null : String(p.theme);
+  if (t !== null && !THEMES[t]) return fail("Unknown theme.");
+  if ((m.conversations.theme ?? null) === t) return reply({ ok: true, theme: t });
+  await db.from("conversations").update({ theme: t }).eq("id", m.conversation_id);
+  await system(m.conversation_id, me.id, t ? `${nameOf(me)} changed the chat theme to ${THEMES[t]}` : `${nameOf(me)} set the chat theme back to default`);
+  later(ping(m.conversations.channel_key, "meta", {}));
+  return reply({ ok: true, theme: t });
+}
+// deno-lint-ignore no-explicit-any
+async function wallpaper(p: any, me: any) {
+  const m = await membership(String(p.id), me);
+  if (!m || m.status !== "active") return fail("Chat not found.", 404);
+  const c = m.conversations;
+  let path: string | null = null;
+  if (p.path) {
+    path = String(p.path);
+    // sariling upload lang (upload kind "wallpaper") sa chat na ito
+    if (!path.startsWith(`${c.id}/wp-${me.id}-`) || !/^[0-9a-f-]{36}\/wp-[0-9a-f-]{36}-[a-z0-9]+\.jpg$/.test(path)) return fail("Invalid wallpaper.");
+    const { data: ok } = await db.storage.from(BUCKET).createSignedUrl(path, 60);
+    if (!ok) return fail("The photo didn't upload. Please try again.");
+  }
+  const old = c.wallpaper_path;
+  await db.from("conversations").update({ wallpaper_path: path }).eq("id", c.id);
+  if (old && old !== path) later(db.storage.from(BUCKET).remove([old]).then(() => {}, () => {}));
+  await system(c.id, me.id, path ? `${nameOf(me)} changed the chat wallpaper` : `${nameOf(me)} removed the chat wallpaper`);
+  later(ping(c.channel_key, "meta", {}));
+  return reply({ ok: true });
+}
 // I-mute ang chat (walang push)
 // deno-lint-ignore no-explicit-any
 async function mute(p: any, me: any) {
@@ -537,6 +584,8 @@ Deno.serve(async (req) => {
       case "removeMember": return await removeMember(p, me);
       case "leave":        return await leave(p, me);
       case "mute":         return await mute(p, me);
+      case "theme":        return await theme(p, me);
+      case "wallpaper":    return await wallpaper(p, me);
       default:             return fail("Unknown action.");
     }
   } catch (e) {

@@ -1,17 +1,16 @@
 /* TigoMeNote · app-update.js — APK lang (isinisingit ng apk/build-web.py pagkatapos ng app-mode.js)
    Kapag may mas bagong version sa tigomenote.com/app-version.json, HINDI na magagamit ang app hangga't hindi naa-update:
    lalabas ang "Download new version" + What's new → dina-download sa Chrome (gumagana sa lahat ng phone; hindi Play Store kaya walang auto-install).
-   Pangalawang paraan: "Install inside the app" → dina-download ng app mismo (may progress) → installer ng Android.
-   Kung hindi kaya (luma ang app / walang bridge): bubuksan ang download sa Chrome.
+   Inalis ang "Install inside the app" (0.11.33): "There was a problem while parsing the package" sa phone ni Bench; Chrome lang ang maaasahan.
    Chine-check: pagbukas, pagbalik sa app (resume) at bawat 30 minuto. Walang internet = hindi hinaharang. */
 (function () {
   if (!window.TMN_IN_APP) return;
-  var C = window.TMN_CONFIG, APP_ID = window.TMN_APP_ID || "main", U = window.TMNUpdate, NA = window.TMNApps;
+  var C = window.TMN_CONFIG, APP_ID = window.TMN_APP_ID || "main", NA = window.TMNApps;
   var Cap = window.Capacitor, P = (Cap && Cap.Plugins) || {};
   var URL_V = (C.apps && C.apps.remoteVersion) || "https://tigomenote.com/app-version.json";
   var NAMES = { main: "TigoMeNote", chat: "TigoMeNote Chat", tigo: "Tigo" };
   var code = function (v) { var p = String(v || "0.0.0").split(".").map(Number); return (p[0] || 0) * 1000000 + (p[1] || 0) * 1000 + (p[2] || 0); };
-  var mine = code(C.version), box = null, info = null, timer = null, notes = [];
+  var mine = code(C.version), box = null, info = null, notes = [];
   var URL_N = URL_V.replace(/app-version\.json.*$/, "whatsnew.json");
 
   function check() {
@@ -45,46 +44,17 @@
         (notes.length ? '<div class="upd-new"><b>What’s new</b>' + notes.map(function (n) {
           return '<p class="upd-v">' + n.v + "</p><ul>" + n.items.map(function (t) { return "<li>" + String(t).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }) + "</li>"; }).join("") + "</ul>";
         }).join("") + "</div>" : "") +
-        '<div class="upd-bar hidden"><i></i></div>' +
         '<p class="upd-msg small" aria-live="polite"></p>' +
         '<button type="button" class="btn btn-primary btn-lg upd-dl">⬇ Download new version</button>' +
         '<p class="upd-how faint small">Opens in Chrome. When it finishes, tap the downloaded file → Install. Your data stays.</p>' +
-        '<button type="button" class="upd-alt small upd-go">Install inside the app instead</button>' +
       "</div>";
     document.body.appendChild(box);
     document.documentElement.classList.add("upd-open");
     document.dispatchEvent(new Event("tmn:upd")); // hal. Tigo 3D: tumitigil habang nag-a-update
-    box.querySelector(".upd-go").addEventListener("click", start);
     box.querySelector(".upd-dl").addEventListener("click", function () { chrome(); msg("Downloading in Chrome… then open the file to install."); });
   }
   function msg(t) { box.querySelector(".upd-msg").textContent = t || ""; }
   function chrome() { if (NA && NA.openUrl) NA.openUrl(info.url); else location.href = info.url; }
-
-  var done = false;
-  function start() {
-    var go = box.querySelector(".upd-go");
-    if (done) { U.reopen(); msg("Tap Install on the next screen. Your data stays."); return; }
-    if (!U || !U.install) { chrome(); msg("Opening the download in Chrome…"); return; }
-    if (!U.canInstall()) {
-      msg("Allow \"Install unknown apps\" for " + NAMES[APP_ID] + ", then come back and tap Install again.");
-      U.allowInstall(); return;
-    }
-    if (!U.install(info.url)) { chrome(); msg("Opening the download in Chrome…"); return; }
-    go.disabled = true; go.textContent = "Downloading…";
-    var bar = box.querySelector(".upd-bar"), fill = bar.querySelector("i"); bar.classList.remove("hidden");
-    clearInterval(timer);
-    timer = setInterval(function () {
-      var p = U.progress();
-      if (p >= 0 && p <= 100) { fill.style.width = p + "%"; go.textContent = "Downloading… " + p + "%"; }
-      else if (p === 101) {
-        clearInterval(timer); fill.style.width = "100%"; go.disabled = false; go.textContent = "Install"; done = true;
-        msg("Tap Install on the next screen. Your data stays.");
-      } else if (p === -2) {
-        clearInterval(timer); go.disabled = false; go.textContent = "⬇ Try again"; bar.classList.add("hidden");
-        msg("Download failed. Check your internet, or download in Chrome.");
-      }
-    }, 400);
-  }
 
   // Back button: sarado ang ibang bagay, hindi ang update
   if (P.App && P.App.addListener) P.App.addListener("resume", check);

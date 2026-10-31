@@ -4,16 +4,10 @@
 .mu-head h3 { display: flex; align-items: center; gap: 8px; margin: 0; }
 .mu-note, .mu-tip, .mu-empty { margin: 0; }
 .mu-tip { display: flex; gap: 6px; align-items: flex-start; }
-.mu-now { display: grid; gap: 8px; padding: 12px; border-radius: var(--r-lg); background: var(--surface-2); }
-.mu-now-info { display: grid; text-align: center; }
 .mu-now-info b { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mu-seek { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; }
-.mu-bar { width: 100%; accent-color: var(--ink); }
 .mu-ctrls { display: flex; align-items: center; justify-content: center; gap: 10px; }
-.mu-ctrls .icon-btn { font-size: 18px; color: var(--text-2); position: relative; }
-.mu-ctrls .icon-btn.on { color: var(--accent); }
 .mu-repeat small { position: absolute; right: 4px; bottom: 2px; font-size: 9px; font-weight: 700; }
-.mu-play { width: 52px; height: 52px; border-radius: 50%; border: 0; display: grid; place-items: center; background: var(--ink); color: var(--ink-text); cursor: pointer; }
 .mu-list { list-style: none; margin: 0; padding: 0; display: grid; }
 .mu-item { display: flex; align-items: center; gap: 6px; border-top: 1px solid var(--line); }
 .mu-item:first-child { border-top: 0; }
@@ -29,3 +23,32 @@
 @keyframes mu-eq { 0%, 100% { height: 4px; } 50% { height: 16px; } }
 @media (prefers-reduced-motion: reduce) { .mu-eq i { animation: none; height: 10px; } }
 .mu-menu { display: grid; gap: 8px; }
+
+/* ---------- Now playing: sariling TigoMeNote design (pareho ang kulay sa widget ng Android) ---------- */
+.mu-now { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 6px 12px; padding: 12px 16px 14px 10px; border-radius: 24px; overflow: hidden;
+  color: #fff; background: linear-gradient(135deg, #241838 0%, #3a1e4c 55%, #5a2440 100%); box-shadow: 0 10px 28px rgba(36,24,56,.28); }
+.mu-now::after { content: ""; position: absolute; right: -40px; top: -60px; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(255,107,74,.35), transparent 70%); pointer-events: none; }
+.mu-tigo { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle, rgba(255,107,74,.32), transparent 70%); }
+.mu-tigo img { width: 96px; height: 96px; display: block; }
+.mu-main { display: contents; }
+.mu-tigo { grid-row: 1; grid-column: 1; }
+.mu-now-info { grid-row: 1; grid-column: 2; position: relative; z-index: 1; }
+.mu-seek { grid-row: 2; grid-column: 1 / -1; padding-left: 6px; position: relative; z-index: 1; }
+.mu-ctrls { grid-row: 3; grid-column: 1 / -1; position: relative; z-index: 1; }
+.mu-now-info { display: grid; text-align: left; min-width: 0; }
+.mu-now-info b { color: #fff; }
+.mu-now-info::before { content: "♪ Now playing"; font-size: 11px; font-weight: 800; letter-spacing: .02em; color: #ff8a5b; }
+.mu-now .mu-artist { color: rgba(255,255,255,.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mu-now .mu-cur, .mu-now .mu-dur { color: rgba(255,255,255,.7); }
+.mu-bar { width: 100%; height: 6px; -webkit-appearance: none; appearance: none; border-radius: 6px; cursor: pointer;
+  background: linear-gradient(90deg, #3dd6c0, #ff8a5b) 0 / var(--p, 0%) 100% no-repeat, rgba(255,255,255,.2); }
+.mu-bar::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+.mu-bar::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: #fff; }
+.mu-ctrls { justify-content: center; gap: 12px; }
+.mu-ctrls .icon-btn { font-size: 17px; color: rgba(255,255,255,.75); position: relative; width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.12); }
+.mu-ctrls .icon-btn:hover { background: rgba(255,255,255,.2); color: #fff; }
+.mu-ctrls .icon-btn.on { color: #3dd6c0; background: rgba(61,214,192,.18); }
+.mu-play { width: 50px; height: 50px; border-radius: 50%; border: 0; display: grid; place-items: center; color: #fff; cursor: pointer;
+  background: linear-gradient(135deg, #ff8a5b, #ff4f7b); box-shadow: 0 6px 16px rgba(255,79,123,.45); }
+.mu-play:active { transform: scale(.94); }
+@media (max-width: 380px) { .mu-tigo, .mu-tigo img { width: 80px; height: 80px; } .mu-ctrls { gap: 8px; } }

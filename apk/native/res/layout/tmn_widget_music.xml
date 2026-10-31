@@ -1,59 +1,116 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- TigoMeNote music widget (MusicEngine.updateWidgets): si Tigo na naka-headphones (gumagalaw kapag tumutugtog, tulog kapag naka-pause) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/tmn_w_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="14dp"
+    android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:background="@drawable/tmn_widget_bg">
-    <TextView
-        android:id="@+id/tmn_w_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:singleLine="true"
-        android:ellipsize="end"
-        android:text="My music"
-        android:textColor="#FFFFFF"
-        android:textSize="15sp"
-        android:textStyle="bold" />
-    <TextView
-        android:id="@+id/tmn_w_artist"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:singleLine="true"
-        android:ellipsize="end"
-        android:text="TigoMeNote"
-        android:textColor="#B8B8C0"
-        android:textSize="12sp" />
+    android:paddingStart="10dp"
+    android:paddingEnd="14dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp"
+    android:background="@drawable/tmn_widget_music_bg">
+    <FrameLayout
+        android:id="@+id/tmn_w_tigo"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:background="@drawable/tmn_w_tigo_bg">
+        <ViewFlipper
+            android:id="@+id/tmn_w_dance"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:autoStart="true"
+            android:flipInterval="520"
+            android:visibility="gone">
+            <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/tmn_tigo_music1" android:contentDescription="Tigo" />
+            <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/tmn_tigo_music2" android:contentDescription="Tigo" />
+            <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/tmn_tigo_music3" android:contentDescription="Tigo" />
+            <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/tmn_tigo_music2" android:contentDescription="Tigo" />
+        </ViewFlipper>
+        <ImageView
+            android:id="@+id/tmn_w_rest"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/tmn_tigo_rest"
+            android:contentDescription="Tigo" />
+    </FrameLayout>
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:gravity="center"
-        android:orientation="horizontal">
-        <ImageButton
-            android:id="@+id/tmn_w_prev"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="Previous"
-            android:src="@android:drawable/ic_media_previous" />
-        <ImageButton
-            android:id="@+id/tmn_w_play"
-            android:layout_width="56dp"
-            android:layout_height="48dp"
-            android:layout_marginStart="14dp"
-            android:layout_marginEnd="14dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="Play or pause"
-            android:src="@android:drawable/ic_media_play" />
-        <ImageButton
-            android:id="@+id/tmn_w_next"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="Next"
-            android:src="@android:drawable/ic_media_next" />
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="♪ TigoMeNote music"
+            android:textColor="#FFFF8A5B"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/tmn_w_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:text="My music"
+            android:textColor="#FFFFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/tmn_w_artist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:text="TigoMeNote"
+            android:textColor="#B3FFFFFF"
+            android:textSize="12sp" />
+        <ProgressBar
+            android:id="@+id/tmn_w_prog"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            android:layout_marginTop="7dp"
+            android:max="1000"
+            android:progress="0"
+            android:progressDrawable="@drawable/tmn_w_progress" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <ImageButton
+                android:id="@+id/tmn_w_prev"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="10dp"
+                android:scaleType="fitCenter"
+                android:background="@drawable/tmn_w_btnbg"
+                android:contentDescription="Previous"
+                android:src="@drawable/tmn_ic_prev" />
+            <ImageButton
+                android:id="@+id/tmn_w_play"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_marginStart="14dp"
+                android:layout_marginEnd="14dp"
+                android:padding="13dp"
+                android:scaleType="fitCenter"
+                android:background="@drawable/tmn_w_playbg"
+                android:contentDescription="Play or pause"
+                android:src="@drawable/tmn_ic_play" />
+            <ImageButton
+                android:id="@+id/tmn_w_next"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="10dp"
+                android:scaleType="fitCenter"
+                android:background="@drawable/tmn_w_btnbg"
+                android:contentDescription="Next"
+                android:src="@drawable/tmn_ic_next" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

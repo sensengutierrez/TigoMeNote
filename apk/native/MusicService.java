@@ -20,7 +20,7 @@ public class MusicService extends Service {
     private MusicEngine eng;
     private boolean noisyOn = false;
     private final BroadcastReceiver noisy = new BroadcastReceiver() {
-        @Override public void onReceive(Context c, Intent i) { eng.pause(); }
+        @Override public void onReceive(Context c, Intent i) { eng.userPause(); }
     };
 
     @Override public void onCreate() {
@@ -34,11 +34,11 @@ public class MusicService extends Service {
         session = new MediaSessionCompat(this, "TigoMusic");
         session.setCallback(new MediaSessionCompat.Callback() {
             @Override public void onPlay() { eng.resume(); }
-            @Override public void onPause() { eng.pause(); }
+            @Override public void onPause() { eng.userPause(); }
             @Override public void onSkipToNext() { eng.next(); }
             @Override public void onSkipToPrevious() { eng.prev(); }
             @Override public void onSeekTo(long pos) { eng.seek((int) pos); }
-            @Override public void onStop() { eng.pause(); }
+            @Override public void onStop() { eng.userPause(); }
         });
         session.setActive(true);
         eng.attach(this, session);
@@ -51,13 +51,18 @@ public class MusicService extends Service {
             if ("toggle".equals(x)) eng.toggle();
             else if ("next".equals(x)) eng.next();
             else if ("prev".equals(x)) eng.prev();
-            else if ("stop".equals(x)) eng.pause();
+            else if ("stop".equals(x)) eng.userPause();
         }
         refresh();
         return START_NOT_STICKY;
     }
 
+    // habang tumutugtog: i-update ang progress ng widget bawat 3 segundo
+    private final android.os.Handler tick = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable tickR = new Runnable() { @Override public void run() { if (eng.isPlaying()) { eng.updateProgress(); tick.postDelayed(this, 3000); } } };
+
     void refresh() {
+        tick.removeCallbacks(tickR); if (eng.isPlaying()) tick.postDelayed(tickR, 3000);
         eng.updateSession(session);
         eng.updateWidgets();
         android.app.Notification n = eng.build(this, session);
@@ -77,6 +82,7 @@ public class MusicService extends Service {
     }
 
     @Override public void onDestroy() {
+        tick.removeCallbacks(tickR);
         if (noisyOn) { try { unregisterReceiver(noisy); } catch (Exception e) { } }
         eng.detach();
         if (session != null) { session.setActive(false); session.release(); }

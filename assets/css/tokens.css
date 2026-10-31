@@ -76,3 +76,21 @@
   --shadow-lg: 0 24px 60px -20px rgba(0,0,0,.8);
   color-scheme: dark;
 }
+
+/* ---------- Appearance (Settings → Appearance, assets/js/ui-prefs.js) ---------- */
+/* Theme color: --accent (active, badge, highlight) */
+:root[data-accent="violet"] { --accent: #7b5cff; --accent-soft: #f1edff; }
+:root[data-accent="blue"]   { --accent: #2f7bff; --accent-soft: #eaf2ff; }
+:root[data-accent="mint"]   { --accent: #0fa596; --accent-soft: #e6f8f5; }
+:root[data-accent="amber"]  { --accent: #e08a00; --accent-soft: #fff5e0; }
+:root[data-accent="rose"]   { --accent: #f0457f; --accent-soft: #ffecf3; }
+:root[data-theme="dark"][data-accent="violet"] { --accent: #9a85ff; --accent-soft: #1d1830; }
+:root[data-theme="dark"][data-accent="blue"]   { --accent: #5b9bff; --accent-soft: #142035; }
+:root[data-theme="dark"][data-accent="mint"]   { --accent: #2dd4bf; --accent-soft: #0f2623; }
+:root[data-theme="dark"][data-accent="amber"]  { --accent: #ffc145; --accent-soft: #2a2110; }
+:root[data-theme="dark"][data-accent="rose"]   { --accent: #ff6fa0; --accent-soft: #2c1520; }
+/* UI style: kanto ng cards, buttons at inputs */
+:root[data-ustyle="soft"]  { --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 18px; }
+:root[data-ustyle="crisp"] { --r-sm: 3px; --r-md: 5px; --r-lg: 8px; --r-xl: 10px; --r-full: 10px; }
+/* Laki ng text sa website (sa APK: textZoom ng Android). Ang laman lang ng page, hindi ang menu; hindi sa Tigo (3D). */
+:root[data-tsize] body:not([data-page="tigo"]) #page { zoom: var(--tsize, 1); }

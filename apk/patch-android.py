@@ -81,7 +81,7 @@ public class MainActivity extends BridgeActivity {{
         super.onCreate(savedInstanceState);
         final WebView wv = getBridge().getWebView();
         WebSettings s = wv.getSettings();
-        s.setTextZoom(100);              // hindi sumusunod sa font size / zoom ng phone
+        s.setTextZoom(100);              // hindi sumusunod sa font size / zoom ng phone (ang app mismo ang may Text size: TMNNative.setTextZoom)
         s.setSupportZoom(false);
         s.setBuiltInZoomControls(false);
         s.setDisplayZoomControls(false);
@@ -260,6 +260,12 @@ public class MainActivity extends BridgeActivity {{
 
     // window.TMNNative.setBars("#ffffff", false) — kulay sa likod ng status/navigation bar + kulay ng icons (app-mode.js)
     public class Bars {{
+        // Settings → Appearance → Text size (ui-prefs.js): text lang ang lumalaki (Android textZoom), 80–140%
+        @JavascriptInterface
+        public void setTextZoom(final int pct) {{
+            final int z = Math.max(80, Math.min(140, pct));
+            runOnUiThread(() -> {{ WebSettings s = getBridge().getWebView().getSettings(); if (s.getTextZoom() != z) s.setTextZoom(z); }});
+        }}
         @JavascriptInterface
         public void setBars(final String color, final boolean dark) {{
             runOnUiThread(() -> {{

@@ -1,4 +1,13 @@
 {
+  "0.11.33": [
+    "Music: switching to the next song now plays (no more silence after the first song)",
+    "New music widget and player — Tigo dances while your music plays",
+    "Chat: new Messages widget with a clock and Tigo; your newest message pops up in a small bubble",
+    "Chat: Theme & wallpaper — pick a theme or your own photo, and everyone in the chat sees it",
+    "New Settings: Appearance with theme color, text size and UI style (preview, then Review and Save)",
+    "Sign in: say hi to Tigo",
+    "Updates now download in Chrome only (fixes \"problem while parsing the package\")"
+  ],
   "0.11.32": [
     "Chat: new Messages widget — your latest 3 chats with unread counts; tap a chat to open it",
     "Music widget is music only (in the TigoMeNote app); if a song can't play, you'll see why",
