@@ -506,3 +506,9 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench: hiwalay ang notifications ng Messenger at ng follow/like sa apps; ginawa ni Bench ang Firebase project at ang dalawang secret.
 - **Files:** `backend/push.ts`, `backend/notify-fast.ts`, `backend/safety-fast.ts`, `backend/pet-fast.ts`, `backend/daily-fast.ts`, `sql/083-push-app.sql`, `apk/add-firebase.py`, `.github/workflows/apk.yml`, `apk/main|chat/package.json`, `apk/main|chat/capacitor.config.json`, `assets/js/app-mode.js`, `assets/js/push-setup.js`, `assets/js/native-bridge.js`, `config.js` (0.11.24)
 - **Paano:** unit test ng routing at JWT (mock), test_fcm 9/9 (simulated na plugin: walang tanong pagbukas, Turn on → permission → token → subscribe app=messenger, pindot → page, walang ulit sa parehong araw), dry run ng add-firebase.py (pekeng config). Hindi pa nasubukan sa totoong phone.
+
+## 2026-10-31 · #60 Auto-download ng update + What's new
+- **Ano:** Pagbukas ng app at may bagong version, kusang nagda-download na ang APK (kung pinayagan na ang "Install unknown apps"), tapos bubukas ang installer ng Android: "Install" na lang ang pipindutin. Ang "What's new" (whatsnew.json, mula 0.11.28) ay nasa update screen. Tumitigil ang 3D ng Tigo habang bukas ang update screen. Version 0.11.29.
+- **Bakit:** Ayon kay Bench: "Hndi ba auto na ung update pag open ng apps, tapos dapat lumabas ung details ng bagong patch para makita anung bago sa new version". Hindi kayang mag-install nang tahimik ng sideload na APK (Android ang nagtatanong); sa Play Store lang iyon.
+- **Files:** `assets/js/app-update.js`, `assets/js/tigo/pet-scene.js`, `whatsnew.json`, `config.js` (0.11.29)
+- **Paano:** test_autoupd 5/5 (may permission → kusang download → Install; walang permission → hinihintay ang tap; What's new lumalabas), test_tigoupd 3/3 (kasya sa landscape, tumitigil ang 3D).

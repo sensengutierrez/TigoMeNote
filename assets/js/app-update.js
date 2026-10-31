@@ -1,6 +1,6 @@
 /* TigoMeNote · app-update.js — APK lang (isinisingit ng apk/build-web.py pagkatapos ng app-mode.js)
    Kapag may mas bagong version sa tigomenote.com/app-version.json, HINDI na magagamit ang app hangga't hindi naa-update:
-   lalabas ang "Install new version" → dina-download ng app mismo ang APK (may progress) → bubukas ang installer ng Android.
+   lalabas ang "Install new version" + What's new → KUSANG dina-download ng app ang APK (may progress) → bubukas ang installer ng Android.
    Kung hindi kaya (luma ang app / walang bridge): bubuksan ang download sa Chrome.
    Chine-check: pagbukas, pagbalik sa app (resume) at bawat 30 minuto. Walang internet = hindi hinaharang. */
 (function () {
@@ -54,6 +54,9 @@
     document.dispatchEvent(new Event("tmn:upd")); // hal. Tigo 3D: tumitigil habang nag-a-update
     box.querySelector(".upd-go").addEventListener("click", start);
     box.querySelector(".upd-alt").addEventListener("click", chrome);
+    // Auto: kusang magda-download pagbukas (kung pinayagan na ang "Install unknown apps");
+    // pagkatapos, bubukas ang installer ng Android — "Install" na lang ang pipindutin
+    if (U && U.install && U.canInstall && U.canInstall()) setTimeout(start, 600);
   }
   function msg(t) { box.querySelector(".upd-msg").textContent = t || ""; }
   function chrome() { if (NA && NA.openUrl) NA.openUrl(info.url); else location.href = info.url; }

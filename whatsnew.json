@@ -1,4 +1,8 @@
 {
+  "0.11.29": [
+    "Updates start downloading by themselves when you open the app — just tap Install",
+    "Tigo pauses the 3D while updating, so the app doesn't close during the download"
+  ],
   "0.11.28": [
     "Update screen: fits small / landscape screens and shows what's new",
     "Tigo: fewer force-closes (the app now reopens the screen instead of closing)",
