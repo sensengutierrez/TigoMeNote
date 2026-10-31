@@ -382,9 +382,9 @@
   }
   async function openGames() {
     var g = await mod("games-ui");
-    var m = TMN_MODAL.open({ title: "Games", size: "sm", cls: "modal-sheet", body: g.gamesNode(function (id) { m.close(); playGame(id); }) });
+    var m = TMN_MODAL.open({ title: "Games", size: "sm", cls: "modal-sheet", body: g.gamesNode(function (id, opt) { m.close(); playGame(id, opt); }) });
   }
-  async function playGame(kind) {
+  async function playGame(kind, opt) {
     if (!sc) { toast("Games need 3D (WebGL) on this device."); return; }
     if (playing) return;
     var p = live();
@@ -397,7 +397,7 @@
     $("stage").scrollIntoView({ behavior: "smooth", block: "center" });
     var g = await mod("games-ui");
     if (talk) talk.idle(false);
-    var res = await g.runGame(kind, { sc: sc, stage: $("stage"), voice: voice, seconds: kind === "coins" ? Number($("stage").dataset.rush) || 30 : undefined, // data-rush = mas maikli sa tests
+    var res = await g.runGame(kind, { sc: sc, stage: $("stage"), voice: voice, seconds: kind === "coins" ? Number($("stage").dataset.rush) || 30 : undefined, track: opt && opt.track, // data-rush = mas maikli sa tests
       onJump: function (fn) { gameJump = fn; } });
     gameJump = null; playing = false; if (talk) talk.idle(true);
     say(res.win || res.place === 1 || res.score >= 10 ? "win" : "lose");

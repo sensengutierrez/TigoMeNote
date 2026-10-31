@@ -1,0 +1,21 @@
+-- TigoMeNote · 092 · vault sync: #63 messages widget, race, music — record lang; napatakbo na
+insert into brain_notes (title, body, tags, updated_by) values ($v$Change log$v$, '', '{}', 'claude') on conflict (lower(title)) do update set body = replace(brain_notes.body, $v$- **Paano:** test_v31 14/14 (folder sa itaas, lumulutang na bar, long press → options → Schedule, Chat music card, Tigo push register lang kung may Firebase, update walang auto download at kasya sa landscape), gallery bar sa landscape 844×390 walang patong. Hindi pa nasubukan sa totoong phone.
+$v$, $v$- **Paano:** test_v31 14/14 (folder sa itaas, lumulutang na bar, long press → options → Schedule, Chat music card, Tigo push register lang kung may Firebase, update walang auto download at kasya sa landscape), gallery bar sa landscape 844×390 walang patong. Hindi pa nasubukan sa totoong phone.
+
+## 2026-11-01 · #63 Messages widget (Chat), race tracks at pedals, music error report
+- **Ano:**
+  - Messages widget (Chat app lang): 3 pinakabagong chat, pangalan, huling message, oras at unread; pindot = bukas ang chat (`tmn_url` → MainActivity.openFromIntent); ↻ = refresh. Ang widget mismo ang kumukuha ng inbox (messages-fast) gamit ang token mula sa `TMNWidget.setAuth` (`widget-sync.js`); update bawat 30 min, pag-alis sa app, at ↻. Music widget: sa TigoMeNote lang (music lang).
+  - Tigo Racing: pili ng track (Easy loop / Classic / Twisty hills, iba ang lapad at bilis ng kalaban), Brake (hawak) at Turbo (6 s na hintay, bilog na napupuno) na pedal, tulong sa pagliko (sumusunod sa daan kapag walang liko), tamang direksyon ng ⚡ arrow.
+  - HUD ng laro nasa itaas-gitna sa landscape. Music: ipinapakita at nire-report kung bakit hindi tumugtog.
+  - Version 0.11.32.
+- **Bakit:** Ayon kay Bench: "di ng play ung music", "ung life at score nasa badang gitna", "ung race baliktad ung arrow, mahirap ung race dapat me pedal ng stop at turbo… me pag pipiliaan ng race track", "ibalik mo ung widget ng message, pero make it real na messages lang. At ung widget ng music make sure music lang".
+- **Files:** `apk/native/MessagesWidget.java`, `apk/native/res/layout/tmn_widget_msgs.xml`, `apk/native/res/xml/tmn_widget_msgs_info.xml`, `apk/native/res/drawable/tmn_badge_bg.xml`, `apk/native/res/drawable/tmn_widget_row.xml`, `apk/native/MusicEngine.java`, `apk/patch-android.py`, `apk/build-web.py`, `assets/js/widget-sync.js`, `assets/js/components/music-native.js`, `assets/js/tigo/race-game.js`, `assets/js/tigo/games-ui.js`, `assets/js/pages/tigo.js`, `assets/css/pages/tigo.css`, `whatsnew.json`, `config.js` (0.11.32)
+- **Paano:** test_v32 9/9 (HUD sa itaas at hindi tumatama sa pangalan/✕, 3 track, pedals hindi tumatakip sa jump/joystick sa landscape at portrait, turbo cooldown, widget-sync token + refresh). Java: walang syntax error (javac); Chat manifest: MessagesWidget lang, walang MusicWidget. Hindi pa nasubukan sa totoong phone (widget, music).
+$v$), updated_by = 'claude', updated_at = now();
+insert into brain_notes (title, body, tags, updated_by) values ($v$Fix log$v$, '', '{}', 'claude') on conflict (lower(title)) do update set body = replace(brain_notes.body, $v$- 2026-10-31 · Update screen: kusang download (0.11.29) ay hindi nag-i-install sa phone ni Bench (manual sa Chrome lang ang gumagana) → walang auto download; ang pangunahing button ay "Download new version" (Chrome), pangalawa ang "Install inside the app" (`app-update.js`, `base.css`)
+
+$v$, $v$- 2026-10-31 · Update screen: kusang download (0.11.29) ay hindi nag-i-install sa phone ni Bench (manual sa Chrome lang ang gumagana) → walang auto download; ang pangunahing button ay "Download new version" (Chrome), pangalawa ang "Install inside the app" (`app-update.js`, `base.css`)
+- 2026-11-01 · Music (TigoMeNote app): hindi tumutugtog, walang error → tahimik na `catch` sa MusicEngine.play(); hindi pa alam ang dahilan → `lastErr` sa musicState (`error`), toast sa user at report sa crash-fast (`kind=music`, may access/tracks) para makita sa `app_crashes`. Version 0.11.32
+- 2026-11-01 · Tigo Racing: baliktad ang ⚡ arrow (rotation.x −π/2 → nakaturo pabalik) → +π/2 at DoubleSide (`race-game.js`). Pac-Tigo/Racing HUD nasa gitna ng laro sa landscape (top 104px) → itaas-gitna habang naglalaro (`tigo.css`)
+
+$v$), updated_by = 'claude', updated_at = now();

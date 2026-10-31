@@ -1,17 +1,28 @@
 /* TigoMeNote · tigo/race-game.js — "Tigo Racing": 3 lap sa paikot-ikot na track laban sa 3 Tigo (computer)
    import { startRace } from "./race-game.js"
-   const g = startRace(sc, { voice, onHud({ lap, laps, place, coins }), onEnd({ score, place, coins }) })   g.go() · g.stop()
-   Kontrol: kusang umaandar; kaliwa/kanan (A D / ← → / joystick / swipe) = liko, S / ↓ = preno, Space = talon.
+   const g = startRace(sc, { track, voice, onHud({ lap, laps, place, coins, turbo }), onEnd({ score, place, coins }) })
+   g.go() · g.stop() · g.brake(true|false) · g.turbo() · g.jump()
+   Track: "easy" (bilog, mabagal ang kalaban) · "classic" · "twisty" (paliko-liko, mabilis ang kalaban) — TRACKS sa ibaba.
+   Kontrol: kusang umaandar; kaliwa/kanan (A D / ← → / joystick / swipe) = liko (may tulong para manatili sa daan),
+   S / ↓ o ang Brake pedal = preno, Turbo pedal = bilis (may hintay bago ulit), Space = talon.
    ⚡ boost pad = bilis sandali. Coins sa daan. Coins = nakuha + bonus ayon sa puwesto (1st 15, 2nd 10, 3rd 6, 4th 3). */
 import * as THREE from "../../vendor/three/three.module.min.js";
 import { RoundedBoxGeometry } from "../../vendor/three/RoundedBoxGeometry.js";
 import { createTigo } from "./pet-model.js";
 
-const LAPS = 3, W = 2.3, MAX = 7.2;
-const PTS = [[0, -7.5], [6, -6.5], [8.5, -1.5], [5, 2.5], [7, 7], [1, 8.5], [-5, 6.5], [-4.5, 1.5], [-8.5, -2], [-6, -7]];
+const LAPS = 3, MAX = 7.2, TURBO_WAIT = 6;
+export const TRACKS = {
+  easy: { name: "Easy loop", icon: "🟢", text: "Wide, round track. Slower rivals.", w: 3.0, rival: 0.86,
+    pts: [[0, -8], [6.5, -6], [8.5, 0], [6.5, 6], [0, 8], [-6.5, 6], [-8.5, 0], [-6.5, -6]] },
+  classic: { name: "Classic", icon: "🟡", text: "Curves and a hairpin.", w: 2.3, rival: 1,
+    pts: [[0, -7.5], [6, -6.5], [8.5, -1.5], [5, 2.5], [7, 7], [1, 8.5], [-5, 6.5], [-4.5, 1.5], [-8.5, -2], [-6, -7]] },
+  twisty: { name: "Twisty hills", icon: "🔴", text: "Zig-zags and tight turns. Fast rivals.", w: 2.2, rival: 1.08,
+    pts: [[0, -9], [5, -8], [9, -5], [6, -2], [9.5, 2], [7, 7], [2.5, 5], [0, 9.5], [-4, 7], [-8, 8], [-9.5, 3], [-5, 1], [-9, -3], [-7, -8]] },
+};
 const ORD = ["1st", "2nd", "3rd", "4th"], BONUS = [15, 10, 6, 3];
 
-export function startRace(sc, { voice, onHud, onEnd, seconds = 150 } = {}) {
+export function startRace(sc, { track = "easy", voice, onHud, onEnd, seconds = 150 } = {}) {
+  const TR = TRACKS[track] || TRACKS.easy, W = TR.w, PTS = TR.pts;
   const world = new THREE.Group(); sc.scene.add(world);
   const own = []; const keep = (x) => { own.push(x); return x; };
   const curve = new THREE.CatmullRomCurve3(PTS.map(([x, z]) => new THREE.Vector3(x, 0, z)), true, "catmullrom", 0.5);
@@ -56,12 +67,13 @@ export function startRace(sc, { voice, onHud, onEnd, seconds = 150 } = {}) {
     const a = new THREE.Mesh(tg, trunk); a.position.set(x, 0.3, z); const b = new THREE.Mesh(lg, leafM); b.position.set(x, 1.2, z); a.castShadow = b.castShadow = true; world.add(a, b);
   }
   // boost pads
-  const boostM = keep(new THREE.MeshStandardMaterial({ color: 0x40e0ff, emissive: 0x00b8ff, emissiveIntensity: 0.9, transparent: true, opacity: 0.9 }));
+  const boostM = keep(new THREE.MeshStandardMaterial({ color: 0x40e0ff, emissive: 0x00b8ff, emissiveIntensity: 0.9, transparent: true, opacity: 0.9, side: THREE.DoubleSide }));
   const arrow = new THREE.Shape(); arrow.moveTo(-0.35, -0.3); arrow.lineTo(0, 0.05); arrow.lineTo(0.35, -0.3); arrow.lineTo(0.35, 0); arrow.lineTo(0, 0.35); arrow.lineTo(-0.35, 0); arrow.closePath();
   const ag = keep(new THREE.ShapeGeometry(arrow));
   const boosts = [0.18, 0.47, 0.76].map((t) => {
     const i = at(t), g = new THREE.Group(); g.position.set(P[i].x, 0.04, P[i].z); g.rotation.y = Math.atan2(Tn[i].x, Tn[i].z);
-    [0, 0.45].forEach((z) => { const m = new THREE.Mesh(ag, boostM); m.rotation.x = -Math.PI / 2; m.position.z = z; g.add(m); });
+    // +π/2: ang dulo ng arrow ay nakaturo sa direksyon ng takbo (dati ay pabalik)
+    [0, 0.45].forEach((z) => { const m = new THREE.Mesh(ag, boostM); m.rotation.x = Math.PI / 2; m.position.z = z; g.add(m); });
     world.add(g); return { t, i };
   });
   // coins
@@ -92,11 +104,11 @@ export function startRace(sc, { voice, onHud, onEnd, seconds = 150 } = {}) {
   const T = sc.main; me.body.add(T.group); T.group.position.set(0, 0.28, -0.12); T.group.scale.setScalar(0.36); T.group.rotation.set(0, 0, 0); T.face(0);
   const rivals = [["amber", 0x2f6fde, "cap"], ["sky", 0x7b5cff, "crown"], ["lilac", 0x2bb3a3, "bow"]].map(([col, kc, hat], k) => {
     const kk = kart(kc), t = createTigo({ color: col, gear: hat }); kk.body.add(t.group); t.group.position.set(0, 0.28, -0.12); t.group.scale.setScalar(0.36);
-    return { ...kk, tigo: t, t: [0.997, 0.975, 0.975][k], lane: [-0.55, 0.55, -0.55][k], lap: -1, base: 6.3 + k * 0.25, ph: Math.random() * 6, hop: 0 };
+    return { ...kk, tigo: t, t: [0.997, 0.975, 0.975][k], lane: [-0.55, 0.55, -0.55][k], lap: -1, base: (6.3 + k * 0.25) * TR.rival, ph: Math.random() * 6, hop: 0 };
   });
   // si Tigo: nasa likod ng start line
   const i0 = at(0.997);
-  const st = { x: P[i0].x + nrm(i0).x * 0.55, z: P[i0].z + nrm(i0).z * 0.55, h: Math.atan2(Tn[i0].x, Tn[i0].z), v: 0, t: 0.997, lap: -1, half: true, boost: 0, hop: 0, coins: 0 };
+  const st = { x: P[i0].x + nrm(i0).x * 0.55, z: P[i0].z + nrm(i0).z * 0.55, h: Math.atan2(Tn[i0].x, Tn[i0].z), v: 0, t: 0.997, lap: -1, half: true, boost: 0, hop: 0, coins: 0, brake: false, turboWait: 0 };
   let left = seconds, done = false, running = false, finishPlace = 0;
 
   function nearest(x, z, guess) {
@@ -110,7 +122,7 @@ export function startRace(sc, { voice, onHud, onEnd, seconds = 150 } = {}) {
     const mine = progress(st.lap, st.t);
     return 1 + rivals.filter((r) => progress(r.lap, r.t) > mine).length;
   }
-  function hud() { onHud && onHud({ lap: Math.max(1, Math.min(LAPS, st.lap + 1)), laps: LAPS, place: ORD[place() - 1], coins: st.coins, time: Math.max(0, Math.ceil(left)) }); }
+  function hud() { onHud && onHud({ lap: Math.max(1, Math.min(LAPS, st.lap + 1)), laps: LAPS, place: ORD[place() - 1], coins: st.coins, time: Math.max(0, Math.ceil(left)), turbo: 1 - st.turboWait / TURBO_WAIT }); }
 
   function tick(dt, t) {
     if (done) return;
@@ -120,9 +132,18 @@ export function startRace(sc, { voice, onHud, onEnd, seconds = 150 } = {}) {
     const inp = sc.input ? sc.input() : { x: 0, z: 0 };
     const nr = nearest(st.x, st.z, guessI); guessI = nr.i;
     const off = nr.d > W / 2 + 0.1;
-    const top = (off ? 3.6 : MAX) * (st.boost > 0 ? 1.45 : 1) * (inp.z > 0.4 ? 0.4 : 1);
-    st.v += (top - st.v) * Math.min(1, dt * (st.v < top ? 1.6 : 3));
-    st.h -= inp.x * dt * 2.4 * Math.min(1, 0.35 + st.v / MAX);
+    const braking = st.brake || inp.z > 0.4;
+    const top = (off ? 3.6 : MAX) * (st.boost > 0 ? 1.45 : 1) * (braking ? 0.3 : 1);
+    st.v += (top - st.v) * Math.min(1, dt * (st.v < top ? 1.6 : braking ? 5 : 3));
+    st.h -= inp.x * dt * 2.6 * Math.min(1, 0.45 + st.v / MAX);
+    // tulong sa pagliko: kapag hindi ka lumiliko, unti-unting sumusunod sa daan (mas madali sa phone)
+    if (Math.abs(inp.x) < 0.15) {
+      const want = Math.atan2(Tn[nr.i].x, Tn[nr.i].z); let dh = want - st.h;
+      dh = Math.atan2(Math.sin(dh), Math.cos(dh));
+      const n = nrm(nr.i), side = (st.x - P[nr.i].x) * n.x + (st.z - P[nr.i].z) * n.z; // + = nasa kaliwa ng gitna
+      st.h += (dh - side * 0.12) * Math.min(1, dt * (off ? 2.6 : 1.5));
+    }
+    if (st.turboWait > 0) st.turboWait = Math.max(0, st.turboWait - dt);
     st.x += Math.sin(st.h) * st.v * dt; st.z += Math.cos(st.h) * st.v * dt;
     if (nr.d > W / 2 + 2.2) { const p = P[nr.i]; st.x += (p.x - st.x) * 0.08; st.z += (p.z - st.z) * 0.08; }
     if (st.boost > 0) st.boost -= dt;
@@ -196,6 +217,8 @@ export function startRace(sc, { voice, onHud, onEnd, seconds = 150 } = {}) {
   return {
     go() { running = true; },
     jump() { if (st.hop <= 0) { st.hop = 0.7; voice && voice.sfx("jump"); } },
+    brake(on) { st.brake = !!on; },
+    turbo() { if (!running || done || st.turboWait > 0) return false; st.boost = 1.8; st.turboWait = TURBO_WAIT; voice && voice.sfx("power"); return true; },
     stop() { finish(); },
   };
 }

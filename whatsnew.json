@@ -1,4 +1,10 @@
 {
+  "0.11.32": [
+    "Chat: new Messages widget — your latest 3 chats with unread counts; tap a chat to open it",
+    "Music widget is music only (in the TigoMeNote app); if a song can't play, you'll see why",
+    "Tigo Racing: choose a track (Easy loop, Classic, Twisty hills), Brake and Turbo pedals, easier steering, boost arrows now point forward",
+    "Pac-Tigo and Racing: lives, score and time moved to the top so they don't cover the game"
+  ],
   "0.11.31": [
     "Tigo no longer force-closes on open",
     "Gallery: tapping a phone folder opens it at the top; press and hold a photo for Post now / Schedule / Save",

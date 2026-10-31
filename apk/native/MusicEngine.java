@@ -56,6 +56,7 @@ public final class MusicEngine {
     private MusicService service;
     private AudioManager am;
     private AudioFocusRequest focusReq;
+    private String lastErr = "";   // bakit hindi tumugtog (ipinapakita at nire-report ng music-native.js)
 
     private MusicEngine(Context c) {
         ctx = c; am = (AudioManager) c.getSystemService(Context.AUDIO_SERVICE);
@@ -153,10 +154,11 @@ public final class MusicEngine {
             mp.setWakeMode(ctx, android.os.PowerManager.PARTIAL_WAKE_LOCK);
             mp.setDataSource(ctx, android.net.Uri.parse(t.uri)); mp.prepare();
             mp.setOnCompletionListener(m -> onDone());
-            mp.setOnErrorListener((m, w, e) -> { onDone(); return true; });
+            mp.setOnErrorListener((m, w, e) -> { lastErr = "MediaPlayer error " + w + "/" + e; onDone(); return true; });
             focus();
             mp.start();
-        } catch (Exception e) { stopPlayer(); idx = -1; }
+            lastErr = "";
+        } catch (Exception e) { lastErr = e.getClass().getSimpleName() + ": " + e.getMessage() + " · uri=" + t.uri; stopPlayer(); idx = -1; }
         ensureService(); changed();
     }
     private void onDone() {
@@ -177,7 +179,12 @@ public final class MusicEngine {
     public synchronized void next() { int n = nextIndex(1); if (n >= 0) play(n); }
     public synchronized void prev() { if (mp != null && mp.getCurrentPosition() > 3000) { mp.seekTo(0); changed(); return; } int n = nextIndex(-1); if (n >= 0) play(n); }
     public synchronized void pause() { if (mp != null && mp.isPlaying()) { mp.pause(); changed(); } }
-    public synchronized void resume() { if (mp != null && !mp.isPlaying()) { focus(); mp.start(); ensureService(); changed(); } }
+    public synchronized void resume() {
+        if (mp != null && !mp.isPlaying()) {
+            try { focus(); mp.start(); lastErr = ""; } catch (Exception e) { lastErr = "resume: " + e; stopPlayer(); play(idx >= 0 ? idx : 0); return; }
+            ensureService(); changed();
+        }
+    }
     public synchronized void toggle() {
         if (mp == null) { if (!tracks.isEmpty()) play(idx >= 0 ? idx : 0); return; }
         if (mp.isPlaying()) pause(); else resume();
@@ -192,7 +199,7 @@ public final class MusicEngine {
         try {
             Track t = cur();
             return new JSONObject().put("id", t != null ? t.id : "").put("playing", isPlaying()).put("active", hasTrack())
-                .put("pos", pos()).put("dur", dur()).put("shuffle", shuffle).put("repeat", repeat);
+                .put("pos", pos()).put("dur", dur()).put("shuffle", shuffle).put("repeat", repeat).put("error", lastErr).put("count", tracks.size());
         } catch (Exception e) { return new JSONObject(); }
     }
 

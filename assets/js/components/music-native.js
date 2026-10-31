@@ -39,7 +39,7 @@
       '<button type="button" class="btn btn-ghost btn-sm mu-access hidden">Show songs added in my other TigoMeNote app</button>' +
       '<ol class="mu-list"></ol>' +
       '<p class="faint small mu-empty">Add MP3 or other songs from your phone to make your playlist.</p>' +
-      '<p class="faint small mu-tip">' + I("info", "ic-sm") + " Keeps playing on every page, when you minimize and when the phone is locked. Long-press your home screen → Widgets → Tigo music to add the player widget.</p>";
+      '<p class="faint small mu-tip">' + I("info", "ic-sm") + " Keeps playing on every page, when you minimize and when the phone is locked. Long-press your home screen → Widgets → TigoMeNote music to add the player widget.</p>";
     var $ = function (s) { return el.querySelector(s); };
     var list = $(".mu-list"), bar = $(".mu-bar");
 
@@ -90,12 +90,23 @@
     bar.addEventListener("input", function () { seeking = true; });
     bar.addEventListener("change", function () { seeking = false; if (st.dur) N.musicSeek({ ms: Math.round(bar.value / 1000 * st.dur) }).then(poll); });
 
-    async function act(fn) { try { await fn(); } catch (e) {} await poll(); await refresh(); }
+    // Kapag hindi tumugtog: sabihin sa user at i-report (crash-fast, isang beses bawat error) para maayos
+    var told = "";
+    function checkErr(where) {
+      if (!st.error || st.playing || st.error === told) return;
+      told = st.error;
+      UI.toast("Couldn't play this song. Try another song, or remove and add it again.", 4500);
+      try {
+        if (window.TMN_API && TMN_CONFIG.fn && TMN_CONFIG.fn.crash) TMN_API.call("crash", "report", { app: window.TMN_APP_ID || "main", version: TMN_CONFIG.version,
+          report: "kind=music\nwhere=" + where + "\nerror=" + st.error + "\naccess=" + access + "\ntracks=" + tracks.length + "\nua=" + navigator.userAgent }).catch(function () {});
+      } catch (e) {}
+    }
+    async function act(fn, where) { try { await fn(); } catch (e) { st.error = "plugin: " + (e && e.message || e); } await poll(); await refresh(); setTimeout(function () { poll().then(function () { checkErr(where || "button"); }); }, 900); }
     el.addEventListener("click", function (e) {
       var b = e.target.closest("button"); if (!b) return;
       if (b.classList.contains("mu-addbtn")) return add();
       if (b.classList.contains("mu-access")) { N.musicRequest().then(refresh, refresh); return; }
-      if (b.classList.contains("mu-play")) return act(function () { return N.musicToggle(); });
+      if (b.classList.contains("mu-play")) return act(function () { return N.musicToggle(); }, "play button");
       if (b.classList.contains("mu-next")) return act(function () { return N.musicNext(); });
       if (b.classList.contains("mu-prev")) return act(function () { return N.musicPrev(); });
       if (b.classList.contains("mu-shuffle")) return act(function () { return N.musicSet({ shuffle: !st.shuffle }); });
@@ -106,7 +117,7 @@
       }
       var li = b.closest(".mu-item"); if (!li) return;
       var t = tracks[Number(li.dataset.i)]; if (!t) return;
-      if (b.dataset.a === "play") return act(function () { return t.id === st.id ? N.musicToggle() : N.musicPlay({ id: t.id }); });
+      if (b.dataset.a === "play") return act(function () { return t.id === st.id ? N.musicToggle() : N.musicPlay({ id: t.id }); }, "song row");
       if (b.dataset.a === "more") menu(t, Number(li.dataset.i));
     });
 

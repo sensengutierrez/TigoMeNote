@@ -101,6 +101,8 @@ public class MainActivity extends BridgeActivity {{
         wv.addJavascriptInterface(new Apps(), "TMNApps");
         wv.addJavascriptInterface(new Update(), "TMNUpdate");
         wv.addJavascriptInterface(new Crash(), "TMNCrash");
+        wv.addJavascriptInterface(new Widget(), "TMNWidget");
+        openFromIntent(getIntent());
         // Kapag namatay ang WebView (kulang sa memory, hal. 3D game): huwag i-force close ang app — buksan ulit ang screen (hanggang 3 beses kada minuto)
         getBridge().setWebViewClient(new BridgeWebViewClient(getBridge()) {{
             @Override
@@ -219,6 +221,29 @@ public class MainActivity extends BridgeActivity {{
             w.write(head + (body.length() > 6000 ? body.substring(0, 6000) : body) + "\\n---\\n"); w.close();
         }} catch (Throwable x) {{ }}
     }}
+    // Galing sa widget (o notification): extra "tmn_url" = page sa loob ng app (hal. app/messages.html?c=<id>)
+    @Override
+    protected void onNewIntent(Intent intent) {{ super.onNewIntent(intent); openFromIntent(intent); }}
+    private void openFromIntent(Intent i) {{
+        if (i == null) return;
+        String u = i.getStringExtra("tmn_url");
+        if (u == null || u.isEmpty() || u.contains(":") || u.contains("..")) return;
+        i.removeExtra("tmn_url");
+        final String full = getBridge().getLocalUrl() + "/" + u.replaceFirst("^/+", "");
+        final WebView w = getBridge().getWebView();
+        w.postDelayed(() -> w.loadUrl(full), 400);
+    }}
+    // window.TMNWidget.setAuth(token, inboxUrl) · refresh() — para sa Messages widget (Chat app)
+    public class Widget {{
+        @JavascriptInterface
+        public void setAuth(String token, String url) {{
+            getSharedPreferences("tmn_widget", MODE_PRIVATE).edit().putString("token", token == null ? "" : token).putString("url", url == null ? "" : url).apply();
+        }}
+        @JavascriptInterface
+        public void refresh() {{
+            try {{ sendBroadcast(new Intent(MainActivity.this, MessagesWidget.class).setAction(MessagesWidget.ACTION_REFRESH)); }} catch (Exception e) {{ }}
+        }}
+    }}
     // window.TMNCrash.take() → huling crash report (text) at binubura; "" kung wala
     public class Crash {{
         @JavascriptInterface
@@ -250,14 +275,14 @@ public class MainActivity extends BridgeActivity {{
 
 # 2a) Native: music player (service, notification, lock screen, widget) at Gallery ng phone — apk/native/
 jdir = os.path.dirname(java)
-for f in ("MusicEngine.java", "MusicService.java", "MusicWidget.java", "UploadKeepService.java", "TmnNative.java"):
+for f in ("MusicEngine.java", "MusicService.java", "MusicWidget.java", "MessagesWidget.java", "UploadKeepService.java", "TmnNative.java"):
     open(os.path.join(jdir, f), "w").write(open(os.path.join(ROOT, "apk/native", f)).read().replace("__PKG__", pkg))
 nres = os.path.join(ROOT, "apk/native/res")
 for d in os.listdir(nres):
     os.makedirs(os.path.join(res, d), exist_ok=True)
     for f in os.listdir(os.path.join(nres, d)): shutil.copy(os.path.join(nres, d, f), os.path.join(res, d, f))
 os.makedirs(os.path.join(res, "values"), exist_ok=True)
-open(os.path.join(res, "values", "tmn_widget.xml"), "w").write('<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <string name="tmn_widget_desc">Music player: previous, play/pause, next</string>\n</resources>\n')
+open(os.path.join(res, "values", "tmn_widget.xml"), "w").write('<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <string name="tmn_widget_desc">Music player: previous, play/pause, next</string>\n    <string name="tmn_widget_msgs_desc">Your latest chats and unread messages</string>\n</resources>\n')
 gr = os.path.join(AND, "app/build.gradle"); g0 = open(gr).read()
 if "androidx.media:media" not in g0:
     g0 = g0.replace("dependencies {", 'dependencies {\n    implementation "androidx.media:media:1.7.0"', 1)
@@ -301,6 +326,13 @@ if "<queries>" not in s: s = s.replace("</manifest>", add + "</manifest>", 1)
 if "MusicService" not in s:
     s = s.replace("</application>", f'''    <service android:name=".MusicService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
         <service android:name=".UploadKeepService" android:exported="false" android:foregroundServiceType="dataSync" />
+    </application>''', 1)
+# Messages widget: sa TigoMeNote Chat lang (MessagesWidget.java — totoong messages galing sa server)
+if app == "chat" and ".MessagesWidget" not in s:
+    s = s.replace("</application>", '''    <receiver android:name=".MessagesWidget" android:exported="false" android:label="TigoMeNote messages">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/tmn_widget_msgs_info" />
+        </receiver>
     </application>''', 1)
 # Music widget: sa TigoMeNote (main) lang — iisang music player; ang Chat ay para sa messages
 if app == "main" and ".MusicWidget" not in s:

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TigoMeNote Chat: widget ng messages (MessagesWidget.java) — 3 pinakabagong chat -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@drawable/tmn_widget_bg">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <LinearLayout
+            android:id="@+id/tmn_m_head"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Chats"
+                android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold" />
+            <TextView android:id="@+id/tmn_m_total" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginStart="8dp" android:textColor="#4FC3F7" android:textSize="12sp" android:textStyle="bold" />
+        </LinearLayout>
+        <ImageButton
+            android:id="@+id/tmn_m_refresh"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="Refresh"
+            android:src="@android:drawable/ic_popup_sync" />
+    </LinearLayout>
+    <TextView
+        android:id="@+id/tmn_m_empty"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:textColor="#B8B8C0"
+        android:textSize="13sp"
+        android:visibility="gone" />
+    <LinearLayout
+        android:id="@+id/tmn_m_row0"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:background="@drawable/tmn_widget_row">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView android:id="@+id/tmn_m_name0" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:singleLine="true" android:ellipsize="end" android:textColor="#FFFFFF" android:textSize="14sp" android:textStyle="bold" />
+            <TextView android:id="@+id/tmn_m_text0" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:singleLine="true" android:ellipsize="end" android:textColor="#B8B8C0" android:textSize="12.5sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:gravity="end"
+            android:orientation="vertical">
+            <TextView android:id="@+id/tmn_m_time0" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textColor="#9A9AA6" android:textSize="11sp" />
+            <TextView android:id="@+id/tmn_m_badge0" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="3dp" android:minWidth="20dp" android:gravity="center" android:paddingStart="6dp" android:paddingEnd="6dp"
+                android:background="@drawable/tmn_badge_bg" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/tmn_m_row1"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:background="@drawable/tmn_widget_row">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView android:id="@+id/tmn_m_name1" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:singleLine="true" android:ellipsize="end" android:textColor="#FFFFFF" android:textSize="14sp" android:textStyle="bold" />
+            <TextView android:id="@+id/tmn_m_text1" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:singleLine="true" android:ellipsize="end" android:textColor="#B8B8C0" android:textSize="12.5sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:gravity="end"
+            android:orientation="vertical">
+            <TextView android:id="@+id/tmn_m_time1" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textColor="#9A9AA6" android:textSize="11sp" />
+            <TextView android:id="@+id/tmn_m_badge1" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="3dp" android:minWidth="20dp" android:gravity="center" android:paddingStart="6dp" android:paddingEnd="6dp"
+                android:background="@drawable/tmn_badge_bg" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/tmn_m_row2"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:background="@drawable/tmn_widget_row">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <TextView android:id="@+id/tmn_m_name2" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:singleLine="true" android:ellipsize="end" android:textColor="#FFFFFF" android:textSize="14sp" android:textStyle="bold" />
+            <TextView android:id="@+id/tmn_m_text2" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:singleLine="true" android:ellipsize="end" android:textColor="#B8B8C0" android:textSize="12.5sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:gravity="end"
+            android:orientation="vertical">
+            <TextView android:id="@+id/tmn_m_time2" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textColor="#9A9AA6" android:textSize="11sp" />
+            <TextView android:id="@+id/tmn_m_badge2" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="3dp" android:minWidth="20dp" android:gravity="center" android:paddingStart="6dp" android:paddingEnd="6dp"
+                android:background="@drawable/tmn_badge_bg" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
