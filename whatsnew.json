@@ -1,4 +1,11 @@
 {
+  "0.11.31": [
+    "Tigo no longer force-closes on open",
+    "Gallery: tapping a phone folder opens it at the top; press and hold a photo for Post now / Schedule / Save",
+    "Gallery: Post and Schedule stay at the bottom while photos are selected",
+    "Music: one player and one widget, in the TigoMeNote app (keeps playing while you use Chat)",
+    "Updates: 'Download new version' opens in Chrome — no more automatic download"
+  ],
   "0.11.30": [
     "Tigo: the menu, needs bars and size slider no longer overlap on small or landscape screens",
     "Tigo: if the app closes by itself, it switches to lighter 3D and sends us the reason so we can fix it"

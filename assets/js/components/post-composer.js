@@ -27,7 +27,7 @@
     if (items.length > MAX) { UI.toast("Up to " + MAX + " per post. The first " + MAX + " were used."); items = items.slice(0, MAX); }
 
     var urls = [];
-    var state = { vis: "public", when: "now", busy: false };
+    var state = { vis: "public", when: o.when === "later" ? "later" : "now", busy: false }; // o.when: "later" = bukas na ang Schedule
     var lastVis = null; try { lastVis = localStorage.getItem("tmnPostVis"); } catch (e) {}
     if (lastVis && VIS.some(function (x) { return x.v === lastVis; })) state.vis = lastVis;
 

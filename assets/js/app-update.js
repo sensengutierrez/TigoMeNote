@@ -1,6 +1,7 @@
 /* TigoMeNote · app-update.js — APK lang (isinisingit ng apk/build-web.py pagkatapos ng app-mode.js)
    Kapag may mas bagong version sa tigomenote.com/app-version.json, HINDI na magagamit ang app hangga't hindi naa-update:
-   lalabas ang "Install new version" + What's new → KUSANG dina-download ng app ang APK (may progress) → bubukas ang installer ng Android.
+   lalabas ang "Download new version" + What's new → dina-download sa Chrome (gumagana sa lahat ng phone; hindi Play Store kaya walang auto-install).
+   Pangalawang paraan: "Install inside the app" → dina-download ng app mismo (may progress) → installer ng Android.
    Kung hindi kaya (luma ang app / walang bridge): bubuksan ang download sa Chrome.
    Chine-check: pagbukas, pagbalik sa app (resume) at bawat 30 minuto. Walang internet = hindi hinaharang. */
 (function () {
@@ -46,17 +47,15 @@
         }).join("") + "</div>" : "") +
         '<div class="upd-bar hidden"><i></i></div>' +
         '<p class="upd-msg small" aria-live="polite"></p>' +
-        '<button type="button" class="btn btn-primary btn-lg upd-go">⬇ Install new version</button>' +
-        '<button type="button" class="upd-alt small">Download in Chrome instead</button>' +
+        '<button type="button" class="btn btn-primary btn-lg upd-dl">⬇ Download new version</button>' +
+        '<p class="upd-how faint small">Opens in Chrome. When it finishes, tap the downloaded file → Install. Your data stays.</p>' +
+        '<button type="button" class="upd-alt small upd-go">Install inside the app instead</button>' +
       "</div>";
     document.body.appendChild(box);
     document.documentElement.classList.add("upd-open");
     document.dispatchEvent(new Event("tmn:upd")); // hal. Tigo 3D: tumitigil habang nag-a-update
     box.querySelector(".upd-go").addEventListener("click", start);
-    box.querySelector(".upd-alt").addEventListener("click", chrome);
-    // Auto: kusang magda-download pagbukas (kung pinayagan na ang "Install unknown apps");
-    // pagkatapos, bubukas ang installer ng Android — "Install" na lang ang pipindutin
-    if (U && U.install && U.canInstall && U.canInstall()) setTimeout(start, 600);
+    box.querySelector(".upd-dl").addEventListener("click", function () { chrome(); msg("Downloading in Chrome… then open the file to install."); });
   }
   function msg(t) { box.querySelector(".upd-msg").textContent = t || ""; }
   function chrome() { if (NA && NA.openUrl) NA.openUrl(info.url); else location.href = info.url; }

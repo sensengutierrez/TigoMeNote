@@ -117,6 +117,11 @@ public class MainActivity extends BridgeActivity {{
 
     // Ibang TigoMeNote app: naka-install ba? buksan · at link na bubuksan sa Chrome (hal. download page)
     public class Apps {{
+        // may Firebase ba ang app na ito (google-services.json)? Kung wala, bawal ang push register (nagka-crash ang Tigo app)
+        @JavascriptInterface
+        public boolean hasFirebase() {{
+            return getResources().getIdentifier("google_app_id", "string", getPackageName()) != 0;
+        }}
         @JavascriptInterface
         public boolean hasApp(String pkg) {{
             try {{ getPackageManager().getPackageInfo(pkg, 0); return true; }} catch (Exception e) {{ return false; }}
@@ -296,7 +301,10 @@ if "<queries>" not in s: s = s.replace("</manifest>", add + "</manifest>", 1)
 if "MusicService" not in s:
     s = s.replace("</application>", f'''    <service android:name=".MusicService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
         <service android:name=".UploadKeepService" android:exported="false" android:foregroundServiceType="dataSync" />
-        <receiver android:name=".MusicWidget" android:exported="false" android:label="Tigo music">
+    </application>''', 1)
+# Music widget: sa TigoMeNote (main) lang — iisang music player; ang Chat ay para sa messages
+if app == "main" and ".MusicWidget" not in s:
+    s = s.replace("</application>", '''    <receiver android:name=".MusicWidget" android:exported="false" android:label="TigoMeNote music">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/tmn_widget_music_info" />
         </receiver>

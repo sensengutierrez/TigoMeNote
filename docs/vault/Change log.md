@@ -518,3 +518,13 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
 - **Bakit:** Ayon kay Bench (screenshot ng Tigo app): "ganto padin kase at ng force closed".
 - **Files:** `apk/patch-android.py`, `backend/crash-fast.ts`, `sql/089-app-crashes.sql`, `assets/js/app-mode.js`, `assets/js/tigo/pet-scene.js`, `assets/js/pages/tigo.js`, `config.js` (fn.crash, 0.11.30), `whatsnew.json`
 - **Paano:** test_crash 5/5 (report naipapadala nang isang beses, lite 3D 1x, walang report kung walang crash), sukat ng layout sa 909×414, 727×320 (malaking stats), 640×300: walang patong. Java ng MainActivity: walang syntax error (javac). Hindi pa nasubukan sa totoong phone.
+
+## 2026-10-31 · #62 Phone gallery: buksan sa itaas, long press na options; iisang music player
+- **Ano:**
+  - Phone gallery: pag-tap ng folder → bukas at umaakyat agad sa itaas. Habang may napili, lumulutang sa ibaba ang bar (Post, Schedule, Save, Clear). Long press sa litrato → options (Post now / Schedule / Save to app gallery). Composer: `o.when = "later"` = bukas agad ang Schedule.
+  - Music: sa TigoMeNote (main) lang ang player at widget; sa Chat app, "Open music in TigoMeNote" na lang (tuloy ang tugtog habang nasa Chat).
+  - Tigo: walang push register kung walang Firebase (dahilan ng force close). Update: Chrome download ang pangunahin, walang auto download.
+  - Version 0.11.31.
+- **Bakit:** Ayon kay Bench: "pag click ko automatic open folder", "pag ng long press ako or click sa picture me option lalabas, kung post to schedule", "dalawa ung widget ng music… dapat iisa lang", "force close padin", "wag auto download… lagi manual download".
+- **Files:** `assets/js/pages/gallery-phone.js`, `assets/css/pages/gallery.css`, `assets/js/components/post-composer.js`, `assets/js/components/music-player.js`, `apk/patch-android.py` (MusicWidget sa main lang, hasFirebase), `assets/js/app-mode.js`, `assets/js/app-update.js`, `assets/css/base.css`, `whatsnew.json`, `config.js` (0.11.31)
+- **Paano:** test_v31 14/14 (folder sa itaas, lumulutang na bar, long press → options → Schedule, Chat music card, Tigo push register lang kung may Firebase, update walang auto download at kasya sa landscape), gallery bar sa landscape 844×390 walang patong. Hindi pa nasubukan sa totoong phone.

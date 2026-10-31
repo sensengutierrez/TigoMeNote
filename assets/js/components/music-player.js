@@ -12,6 +12,16 @@
   var PREF = "tmnMusicPrefs";
 
   function mount(el) {
+    // TigoMeNote Chat app: walang sariling player (iisa lang ang music: nasa TigoMeNote app, tuloy kahit nasa Chat ka)
+    if (window.TMN_APP_ID === "chat") {
+      el.innerHTML = '<div class="mu-head"><h3>' + I("music", "ic-sm") + 'My music</h3></div>' +
+        '<p class="faint small mu-note">Music plays in the TigoMeNote app, so there is only one player and one widget. It keeps playing while you chat — use the notification to pause or skip.</p>' +
+        '<button type="button" class="btn btn-ghost btn-sm mu-open">' + I("music", "ic-sm") + 'Open music in TigoMeNote</button>';
+      el.querySelector(".mu-open").addEventListener("click", function () {
+        var A = window.TMN_APP; if (A && A.hasApp && A.hasApp("tigomenote")) A.openApp("tigomenote"); else if (A && A.installApp) A.installApp();
+      });
+      return;
+    }
     // Sa APK: native player (tuloy kahit lumipat ng page / naka-lock, may widget) — components/music-native.js
     if (window.TMN_MUSIC_NATIVE && TMN_MUSIC_NATIVE.available()) return TMN_MUSIC_NATIVE.mount(el);
     var DB = window.TMN_MUSICDB, UI = window.TMN_UI;

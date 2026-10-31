@@ -122,3 +122,15 @@
 .album-cover .ph-th { border-radius: inherit; }
 #phonePane .g-title { display: flex; align-items: center; gap: 8px; }
 #phoneCard #phoneList { display: grid; gap: 6px; }
+
+/* Phone gallery: tip, at lumulutang na bar sa ibaba habang may napili (hindi na kailangang umakyat) */
+.ph-tip { margin: 0; padding: 6px 16px 0; }
+#phonePane .tile { -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
+@media (max-width: 899px) {
+  #phonePane.has-sel .sel-bar { position: fixed; left: 10px; right: 10px; bottom: calc(var(--tabbar-h, 64px) + 10px + env(safe-area-inset-bottom)); z-index: 45;
+    border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: 0 10px 30px rgba(0,0,0,.28); padding: 10px 12px; }
+  #phonePane.has-sel .g-scroll { padding-bottom: 150px; }
+  #phonePane:not(.has-sel) .sel-bar { display: none; }
+}
+.ph-opts { display: grid; gap: 10px; }
+.ph-opts .btn { width: 100%; justify-content: center; }

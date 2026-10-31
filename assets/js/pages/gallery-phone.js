@@ -32,9 +32,11 @@
     '<div class="g-tools"><div class="chips" id="phChips"><button class="chip active" type="button" data-type="all">All</button><button class="chip" type="button" data-type="photo">Photos</button><button class="chip" type="button" data-type="video">Videos</button></div></div></div>' +
     '<div class="sel-bar" id="phBar"><b id="phSel">0 selected</b><div class="sel-actions">' +
       '<button class="btn btn-ghost btn-sm" type="button" id="phAll">Select all</button>' +
-      '<button class="btn btn-primary btn-sm" type="button" id="phPost">' + I("send", "ic-sm") + 'Post / schedule</button>' +
+      '<button class="btn btn-primary btn-sm" type="button" id="phPost">' + I("send", "ic-sm") + 'Post</button>' +
+      '<button class="btn btn-ghost btn-sm" type="button" id="phSched">' + I("calendar", "ic-sm") + 'Schedule</button>' +
       '<button class="btn btn-ghost btn-sm" type="button" id="phSave">' + I("download", "ic-sm") + 'Save to app gallery</button>' +
       '<button class="btn btn-ghost btn-sm" type="button" id="phClear">Clear</button></div></div>' +
+    '<p class="faint small ph-tip">Tap to select · press and hold a photo for options</p>' +
     '<div class="g-scroll" id="phScroll"><div class="g-grid" id="phGrid"></div><div class="empty hidden" id="phEmpty"><div class="empty-art">' + I("image", "ic-lg") + '</div><h3>Nothing here</h3></div>' +
     '<div style="text-align:center;padding:10px"><button class="btn btn-ghost hidden" type="button" id="phMore">Load more</button></div></div>';
   main.parentNode.insertBefore(pane, main.nextSibling);
@@ -96,7 +98,14 @@
   function show(on) { pane.classList.toggle("hidden", !on); main.classList.toggle("hidden", on); }
   function openBucket(id, name) {
     st.bucket = id; st.name = name; st.items = []; st.done = false; st.sel.clear();
-    $("phTitle").textContent = name; $("phGrid").innerHTML = ""; show(true); more();
+    $("phTitle").textContent = name; $("phGrid").innerHTML = ""; show(true);
+    toTop(pane);                         // sa phone, nasa ibaba ang folder → umakyat agad doon
+    more().then(function () { toTop(pane); });   // ulit pagkalabas ng mga litrato (humahaba ang page)
+  }
+  function toTop(el) {
+    var bar = document.querySelector(".topbar"), off = bar ? bar.getBoundingClientRect().height : 0;
+    var y = el.getBoundingClientRect().top + window.scrollY - off - 8;
+    window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
   }
   async function more() {
     if (st.loading || st.done) return; st.loading = true;
@@ -126,12 +135,39 @@
   function redraw() { $("phGrid").innerHTML = ""; draw(st.items); updateBar(); }
   $("phMore").addEventListener("click", more);
   $("phScroll").addEventListener("scroll", function () { var s = this; if (s.scrollTop + s.clientHeight > s.scrollHeight - 600) more(); });
-  $("phBack").addEventListener("click", function () { show(false); st.bucket = null; });
+  $("phBack").addEventListener("click", function () { show(false); st.bucket = null; st.sel.clear(); updateBar(); toTop(card); });
   $("phChips").addEventListener("click", function (e) {
     var b = e.target.closest("[data-type]"); if (!b) return; st.type = b.dataset.type;
     this.querySelectorAll(".chip").forEach(function (c) { c.classList.toggle("active", c === b); }); redraw();
   });
+  // Pindutin nang matagal ang litrato → mga option (Post, Schedule, Save)
+  var lp = { t: 0, fired: false, x: 0, y: 0 };
+  $("phGrid").addEventListener("pointerdown", function (e) {
+    var t = e.target.closest(".tile"); if (!t) return;
+    lp.fired = false; lp.x = e.clientX; lp.y = e.clientY; clearTimeout(lp.t);
+    lp.t = setTimeout(function () { lp.fired = true; options(Number(t.dataset.id), t); }, 480);
+  });
+  ["pointerup", "pointercancel", "pointerleave"].forEach(function (ev) { $("phGrid").addEventListener(ev, function () { clearTimeout(lp.t); }); });
+  $("phGrid").addEventListener("pointermove", function (e) { if (Math.abs(e.clientX - lp.x) + Math.abs(e.clientY - lp.y) > 12) clearTimeout(lp.t); });
+  $("phGrid").addEventListener("contextmenu", function (e) { if (e.target.closest(".tile")) e.preventDefault(); });
+  function options(id, tile) {
+    var it = st.items.filter(function (x) { return x.id === id; })[0]; if (!it) return;
+    if (!st.sel.has(id)) { st.sel.set(id, it); tile.classList.add("sel"); updateBar(); }
+    if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {}
+    var n = st.sel.size;
+    var body = document.createElement("div"); body.className = "ph-opts";
+    body.innerHTML =
+      '<button type="button" class="btn btn-primary" data-o="now">' + I("send", "ic-sm") + "Post now</button>" +
+      '<button type="button" class="btn btn-ghost" data-o="later">' + I("calendar", "ic-sm") + "Schedule</button>" +
+      '<button type="button" class="btn btn-ghost" data-o="save">' + I("download", "ic-sm") + "Save to app gallery</button>";
+    var m = window.TMN_MODAL.open({ title: n > 1 ? n + " selected" : (it.type === "video" ? "Video" : "Photo"), size: "sm", body: body });
+    body.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-o]"); if (!b) return; m.close();
+      if (b.dataset.o === "save") $("phSave").click(); else post(b.dataset.o);
+    });
+  }
   $("phGrid").addEventListener("click", function (e) {
+    if (lp.fired) { lp.fired = false; return; }   // galing sa long press
     var t = e.target.closest(".tile"); if (!t) return;
     var id = Number(t.dataset.id), it = st.items.filter(function (x) { return x.id === id; })[0]; if (!it) return;
     if (st.sel.has(id)) st.sel.delete(id); else st.sel.set(id, it);
@@ -139,7 +175,8 @@
   });
   function updateBar() {
     var n = st.sel.size; $("phSel").textContent = n + " selected";
-    ["phPost", "phSave", "phClear"].forEach(function (id) { $(id).disabled = !n; });
+    ["phPost", "phSched", "phSave", "phClear"].forEach(function (id) { $(id).disabled = !n; });
+    pane.classList.toggle("has-sel", n > 0);   // phone: lumulutang ang bar sa ibaba habang may napili
   }
   $("phAll").addEventListener("click", function () {
     var vis = st.items.filter(function (i) { return st.type === "all" || i.type === st.type; });
@@ -167,10 +204,12 @@
     if (!out.length) UI.toast("Couldn’t read the selected files.");
     return out.length ? out : null;
   }
-  $("phPost").addEventListener("click", async function () {
+  async function post(when) {
     var items = await pickedItems(10); if (!items) return;
-    window.TMN_COMPOSER.open(items, { onPosted: function () { st.sel.clear(); redraw(); try { N.galleryClean(); } catch (e) {} } });
-  });
+    window.TMN_COMPOSER.open(items, { when: when, onPosted: function () { st.sel.clear(); redraw(); try { N.galleryClean(); } catch (e) {} } });
+  }
+  $("phPost").addEventListener("click", function () { post("now"); });
+  $("phSched").addEventListener("click", function () { post("later"); });
   $("phSave").addEventListener("click", async function () {
     var items = await pickedItems(0); if (!items) return;
     var files = items.map(function (it) { return new File([it.blob], it.name || ("photo_" + it.id), { type: it.blob.type || (it.type === "video" ? "video/mp4" : "image/jpeg") }); });

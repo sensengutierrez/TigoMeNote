@@ -74,7 +74,9 @@ img { -webkit-user-drag: none; }
 .upd-bar { width: 100%; height: 8px; border-radius: 8px; background: var(--surface-2); overflow: hidden; }
 .upd-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #2fc6c9, #2f8dff); transition: width .3s; }
 .upd-msg { margin: 0; min-height: 1em; color: var(--text-2); }
-.upd-go { width: 100%; justify-content: center; }
+.upd-go, .upd-dl { width: 100%; justify-content: center; }
+.upd-alt.upd-go { width: auto; }
+.upd-how { margin: 0; text-align: center; }
 .upd-alt { border: 0; background: none; color: var(--text-3); text-decoration: underline; padding: 6px; cursor: pointer; font: inherit; }
 .upd-open body { overflow: hidden; }
 /* Hindi lalampas sa screen: nag-i-scroll ang laman, at kasya sa landscape / maliit na screen */
@@ -90,6 +92,6 @@ img { -webkit-user-drag: none; }
   .upd-ic { display: none; }
   .upd-card h2 { font-size: 18px; margin: 0; }
   .upd-new { max-height: 22dvh; }
-  .upd-go { height: 40px; }
+  .upd-dl { height: 40px; } .upd-how { font-size: 12px; }
 }
 @keyframes upd-in { from { transform: scale(.9); opacity: 0; } to { transform: none; opacity: 1; } }

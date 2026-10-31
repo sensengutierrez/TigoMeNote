@@ -43,6 +43,10 @@
   }
   function pushToken(opts) {
     if (!PN || !PN.checkPermissions) return Promise.resolve(null);
+    // Walang Firebase sa app na ito (hal. Tigo) → walang push; kung hindi, nagfo-force close ang register()
+    var A = window.TMNApps;
+    if (A && A.hasFirebase) { try { if (!A.hasFirebase()) return Promise.resolve(null); } catch (e) { return Promise.resolve(null); } }
+    else if (APP_ID === "tigo") return Promise.resolve(null);
     if (tokP) return tokP;
     var ask = !!(opts && opts.ask);
     return PN.checkPermissions().then(function (p) {
