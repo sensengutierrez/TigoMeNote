@@ -113,3 +113,4 @@ button.set-item:hover, a.set-item:hover { background: var(--surface-2); }
 .set-check { flex: none; width: 24px; height: 24px; border-radius: 50%; }
 [aria-checked="true"] > .set-check { background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center / 15px no-repeat; }
 .settings-version { margin-top: 18px; }
+.set-tip { margin-top: 14px; border: 1px solid var(--line); border-radius: var(--r-lg); }

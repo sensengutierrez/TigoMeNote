@@ -4,7 +4,7 @@
      TMN_LOOK.set(look)             → ilapat agad + i-save sa device (ang pag-save sa account ay sa appearance-settings.js)
      TMN_LOOK.PRESETS               → [{ id, name, css }]
    use: "none" | "preset" | "color" | "image". strength = gaano kakita ang background (10–100).
-   panels = gaano kabuo ang cards (30 = halos see-through, 100 = buo).
+   panels = gaano kabuo ang mga box (0 = text na lang, kita ang buong background · 100 = buo).
    Picture: "desktop" para sa laptop/desktop, "phone" para sa phone (≤ 768 px); kung isa lang, iyon ang gamit sa pareho.
    Naka-save sa account (profile-fast: look / saveLook); kinukuha ulit bawat 10 minuto para pareho sa lahat ng device. */
 (function () {
@@ -24,8 +24,15 @@
     { id: "night", name: "Night", dark: true, css: "linear-gradient(160deg,#0f2027 0%,#203a43 50%,#2c5364 100%)" },
     { id: "manila-bay", name: "Manila Bay", css: "linear-gradient(180deg,#ff9a44 0%,#fc6076 45%,#3a1c71 100%)" }
   ];
+  // Seasonal (may gumagalaw na epekto: season-fx.js, at tunog sa Settings: season-sound.js)
+  var SEASONS = [
+    { id: "christmas", name: "Christmas 🎄", season: true, fx: "snow", dark: true, css: "radial-gradient(circle at 18% 12%,rgba(255,255,255,.16),transparent 30%),radial-gradient(circle at 85% 90%,rgba(255,210,63,.18),transparent 35%),linear-gradient(160deg,#0b3d2e 0%,#14532d 45%,#7f1d1d 100%)" },
+    { id: "newyear", name: "New Year 🎆", season: true, fx: "fireworks", dark: true, css: "radial-gradient(circle at 72% 18%,rgba(255,210,63,.32),transparent 40%),radial-gradient(circle at 15% 70%,rgba(155,123,255,.28),transparent 45%),linear-gradient(170deg,#070b1f 0%,#1b1f4b 55%,#3b1d5c 100%)" },
+    { id: "halloween", name: "Halloween 🎃", season: true, fx: "bats", dark: true, css: "radial-gradient(circle at 80% 16%,#fff1c2 0 6%,rgba(255,200,80,.28) 7%,transparent 22%),linear-gradient(170deg,#140823 0%,#3b1153 52%,#9a3412 110%)" },
+    { id: "valentine", name: "Valentine's 💘", season: true, fx: "hearts", css: "radial-gradient(circle at 25% 18%,rgba(255,255,255,.55),transparent 35%),linear-gradient(150deg,#ffe0e8 0%,#ff8fab 55%,#e11d48 125%)" }
+  ];
   var TIGO = (window.TMN_LOOK_TIGO || []).map(function (p) { return Object.assign({ tigo: true }, p); });
-  var PRESETS = TIGO.concat(COLORS);
+  var PRESETS = TIGO.concat(SEASONS, COLORS);
   var mq = window.matchMedia ? window.matchMedia("(max-width: 768px)") : null;
 
   function read() { try { return JSON.parse(localStorage.getItem(KEY) || "null") || { use: "none" }; } catch (e) { return { use: "none" }; } }
@@ -46,12 +53,17 @@
     root.classList.toggle("bg-photo", !!bg && l.use === "image");
     var pr = l.use === "preset" ? PRESETS.filter(function (x) { return x.id === l.preset; })[0] : null;
     root.classList.toggle("bg-dark", !!(bg && pr && pr.dark && Number(l.strength) >= 45));
+    if (bg && pr && pr.fx) root.setAttribute("data-fx", pr.fx); else root.removeAttribute("data-fx");   // season-fx.js
     if (bg) {
       root.style.setProperty("--look-layer", bg);
       root.style.setProperty("--look-strength", String(Math.min(100, Math.max(10, Number(l.strength) || 60)) / 100));
-      root.style.setProperty("--look-panel", Math.min(100, Math.max(30, Number(l.panels) || 88)) + "%");
+      var pn = Number(l.panels); pn = isFinite(pn) && l.panels !== null && l.panels !== "" ? Math.min(100, Math.max(0, pn)) : 88;
+      root.style.setProperty("--look-panel", pn + "%");
+      root.style.setProperty("--look-blur", Math.round(pn / 100 * 14) + "px");   // 0% = walang blur (malinaw ang background)
+      root.classList.toggle("bg-clear", pn <= 35);                             // halos walang box: may anino ang text para mabasa
     } else {
-      ["--look-layer", "--look-strength", "--look-panel"].forEach(function (k) { root.style.removeProperty(k); });
+      ["--look-layer", "--look-strength", "--look-panel", "--look-blur"].forEach(function (k) { root.style.removeProperty(k); });
+      root.classList.remove("bg-clear");
     }
     document.dispatchEvent(new CustomEvent("tmn:look", { detail: l }));
   }

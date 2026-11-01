@@ -1,10 +1,12 @@
 /* TigoMeNote · components/wellbeing-settings.js — sa Settings: Sleep & breaks, Privacy (private account + follow requests),
    at Parental supervision (teen ↔ parent).
-   TMN_WB_SETTINGS.mount(el)  → gumagawa ng mga card sa loob ng el
+   TMN_WB_SETTINGS.mount(el)                  → lahat (Sleep & breaks, Privacy, Parental supervision)
+   TMN_WB_SETTINGS.mount(el, { part: "sleep" }) → Sleep & breaks lang (nasa Daily na, ayon kay Bench)
+   TMN_WB_SETTINGS.mount(el, { part: "rest" })  → Privacy at Parental supervision (Settings), may link papunta sa Daily
    Kailangan: api.js, modal.js (para sa confirm), wellbeing.js (opsyonal, para ma-refresh agad) */
 (function () {
   var UI = window.TMN_UI, I = window.TMN_ICON, esc = UI.esc;
-  var el, st = null;
+  var el, st = null, part = "";
 
   var BREAKS = [30, 45, 60, 90, 120];
   var LIMITS = [0, 30, 60, 90, 120, 180, 240];
@@ -35,10 +37,14 @@
     var me = st.me;
     var supervisedBy = st.guardians.filter(function (g) { return g.status === "accepted"; });
     var h = "";
-    // Sleep & breaks
-    h += '<section class="card"><h3 class="set-title">Sleep &amp; breaks</h3>' +
+    // Sleep & breaks (sa Daily)
+    var sleep = '<h3 class="set-title side-title">' + I("moon", "ic-sm") + " Sleep &amp; breaks</h3>" +
       (me.supervised ? '<p class="wb-note small">' + I("lock", "ic-sm") + "<span>Managed by your parent: " + supervisedBy.map(function (g) { return '<b translate="no">' + esc(g.user.display_name || g.user.username) + "</b>"; }).join(", ") + "</span></p>" : "") +
-      settingsRows(st.settings, me.supervised, null, st.state.used_seconds) + "</section>";
+      settingsRows(st.settings, me.supervised, null, st.state.used_seconds);
+    if (part === "sleep") { el.innerHTML = sleep; return; }
+    if (part === "rest") h += '<section class="card"><a class="row row-link wb-moved" href="home.html#sleep"><div class="row-main"><div class="row-title">' + I("moon", "ic-sm") +
+      ' Sleep &amp; breaks</div><div class="row-sub">Now in Daily — sleep time, break reminder and daily limit.</div></div>' + I("chevronR", "ic-sm") + "</a></section>";
+    else h += '<section class="card">' + sleep + "</section>";
     // Privacy
     h += '<section class="card"><h3 class="set-title">Privacy</h3><div class="rows">' +
       '<div class="row"><div class="row-main"><div class="row-title">Private account</div><div class="row-sub">' +
@@ -145,10 +151,11 @@
 
   async function load() {
     try { st = await TMN_API.call("wellbeing", "status", {}); render(); }
-    catch (e) { el.innerHTML = '<section class="card"><p class="faint small">' + esc(e.message) + "</p></section>"; }
+    catch (e) { el.innerHTML = part === "sleep" ? '<p class="faint small">' + esc(e.message) + "</p>" : '<section class="card"><p class="faint small">' + esc(e.message) + "</p></section>"; }
   }
-  function mount(target) {
-    el = target; el.innerHTML = '<section class="card"><p class="faint small">Loading…</p></section>';
+  function mount(target, o) {
+    part = (o && o.part) || "";
+    el = target; el.innerHTML = part === "sleep" ? '<p class="faint small">Loading…</p>' : '<section class="card"><p class="faint small">Loading…</p></section>';
     bind(); load();
   }
   window.TMN_WB_SETTINGS = { mount: mount, reload: load };

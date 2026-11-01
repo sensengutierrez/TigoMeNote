@@ -60,6 +60,8 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-01 · Music: unang kanta lang ang tumutugtog, tahimik pagpalit → bagong AudioFocusRequest at listener bawat kanta; ang LOSS na dumarating sa lumang listener ay nagpo-pause sa bagong kanta → iisang request at listener (ginawa minsan), `pausedByFocus`, at `userPause()` para sa pindot ng user (`MusicEngine.java`, `MusicService.java`). Version 0.11.33
 - 2026-11-01 · Update: "There was a problem while parsing the package" sa "Install inside the app" → inalis na ang in-app install; "Download new version" sa Chrome lang (`app-update.js`). Version 0.11.33
 - 2026-11-01 · Chat theme: hindi nagbabago ang kulay ng sariling bubble → ang `--mc-grad` ay kinukwenta sa `:root` kaya hindi sumusunod sa `--mc-a/--mc-b` ng theme → idineklara ulit sa `.ch[data-ctheme]` (`messages.css`)
+- 2026-11-01 · APK: pagbukas ng camera, malaking kulay-abong ▶ na parang video player → default na poster ng Android WebView sa `<video>` habang wala pang frame → transparent na poster sa `video[autoplay]` (MutationObserver sa `app-mode.js`) at sa `camera.js`. Version 0.11.35
+- 2026-11-01 · Background: hindi umaabot sa 0 ang "Card transparency" → `Number(l.panels) || 88` (0 = 88) at clamp 30–100 sa browser at server → isFinite, 0–100 (`appearance.js`, `profile-fast.ts`). Version 0.11.35
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

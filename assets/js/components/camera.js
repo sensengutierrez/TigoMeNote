@@ -29,7 +29,7 @@
     root.setAttribute("aria-modal", "true");
     root.setAttribute("aria-label", "Camera");
     root.innerHTML =
-      '<div class="cam-stage"><video class="cam-video" playsinline muted autoplay></video><canvas class="cam-canvas hidden"></canvas>' +
+      '<div class="cam-stage"><video class="cam-video" playsinline muted autoplay poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"></video><canvas class="cam-canvas hidden"></canvas>' +
         '<div class="cam-msg hidden"></div><div class="cam-flash"></div>' +
         '<div class="cam-rec hidden"><span class="cam-dot"></span><span class="cam-time">0:00</span></div>' +
         '<div class="cam-fname" aria-live="polite"></div></div>' +

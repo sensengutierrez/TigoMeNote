@@ -319,3 +319,27 @@ body.msg-gate .inbox { display: none; }
 .ct-bub-prev .ch-bubble { justify-self: start; cursor: default; font-size: 13px; padding: 6px 12px; }
 .ct-bub-prev .ch-row { display: grid; }
 .ct-bub-prev .ch-row.mine .ch-bubble { justify-self: end; }
+
+/* ---------- Seasonal na chat theme (may gumagalaw na epekto: season-fx.js, at tunog kapag pinili) ---------- */
+.ch[data-ctheme="christmas"] { --mc-a: #e63946; --mc-b: #b5121b; --mc-soft: rgba(230, 57, 70, .14);
+  --ct-bg: radial-gradient(circle at 15% 10%, rgba(255,255,255,.18), transparent 30%), linear-gradient(170deg, #0f4d38 0%, #14532d 60%, #0b2e22 100%);
+  --ct-other: rgba(255, 255, 255, .94); --ct-other-text: #13261d; --ct-chip: rgba(255, 255, 255, .88); }
+.ch[data-ctheme="newyear"] { --mc-a: #ffd23f; --mc-b: #c084fc; --mc-soft: rgba(255, 210, 63, .14);
+  --ct-bg: radial-gradient(circle at 75% 15%, rgba(255,210,63,.25), transparent 40%), linear-gradient(170deg, #070b1f 0%, #1b1f4b 60%, #3b1d5c 100%);
+  --ct-other: rgba(30, 32, 70, .92); --ct-other-text: #f3f1ff; --ct-chip: rgba(30, 32, 70, .85); }
+.ch[data-ctheme="newyear"] .ch-row.mine .ch-bubble:not(.k-photo):not(.k-sticker):not(.k-gif) { color: #1b1030; }
+.ch[data-ctheme="halloween"] { --mc-a: #ff8a1f; --mc-b: #c2410c; --mc-soft: rgba(255, 138, 31, .14);
+  --ct-bg: radial-gradient(circle at 82% 14%, #fff1c2 0 5%, rgba(255,200,80,.22) 6%, transparent 20%), linear-gradient(170deg, #140823 0%, #2e0f45 60%, #4a1a12 100%);
+  --ct-other: rgba(42, 22, 60, .93); --ct-other-text: #f6ecff; --ct-chip: rgba(42, 22, 60, .85); }
+.ch[data-ctheme="valentine"] { --mc-a: #ff5c8a; --mc-b: #e11d48; --mc-soft: rgba(225, 29, 72, .12);
+  --ct-bg: radial-gradient(circle at 25% 15%, rgba(255,255,255,.6), transparent 35%), linear-gradient(165deg, #fff0f4 0%, #ffd1dc 60%, #ffb3c6 100%); }
+:root[data-theme="dark"] .ch[data-ctheme="valentine"] { --ct-bg: radial-gradient(circle at 25% 15%, rgba(255,92,138,.25), transparent 40%), linear-gradient(165deg, #2b1220, #3a0f22); }
+.ch[data-ctheme="christmas"] .ch-meta, .ch[data-ctheme="newyear"] .ch-meta, .ch[data-ctheme="halloween"] .ch-meta { color: rgba(255, 255, 255, .8); }
+.ct-prev[data-ctheme="christmas"] { --mc-a: #e63946; --mc-b: #b5121b; --ct-bg: linear-gradient(170deg, #0f4d38, #0b2e22); }
+.ct-prev[data-ctheme="newyear"] { --mc-a: #ffd23f; --mc-b: #c084fc; --ct-bg: linear-gradient(170deg, #070b1f, #3b1d5c); --ct-other: rgba(30, 32, 70, .92); }
+.ct-prev[data-ctheme="halloween"] { --mc-a: #ff8a1f; --mc-b: #c2410c; --ct-bg: linear-gradient(170deg, #140823, #4a1a12); --ct-other: rgba(42, 22, 60, .93); }
+.ct-prev[data-ctheme="valentine"] { --mc-a: #ff5c8a; --mc-b: #e11d48; --ct-bg: linear-gradient(165deg, #fff0f4, #ffb3c6); }
+.ct-sw.ct-season small { color: var(--mc-b, var(--accent)); }
+/* epekto sa ibabaw ng mga message (hindi napipindot) */
+.ch.has-fx { position: relative; }
+.ch-fx { position: absolute; left: 0; right: 0; top: 0; height: 0; pointer-events: none; z-index: 3; overflow: hidden; }

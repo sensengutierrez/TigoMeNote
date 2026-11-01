@@ -71,7 +71,7 @@ function cleanLook(p: any) {
     preset: /^[a-z0-9-]{1,24}$/.test(String(p.preset ?? "")) ? String(p.preset) : null,
     color: /^#[0-9a-f]{6}$/i.test(String(p.color ?? "")) ? String(p.color).toLowerCase() : null,
     strength: n(p.strength, 10, 100, 60),
-    panels: n(p.panels, 30, 100, 88),
+    panels: n(p.panels, 0, 100, 88),   // 0 = see-through na lahat ng box (text na lang)
   };
 }
 const publicUrl = (path: string) => `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;

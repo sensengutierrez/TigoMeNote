@@ -13,6 +13,15 @@
   window.TMN_IN_APP = true; window.TMN_APP_ID = APP_ID;
   document.documentElement.classList.add("in-app", "app-" + APP_ID);
 
+  // Android WebView: may kulay-abong "video player" (▶) na larawan ang <video> bago lumabas ang unang frame
+  // (hal. camera). Sa mga video na kusang tumutugtog (autoplay), transparent na poster na lang.
+  var NOPOSTER = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+  function fixPosters(root) { (root.querySelectorAll ? root.querySelectorAll("video[autoplay]:not([poster])") : []).forEach(function (v) { v.setAttribute("poster", NOPOSTER); }); }
+  try {
+    new MutationObserver(function (ms) { ms.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType !== 1) return; if (n.matches("video[autoplay]:not([poster])")) n.setAttribute("poster", NOPOSTER); else fixPosters(n); }); }); })
+      .observe(document.documentElement, { childList: true, subtree: true });
+  } catch (e) {}
+
   // walang zoom
   var vp = document.querySelector('meta[name="viewport"]');
   if (vp) vp.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover");

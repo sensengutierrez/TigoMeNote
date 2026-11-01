@@ -15,7 +15,25 @@
     { id: "candy", name: "Candy", emoji: "🍬" },
     { id: "night", name: "Night", emoji: "🌙" },
     { id: "sampaguita", name: "Sampaguita", emoji: "🌼" },
+    // seasonal: may gumagalaw na epekto (season-fx.js) at tunog kapag pinili (season-sound.js)
+    { id: "christmas", name: "Christmas", emoji: "🎄", fx: "snow" },
+    { id: "newyear", name: "New Year", emoji: "🎆", fx: "fireworks" },
+    { id: "halloween", name: "Halloween", emoji: "🎃", fx: "bats" },
+    { id: "valentine", name: "Valentine's", emoji: "💘", fx: "hearts" },
   ];
+  function fxOf(id) { var t = THEMES.filter(function (x) { return x.id === id; })[0]; return (t && t.fx) || ""; }
+  // Epekto sa ibabaw ng listahan ng messages (sumusunod sa laki at puwesto ng .ch-list)
+  function fx(root, kind) {
+    var list = root.querySelector(".ch-list"), box = root.querySelector(":scope > .ch-fx");
+    if (!kind || !window.TMN_FX || !list) { if (box) { if (window.TMN_FX) TMN_FX.attach(box, ""); box.remove(); } root.classList.remove("has-fx"); return; }
+    root.classList.add("has-fx");
+    if (!box) {
+      box = document.createElement("div"); box.className = "ch-fx"; box.setAttribute("aria-hidden", "true"); root.appendChild(box);
+      var pos = function () { var l = root.querySelector(".ch-list"); if (l) { box.style.top = l.offsetTop + "px"; box.style.height = l.offsetHeight + "px"; } };
+      pos(); if (window.ResizeObserver) new ResizeObserver(pos).observe(list); window.addEventListener("resize", pos);
+    }
+    TMN_FX.attach(box, kind);
+  }
   var MAX_SIDE = 1600;   // wallpaper: hanggang 1600 px, JPEG ~80% (mga 200–400 KB)
 
   // Ilapat sa chat. Hindi pinapalitan ang larawan kung pareho ang key (iwas kisap tuwing nire-refresh ang chat).
@@ -23,6 +41,7 @@
     if (!root || !chat) return;
     var t = chat.theme && THEMES.some(function (x) { return x.id === chat.theme; }) ? chat.theme : "";
     if (t) root.setAttribute("data-ctheme", t); else root.removeAttribute("data-ctheme");
+    fx(root, fxOf(t));
     var wp = chat.wallpaper;
     if (wp && wp.url) {
       if (root._wpKey !== wp.key) { root._wpKey = wp.key; root.style.setProperty("--ct-wp", 'url("' + String(wp.url).replace(/["\\\n]/g, "") + '")'); }
@@ -57,7 +76,7 @@
     body.innerHTML =
       '<p class="faint small ct-note">Everyone in this chat sees the same theme and wallpaper.</p>' +
       '<div class="ct-grid" role="radiogroup" aria-label="Chat theme">' + THEMES.map(function (t) {
-        return '<button type="button" class="ct-sw" role="radio" aria-checked="' + (t.id === cur) + '" data-t="' + t.id + '">' +
+        return '<button type="button" class="ct-sw' + (t.fx ? " ct-season" : "") + '" role="radio" aria-checked="' + (t.id === cur) + '" data-t="' + t.id + '">' +
           '<span class="ct-prev" data-ctheme="' + (t.id === "default" ? "" : t.id) + '"><i class="ct-b1"></i><i class="ct-b2"></i></span>' +
           "<small>" + t.emoji + " " + t.name + "</small></button>";
       }).join("") + "</div>" +
@@ -101,6 +120,7 @@
       if (b && !busy) {
         if (b.dataset.t === cur) { m.close(); return; }
         busy = true; msg.textContent = "Saving…";
+        if (fxOf(b.dataset.t) && window.TMN_SEASON_SOUND) TMN_SEASON_SOUND.play(b.dataset.t);   // maikling kanta ng theme
         try { await TMN_API.call("messages", "theme", { id: chatId, theme: b.dataset.t }); UI.toast("Theme changed for everyone in this chat."); done(); }
         catch (err) { msg.textContent = err.message; busy = false; }
         return;

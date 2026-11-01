@@ -1,4 +1,13 @@
 {
+  "0.11.35": [
+    "New seasonal themes: Christmas 🎄 (snow), New Year 🎆 (fireworks), Halloween 🎃 (bats and ghosts), Valentine's 💘 (floating hearts) — with a little song",
+    "Seasonal themes in chats too (everyone in the chat sees them)",
+    "Background: make every box see-through, up to 100%",
+    "Sleep & breaks is now in Daily",
+    "Profile: photo and video filters no longer scroll sideways",
+    "Camera opens without the grey play icon",
+    "Sound Maker removed from the menu"
+  ],
   "0.11.34": [
     "Tigo is now 3D in the widgets and music notification",
     "Messages widget: weather with temperature and humidity, and Tigo dresses for it (shades, umbrella and raincoat, beanie and scarf, scared of thunder)",

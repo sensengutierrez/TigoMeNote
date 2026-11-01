@@ -30,10 +30,14 @@
         '<div class="lk-group faint small">TigoMeNote originals</div>' +
         '<div class="lk-swatches lk-tigo" role="radiogroup" aria-label="TigoMeNote backgrounds">' +
           L.PRESETS.filter(function (p) { return p.tigo; }).map(sw).join("") + "</div>" +
+        '<div class="lk-group faint small">Seasons ✨ <span class="lk-season-note">moving effects and a little song</span></div>' +
+        '<div class="lk-swatches lk-seasons" role="radiogroup" aria-label="Seasonal themes">' +
+          L.PRESETS.filter(function (p) { return p.season; }).map(sw).join("") + "</div>" +
+        '<button type="button" class="btn btn-ghost btn-sm lk-play hidden">' + I("play", "ic-sm") + "Play theme sound</button>" +
         '<div class="lk-group faint small">Colors and your photo</div>' +
         '<div class="lk-swatches" role="radiogroup" aria-label="Background">' +
           '<button type="button" class="lk-sw lk-none" data-use="none" aria-label="None"><span>' + I("x", "ic-sm") + '</span><small>None</small></button>' +
-          L.PRESETS.filter(function (p) { return !p.tigo; }).map(sw).join("") +
+          L.PRESETS.filter(function (p) { return !p.tigo && !p.season; }).map(sw).join("") +
           '<label class="lk-sw lk-color" data-use="color"><span class="lk-color-chip"></span><small>Color</small><input type="color" class="sr-only lk-color-in" value="' + (look.color || "#7ab8ff") + '"></label>' +
           '<button type="button" class="lk-sw lk-photo" data-use="image" aria-label="My photo"><span>' + I("image", "ic-sm") + "</span><small>My photo</small></button>" +
         "</div>" +
@@ -45,12 +49,16 @@
         }).join("") + '<p class="faint small">If you add only one, it is used on both.</p></div>' +
         '<div class="lk-sliders">' +
           '<label class="lk-slider"><span>Background strength <b class="lk-sv"></b></span><input type="range" min="10" max="100" step="5" class="lk-strength"></label>' +
-          '<label class="lk-slider"><span>Card transparency <b class="lk-pv"></b></span><input type="range" min="0" max="70" step="5" class="lk-panels"></label>' +
+          '<label class="lk-slider"><span>Box see-through <b class="lk-pv"></b></span><input type="range" min="0" max="100" step="5" class="lk-panels"></label>' +
         "</div>" +
         '<p class="lk-status faint small" aria-live="polite">Saved to your account, so it shows on all your devices.</p>' +
       "</div>";
     var $ = function (s) { return el.querySelector(s); };
     var strength = $(".lk-strength"), panels = $(".lk-panels"), status = $(".lk-status");
+    // Seasonal: tunog kapag pinili (season-sound.js) at ▶ para ulitin
+    var SEASON = {}; L.PRESETS.forEach(function (p) { if (p.season) SEASON[p.id] = p; });
+    function sing(id) { if (window.TMN_SEASON_SOUND) TMN_SEASON_SOUND.play(id); }
+    $(".lk-play").addEventListener("click", function () { sing(look.preset); });
 
     function paint() {
       el.querySelectorAll(".lk-sw").forEach(function (b) {
@@ -68,6 +76,7 @@
       strength.value = look.strength; panels.value = 100 - look.panels;
       $(".lk-sv").textContent = look.strength + "%"; $(".lk-pv").textContent = (100 - look.panels) + "%";
       el.querySelector(".lk-sliders").classList.toggle("off", look.use === "none");
+      $(".lk-play").classList.toggle("hidden", !(look.use === "preset" && SEASON[look.preset]));
     }
     function change(ch, now) {
       Object.assign(look, ch); L.set(look); paint();
@@ -85,7 +94,7 @@
     el.querySelectorAll(".lk-swatches").forEach(function (box) { box.addEventListener("click", onPick); });
     function onPick(e) {
       var b = e.target.closest(".lk-sw"); if (!b || b.tagName === "LABEL") return;
-      if (b.dataset.use === "preset") change({ use: "preset", preset: b.dataset.preset }, true);
+      if (b.dataset.use === "preset") { change({ use: "preset", preset: b.dataset.preset }, true); if (SEASON[b.dataset.preset]) sing(b.dataset.preset); }
       else if (b.dataset.use === "image") { change({ use: "image" }, !!(look.desktop || look.phone)); if (!look.desktop && !look.phone) status.textContent = "Upload a photo for desktop/laptop, phone, or both."; }
       else change({ use: b.dataset.use }, true);
     }

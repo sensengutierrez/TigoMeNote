@@ -84,6 +84,8 @@
   // ---------- reminders, orasan ----------
   if (window.TMN_REMIND) TMN_REMIND.mount($("remind"));
   if (window.TMN_HOMECLOCK) TMN_HOMECLOCK.mount($("homeClock"));
+  if (window.TMN_WB_SETTINGS && $("sleep")) TMN_WB_SETTINGS.mount($("sleep"), { part: "sleep" });   // Sleep & breaks (dati nasa Settings)
+  if (location.hash === "#sleep") setTimeout(function () { var s = $("sleep"); if (s) s.scrollIntoView({ behavior: "smooth", block: "start" }); }, 600);
 
   paintUser(); paintDays(); otd();
   document.addEventListener("tmn:user", paintUser);

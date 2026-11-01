@@ -17,7 +17,7 @@
     document.querySelectorAll(".set-pane").forEach(function (p) { p.hidden = p.dataset.pane !== want; });
     cur = want; window.scrollTo(0, 0);
     if (want === "background" && !mounted.bg && window.TMN_LOOK_UI) { mounted.bg = 1; TMN_LOOK_UI.mount($("lookMount")); }
-    if (want === "privacy" && !mounted.wb && window.TMN_WB_SETTINGS) { mounted.wb = 1; TMN_WB_SETTINGS.mount($("wbMount")); }
+    if (want === "privacy" && !mounted.wb && window.TMN_WB_SETTINGS) { mounted.wb = 1; TMN_WB_SETTINGS.mount($("wbMount"), { part: "rest" }); }
     if (want === "files" && !mounted.files && window.TMN_FILES_SETTINGS) { mounted.files = 1; TMN_FILES_SETTINGS.mount($("filesMount")); }
     if (want === "appearance") enterAppearance();
     paintMain();

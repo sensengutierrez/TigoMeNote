@@ -27,7 +27,7 @@ window.TMN_NAV = {
 
   // Ibaba ng menu (sidebar + hamburger lang, wala sa bottom tabs)
   more: [
-    { id: "sounds",   label: "Sound Maker", icon: "music", href: "app/sound-maker.html" },
+    // Sound Maker: inalis sa menu (2026-11-01, ayon kay Bench); nandoon pa ang app/sound-maker.html para sa mga lumang link
     { id: "settings", label: "Settings", icon: "gear",    href: "app/settings.html" },
     { id: "getapp",   label: "Get app",  icon: "phone",   href: "get/", web: true },
     { id: "reports",  label: "Reports",  icon: "flag",    href: "app/admin/reports.html", role: "Admin" },

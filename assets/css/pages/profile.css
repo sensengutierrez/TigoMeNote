@@ -64,8 +64,10 @@
 .pe-pic .grow { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; }
 .pe-pic .btns { display: flex; gap: 6px; }
 
-.posts-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; }
-.posts-head .chips { min-width: 0; flex: 1; }
+.posts-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 10px; padding-top: 12px; }
+/* lahat kita: bumababa sa susunod na linya ang hindi kasya (walang side scroll) */
+.posts-head .chips { min-width: 0; flex: 1 1 auto; flex-wrap: wrap; overflow: visible; }
+.posts-head .p-sort { margin-inline-start: auto; }
 .p-sort select { height: 34px; padding: 0 30px 0 12px; font-size: 13.5px; border-radius: var(--r-full); width: auto; }
 .posts-head.hidden { display: none; }
 .p-tabnote { margin: 12px 0 0; }

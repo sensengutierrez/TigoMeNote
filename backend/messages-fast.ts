@@ -33,7 +33,8 @@ const isEmoji = (e: unknown) => typeof e === "string" && e.length <= 32 &&
 const cut = (t: string, n: number) => { const g = Array.from(new Intl.Segmenter("en", { granularity: "grapheme" }).segment(t), (x) => x.segment); return g.length > n ? g.slice(0, n).join("") + "…" : t; };
 const PUB = "id, username, display_name, avatar_url, birthdate, status";
 // Mga theme ng chat (kapareho ng assets/js/components/chat-theme.js). null = default.
-const THEMES: Record<string, string> = { tigo: "Tigo 🧡", ocean: "Ocean 🌊", sunset: "Sunset 🌅", forest: "Forest 🌿", lavender: "Lavender 💜", candy: "Candy 🍬", night: "Night 🌙", sampaguita: "Sampaguita 🌼" };
+const THEMES: Record<string, string> = { tigo: "Tigo 🧡", ocean: "Ocean 🌊", sunset: "Sunset 🌅", forest: "Forest 🌿", lavender: "Lavender 💜", candy: "Candy 🍬", night: "Night 🌙", sampaguita: "Sampaguita 🌼",
+  christmas: "Christmas 🎄", newyear: "New Year 🎆", halloween: "Halloween 🎃", valentine: "Valentine's 💘" };
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",

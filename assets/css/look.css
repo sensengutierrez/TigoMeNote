@@ -11,23 +11,30 @@ html.has-bg .sidebar { background: transparent; }
   html.has-bg .sidebar { background: color-mix(in srgb, var(--bg) var(--look-panel, 88%), transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 }
 /* Cards: gaano kabuo (Card transparency sa Settings) + konting blur para mabasa pa rin */
-html.has-bg .card,
-html.has-bg .pcard {
-  background: color-mix(in srgb, var(--surface) var(--look-panel, 88%), transparent);
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+/* Lahat ng box sa app (pati Settings at Daily); ang Policies ay walang look.css kaya laging buo */
+html.has-bg :is(.card, .pcard, .set-card, .set-preview, .set-style, .set-review, .p-tile) {
+  background-color: color-mix(in srgb, var(--surface) var(--look-panel, 88%), transparent);
+  backdrop-filter: blur(var(--look-blur, 12px)); -webkit-backdrop-filter: blur(var(--look-blur, 12px));
 }
-html.has-bg .segmented { background: color-mix(in srgb, var(--surface-2) var(--look-panel, 88%), transparent); }
+html.has-bg :is(.segmented, .hc-c, .set-size, .today-stats > div, .chip:not(.active), .input:not(:focus)) { background-color: color-mix(in srgb, var(--surface-2) var(--look-panel, 88%), transparent); }
+html.bg-clear :is(.card, .pcard, .set-card, .set-preview, .set-style, .set-review) { border-color: color-mix(in srgb, var(--text) 18%, transparent); box-shadow: none; }
+/* Halos walang box (Box see-through ≥ 65%): may "halo" ang text para mabasa sa ibabaw ng background */
+html.bg-clear :is(.card, .set-card, .set-preview, .set-style) :is(h2, h3, b, p, span, small, label, .row-title, .row-sub, .faint) {
+  text-shadow: 0 0 2px color-mix(in srgb, var(--bg) 85%, transparent), 0 1px 8px color-mix(in srgb, var(--bg) 70%, transparent);
+}
 /* Pamagat ng page na nasa ibabaw mismo ng background: may anino para mabasa sa picture */
 html.bg-photo .page-head h1, html.bg-photo .ex-head h1 { text-shadow: 0 1px 12px color-mix(in srgb, var(--bg) 85%, transparent); }
 /* Madilim na background (hal. Tigo Night, Tigo Pearls): puti ang text na direktang nasa ibabaw nito */
 html.bg-dark .page-head h1, html.bg-dark .page-head .lead, html.bg-dark .page-head .eyebrow, html.bg-dark .ex-head h1,
-html.bg-dark .page > h1, html.bg-dark .empty h3, html.bg-dark .empty p { color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.45); }
+html.bg-dark .page > h1, html.bg-dark .empty h3, html.bg-dark .empty p,
+html.bg-dark .set-hero h1, html.bg-dark .set-hero .lead, html.bg-dark .set-sub h2, html.bg-dark .set-sub .icon-btn, html.bg-dark .set-note, html.bg-dark .set-group { color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.45); }
 /* Dark mode + maliwanag na background o picture: dinidilim para mabasa pa rin ang text */
 html[data-theme="dark"].has-bg:not(.bg-dark) body::before { filter: brightness(.45) saturate(.9); }
 /* Text na direktang nasa ibabaw ng background (hindi nasa card): may "halo" na kulay ng page para laging mabasa,
    kahit maliwanag o magulo ang picture (light mode at dark mode) */
 html.has-bg:not(.bg-dark) .page-head h1, html.has-bg:not(.bg-dark) .page-head .lead, html.has-bg:not(.bg-dark) .page-head .eyebrow,
 html.has-bg:not(.bg-dark) .ex-head h1, html.has-bg:not(.bg-dark) .page > h1, html.has-bg:not(.bg-dark) .more-wrap,
+html.has-bg:not(.bg-dark) .set-hero h1, html.has-bg:not(.bg-dark) .set-hero .lead, html.has-bg:not(.bg-dark) .set-sub h2, html.has-bg:not(.bg-dark) .set-note, html.has-bg:not(.bg-dark) .set-group,
 html.has-bg:not(.bg-dark) .settings-version {
   color: var(--text);
   text-shadow: 0 0 1px var(--bg), 0 0 4px var(--bg), 0 0 10px var(--bg), 0 0 18px var(--bg), 0 0 28px var(--bg);
@@ -50,3 +57,8 @@ html.has-bg .ch-input { background: color-mix(in srgb, var(--surface-2) var(--lo
 html.has-bg .ch-input:focus { background: color-mix(in srgb, var(--surface) var(--look-panel, 88%), transparent); }
 html.has-bg .ch-row:not(.mine) .ch-bubble { background: color-mix(in srgb, var(--surface) var(--look-panel, 88%), transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 html.has-bg .ch-day, html.has-bg .ch-sys { background: color-mix(in srgb, var(--surface) var(--look-panel, 88%), transparent); }
+/* Seasonal na background: gumagalaw na epekto (season-fx.js) — sa likod ng laman, hindi napipindot */
+.fx-page { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+.fx-box { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.lk-season-note { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.lk-play { justify-self: start; }
