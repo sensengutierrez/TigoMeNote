@@ -1,0 +1,15 @@
+-- TigoMeNote · 098 brain vault sync (Change log #67)
+insert into brain_notes (title, body, tags, updated_by) values ($v$Change log$v$, '', '{}', 'claude') on conflict (lower(title)) do update set body = replace(brain_notes.body, $v$- **Paano:** test_v35 33/33 (4 seasonal sa Background: epekto + tunog, Box see-through 100% → Settings at Daily see-through, Sleep sa Daily, Privacy pane may link lang, walang Sound Maker, Profile chips walang side scroll, APK poster) sa portrait at landscape; test_season_chat (4 seasonal sa chat: epekto sa ibabaw ng messages, tunog, aalisin kapag ibang theme) sa phone, landscape, desktop; at lahat ng luma (pumapasa; ang ilang "FAIL" ay lumang bilang lang: 9→13 chat themes, 23→27 backgrounds). Hindi pa nasubukan sa totoong phone: tunog at galaw ng epekto sa APK, camera poster.
+$v$, $v$- **Paano:** test_v35 33/33 (4 seasonal sa Background: epekto + tunog, Box see-through 100% → Settings at Daily see-through, Sleep sa Daily, Privacy pane may link lang, walang Sound Maker, Profile chips walang side scroll, APK poster) sa portrait at landscape; test_season_chat (4 seasonal sa chat: epekto sa ibabaw ng messages, tunog, aalisin kapag ibang theme) sa phone, landscape, desktop; at lahat ng luma (pumapasa; ang ilang "FAIL" ay lumang bilang lang: 9→13 chat themes, 23→27 backgrounds). Hindi pa nasubukan sa totoong phone: tunog at galaw ng epekto sa APK, camera poster.
+
+## 2026-11-01 · #67 See-through na menu (☰), top bar at tabs; tunog ng theme sa menu; lakas ng tunog
+- **Ano:**
+  - Ang hamburger menu (drawer), top bar at bottom tabs ay sumusunod na rin sa Background → "Box see-through" (laging may blur para mabasa; mas magaan ang dilim sa likod ng menu). Madilim na background + halos walang box: puti ang text ng menu at tabs.
+  - Kapag seasonal ang Background: may maikling tunog kapag binuksan ang ☰ at kapag pumindot sa loob ng menu (pati sidebar sa desktop). Ang link ay naghihintay ng 0.22 s para marinig ang tunog bago lumipat. Christmas = kampanilya, New Year = paputok, Halloween = nakakatakot na "woo", Valentine's = chime.
+  - Settings → Background → 🔊 "Theme sound" 0–100% (0 = walang tunog), naka-save sa device (`tmnFxVol`); may maikling tunog habang inaayos.
+  - Kasama na ang `season-sound.js` sa lahat ng page.
+  - Version 0.11.36.
+- **Bakit:** Ayon kay Bench: "ung humbuger diba na transparent?" → "Sige gawin mo na yan, ung themes sound pag ng click ako ng humburger at pag ng click ako ng nasa loob nya dun tutunog… lagyan mo din ng adjustment ng sounds".
+- **Files:** `assets/css/look.css`, `assets/js/season-sound.js`, `assets/js/components/appearance-settings.js`, `app/*.html` (season-sound.js), `whatsnew.json`, `config.js` (0.11.36)
+- **Paano:** test_v36 17/17 (lakas: save at preview; drawer/top bar/tabs see-through; ☰ = "open", link = "pick" tapos lipat ng page; 0% = tahimik; walang seasonal = walang tunog) sa portrait at landscape; test_v35 33/33 at ang iba pang luma. Hindi pa nasubukan sa totoong phone ang tunog.
+$v$), updated_by = 'claude', updated_at = now();

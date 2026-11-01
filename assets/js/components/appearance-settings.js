@@ -33,7 +33,11 @@
         '<div class="lk-group faint small">Seasons ✨ <span class="lk-season-note">moving effects and a little song</span></div>' +
         '<div class="lk-swatches lk-seasons" role="radiogroup" aria-label="Seasonal themes">' +
           L.PRESETS.filter(function (p) { return p.season; }).map(sw).join("") + "</div>" +
-        '<button type="button" class="btn btn-ghost btn-sm lk-play hidden">' + I("play", "ic-sm") + "Play theme sound</button>" +
+        '<div class="lk-sound">' +
+          '<label class="lk-slider"><span>🔊 Theme sound <b class="lk-vv"></b></span><input type="range" min="0" max="100" step="5" class="lk-vol" aria-label="Theme sound volume"></label>' +
+          '<p class="faint small lk-vnote">Plays when you pick a season, open the ☰ menu and tap inside it. 0 = off.</p>' +
+          '<button type="button" class="btn btn-ghost btn-sm lk-play hidden">' + I("play", "ic-sm") + "Play theme sound</button>" +
+        "</div>" +
         '<div class="lk-group faint small">Colors and your photo</div>' +
         '<div class="lk-swatches" role="radiogroup" aria-label="Background">' +
           '<button type="button" class="lk-sw lk-none" data-use="none" aria-label="None"><span>' + I("x", "ic-sm") + '</span><small>None</small></button>' +
@@ -59,6 +63,15 @@
     var SEASON = {}; L.PRESETS.forEach(function (p) { if (p.season) SEASON[p.id] = p; });
     function sing(id) { if (window.TMN_SEASON_SOUND) TMN_SEASON_SOUND.play(id); }
     $(".lk-play").addEventListener("click", function () { sing(look.preset); });
+    // Lakas ng tunog (sa device na ito)
+    var volIn = $(".lk-vol"), volT = 0;
+    function snd() { return window.TMN_SEASON_SOUND; }   // season-sound.js ay "defer": hanapin kapag kailangan na
+    function paintVol() { var S = snd(), v = S ? S.volume() : 70; volIn.value = v; $(".lk-vv").textContent = v ? v + "%" : "Off"; }
+    volIn.addEventListener("input", function () {
+      var S = snd(); if (!S) return; S.volume(volIn.value); paintVol();
+      clearTimeout(volT); volT = setTimeout(function () { var k = SEASON[look.preset] ? look.preset : "christmas"; S.tap(k, "open"); }, 250);   // pakinggan
+    });
+    paintVol(); if (!snd()) document.addEventListener("DOMContentLoaded", paintVol);
 
     function paint() {
       el.querySelectorAll(".lk-sw").forEach(function (b) {

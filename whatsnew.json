@@ -1,4 +1,9 @@
 {
+  "0.11.36": [
+    "The ☰ menu, top bar and bottom tabs are see-through too (Background → Box see-through)",
+    "Seasonal themes: the menu plays a little sound when you open it and tap inside",
+    "Background → Theme sound: set the volume (0 = off)"
+  ],
   "0.11.35": [
     "New seasonal themes: Christmas 🎄 (snow), New Year 🎆 (fireworks), Halloween 🎃 (bats and ghosts), Valentine's 💘 (floating hearts) — with a little song",
     "Seasonal themes in chats too (everyone in the chat sees them)",
