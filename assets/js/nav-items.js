@@ -29,6 +29,7 @@ window.TMN_NAV = {
   more: [
     // Sound Maker: inalis sa menu (2026-11-01, ayon kay Bench); nandoon pa ang app/sound-maker.html para sa mga lumang link
     { id: "settings", label: "Settings", icon: "gear",    href: "app/settings.html" },
+    { id: "guide",    label: "How to use", icon: "sparkle", href: "app/guide.html" },
     { id: "getapp",   label: "Get app",  icon: "phone",   href: "get/", web: true },
     { id: "reports",  label: "Reports",  icon: "flag",    href: "app/admin/reports.html", role: "Admin" },
     { id: "policies", label: "Policies", icon: "info",    href: "legal/index.html" }
@@ -52,6 +53,7 @@ window.TMN_NAV = {
         { id: "settings", label: "Settings", icon: "gear", href: "app/settings.html" }
       ],
       more: [
+        { id: "guide",    label: "How to use", icon: "sparkle", href: "app/guide.html" },
         { id: "policies", label: "Policies", icon: "info", href: "legal/index.html" }
       ],
       topbar: ["notifications"],

@@ -1,0 +1,78 @@
+# TigoMeNote · Google Play bundle (AAB) — manual lang: Actions → Build for Google Play → Run
+# Kaiba sa Build APK: TMN_PLAY=1 (walang "Download new version" — si Play ang nag-a-update), .aab ang gawa (bundleRelease).
+# Pirma: parehong key (APK_KEYSTORE_PASSWORD → apk/derive-key.py) bilang "upload key" sa Play App Signing.
+# Hindi ina-upload sa Play nang kusa: i-download ang .aab sa Artifacts at i-upload sa Play Console.
+name: Build for Google Play
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: "Aling app (main | chat | tigo); blangko = lahat"
+        default: ""
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(github.event.inputs.app && format('["{0}"]', github.event.inputs.app) || '["main","chat","tigo"]') }}
+    env:
+      APP: ${{ matrix.app }}
+      TMN_PLAY: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Version
+        run: echo "VER=$(grep -oP 'version:\s*"\K[^"]+' assets/js/config.js)" >> $GITHUB_ENV
+      - name: Capacitor + web files (Play)
+        run: |
+          cd apk/$APP && npm install --no-audit --no-fund
+          cd ../.. && python3 apk/build-web.py $APP
+          cd apk/$APP && npx cap add android && npx cap sync android
+          cd ../.. && python3 apk/patch-android.py $APP
+      - name: Target API (Play — Android 16 / API 36 o mas bago)
+        run: |
+          T=$(grep -oP 'targetSdkVersion\s*=\s*\K[0-9]+' apk/$APP/android/variables.gradle || echo 0)
+          echo "targetSdk=$T"
+          [ "$T" -ge 36 ] || { echo "::error::targetSdk $T — kailangan 36+ para sa Google Play"; exit 1; }
+      - name: Push notifications (Firebase)
+        env: { GOOGLE_SERVICES_JSON: "${{ secrets.GOOGLE_SERVICES_JSON }}" }
+        run: python3 apk/add-firebase.py $APP
+      - name: Upload key
+        env: { PW: "${{ secrets.APK_KEYSTORE_PASSWORD }}" }
+        run: |
+          if [ -z "$PW" ] || [ ${#PW} -lt 20 ]; then echo "::error::Kailangan ang APK_KEYSTORE_PASSWORD (20+ characters)"; exit 1; fi
+          pip install --quiet "cryptography==44.0.3"
+          FP=$(PW="$PW" python3 apk/derive-key.py "$RUNNER_TEMP/release.p12")
+          [ "$FP" = "$(tr -d '[:space:]' < apk/keys/cert-sha256.txt)" ] || { echo "::error::Iba ang signing key sa dati"; exit 1; }
+          echo "KS=$RUNNER_TEMP/release.p12" >> $GITHUB_ENV
+      - name: Build AAB
+        run: |
+          cd apk/$APP/android && chmod +x gradlew
+          set +e; ./gradlew --no-daemon bundleRelease > "$RUNNER_TEMP/gradle.log" 2>&1; ST=$?; set -e
+          tail -40 "$RUNNER_TEMP/gradle.log"
+          if [ $ST -ne 0 ]; then
+            MSG=$(grep -E "What went wrong|error:|ERROR|Execution failed|> " "$RUNNER_TEMP/gradle.log" | grep -v "^> Task" | head -25 | cut -c1-300 | sed ':a;N;$!ba;s/%/%25/g;s/\r//g;s/\n/%0A/g')
+            echo "::error title=Gradle build failed::$MSG"; exit $ST
+          fi
+      - name: Sign AAB
+        env: { PW: "${{ secrets.APK_KEYSTORE_PASSWORD }}" }
+        run: |
+          NAME=$(python3 -c "import json;print(json.load(open('apk/$APP/capacitor.config.json'))['appName'].replace(' ',''))")
+          mkdir -p out
+          cp apk/$APP/android/app/build/outputs/bundle/release/app-release.aab out/$NAME-$VER.aab
+          jarsigner -keystore "$KS" -storetype PKCS12 -storepass:env PW -keypass:env PW -sigalg SHA256withRSA -digestalg SHA-256 out/$NAME-$VER.aab tigomenote
+          jarsigner -verify out/$NAME-$VER.aab | tail -1
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "${{ env.APP }}-play-${{ env.VER }}"
+          path: out/*.aab
+          retention-days: 30

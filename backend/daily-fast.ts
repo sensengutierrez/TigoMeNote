@@ -1,6 +1,8 @@
 // TigoMeNote · daily-fast (Supabase Edge Function, verify_jwt = off) — Reminders at Alarms ng Daily
 // Isang trabaho lang: i-save ang reminders/alarms at ipadala ang push sa phone sa tamang oras.
 // Actions (session token): list, save, remove, done, snooze
+// School at work schedule: kind "class" | "work", repeat "days", sched = { days:[0–6], start:"HH:MM", end:"HH:MM", lead:min, tz }
+//   → paalala bago magsimula (lead minuto), bawat araw na pinili, sa oras ng user (tz)
 // Action ng cron (bawat minuto, sql/050): due  ← key galing sa app_keys "cron_daily" (hindi service key)
 // Files: index.ts + webpush.ts + push.ts (parehong folder sa deploy). VAPID: app_keys "vapid"; FCM: secret FCM_SERVICE_ACCOUNT.
 // Ang Daily notes ay HINDI dumadaan dito (nasa device lang).
@@ -11,7 +13,8 @@ import { deliver } from "./push.ts";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 const MAX_ACTIVE = 100;
-const REPEATS = ["none", "daily", "weekly", "monthly"];
+const REPEATS = ["none", "daily", "weekly", "monthly", "days"];
+const KINDS = ["reminder", "alarm", "class", "work"];
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -41,11 +44,50 @@ async function sessionUser(token: string): Promise<any | null> {
 }
 
 // deno-lint-ignore no-explicit-any
-const shape = (r: any) => ({ id: r.id, kind: r.kind, title: r.title, note: r.note, due_at: r.due_at, repeat: r.repeat, done_at: r.done_at, sent_at: r.sent_at });
+const shape = (r: any) => ({ id: r.id, kind: r.kind, title: r.title, note: r.note, due_at: r.due_at, repeat: r.repeat, done_at: r.done_at, sent_at: r.sent_at, sched: r.sched ?? null });
+
+// ---------- schedule (school/work): oras sa timezone ng user ----------
+type Sched = { days: number[]; start: string; end: string | null; lead: number; tz: string };
+function tzParts(ms: number, tz: string) {
+  const f = new Intl.DateTimeFormat("en-US", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  const o: Record<string, number> = {};
+  for (const x of f.formatToParts(new Date(ms))) if (x.type !== "literal") o[x.type] = Number(x.value);
+  return { y: o.year, m: o.month, d: o.day, h: o.hour % 24, mi: o.minute };
+}
+function localToUtc(y: number, m: number, d: number, h: number, mi: number, tz: string): number {
+  const guess = Date.UTC(y, m - 1, d, h, mi);
+  let t = guess;
+  for (let i = 0; i < 2; i++) { const p = tzParts(t, tz); t = guess - (Date.UTC(p.y, p.m - 1, p.d, p.h, p.mi) - t); }
+  return t;
+}
+// Susunod na paalala (simula − lead) na lampas sa `after`
+function nextSlot(s: Sched, after: number): string | null {
+  const [h, mi] = s.start.split(":").map(Number);
+  const t = tzParts(after, s.tz);
+  for (let i = 0; i < 9; i++) {
+    const day = new Date(Date.UTC(t.y, t.m - 1, t.d + i));
+    if (!s.days.includes(day.getUTCDay())) continue;
+    const at = localToUtc(day.getUTCFullYear(), day.getUTCMonth() + 1, day.getUTCDate(), h, mi, s.tz) - s.lead * 60_000;
+    if (at > after) return new Date(at).toISOString();
+  }
+  return null;
+}
+// deno-lint-ignore no-explicit-any
+function cleanSched(x: any): Sched | null {
+  if (!x || typeof x !== "object") return null;
+  const hm = (v: unknown) => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(v ?? "")) ? String(v) : null;
+  const days = [...new Set((Array.isArray(x.days) ? x.days : []).map(Number).filter((n: number) => Number.isInteger(n) && n >= 0 && n <= 6))].sort() as number[];
+  const start = hm(x.start); if (!days.length || !start) return null;
+  let tz = String(x.tz ?? "UTC").slice(0, 64);
+  try { new Intl.DateTimeFormat("en-US", { timeZone: tz }); } catch { tz = "UTC"; }
+  return { days, start, end: hm(x.end), lead: Math.min(180, Math.max(0, Math.round(Number(x.lead) || 0))), tz };
+}
 
 // Susunod na oras ng umuulit na reminder (laging lampas sa ngayon)
-function nextDue(iso: string, repeat: string): string | null {
+// deno-lint-ignore no-explicit-any
+function nextDue(iso: string, repeat: string, sched?: any): string | null {
   if (repeat === "none") return null;
+  if (repeat === "days") return sched ? nextSlot(sched as Sched, Math.max(Date.now(), new Date(iso).getTime())) : null;
   const d = new Date(iso), now = Date.now();
   for (let i = 0; i < 400 && d.getTime() <= now; i++) {
     if (repeat === "daily") d.setUTCDate(d.getUTCDate() + 1);
@@ -67,17 +109,20 @@ async function list(_p: any, me: any) {
 async function save(p: any, me: any) {
   const title = String(p.title ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
   if (!title) return fail("Add a title.");
-  const due = new Date(String(p.due_at ?? ""));
+  const kind = KINDS.includes(p.kind) ? p.kind : "reminder";
+  const sched = kind === "class" || kind === "work" ? cleanSched(p.sched) : null;
+  if ((kind === "class" || kind === "work") && !sched) return fail("Pick the days and the start time.");
+  const due = new Date(sched ? (nextSlot(sched, Date.now()) ?? "") : String(p.due_at ?? ""));
   if (isNaN(due.getTime())) return fail("Pick a date and time.");
   if (due.getTime() > Date.now() + 2 * 365 * 86_400_000) return fail("Up to 2 years ahead.");
   const row = {
-    kind: p.kind === "alarm" ? "alarm" : "reminder", title,
+    kind, title, sched,
     note: p.note ? String(p.note).trim().slice(0, 300) || null : null,
-    repeat: REPEATS.includes(p.repeat) ? p.repeat : "none",
+    repeat: sched ? "days" : REPEATS.includes(p.repeat) && p.repeat !== "days" ? p.repeat : "none",
     due_at: due.toISOString(), done_at: null, sent_at: null, updated_at: nowIso(),
   };
   if (row.repeat === "none" && due.getTime() < Date.now() - 60_000) return fail("That time has passed. Pick a later time.");
-  if (row.repeat !== "none") row.due_at = due.getTime() < Date.now() ? nextDue(row.due_at, row.repeat)! : row.due_at;
+  if (row.repeat !== "none" && !sched) row.due_at = due.getTime() < Date.now() ? nextDue(row.due_at, row.repeat)! : row.due_at;
   if (p.id) {
     const { data, error } = await db.from("reminders").update(row).eq("id", String(p.id)).eq("user_id", me.id).select("*").maybeSingle();
     if (error) throw error;
@@ -102,7 +147,7 @@ async function remove(p: any, me: any) {
 async function done(p: any, me: any) {
   const { data: r } = await db.from("reminders").select("*").eq("id", String(p.id || "")).eq("user_id", me.id).maybeSingle();
   if (!r) return fail("Not found.", 404);
-  const nx = nextDue(r.due_at, r.repeat);
+  const nx = nextDue(r.due_at, r.repeat, r.sched);
   const ch = nx ? { due_at: nx, sent_at: null, updated_at: nowIso() } : { done_at: nowIso(), updated_at: nowIso() };
   const { data } = await db.from("reminders").update(ch).eq("id", r.id).select("*").single();
   return reply({ ok: true, item: shape(data) });
@@ -135,14 +180,18 @@ async function due(p: any) {
   let sent = 0;
   await Promise.allSettled(rows.map(async (r) => {
     const mine = (subs ?? []).filter((s) => s.user_id === r.user_id);
-    const payload = {
+    const sc = r.sched as Sched | null;
+    const payload = sc ? {
+      type: r.kind, id: r.id, title: (r.kind === "class" ? "📚 " : "💼 ") + r.title + (sc.lead ? " in " + sc.lead + " min" : " now"),
+      body: (sc.start + (sc.end ? "–" + sc.end : "")) + (r.note ? " · " + r.note : ""), url: "app/home.html?reminder=" + r.id,
+    } : {
       type: r.kind, id: r.id, title: (r.kind === "alarm" ? "⏰ " : "🔔 ") + r.title,
       body: r.note || (r.kind === "alarm" ? "Alarm" : "Reminder"), url: "app/home.html?reminder=" + r.id,
     };
     try { sent += await deliver(db, mine, payload, vapid, { cat: "daily", ttl: 1800, urgency: "high" }); }
     catch (e) { console.error("reminder push failed", String(e)); }
     // Hindi umuulit: markahan na naipadala. Umuulit: ilipat sa susunod na oras.
-    const nx = nextDue(r.due_at, r.repeat);
+    const nx = nextDue(r.due_at, r.repeat, r.sched);
     await db.from("reminders").update(nx ? { due_at: nx, sent_at: null } : { sent_at: nowIso() }).eq("id", r.id);
   }));
   return reply({ ok: true, due: rows.length, sent });

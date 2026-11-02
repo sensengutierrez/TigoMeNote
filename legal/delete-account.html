@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>Delete your account · TigoMeNote</title>
+  <meta name="description" content="How to delete your TigoMeNote account and what gets deleted.">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <script src="../assets/js/theme.js?v=0.11.38"></script>
+  <script src="../assets/js/ui-prefs.js?v=0.11.38"></script>
+  <script src="../assets/js/config.js?v=0.11.38"></script>
+  <script src="../assets/js/i18n.js?v=0.11.38"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/tokens.css?v=0.11.38">
+  <link rel="stylesheet" href="../assets/css/base.css?v=0.11.38">
+  <link rel="stylesheet" href="../assets/css/components.css?v=0.11.38">
+  <link rel="stylesheet" href="../assets/css/pages/legal.css?v=0.11.38">
+</head>
+<body class="legal" data-legal="delete">
+  <header class="lg-top">
+    <a class="brand" href="../index.html"><span class="brand-mark">T</span><span>Tigo<b>Me</b>Note</span></a>
+    <div class="lg-top-actions"><span id="langMini"></span><button class="icon-btn js-theme" type="button" aria-label="Toggle dark mode"></button><a class="btn btn-ghost btn-sm" href="../app/home.html">Open app</a></div>
+  </header>
+  <div class="lg-wrap">
+    <nav class="lg-nav" aria-label="Policies"><a href="index.html">About</a><a href="terms.html">Terms of Use</a><a href="privacy.html">Privacy Policy</a><a href="guidelines.html">Community Guidelines</a><a href="copyright.html">Copyright</a><a href="third-party.html">Third-party software</a><a href="delete-account.html" aria-current="page">Delete account</a></nav>
+    <main class="lg-main">
+      <h1>Delete your account</h1>
+      <p class="lg-lead">For TigoMeNote, TigoMeNote Chat and Tigo — one account for all three apps.</p>
+      <article class="lg-body" translate="no">
+<h2>In the app</h2>
+<p>Open <b>Settings → Account → Delete account</b>, enter your password and type <b>DELETE</b>.</p>
+<h2>Here on the website</h2>
+<form class="del-web" id="delForm">
+  <label class="field"><span>Username or email</span><input class="input" name="username" autocomplete="username" required></label>
+  <label class="field"><span>Password</span><input class="input" name="password" type="password" autocomplete="current-password" required></label>
+  <label class="field"><span>Type <b>DELETE</b> to confirm</span><input class="input" name="confirm" autocomplete="off" autocapitalize="characters" required></label>
+  <p class="small del-msg" id="delMsg" aria-live="polite"></p>
+  <button class="btn btn-danger-solid" type="submit">Delete my account</button>
+</form>
+<h2>What gets deleted</h2>
+<ul>
+  <li>Your profile, posts, photos and status, comments, likes, saves and shares.</li>
+  <li>Followers and following, Family &amp; Friends, location history and SOS alerts.</li>
+  <li>Tigo (your pet, coins and house), reminders, notifications and sign-ins on all devices.</li>
+  <li>Your messages are blanked in other people’s chats, so their conversations stay readable.</li>
+</ul>
+<p>Deletion happens right away and can’t be undone. Server backups are overwritten within 30 days.</p>
+<h2>What stays</h2>
+<p>Files on your own phone are yours and are not touched: photos in <b>Pictures/TigoMeNote</b>, your Daily backup in <b>Documents/TigoMeNote</b>, and Daily notes saved in the app on your device until you uninstall it.</p>
+      </article>
+    </main>
+  </div>
+  <footer class="lg-foot faint small">© <span data-year>2026</span> TigoMeNote · <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a> · <a href="delete-account.html">Delete account</a></footer>
+  <script src="../assets/js/icons.js?v=0.11.38"></script>
+  <script src="../assets/js/pages/legal.js?v=0.11.38"></script>
+  <script>
+    // Delete account sa website (auth-fast: deleteAccount gamit ang username/email + password)
+    (function () {
+      var f = document.getElementById("delForm"), msg = document.getElementById("delMsg");
+      f.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        var d = Object.fromEntries(new FormData(f));
+        d.confirm = String(d.confirm || "").trim().toUpperCase();
+        if (d.confirm !== "DELETE") { msg.textContent = "Type DELETE to confirm."; return; }
+        var b = f.querySelector("button"); b.disabled = true; msg.textContent = "Deleting…";
+        try {
+          var r = await fetch(TMN_CONFIG.fn.auth, { method: "POST", headers: { "Content-Type": "text/plain;charset=UTF-8" }, body: JSON.stringify(Object.assign({ action: "deleteAccount" }, d)) });
+          var j = await r.json().catch(function () { return {}; });
+          if (!r.ok || !j.ok) throw new Error(j.error || "Couldn’t delete the account.");
+          f.innerHTML = "<p><b>Your account was deleted.</b> Take care! 👋</p>";
+          try { localStorage.clear(); } catch (er) {}
+        } catch (err) { msg.textContent = err.message; b.disabled = false; }
+      });
+    })();
+  </script>
+</body>
+</html>

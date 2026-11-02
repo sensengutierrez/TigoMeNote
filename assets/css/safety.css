@@ -97,9 +97,14 @@ html.wb-open { overflow: hidden; }
 .sf-check { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
 
 /* Wellbeing settings */
-.wb-times { display: flex; gap: 10px; width: 100%; flex-wrap: wrap; }
-.wb-times label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); }
-.wb-times .input { width: auto; height: 36px; }
+/* Sleep & breaks: kapag kulang ang lapad (malaking text, makitid na phone), bumababa ang controls sa ilalim ng text — hindi pinipiga ang text */
+.wb-rows .row { flex-wrap: wrap; row-gap: 10px; }
+.wb-rows .row-main { flex: 1 1 210px; }
+.wb-times { display: flex; gap: 10px; flex: 1 1 100%; flex-wrap: wrap; }
+.wb-times label { display: grid; grid-template-columns: 40px 1fr; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); flex: 1 1 150px; }
+.wb-times .input { width: 100%; min-width: 0; height: 40px; }
+.wb-rows .row-title { display: flex; align-items: center; gap: 6px; }
+.wb-rows .row-title .ic { margin: 0; flex: none; }
 .wb-sel { width: auto; height: 36px; padding: 0 30px 0 10px; }
 .row-title .ic { vertical-align: -3px; margin-inline-end: 4px; }
 .wb-note { display: flex; gap: 8px; align-items: center; background: var(--surface-2); padding: 8px 12px; border-radius: 12px; margin-bottom: 8px; }

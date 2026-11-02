@@ -1,0 +1,20 @@
+/* TigoMeNote · How to use (app/guide.html) */
+.g-page { max-width: 980px; display: grid; gap: 16px; }
+.g-head h1 { margin: 0 0 4px; font: 800 28px/1.15 var(--font-display); }
+.g-toc { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.g-toc .chip { text-decoration: none; }
+.g-sec { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; scroll-margin-top: 72px; }
+.g-shot { margin: 0; justify-self: center; width: min(240px, 70%); border-radius: 22px; overflow: hidden; border: 6px solid #15151a; box-shadow: var(--shadow-sm); background: #15151a; }
+.g-shot img { display: block; width: 100%; height: auto; }
+#g-schedule .g-shot { width: min(300px, 90%); border-width: 0; border-radius: 16px; background: transparent; }
+.g-txt h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 2px; font: 700 21px/1.2 var(--font-display); }
+.g-ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--surface-2); flex: none; }
+.g-txt p { margin: 0 0 8px; }
+.g-txt ol { margin: 0; padding-inline-start: 22px; display: grid; gap: 8px; line-height: 1.5; }
+.g-txt li::marker { font-weight: 700; color: var(--accent, var(--text-2)); }
+.g-end { margin: 8px 0 24px; }
+@media (min-width: 640px) {
+  .g-sec { grid-template-columns: 220px 1fr; }
+  .g-shot { width: 100%; }
+  #g-schedule .g-shot { width: 100%; }
+}

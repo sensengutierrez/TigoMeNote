@@ -62,6 +62,9 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-01 · Chat theme: hindi nagbabago ang kulay ng sariling bubble → ang `--mc-grad` ay kinukwenta sa `:root` kaya hindi sumusunod sa `--mc-a/--mc-b` ng theme → idineklara ulit sa `.ch[data-ctheme]` (`messages.css`)
 - 2026-11-01 · APK: pagbukas ng camera, malaking kulay-abong ▶ na parang video player → default na poster ng Android WebView sa `<video>` habang wala pang frame → transparent na poster sa `video[autoplay]` (MutationObserver sa `app-mode.js`) at sa `camera.js`. Version 0.11.35
 - 2026-11-01 · Background: hindi umaabot sa 0 ang "Card transparency" → `Number(l.panels) || 88` (0 = 88) at clamp 30–100 sa browser at server → isFinite, 0–100 (`appearance.js`, `profile-fast.ts`). Version 0.11.35
+- 2026-11-02 · Daily → Sleep & breaks: ang "Sleep time" ay naipit (isang salita bawat linya) at ang switch ay nakapatong sa text sa malaking text size → walang wrap ang row (`.set-row` ay nasa settings.css lang, hindi naka-load sa Daily) → `.wb-rows .row` ay nag-wa-wrap; bumababa ang From/To at controls sa ilalim ng text (`safety.css`, class `wb-sleep`). Version 0.11.38
+- 2026-11-02 · Tigo: naging "Times New Roman" ang text (Happy, Tip) at nagka-border/padding ang buong page habang naglalaro → ang body class na `tg-game` ay kapareho ng class ng game buttons (`.tg-game { font: inherit; display: flex; border… }`) → pinalitan ng `tg-in-game` (`pages/tigo.js`, `tigo.css`). Version 0.11.38
+- 2026-11-02 · Login: hindi lumalabas ang "Your account was deleted" → pinapalitan ng `fill()` ang `#authSub` pagkatapos ng setTimeout → nasa `fill()` na mismo (`login.js`). Version 0.11.38
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

@@ -45,3 +45,5 @@ body.legal { background: var(--bg); min-height: 100vh; display: flex; flex-direc
 .brand b { color: var(--accent); font-weight: 800; }
 .lg-top .brand { color: var(--text); text-decoration: none; }
 [dir="rtl"] .brand-mark::after { right: auto; left: -2px; }
+.del-web { display: grid; gap: 10px; max-width: 420px; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); }
+.del-web .del-msg { margin: 0; color: var(--danger); min-height: 1em; }

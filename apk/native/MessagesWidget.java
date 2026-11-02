@@ -192,6 +192,12 @@ public class MessagesWidget extends AppWidgetProvider {
         } catch (Exception e) { return "l"; }
     }
 
+    /** Settings → Appearance → Home screen widgets: lakas ng background 0–100% (0 = see-through) → 0–255 */
+    static int bgAlpha(Context c) {
+        int p = c.getSharedPreferences("tmn_widget", 0).getInt("bg", 100);
+        return Math.round(Math.max(0, Math.min(100, p)) * 2.55f);
+    }
+
     static void render(Context c) {
         try {
             AppWidgetManager m = AppWidgetManager.getInstance(c);
@@ -213,7 +219,8 @@ public class MessagesWidget extends AppWidgetProvider {
             for (int id : ids) {
                 String sz = size(m, id);
                 RemoteViews v = new RemoteViews(c.getPackageName(), res(c, "s".equals(sz) ? "tmn_widget_msgs_s" : "m".equals(sz) ? "tmn_widget_msgs_m" : "tmn_widget_msgs", "layout"));
-                v.setInt(res(c, "tmn_m_root", "id"), "setBackgroundResource", res(c, "tmn_wbg_" + md, "drawable"));
+                v.setImageViewResource(res(c, "tmn_m_bg", "id"), res(c, "tmn_wbg_" + md, "drawable"));
+                v.setInt(res(c, "tmn_m_bg", "id"), "setImageAlpha", bgAlpha(c));
                 // si Tigo (3D) ayon sa panahon — flipbook
                 int fl = res(c, "tmn_m_wx", "id");
                 v.removeAllViews(fl);

@@ -1,4 +1,12 @@
 {
+  "0.11.38": [
+    "School & work: add your classes and shifts in Daily and get a reminder before each one",
+    "Home screen widgets can be solid, glass or clear (Settings → Appearance)",
+    "New: How to use guide (menu → How to use, or Settings)",
+    "Delete your account any time in Settings → Delete account",
+    "Sleep & breaks is easier to read on small screens",
+    "Tigo: fixed the text style during games"
+  ],
   "0.11.37": [
     "Pick several photos at once when posting (Share → From gallery)",
     "Gallery: uploads now show here (moved from Profile)",

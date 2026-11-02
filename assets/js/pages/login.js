@@ -199,7 +199,7 @@
     document.querySelectorAll(".reg-only").forEach(function (el) { el.classList.toggle("hidden", !reg); });
     document.querySelectorAll(".login-only").forEach(function (el) { el.classList.toggle("hidden", reg); });
     $("authTitle").textContent = reg ? "Create your account" : "Welcome back";
-    $("authSub").textContent = reg ? "Free. Takes only a few seconds." : "Sign in to continue your Daily.";
+    $("authSub").textContent = reg ? "Free. Takes only a few seconds." : params.get("deleted") === "1" ? "Your account was deleted. Take care! 👋" : "Sign in to continue your Daily.";
     // Sign in: username O email. Create account: username lang (may @ sa harap)
     $("fUserLabel").textContent = reg ? "Username" : "Username or email";
     $("userWrap").classList.toggle("no-at", !reg);

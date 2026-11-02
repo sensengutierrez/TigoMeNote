@@ -330,6 +330,7 @@ public final class MusicEngine {
             v.setOnClickPendingIntent(res(ctx, "tmn_w_play", "id"), act(ctx, "toggle", 12));
             v.setOnClickPendingIntent(res(ctx, "tmn_w_next", "id"), act(ctx, "next", 13));
             v.setOnClickPendingIntent(res(ctx, "tmn_w_root", "id"), open(ctx));
+            v.setInt(res(ctx, "tmn_w_bg", "id"), "setImageAlpha", MessagesWidget.bgAlpha(ctx));
             m.updateAppWidget(id, v);
             }
         } catch (Exception e) { }

@@ -55,6 +55,34 @@
   paintUser();
   document.addEventListener("tmn:user", paintUser);
   $("sLogout").addEventListener("click", function () { this.disabled = true; window.TMN_AUTH.logout(); });
+  // Delete account: password + "DELETE" (auth-fast deleteAccount). Ang nasa phone (Pictures/Documents TigoMeNote) ay hindi nabubura.
+  $("sDelete").addEventListener("click", function () {
+    var body = document.createElement("form"); body.className = "del-acc";
+    body.innerHTML =
+      '<p>This permanently deletes your account. It can’t be undone.</p>' +
+      '<ul class="small"><li>Deleted: your profile, posts, photos and status on our server, comments and likes, followers, Family &amp; Friends, location history, SOS alerts, Tigo, reminders and notifications.</li>' +
+      '<li>Your messages are blanked in other people’s chats.</li>' +
+      '<li>Not deleted: files on your phone (Pictures/TigoMeNote, Documents/TigoMeNote) and your Daily notes on this device.</li></ul>' +
+      '<label class="field"><span>Password</span><input class="input" type="password" autocomplete="current-password" required></label>' +
+      '<label class="field"><span>Type <b>DELETE</b> to confirm</span><input class="input del-confirm" autocomplete="off" autocapitalize="characters" required></label>' +
+      '<p class="del-msg small" aria-live="polite"></p>' +
+      '<button type="submit" class="btn btn-danger-solid btn-block">Delete my account</button>';
+    var m = TMN_MODAL.open({ title: "Delete account?", size: "sm", body: body });
+    body.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var pw = body.querySelector('[type="password"]').value, cf = body.querySelector(".del-confirm").value.trim().toUpperCase(), msg = body.querySelector(".del-msg");
+      if (cf !== "DELETE") { msg.textContent = "Type DELETE to confirm."; return; }
+      var btn = body.querySelector("button[type=submit]"); btn.disabled = true; msg.textContent = "Deleting…";
+      try {
+        var r = await fetch(C.fn.auth, { method: "POST", headers: { "Content-Type": "text/plain;charset=UTF-8" }, body: JSON.stringify({ action: "deleteAccount", token: window.TMN_TOKEN, password: pw, confirm: cf }) });
+        var d = await r.json().catch(function () { return {}; });
+        if (!r.ok || !d.ok) throw new Error(d.error || "Couldn’t delete the account.");
+        m.close();
+        try { localStorage.clear(); sessionStorage.clear(); if (window.caches) await caches.delete("tmn-media-v1"); } catch (er) {}
+        location.replace(C.root + "login.html?deleted=1");
+      } catch (err) { msg.textContent = err.message; btn.disabled = false; }
+    });
+  });
   $("sVersion").textContent = C.appName + " v" + C.version;
 
   // ---------- Language ----------

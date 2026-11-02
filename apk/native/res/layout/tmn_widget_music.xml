@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- TigoMeNote music widget (MusicEngine.updateWidgets): si Tigo na naka-headphones (gumagalaw kapag tumutugtog, tulog kapag naka-pause) -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent">
+    <!-- background: see-through 0–100% (Settings → Appearance → Home screen widgets; setImageAlpha) -->
+    <ImageView android:id="@+id/tmn_w_bg" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:src="@drawable/tmn_widget_music_bg" android:contentDescription="@null" />
+<LinearLayout
     android:id="@+id/tmn_w_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -10,7 +13,7 @@
     android:paddingEnd="14dp"
     android:paddingTop="10dp"
     android:paddingBottom="10dp"
-    android:background="@drawable/tmn_widget_music_bg">
+    >
     <FrameLayout
         android:id="@+id/tmn_w_tigo"
         android:layout_width="96dp"
@@ -57,7 +60,7 @@
             android:text="My music"
             android:textColor="#FFFFFFFF"
             android:textSize="15sp"
-            android:textStyle="bold" />
+            android:textStyle="bold" android:shadowColor="#73000000" android:shadowDy="1" android:shadowRadius="3" />
         <TextView
             android:id="@+id/tmn_w_artist"
             android:layout_width="match_parent"
@@ -66,7 +69,7 @@
             android:ellipsize="end"
             android:text="TigoMeNote"
             android:textColor="#B3FFFFFF"
-            android:textSize="12sp" />
+            android:textSize="12sp" android:shadowColor="#73000000" android:shadowDy="1" android:shadowRadius="3" />
         <ProgressBar
             android:id="@+id/tmn_w_prog"
             style="?android:attr/progressBarStyleHorizontal"
@@ -114,3 +117,4 @@
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>
+</FrameLayout>

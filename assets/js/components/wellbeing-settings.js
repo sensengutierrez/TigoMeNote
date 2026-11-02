@@ -21,7 +21,7 @@
     var u = uid ? ' data-uid="' + uid + '"' : "";
     return '<div class="rows wb-rows"' + u + ">" +
       (usedSec != null ? '<div class="row"><div class="row-main"><div class="row-title">Today</div><div class="row-sub">' + Math.round(usedSec / 60) + " min on TigoMeNote</div></div></div>" : "") +
-      '<div class="row set-row"><div class="row-main"><div class="row-title">' + I("moon", "ic-sm") + " Sleep time</div><div class=\"row-sub\">The app rests at night. SOS and Family still work.</div></div>" +
+      '<div class="row wb-sleep"><div class="row-main"><div class="row-title">' + I("moon", "ic-sm") + " Sleep time</div><div class=\"row-sub\">The app rests at night. SOS and Family still work.</div></div>" +
         '<label class="switch"><input type="checkbox" data-f="sleep_on"' + (s.sleep_on ? " checked" : "") + dis + ' aria-label="Sleep time"><span></span></label>' +
         '<div class="wb-times"><label>From <input class="input" type="time" data-f="sleep_start" value="' + esc(s.sleep_start) + '"' + dis + "></label>" +
         '<label>To <input class="input" type="time" data-f="sleep_end" value="' + esc(s.sleep_end) + '"' + dis + "></label></div></div>" +

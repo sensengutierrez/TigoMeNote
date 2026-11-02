@@ -106,6 +106,12 @@ updated: 2026-10-24
 | 2026-11-02 | Walang video upload (posts at status = photo lang); ang video ay sa phone lang | Free plan: 1 GB storage at 5 GB egress; isang video (2.5 MB) ay ~60% ng lahat ng post noon |
 | 2026-11-02 | Ang phone ang storage: capture → Pictures/TigoMeNote, Daily → Documents/TigoMeNote (backup), server = ipinost lang | Hindi nabubura kapag in-uninstall; ang IndexedDB ng app ay nabubura. Hindi kayang magtanong ng app sa pag-uninstall (Android) — `hasFragileUserData` lang |
 | 2026-11-02 | Pangalan/cover ng phone folder: sa TigoMeNote lang (alias sa device) | Hindi pinapayagan ng Android na palitan ang folder ng ibang apps |
+| 2026-11-02 | Security: walang access ang anon/authenticated sa lahat ng table, sequence at function (sql/100); service_role lang (edge functions) | Ang app ay dumadaan lang sa edge functions; kahit may maling RLS sa hinaharap, sarado pa rin ang direct access gamit ang publishable key |
+| 2026-11-02 | Delete account: sa app (Settings) at sa web (legal/delete-account.html), password + "DELETE"; binubura ang users row (cascade) at ang media sa storage; ang messages sa chat ng iba ay blangko na lang | Kailangan ng Google Play (in-app at web URL). Ang nasa phone (Pictures/Documents) ay hindi nabubura — sa user iyon |
+| 2026-11-02 | Google Play: AAB gawa ng manual na workflow `play.yml` (TMN_PLAY=1: walang app-update.js, walang REQUEST_INSTALL_PACKAGES), targetSdk ≥ 36; ang APK sa GitHub ay tuloy pa rin para sa Get app | Bawal sa Play ang sariling update ng app; may sariling update ang Play |
+| 2026-11-02 | Permissions bawat app: main = lahat; chat = walang music/media playback; tigo = VIBRATE lang (`PERMS` sa patch-android.py) | Play: dapat kailangan talaga ang bawat permission ng app |
+| 2026-11-02 | School & work schedule = reminders table (kind class/work, repeat "days", `sched` jsonb na may tz) sa halip na bagong table | Iisang cron at push (daily-fast); ang oras ay kinukwenta sa timezone ng user (Intl) kaya tama kahit may DST |
+| 2026-11-02 | Widget see-through: iisang setting (0–100%) para sa Music at Messages widget, naka-save sa phone (`tmn_widget` "bg"), ImageView sa likod + setImageAlpha | Hindi kaya ng RemoteViews na palitan ang alpha ng background; ImageView.setImageAlpha ay pwede |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

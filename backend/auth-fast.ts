@@ -566,6 +566,62 @@ async function logout(token: string) {
   return reply({ ok: true });
 }
 
+
+// ---------- Delete account (app: Settings → Account; website: legal/delete-account.html) ----------
+// Kailangan: password + "DELETE". Gamit ang session (app) o username/email + password (website).
+// Binubura: posts, photos, status, comments, likes, follows, Family/Friends, location history, SOS, Tigo, reminders,
+// notifications, sessions (CASCADE mula sa users) + mga file sa storage. Ang messages ng user ay binablangko (laman at photo)
+// para hindi masira ang chat ng iba. Hindi kasama ang mga file sa phone mismo (Pictures/TigoMeNote, Documents/TigoMeNote).
+async function listAll(bucket: string, prefix: string, depth = 0): Promise<string[]> {
+  if (depth > 3) return [];
+  const out: string[] = [];
+  for (let off = 0; off < 5000; off += 1000) {
+    const { data } = await db.storage.from(bucket).list(prefix, { limit: 1000, offset: off });
+    if (!data || !data.length) break;
+    for (const o of data) {
+      const path = prefix + "/" + o.name;
+      if (o.id) out.push(path); else out.push(...await listAll(bucket, path, depth + 1));   // walang id = folder
+    }
+    if (data.length < 1000) break;
+  }
+  return out;
+}
+async function removeAll(bucket: string, paths: string[]) {
+  for (let i = 0; i < paths.length; i += 100) await db.storage.from(bucket).remove(paths.slice(i, i + 100));
+}
+async function deleteAccount(p: Record<string, string>, req: Request, token: string) {
+  if (String(p.confirm ?? "") !== "DELETE") return fail('Type DELETE to confirm.');
+  const password = String(p.password ?? "");
+  if (!password) return fail("Enter your password.");
+  const ipKey = "delfail:" + clientIp(req);
+  if (await countRecent(ipKey, 10) >= LOGIN_FAILS_PER_IP_10MIN) return fail("Too many tries. Try again in 10 minutes.", 429);
+  // sino: session (app) o username/email (website)
+  // deno-lint-ignore no-explicit-any
+  let user: any = null;
+  const s = token ? await findSession(token) : null;
+  if (s) user = s.user; else user = await findByIdentifier(p.username);
+  const okPw = user ? safeEqual(await hashPassword(password, user.password_salt), user.password_hash) : (await hashPassword(password, "AAAAAAAAAAAAAAAAAAAAAA=="), false);
+  if (!user || !okPw) { await mark(ipKey, "delete_fail"); return fail("Wrong username or password.", 401); }
+  const uid = user.id as string;
+  // 1) mga file
+  const [posts, profile] = await Promise.all([listAll("post-media", uid), listAll("profile-media", uid)]);
+  await removeAll("post-media", posts); await removeAll("profile-media", profile);
+  const { data: mm } = await db.from("messages").select("media_path").eq("user_id", uid).not("media_path", "is", null);
+  await removeAll("chat-media", (mm ?? []).map((r) => r.media_path as string));
+  const { data: wps } = await db.from("conversations").select("id, wallpaper_path").like("wallpaper_path", `%/wp-${uid}-%`);
+  if (wps && wps.length) {
+    await removeAll("chat-media", wps.map((w) => w.wallpaper_path as string));
+    await db.from("conversations").update({ wallpaper_path: null }).in("id", wps.map((w) => w.id));
+  }
+  // 2) messages: blangko (nananatili ang chat ng iba)
+  await db.from("messages").update({ body: null, media_path: null, lat: null, lng: null, deleted_at: new Date().toISOString() }).eq("user_id", uid);
+  // 3) ang user (CASCADE sa iba pang table)
+  const { error } = await db.from("users").delete().eq("id", uid);
+  if (error) { console.error("deleteAccount", error); return fail("Couldn't delete the account. Please try again.", 500); }
+  console.log("account deleted", uid.slice(0, 8), { files: posts.length + profile.length });
+  return reply({ ok: true, deleted: true });
+}
+
 // ---------- entry ----------
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -592,6 +648,7 @@ Deno.serve(async (req) => {
       case "resetPassword":  return post ? await resetPassword(p, req) : fail("POST only.", 405);
       case "checkSession": return await checkSession(token);
       case "logout":       return await logout(token);
+      case "deleteAccount": return post ? await deleteAccount(p, req, token) : fail("POST only.", 405);
       default:             return fail("Unknown action.");
     }
   } catch (e) {

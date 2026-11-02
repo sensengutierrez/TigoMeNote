@@ -2,7 +2,8 @@
    python3 apk/build-web.py main
    - Kasama: app/, assets/, legal/, login.html, manifest (walang sw.js: sa APK, native ang push at nasa phone na ang files)
    - index.html = apk/start.html: opening animation ni Tigo, tapos unang page ng app (apk/<app>/app.json "home") o Login
-   - Isinisingit ang assets/js/app-mode.js at app-update.js (auto-update) sa bawat page (APK lang); sa Chat, pati widget-sync.js (Messages widget)."""
+   - Isinisingit ang assets/js/app-mode.js at app-update.js (auto-update) sa bawat page (APK lang); sa Chat, pati widget-sync.js (Messages widget).
+   - TMN_PLAY=1 (bersyon para sa Google Play): walang app-update.js."""
 import json, os, re, shutil, sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 app = sys.argv[1] if len(sys.argv) > 1 else "main"
@@ -29,7 +30,8 @@ for base, _, files in os.walk(out):
         p = os.path.join(base, f); s = open(p, encoding="utf-8").read()
         rel = os.path.relpath(os.path.join(out, "assets/js/app-mode.js"), base).replace(os.sep, "/")
         tag = f'<script src="{rel}?v={ver}&app={meta["id"]}"></script>'
-        tag += "\n  " + f'<script src="{rel.replace("app-mode.js", "app-update.js")}?v={ver}" defer></script>'
+        if os.environ.get("TMN_PLAY") != "1":   # Google Play: si Play ang nag-a-update (bawal ang sariling download ng APK)
+            tag += "\n  " + f'<script src="{rel.replace("app-mode.js", "app-update.js")}?v={ver}" defer></script>'
         if meta["id"] == "chat":   # Messages widget (token + refresh)
             tag += "\n  " + f'<script src="{rel.replace("app-mode.js", "widget-sync.js")}?v={ver}" defer></script>'
         if "app-mode.js" in s: continue

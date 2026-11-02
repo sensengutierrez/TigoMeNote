@@ -161,7 +161,7 @@
   function uiGame() { return mqUI.matches || $("stage").classList.contains("full"); }
   function layout() {
     var st = $("stage"), g = mqLand.matches || st.classList.contains("full");
-    st.classList.toggle("ui-game", mqUI.matches || g); st.classList.toggle("game", g); document.body.classList.toggle("tg-game", g);
+    st.classList.toggle("ui-game", mqUI.matches || g); st.classList.toggle("game", g); document.body.classList.toggle("tg-in-game", g);
   }
   [mqUI, mqLand].forEach(function (m) { if (m.addEventListener) m.addEventListener("change", layout); });
   layout();

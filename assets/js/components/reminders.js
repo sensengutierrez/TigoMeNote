@@ -27,7 +27,7 @@
   }
   function paint() {
     if (!el) return;
-    var up = upcoming();
+    var up = upcoming().filter(function (r) { return r.kind === "reminder" || r.kind === "alarm"; });   // class/work → components/schedule.js
     el.innerHTML = '<div class="rm-head"><h3 class="side-title">Reminders &amp; alarms</h3>' +
       '<button type="button" class="btn btn-ghost btn-sm" data-r="add">' + I("plus", "ic-sm") + "Add</button></div>" +
       (up.length ? '<ul class="rm-list">' + up.slice(0, 6).map(function (r) {
@@ -109,15 +109,17 @@
     var loop = r.kind === "alarm" ? setInterval(chime, 2200) : null;
     var body = document.createElement("div");
     body.className = "rm-ring";
-    body.innerHTML = '<div class="rm-ring-ic">' + (r.kind === "alarm" ? "⏰" : "🔔") + '</div><h2>' + esc(r.title) + "</h2>" +
-      '<p class="faint" translate="no">' + new Date(r.due_at).toLocaleTimeString(loc(), { hour: "numeric", minute: "2-digit" }) + "</p>" + (r.note ? "<p>" + esc(r.note) + "</p>" : "");
+    var sc = r.sched, ic = { alarm: "⏰", class: "📚", work: "💼" }[r.kind] || "🔔";
+    body.innerHTML = '<div class="rm-ring-ic">' + ic + '</div><h2>' + esc(r.title) + "</h2>" +
+      '<p class="faint" translate="no">' + (sc ? (sc.lead ? "Starts in " + sc.lead + " min · " : "Starting now · ") + sc.start + (sc.end ? "–" + sc.end : "")
+        : new Date(r.due_at).toLocaleTimeString(loc(), { hour: "numeric", minute: "2-digit" })) + "</p>" + (r.note ? "<p>" + esc(r.note) + "</p>" : "");
     function stop() { clearInterval(loop); ringing = null; if (navigator.vibrate) navigator.vibrate(0); }
     var m = TMN_MODAL.open({
       title: false, size: "sm", cls: "modal-ring", body: body, closeOnBackdrop: false, onClose: stop,
       actions: [
-        { label: "Snooze 10 min", cls: "btn-ghost", onClick: async function () { m.close(); try { await TMN_API.call("daily", "snooze", { id: r.id, minutes: 10 }); load(); } catch (e) {} } },
-        { label: r.kind === "alarm" ? "Stop" : "Done", cls: "btn-primary", onClick: async function () { m.close(); try { await TMN_API.call("daily", "done", { id: r.id }); load(); } catch (e) {} } }
-      ]
+        sc ? null : { label: "Snooze 10 min", cls: "btn-ghost", onClick: async function () { m.close(); try { await TMN_API.call("daily", "snooze", { id: r.id, minutes: 10 }); load(); } catch (e) {} } },
+        { label: r.kind === "alarm" ? "Stop" : sc ? "OK" : "Done", cls: "btn-primary", onClick: async function () { m.close(); if (sc) return; try { await TMN_API.call("daily", "done", { id: r.id }); load(); } catch (e) {} } }
+      ].filter(Boolean)
     });
     ringing = m;
   }
@@ -128,7 +130,7 @@
   // Push habang bukas ang app (galing sa sw.js) → tumunog dito
   if (navigator.serviceWorker) navigator.serviceWorker.addEventListener("message", function (e) {
     var d = e.data && e.data.type === "tmn-push" && e.data.data;
-    if (d && (d.type === "alarm" || d.type === "reminder")) {
+    if (d && (d.type === "alarm" || d.type === "reminder" || d.type === "class" || d.type === "work")) {
       var r = items.filter(function (x) { return x.id === d.id; })[0];
       ring(r || { id: d.id, kind: d.type, title: String(d.title || "").replace(/^\S+\s/, ""), note: d.body, due_at: new Date().toISOString() });
     }
