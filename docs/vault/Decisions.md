@@ -117,5 +117,6 @@ updated: 2026-10-24
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)
 - **Contact email** para sa policies (copyright, privacy requests).
 - **Image detection:** nsfwjs (libre, nudity lang) o bayad na serbisyo (violence + weapons)?
+- **Google Play (naka-hold, 2026-11-02):** wala pang 12 beta testers para sa 14-araw na closed test. Kapag handa na: GitHub → Actions → "Build for Google Play" → Run (AAB) → $25 developer account → closed test, 12 testers, 14 araw → test account ng reviewer sa Play Console → App access (hindi sa listing file). Hindi pa nasusubukan sa totoong phone: widget see-through, push ng class/work reminder, at ang AAB build mismo.
 
 Tingnan din: [[Build - Foundation]]
