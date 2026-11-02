@@ -2,12 +2,12 @@
   "main": {
     "name": "TigoMeNote",
     "id": "com.tigomenote.app",
-    "version": "0.11.37",
-    "code": 11037,
-    "url": "https://tigomenote.com/dl/TigoMeNote.apk?v=0.11.37",
-    "github": "https://github.com/sensengutierrez/TigoMeNote/releases/download/main-v0.11.37/TigoMeNote.apk",
-    "size": 5484245,
-    "sha256": "ad0707ee0a63e815080755587ace2bd609120daa00af6a117dad53053bdf6977",
+    "version": "0.11.38",
+    "code": 11038,
+    "url": "https://tigomenote.com/dl/TigoMeNote.apk?v=0.11.38",
+    "github": "https://github.com/sensengutierrez/TigoMeNote/releases/download/main-v0.11.38/TigoMeNote.apk",
+    "size": 5641238,
+    "sha256": "892887f2da03a94df2645ae343d876872cd65d616a1ecefa95443e686ad218e9",
     "date": "2026-11-02"
   },
   "chat": {
