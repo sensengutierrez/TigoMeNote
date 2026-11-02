@@ -134,3 +134,19 @@
 }
 .ph-opts { display: grid; gap: 10px; }
 .ph-opts .btn { width: 100%; justify-content: center; }
+
+/* Phone gallery: ▾/▸, listahan na may scroll sa loob, at folder na bumubukas sa loob ng card (phone) */
+.ph-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 0; border: 0; background: none; color: var(--text); font: inherit; cursor: pointer; }
+.ph-toggle .ic { transition: transform .2s var(--ease); color: var(--text-2); }
+.ph-toggle[aria-expanded="true"] .ic { transform: rotate(90deg); }
+[dir="rtl"] .ph-toggle[aria-expanded="false"] .ic { transform: scaleX(-1); }
+.ph-body[hidden] { display: none; }
+#phoneCard.ph-closed .albums-head { margin-bottom: 0; }
+#phoneCard .ph-list { max-height: 372px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-inline-end: 2px; }
+#phoneCard .ph-list.hidden { display: none; }
+#phonePane.ph-inline { border: 0; box-shadow: none; background: none; padding: 0; margin-top: 4px; backdrop-filter: none; -webkit-backdrop-filter: none; }
+#phonePane.ph-inline .g-toolbar { padding: 0 0 8px; }
+#phonePane.ph-inline .g-scroll { max-height: min(64vh, 560px); overflow-y: auto; overscroll-behavior: contain; padding: 4px 0 0; }
+#phonePane .g-title #phRename { margin-inline-start: 2px; }
+#phonePane .g-title #phRename[hidden] { display: none; }
+@media (orientation: landscape) and (max-height: 520px) { #phonePane.ph-inline .g-scroll { max-height: 70vh; } #phoneCard .ph-list { max-height: 60vh; } }

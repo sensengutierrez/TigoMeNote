@@ -84,5 +84,21 @@
     return l.sort(function (a, b) { return a.day < b.day ? 1 : -1; }).slice(0, 6);
   }
 
-  window.TMN_DAILY = { list: list, month: month, add: add, update: update, remove: remove, mood: mood, setMood: setMood, onThisDay: onThisDay, dayKey: dayKey };
+  // Backup sa phone (phone-storage.js): text ng notes at moods (ang photos ay nasa phone gallery na)
+  async function backup() {
+    var moods = await tx("moods", "readonly", function (s, o) { var r = s.getAll(); r.onsuccess = function () { o.v = r.result || []; }; });
+    return { app: "TigoMeNote", kind: "daily", v: 1, user: (window.TMN_USER || {}).id || null, at: Date.now(), notes: await all(), moods: moods };
+  }
+  // Ibalik: idinadagdag ang wala pa, pinapalitan kung mas bago ang nasa backup (hindi binubura ang nasa app)
+  async function restore(data) {
+    if (!data || data.app !== "TigoMeNote" || data.kind !== "daily" || !Array.isArray(data.notes)) throw new Error("This isn't a TigoMeNote Daily backup.");
+    var cur = {}; (await all()).forEach(function (n) { cur[n.id] = n; });
+    var notes = data.notes.filter(function (n) { return n && n.id && n.day && (!cur[n.id] || (n.updatedAt || 0) > (cur[n.id].updatedAt || 0)); });
+    await tx("notes", "readwrite", function (s) { notes.forEach(function (n) { s.put(n); }); });
+    var moods = (data.moods || []).filter(function (m) { return m && m.day && m.mood; });
+    await tx("moods", "readwrite", function (s) { moods.forEach(function (m) { s.put(m); }); });
+    changed(); return { notes: notes.length, moods: moods.length };
+  }
+
+  window.TMN_DAILY = { list: list, month: month, add: add, update: update, remove: remove, mood: mood, setMood: setMood, onThisDay: onThisDay, dayKey: dayKey, backup: backup, restore: restore };
 })();

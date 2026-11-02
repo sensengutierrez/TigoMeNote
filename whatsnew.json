@@ -1,4 +1,12 @@
 {
+  "0.11.37": [
+    "Pick several photos at once when posting (Share → From gallery)",
+    "Gallery: uploads now show here (moved from Profile)",
+    "Phone gallery: hide/show with the arrow, the folder list scrolls, and folders open right there",
+    "Rename a phone folder in TigoMeNote and choose its cover (press and hold a photo)",
+    "Photos you take are saved to your phone (Pictures/TigoMeNote) and your Daily notes are backed up (Documents/TigoMeNote) — they stay even if you uninstall",
+    "Only photos can be posted now — videos stay on your phone"
+  ],
   "0.11.36": [
     "The ☰ menu, top bar and bottom tabs are see-through too (Background → Box see-through)",
     "Seasonal themes: the menu plays a little sound when you open it and tap inside",

@@ -147,3 +147,8 @@
 .snd-chip.playing .snd-eq i:nth-child(3) { animation-delay: .4s; }
 @keyframes sndEq { 0%, 100% { height: 4px; } 50% { height: 12px; } }
 @media (prefers-reduced-motion: reduce) { .snd-chip .snd-eq i { animation: none !important; height: 8px; } }
+
+/* ---------- Upload queue sa Gallery (components/upload-queue.js) ---------- */
+.uq { display: grid; gap: 10px; margin-bottom: 16px; }
+.uq .q-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.uq .q-head h3 { display: flex; align-items: center; gap: 6px; font-size: 16px; margin: 0; }

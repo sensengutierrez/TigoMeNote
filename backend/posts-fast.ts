@@ -177,7 +177,9 @@ async function createUpload(p: any, me: any) {
 
   let total = 0;
   for (const f of files) {
-    const kind = f.kind === "video" ? "video" : "photo";
+    // Walang video sa server (2026-11-01, ayon kay Bench): nasa phone lang ang video; photo lang ang ina-upload
+    if (f.kind === "video") return fail("Videos stay on your phone. Only photos can be posted.", 415, { noVideo: true });
+    const kind: string = "photo";
     const size = Number(f.size) || 0;
     if (kind === "photo" && size > MAX_PHOTO_BYTES) return fail("The photo is too large.", 413);
     if (kind === "video" && size > MAX_VIDEO_BYTES) return fail("The video is too large (max ~12 MB).", 413);

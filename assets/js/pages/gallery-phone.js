@@ -3,6 +3,9 @@
    Hindi kinokopya at hindi ina-upload ang lahat: pumili ka lang ng gusto mo, tapos
      • Post  → composer (caption, sino ang makakakita, at kung KAILAN ilalabas; gumagana kahit offline — kusang ia-upload pag may internet)
      • Save  → kopya sa Gallery ng app (album)
+   Ayos: ▾/▸ = itago o ipakita ang listahan (naaalala) · mga 5 folder ang kita, may scroll sa loob ·
+   sa phone, ang folder ay bumubukas SA LOOB ng card (hindi na bumababa ang page) · ✎ = palitan ang pangalan sa TigoMeNote lang
+   (hindi ang totoong folder) at "Set as folder cover" sa press-and-hold — naka-save sa device ("tmnPhoneAlias").
    Native: window.Capacitor.Plugins.TmnNative (apk/native/TmnNative.java). Kailangan: gallery.js, post-composer.js, media-store.js */
 (function () {
   var Cap = window.Capacitor;
@@ -21,14 +24,16 @@
   // ---------- markup ----------
   var card = document.createElement("section");
   card.className = "card albums-card"; card.id = "phoneCard";
-  card.innerHTML = '<div class="albums-head"><h3>Phone gallery</h3><button class="btn btn-ghost btn-sm" type="button" id="phoneSync">' + I("refresh", "ic-sm") + 'Sync</button></div>' +
-    '<p class="faint small ph-note">Folders on this phone. Pick only what you want to post.</p><nav class="album-list" id="phoneList" aria-label="Phone folders"></nav>';
+  card.innerHTML = '<div class="albums-head"><button type="button" class="ph-toggle" id="phoneToggle" aria-expanded="true" aria-controls="phoneBody">' + I("chevronR", "ic-sm") + '<h3>Phone gallery</h3></button>' +
+      '<button class="btn btn-ghost btn-sm" type="button" id="phoneSync">' + I("refresh", "ic-sm") + 'Sync</button></div>' +
+    '<div class="ph-body" id="phoneBody"><p class="faint small ph-note">Folders on this phone. Pick only what you want to post.</p><nav class="album-list ph-list" id="phoneList" aria-label="Phone folders"></nav></div>';
   aside.insertBefore(card, aside.firstChild);
 
   var pane = document.createElement("section");
   pane.className = "card gallery-main hidden"; pane.id = "phonePane";
   pane.innerHTML =
-    '<div class="g-toolbar"><div class="g-title"><button class="icon-btn" type="button" id="phBack" aria-label="Back">' + I("chevronL") + '</button><div><h2 id="phTitle">Phone</h2><span class="faint small" id="phCount"></span></div></div>' +
+    '<div class="g-toolbar"><div class="g-title"><button class="icon-btn" type="button" id="phBack" aria-label="Back">' + I("chevronL") + '</button><div><h2 id="phTitle">Phone</h2><span class="faint small" id="phCount"></span></div>' +
+      '<button class="icon-btn" type="button" id="phRename" aria-label="Rename folder in TigoMeNote" title="Rename">' + I("edit", "ic-sm") + "</button></div>" +
     '<div class="g-tools"><div class="chips" id="phChips"><button class="chip active" type="button" data-type="all">All</button><button class="chip" type="button" data-type="photo">Photos</button><button class="chip" type="button" data-type="video">Videos</button></div></div></div>' +
     '<div class="sel-bar" id="phBar"><b id="phSel">0 selected</b><div class="sel-actions">' +
       '<button class="btn btn-ghost btn-sm" type="button" id="phAll">Select all</button>' +
@@ -40,6 +45,28 @@
     '<div class="g-scroll" id="phScroll"><div class="g-grid" id="phGrid"></div><div class="empty hidden" id="phEmpty"><div class="empty-art">' + I("image", "ic-lg") + '</div><h3>Nothing here</h3></div>' +
     '<div style="text-align:center;padding:10px"><button class="btn btn-ghost hidden" type="button" id="phMore">Load more</button></div></div>';
   main.parentNode.insertBefore(pane, main.nextSibling);
+  // Sa phone (makitid): ang folder ay bumubukas sa loob ng card mismo; sa desktop: sa malaking bahagi sa kanan
+  var narrow = window.matchMedia("(max-width: 899px)");
+  function place() {
+    if (narrow.matches) { if (pane.parentNode !== $("phoneBody")) $("phoneBody").appendChild(pane); pane.classList.add("ph-inline"); }
+    else { if (pane.parentNode !== main.parentNode) main.parentNode.insertBefore(pane, main.nextSibling); pane.classList.remove("ph-inline"); }
+  }
+  place(); if (narrow.addEventListener) narrow.addEventListener("change", function () { place(); show(!!st.bucket); });
+
+  // ▾/▸ itago o ipakita (naaalala)
+  var OPEN = "tmnPhoneOpen";
+  function setOpen(on) {
+    $("phoneToggle").setAttribute("aria-expanded", String(on)); $("phoneBody").hidden = !on; card.classList.toggle("ph-closed", !on);
+    try { localStorage.setItem(OPEN, on ? "1" : "0"); } catch (e) {}
+  }
+  $("phoneToggle").addEventListener("click", function () { setOpen($("phoneBody").hidden); });
+  try { if (localStorage.getItem(OPEN) === "0") setOpen(false); } catch (e) {}
+
+  // Pangalan at cover sa TigoMeNote lang (hindi binabago ang totoong folder sa phone)
+  var AKEY = "tmnPhoneAlias";
+  function aliases() { try { return JSON.parse(localStorage.getItem(AKEY) || "{}") || {}; } catch (e) { return {}; } }
+  function setAlias(id, ch) { var a = aliases(); a[id] = Object.assign({}, a[id] || {}, ch); if (!a[id].name) delete a[id].name; try { localStorage.setItem(AKEY, JSON.stringify(a)); } catch (e) {} }
+  function nameOf(b) { var a = aliases()[b.id]; return (a && a.name) || b.name; }
 
   var st = { buckets: [], bucket: null, name: "", type: "all", items: [], sel: new Map(), done: false, loading: false };
   var PAGE = 120;
@@ -81,9 +108,12 @@
     try {
       var r = await N.galleryBuckets(); st.buckets = r.buckets || [];
       var all = '<button type="button" class="album" data-b="all"><span class="album-cover">' + I("grid") + '</span><span><span class="album-name">All on phone</span><br><span class="album-count">' + (r.total || 0) + " items</span></span></button>";
+      var al = aliases();
       list.innerHTML = all + st.buckets.map(function (b) {
-        return '<button type="button" class="album" data-b="' + esc(b.id) + '"><span class="album-cover"><img class="ph-th ok" alt="" data-id="' + b.cover.id + '" data-type="' + b.cover.type + '"></span>' +
-          '<span><span class="album-name">' + esc(b.name) + '</span><br><span class="album-count">' + b.count + " item" + (b.count === 1 ? "" : "s") + "</span></span></button>";
+        var a = al[b.id] || {}, cov = a.cover ? { id: a.cover, type: "photo" } : b.cover;
+        return '<button type="button" class="album" data-b="' + esc(b.id) + '"><span class="album-cover"><img class="ph-th ok" alt="" data-id="' + cov.id + '" data-type="' + cov.type + '"></span>' +
+          '<span><span class="album-name">' + esc(a.name || b.name) + '</span><br><span class="album-count">' + b.count + " item" + (b.count === 1 ? "" : "s") +
+          (a.name ? " · " + esc(b.name) : "") + "</span></span></button>";
       }).join("");
       list.querySelectorAll("img[data-id]").forEach(function (im) { im.classList.remove("ok"); if (io) io.observe(im); else enqueue(im); });
     } catch (e) { list.innerHTML = '<p class="faint small">Couldn’t read the phone gallery.</p>'; }
@@ -91,16 +121,22 @@
   $("phoneList").addEventListener("click", function (e) {
     var b = e.target.closest("[data-b]"); if (!b) return;
     openBucket(b.dataset.b, b.querySelector(".album-name").textContent);
+    $("phRename").hidden = b.dataset.b === "all";
   });
   $("phoneSync").addEventListener("click", function () { loadBuckets(); if (st.bucket) openBucket(st.bucket, st.name); UI.toast("Synced with your phone gallery."); });
 
   // ---------- grid ----------
-  function show(on) { pane.classList.toggle("hidden", !on); main.classList.toggle("hidden", on); }
+  function show(on) {
+    pane.classList.toggle("hidden", !on);
+    if (pane.classList.contains("ph-inline")) { main.classList.remove("hidden"); $("phoneList").classList.toggle("hidden", on); card.querySelector(".ph-note").classList.toggle("hidden", on); }
+    else { main.classList.toggle("hidden", on); $("phoneList").classList.remove("hidden"); card.querySelector(".ph-note").classList.remove("hidden"); }
+  }
   function openBucket(id, name) {
     st.bucket = id; st.name = name; st.items = []; st.done = false; st.sel.clear();
-    $("phTitle").textContent = name; $("phGrid").innerHTML = ""; show(true);
-    toTop(pane);                         // sa phone, nasa ibaba ang folder → umakyat agad doon
-    more().then(function () { toTop(pane); });   // ulit pagkalabas ng mga litrato (humahaba ang page)
+    $("phTitle").textContent = name; $("phGrid").innerHTML = ""; $("phScroll").scrollTop = 0; show(true);
+    // sa loob ng card bumubukas: umakyat lang kung nakatago sa itaas ang simula ng card
+    if (card.getBoundingClientRect().top < 0) toTop(card);
+    more();
   }
   function toTop(el) {
     var bar = document.querySelector(".topbar"), off = bar ? bar.getBoundingClientRect().height : 0;
@@ -135,7 +171,16 @@
   function redraw() { $("phGrid").innerHTML = ""; draw(st.items); updateBar(); }
   $("phMore").addEventListener("click", more);
   $("phScroll").addEventListener("scroll", function () { var s = this; if (s.scrollTop + s.clientHeight > s.scrollHeight - 600) more(); });
-  $("phBack").addEventListener("click", function () { show(false); st.bucket = null; st.sel.clear(); updateBar(); toTop(card); });
+  $("phBack").addEventListener("click", function () { show(false); st.bucket = null; st.sel.clear(); updateBar(); if (card.getBoundingClientRect().top < 0) toTop(card); });
+  $("phRename").addEventListener("click", async function () {
+    if (!st.bucket || st.bucket === "all") return;
+    var b = st.buckets.filter(function (x) { return x.id === st.bucket; })[0]; if (!b) return;
+    var v = await MODAL.prompt("Folder name in TigoMeNote", { value: nameOf(b), placeholder: b.name, maxLength: 40, okText: "Save" });
+    if (v === null) return;
+    setAlias(b.id, { name: v === b.name ? "" : v });
+    $("phTitle").textContent = nameOf(b); loadBuckets();
+    UI.toast("Renamed in TigoMeNote only. The folder on your phone stays “" + b.name + "”.", 3500);
+  });
   $("phChips").addEventListener("click", function (e) {
     var b = e.target.closest("[data-type]"); if (!b) return; st.type = b.dataset.type;
     this.querySelectorAll(".chip").forEach(function (c) { c.classList.toggle("active", c === b); }); redraw();
@@ -159,10 +204,12 @@
     body.innerHTML =
       '<button type="button" class="btn btn-primary" data-o="now">' + I("send", "ic-sm") + "Post now</button>" +
       '<button type="button" class="btn btn-ghost" data-o="later">' + I("calendar", "ic-sm") + "Schedule</button>" +
-      '<button type="button" class="btn btn-ghost" data-o="save">' + I("download", "ic-sm") + "Save to app gallery</button>";
+      '<button type="button" class="btn btn-ghost" data-o="save">' + I("download", "ic-sm") + "Save to app gallery</button>" +
+      (st.bucket && st.bucket !== "all" && it.type !== "video" ? '<button type="button" class="btn btn-ghost" data-o="cover">' + I("image", "ic-sm") + "Set as folder cover</button>" : "");
     var m = window.TMN_MODAL.open({ title: n > 1 ? n + " selected" : (it.type === "video" ? "Video" : "Photo"), size: "sm", body: body });
     body.addEventListener("click", function (e) {
       var b = e.target.closest("[data-o]"); if (!b) return; m.close();
+      if (b.dataset.o === "cover") { setAlias(st.bucket, { cover: it.id }); st.sel.delete(it.id); tile.classList.remove("sel"); updateBar(); loadBuckets(); UI.toast("Folder cover changed."); return; }
       if (b.dataset.o === "save") $("phSave").click(); else post(b.dataset.o);
     });
   }

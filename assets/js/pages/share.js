@@ -75,6 +75,17 @@
     });
   });
 
+  // APK: "From gallery" = sariling picker (maraming litrato, may numero) → diretso sa Post
+  var galInp = document.querySelector('[data-pick][multiple]');
+  if (galInp) {
+    galInp.closest("label").addEventListener("click", async function (e) {
+      if (!(window.TMN_PHONE_PICK && TMN_PHONE_PICK.ok())) return;   // website: file picker ng browser
+      e.preventDefault();
+      var items = await TMN_PHONE_PICK.open({ max: 10 }); if (!items) return;
+      window.TMN_COMPOSER.open(items, { onPosted: function () { setTimeout(function () { location.href = "profile.html"; }, 900); } });
+    });
+  }
+
   // Explore post (route + photos, parang Komoot)
   document.getElementById("exploreTile").addEventListener("click", function () {
     window.TMN_ACTIVITY.open({ onPosted: function () { setTimeout(function () { location.href = "explore.html"; }, 900); } });

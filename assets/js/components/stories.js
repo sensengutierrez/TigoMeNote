@@ -63,7 +63,7 @@
   // ---------- Add ----------
   function pick() {
     return new Promise(function (res) {
-      var i = document.createElement("input"); i.type = "file"; i.accept = "image/*,video/*"; i.style.display = "none";
+      var i = document.createElement("input"); i.type = "file"; i.accept = "image/*"; i.style.display = "none";   // photo lang (walang video sa server)
       document.body.appendChild(i);
       i.addEventListener("change", function () { var f = i.files && i.files[0]; i.remove(); res(f || null); });
       i.click();
@@ -72,7 +72,8 @@
   async function add(file) {
     if (!navigator.onLine) { UI().toast("You need internet to post a status."); return; }
     file = file || await pick(); if (!file) return;
-    var isVideo = /^video\//.test(file.type);
+    if (/^video\//.test(file.type)) { UI().toast("Videos stay on your phone. Status can be a photo.", 3500); return; }
+    var isVideo = false;
     var url = URL.createObjectURL(file);
     var root = document.createElement("form");
     root.className = "st-new";

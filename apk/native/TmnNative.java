@@ -121,6 +121,8 @@ public class TmnNative extends Plugin {
         int offset = call.getInt("offset", 0), limit = call.getInt("limit", 120);
         String sel = BASE_SEL; String[] args = null;
         if (!"all".equals(bucket)) { sel += " AND " + MediaStore.MediaColumns.BUCKET_ID + "=?"; args = new String[] { bucket }; }
+        // photosOnly: litrato lang (para sa pag-post — walang video sa server)
+        if (call.getBoolean("photosOnly", false)) sel += " AND " + MediaStore.Files.FileColumns.MEDIA_TYPE + "=" + MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
         try (Cursor c = q(sel, args, offset, limit)) {
             JSArray a = new JSArray();
             while (c != null && c.moveToNext()) a.put(row(c));
@@ -258,5 +260,58 @@ public class TmnNative extends Plugin {
             else getContext().stopService(i);
         } catch (Exception e) { }
         call.resolve();
+    }
+
+    // ================= Phone storage (hindi nabubura kahit i-uninstall ang app) =================
+    /** saveToPhone({ data: base64, name, mime }) → Pictures/TigoMeNote (litrato) o Movies/TigoMeNote (video). Makikita sa gallery ng phone. */
+    @PluginMethod public void saveToPhone(final PluginCall call) {
+        final String data = call.getString("data", ""), mime0 = call.getString("mime", "image/jpeg");
+        final String name = call.getString("name", "TigoMeNote_" + System.currentTimeMillis());
+        new Thread(() -> {
+            try {
+                if (Build.VERSION.SDK_INT < 29) { call.reject("Android 10 or newer is needed."); return; }
+                boolean video = mime0.startsWith("video/");
+                String mime = video || mime0.startsWith("image/") ? mime0 : "image/jpeg";
+                byte[] bytes = android.util.Base64.decode(data, android.util.Base64.DEFAULT);
+                ContentResolver cr = getContext().getContentResolver();
+                android.content.ContentValues v = new android.content.ContentValues();
+                v.put(MediaStore.MediaColumns.DISPLAY_NAME, name); v.put(MediaStore.MediaColumns.MIME_TYPE, mime);
+                v.put(MediaStore.MediaColumns.RELATIVE_PATH, video ? "Movies/TigoMeNote" : "Pictures/TigoMeNote"); v.put(MediaStore.MediaColumns.IS_PENDING, 1);
+                Uri dest = cr.insert(video ? MediaStore.Video.Media.EXTERNAL_CONTENT_URI : MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
+                if (dest == null) { call.reject("Couldn't save to the phone."); return; }
+                try (OutputStream os = cr.openOutputStream(dest)) { os.write(bytes); }
+                catch (Exception e) { cr.delete(dest, null, null); call.reject("Couldn't save to the phone."); return; }
+                android.content.ContentValues done = new android.content.ContentValues(); done.put(MediaStore.MediaColumns.IS_PENDING, 0);
+                cr.update(dest, done, null, null);
+                JSObject o = new JSObject(); o.put("uri", dest.toString()); call.resolve(o);
+            } catch (Exception e) { call.reject(String.valueOf(e.getMessage())); }
+        }).start();
+    }
+
+    /** backupWrite({ text, name }) → Documents/TigoMeNote/<name> (pinapalitan kung meron na). Para sa Daily notes at reminders. */
+    @PluginMethod public void backupWrite(final PluginCall call) {
+        final String text = call.getString("text", ""), name = call.getString("name", "TigoMeNote-backup.json");
+        new Thread(() -> {
+            try {
+                if (Build.VERSION.SDK_INT < 29) { call.reject("Android 10 or newer is needed."); return; }
+                ContentResolver cr = getContext().getContentResolver();
+                Uri coll = MediaStore.Files.getContentUri("external");
+                Uri dest = null;
+                // sariling file na ginawa ng app na ito (kung meron na): palitan ang laman
+                try (Cursor c = cr.query(coll, new String[] { MediaStore.MediaColumns._ID },
+                        MediaStore.MediaColumns.RELATIVE_PATH + "=? AND " + MediaStore.MediaColumns.DISPLAY_NAME + "=?", new String[] { "Documents/TigoMeNote/", name }, null)) {
+                    if (c != null && c.moveToFirst()) dest = ContentUris.withAppendedId(coll, c.getLong(0));
+                }
+                if (dest == null) {
+                    android.content.ContentValues v = new android.content.ContentValues();
+                    v.put(MediaStore.MediaColumns.DISPLAY_NAME, name); v.put(MediaStore.MediaColumns.MIME_TYPE, "application/json");
+                    v.put(MediaStore.MediaColumns.RELATIVE_PATH, "Documents/TigoMeNote");
+                    dest = cr.insert(coll, v);
+                }
+                if (dest == null) { call.reject("Couldn't write the backup."); return; }
+                try (OutputStream os = cr.openOutputStream(dest, "wt")) { os.write(text.getBytes("UTF-8")); }
+                JSObject o = new JSObject(); o.put("uri", dest.toString()); o.put("at", System.currentTimeMillis()); call.resolve(o);
+            } catch (Exception e) { call.reject(String.valueOf(e.getMessage())); }
+        }).start();
     }
 }

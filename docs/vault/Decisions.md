@@ -103,6 +103,9 @@ updated: 2026-10-24
 | 2026-11-01 | Bubble ng chat (linaw + glossy) pareho sa lahat ng nasa chat (`conversations.bubble_alpha/bubble_gloss`), walang system message | Kasama ng theme/wallpaper; slider kaya hindi dapat mag-spam ng message |
 | 2026-11-01 | Tigo app: laging buong screen (status bar nakatago) at ⛶ → ✕ Exit; sa website/TigoMeNote may Full pa rin | Ayon kay Bench |
 | 2026-11-01 | Edge functions (messages-fast, pet-fast) dine-deploy bilang maliit na `index.ts` na nag-i-import ng code mula sa GitHub sa eksaktong commit (raw.githubusercontent.com/…/<sha>/backend/…) | Public ang repo; pareho ang deployed at ang nasa repo, at hindi na kailangang kopyahin ang buong code sa deploy. Laging naka-pin sa commit, hindi sa branch |
+| 2026-11-02 | Walang video upload (posts at status = photo lang); ang video ay sa phone lang | Free plan: 1 GB storage at 5 GB egress; isang video (2.5 MB) ay ~60% ng lahat ng post noon |
+| 2026-11-02 | Ang phone ang storage: capture → Pictures/TigoMeNote, Daily → Documents/TigoMeNote (backup), server = ipinost lang | Hindi nabubura kapag in-uninstall; ang IndexedDB ng app ay nabubura. Hindi kayang magtanong ng app sa pag-uninstall (Android) — `hasFragileUserData` lang |
+| 2026-11-02 | Pangalan/cover ng phone folder: sa TigoMeNote lang (alias sa device) | Hindi pinapayagan ng Android na palitan ang folder ng ibang apps |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

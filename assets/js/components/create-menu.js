@@ -4,13 +4,13 @@
 (function () {
   function I(n, c) { return window.TMN_ICON ? TMN_ICON(n, c) : ""; }
   var OPTS = [
-    { id: "story", icon: "clock", title: "Status", sub: "Photo or video for 24 hours" },
-    { id: "post", icon: "image", title: "Post", sub: "Photos and videos on your profile and Explore" },
+    { id: "story", icon: "clock", title: "Status", sub: "A photo for 24 hours" },
+    { id: "post", icon: "image", title: "Post", sub: "Photos on your profile and Explore (pick several)" },
     { id: "explore", icon: "map", title: "Explore", sub: "Your route on a map, with photos and stats (hike, walk, ride…)" }
   ];
   function pickFiles() {
     return new Promise(function (res) {
-      var i = document.createElement("input"); i.type = "file"; i.accept = "image/*,video/*"; i.multiple = true; i.style.display = "none";
+      var i = document.createElement("input"); i.type = "file"; i.accept = "image/*"; i.multiple = true; i.style.display = "none";
       document.body.appendChild(i);
       i.addEventListener("change", function () { var f = [].slice.call(i.files || []); i.remove(); res(f); });
       i.click();
@@ -30,7 +30,10 @@
       m.close();
       if (c === "story") return TMN_STORIES.add();
       if (c === "explore") return TMN_ACTIVITY.open({ onPosted: o.onPosted });
-      if (!window.TMN_MEDIA || !window.TMN_COMPOSER) { location.href = "share.html"; return; }
+      if (!window.TMN_COMPOSER) { location.href = "share.html"; return; }
+      // APK: sariling picker na maraming litrato ang napipili (ang file picker ng Android ay madalas isa lang)
+      if (window.TMN_PHONE_PICK && TMN_PHONE_PICK.ok()) { var picked = await TMN_PHONE_PICK.open({ max: 10 }); if (picked) TMN_COMPOSER.open(picked, { onPosted: o.onPosted }); return; }
+      if (!window.TMN_MEDIA) { location.href = "share.html"; return; }
       var files = await pickFiles(); if (!files.length) return;
       try { var items = await TMN_MEDIA.addFiles(files.slice(0, 10), null); TMN_COMPOSER.open(items, { onPosted: o.onPosted }); }
       catch (er) { TMN_UI.toast(er.message); }

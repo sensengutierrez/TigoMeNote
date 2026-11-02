@@ -165,6 +165,8 @@
     function finish(file, kind) {
       var f = filter;
       close();
+      // APK: kopya agad sa gallery ng phone (Pictures/TigoMeNote) — hindi nabubura kahit i-uninstall ang app
+      if (window.TMN_PHONE && TMN_PHONE.ok()) TMN_PHONE.save(file).then(function () { if (window.TMN_UI) TMN_UI.toast("Saved to your phone gallery (TigoMeNote)."); }, function () {});
       if (o.onCapture) o.onCapture(file, { kind: kind, filter: f });
     }
     function nativeFallback() {

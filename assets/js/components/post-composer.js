@@ -22,8 +22,11 @@
     o = o || {};
     var UI = window.TMN_UI;
     items = (items || []).filter(function (it) { return it && it.blob && (it.type === "photo" || it.type === "video"); });
+    // Walang video sa server: photos lang ang ipo-post; ang video ay nasa phone/Gallery lang
+    var vids = items.filter(function (it) { return it.type === "video"; }).length;
+    if (vids) { items = items.filter(function (it) { return it.type === "photo"; }); UI.toast(vids === 1 ? "Videos stay on your phone — only photos can be posted." : vids + " videos skipped — only photos can be posted.", 3500); }
     var act = o.activity && window.TMN_ROUTE ? o.activity : null;
-    if (!items.length && !act) { UI.toast("Choose a photo or video first."); return; }
+    if (!items.length && !act) { if (!vids) UI.toast("Choose a photo first."); return; }
     if (items.length > MAX) { UI.toast("Up to " + MAX + " per post. The first " + MAX + " were used."); items = items.slice(0, MAX); }
 
     var urls = [];

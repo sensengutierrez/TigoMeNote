@@ -342,6 +342,8 @@ add += '    <uses-feature android:name="android.hardware.camera" android:require
 # para makita ng app kung naka-install ang ibang TigoMeNote app (Android 11+)
 add += '    <queries>\n' + "".join(f'        <package android:name="{p}" />\n' for p in ("com.tigomenote.app", "com.tigomenote.chat", "com.tigomenote.tigo")) + '    </queries>\n'
 if "<queries>" not in s: s = s.replace("</manifest>", add + "</manifest>", 1)
+# Pag-uninstall: "Keep app data" ng Android (10+, kung sinusuportahan ng phone). Ang mga litrato at backup ay nasa phone storage na rin.
+if "hasFragileUserData" not in s: s = s.replace("<application", '<application android:hasFragileUserData="true"', 1)
 # FileProvider para sa update.apk (sariling authority: <pkg>.tmnupdate)
 if "MusicService" not in s:
     s = s.replace("</application>", f'''    <service android:name=".MusicService" android:exported="false" android:foregroundServiceType="mediaPlayback" />

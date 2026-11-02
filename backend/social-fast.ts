@@ -223,7 +223,9 @@ async function stories(_p: any, me: any) {
 
 // deno-lint-ignore no-explicit-any
 async function storyUpload(p: any, me: any) {
-  const kind = p.kind === "video" ? "video" : "photo";
+  // Walang video sa server: photo lang ang status
+  if (p.kind === "video") return fail("Videos stay on your phone. Status can be a photo.", 415, { noVideo: true });
+  const kind: string = "photo";
   const size = Number(p.size) || 0;
   if (kind === "photo" && size > MAX_PHOTO_BYTES) return fail("The photo is too large.", 413);
   if (kind === "video" && (size > MAX_VIDEO_BYTES || Number(p.duration) > MAX_VIDEO_SECONDS)) return fail("Video: up to 15 seconds and 12 MB.", 413);
