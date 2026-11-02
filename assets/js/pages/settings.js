@@ -84,6 +84,7 @@
     });
   });
   $("sVersion").textContent = C.appName + " v" + C.version;
+  $("sBug").addEventListener("click", function () { if (window.TMN_BUG) TMN_BUG.open(); });
 
   // ---------- Language ----------
   var pick = $("langPick");

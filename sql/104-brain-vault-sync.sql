@@ -1,0 +1,19 @@
+-- TigoMeNote · 104 brain vault sync (Change log #70, Decisions 2026-11-02)
+update brain_notes set body = rtrim(body, E' \n') || $v$
+
+## 2026-11-02 · #70 Beta monitor (Admin), Report a bug, app health logs, unang Google Play AAB
+- **Ano:**
+  - **Beta monitor** (`app/admin/beta.html`, Admin lang; nasa menu "Beta monitor"): buod (testers ngayon/7 araw, ilan na ang 14+ araw para sa Google Play closed test, crashes/errors/slow sa 24 oras at 7 araw, open bugs, content reports na may link sa Reports, mga version na gamit). Tabs: Testers (sino, aling app at version, phone, ilang araw na ginagamit /14, ilang beses binuksan, mga problema sa 7 araw), Bugs (may screenshot), Crashes, Errors, Slow. Bawat problema: ilang beses (×N), una/huling oras, page, phone, user, Details; Mark fixed / Reopen / Copy / Delete; filter ng app, status at search.
+  - **app-health.js** sa bawat page: JS error, promise na walang catch, server error 500+, tawag sa server > 4 s, page > 6 s → `crash-fast` action `log` (hanggang 15 bawat page, sabay-sabay bawat 10 s). Isang "hello" bawat bukas ng app (naka-sign in) → bilang ng araw ng tester.
+  - **Report a bug:** Settings → Report a bug (`components/bug-report.js`): ano ang nangyari, screenshot (pinaliit, ≤ 400 KB), technical info (version, phone, huling errors at pages). 10 bawat araw.
+  - `crash-fast` = app health na (report, log, hello, bug; Admin: stats, list, testers, resolve, remove). Parehong problema = iisang row na dumadami ang hits (7 araw). Binubura ang lampas 30 araw. `sql/103` (app_logs, app_testers; inilipat ang lumang app_crashes).
+  - Privacy policy: "App health" sa What we collect.
+  - Google Play: unang takbo ng "Build for Google Play" — pumasa ang 3 AAB (main, chat, tigo 0.11.38) sa Artifacts.
+  - Version 0.11.39.
+- **Bakit:** Ayon kay Bench: "kelangan natin ng isang page sa admin site na meron ng momonitor ng mga beta tester, una ung bug, error ng pag bagal logs, at report, tapos u push muna ung aab".
+- **Files:** `app/admin/beta.html`, `assets/js/pages/admin-beta.js`, `assets/css/pages/admin-beta.css`, `assets/js/app-health.js`, `assets/js/components/bug-report.js`, `backend/crash-fast.ts`, `sql/103-beta-monitor.sql`, `app/*.html` + `login.html` + `app/admin/reports.html` (app-health.js), `app/settings.html`, `assets/js/pages/settings.js`, `assets/js/nav-items.js`, `assets/js/app-mode.js` (device sa crash), `app/guide.html`, `legal/privacy.html`, `whatsnew.json`, `config.js` (0.11.39)
+- **Paano:** test_beta 35/35 sa 360 at 1024 (stats, testers, 4 tabs, screenshot, mark fixed, filter, JS error + server 500 na naipadala, hello isang beses bawat session, bug report na may detail, hindi-admin = "Admins only") + test_del, test_wlook, test_guide, test_sched, test_sleep, test_v37. Hindi pa nasubukan sa totoong phone.$v$, updated_by = 'claude', updated_at = now() where lower(title) = 'change log';
+update brain_notes set body = replace(body, $v$| 2026-11-02 | Widget see-through: iisang setting (0–100%) para sa Music at Messages widget, naka-save sa phone (`tmn_widget` "bg"), ImageView sa likod + setImageAlpha | Hindi kaya ng RemoteViews na palitan ang alpha ng background; ImageView.setImageAlpha ay pwede |
+$v$, $v$| 2026-11-02 | Widget see-through: iisang setting (0–100%) para sa Music at Messages widget, naka-save sa phone (`tmn_widget` "bg"), ImageView sa likod + setImageAlpha | Hindi kaya ng RemoteViews na palitan ang alpha ng background; ImageView.setImageAlpha ay pwede |
+| 2026-11-02 | Beta monitor gamit ang sariling logs (`crash-fast` + app_logs/app_testers), hindi Firebase Crashlytics o Sentry | Libre, walang bagong SDK o account; pareho para sa web at sa 3 APK. Iisang row bawat parehong problema (fp) para hindi lumaki ang database |
+$v$), updated_by = 'claude', updated_at = now() where lower(title) = 'decisions';

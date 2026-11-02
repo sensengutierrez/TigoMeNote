@@ -1,4 +1,8 @@
 {
+  "0.11.39": [
+    "Report a bug: Settings → Report a bug (you can add a screenshot)",
+    "Behind the scenes: errors and slow screens are sent to us so we can fix them faster"
+  ],
   "0.11.38": [
     "School & work: add your classes and shifts in Daily and get a reminder before each one",
     "Home screen widgets can be solid, glass or clear (Settings → Appearance)",

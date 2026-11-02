@@ -82,7 +82,7 @@
     if (/kind=webview/.test(txt)) { try { localStorage.setItem("tmnLite3d", String(Date.now())); } catch (e) {} }
     function send(n) {
       if (!window.TMN_API || !window.TMN_CONFIG || !TMN_CONFIG.fn || !TMN_CONFIG.fn.crash) { if (n < 10) setTimeout(function () { send(n + 1); }, 1000); return; }
-      TMN_API.call("crash", "report", { app: APP_ID, version: TMN_CONFIG.version, report: txt + "\npage=" + location.pathname }).catch(function () {});
+      TMN_API.call("crash", "report", { app: APP_ID, version: TMN_CONFIG.version, report: txt + "\npage=" + location.pathname, device: window.TMN_HEALTH ? TMN_HEALTH.device() : null }).catch(function () {});
     }
     setTimeout(function () { send(0); }, 2500);
   })();

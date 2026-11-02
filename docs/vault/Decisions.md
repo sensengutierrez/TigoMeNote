@@ -112,6 +112,7 @@ updated: 2026-10-24
 | 2026-11-02 | Permissions bawat app: main = lahat; chat = walang music/media playback; tigo = VIBRATE lang (`PERMS` sa patch-android.py) | Play: dapat kailangan talaga ang bawat permission ng app |
 | 2026-11-02 | School & work schedule = reminders table (kind class/work, repeat "days", `sched` jsonb na may tz) sa halip na bagong table | Iisang cron at push (daily-fast); ang oras ay kinukwenta sa timezone ng user (Intl) kaya tama kahit may DST |
 | 2026-11-02 | Widget see-through: iisang setting (0–100%) para sa Music at Messages widget, naka-save sa phone (`tmn_widget` "bg"), ImageView sa likod + setImageAlpha | Hindi kaya ng RemoteViews na palitan ang alpha ng background; ImageView.setImageAlpha ay pwede |
+| 2026-11-02 | Beta monitor gamit ang sariling logs (`crash-fast` + app_logs/app_testers), hindi Firebase Crashlytics o Sentry | Libre, walang bagong SDK o account; pareho para sa web at sa 3 APK. Iisang row bawat parehong problema (fp) para hindi lumaki ang database |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

@@ -32,6 +32,7 @@ window.TMN_NAV = {
     { id: "guide",    label: "How to use", icon: "sparkle", href: "app/guide.html" },
     { id: "getapp",   label: "Get app",  icon: "phone",   href: "get/", web: true },
     { id: "reports",  label: "Reports",  icon: "flag",    href: "app/admin/reports.html", role: "Admin" },
+    { id: "beta",     label: "Beta monitor", icon: "chart", href: "app/admin/beta.html", role: "Admin" },
     { id: "policies", label: "Policies", icon: "info",    href: "legal/index.html" }
     // Halimbawa ng admin-only (pag nagawa na ang page):
     // { id: "admin", label: "Admin", icon: "shield", href: "app/admin/index.html", role: "Admin" }
