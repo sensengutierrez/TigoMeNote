@@ -117,6 +117,8 @@ updated: 2026-10-24
 | 2026-11-10 | Duo online gamit ang Supabase Realtime broadcast (walang bagong server); host ang may hawak ng multo at susi | Libre; isang source of truth para walang away sa estado. Ang code ng room ay 5 titik; walang laman na personal maliban sa username at kulay |
 | 2026-11-10 | Ranking: panalo lang, pinakamabilis bawat tao/pares; 25 s–5 min lang ang tinatanggap | Simpleng bantay laban sa pandaraya (walang server simulation) |
 | 2026-11-10 | Kapag isinara ng phone ang app sa background: reload sa pagbalik, hindi agad | Ang agad na reload ay pinapatay lang ulit at kumakain ng baterya; hindi kayang pigilan ng app ang pagsara ng phone |
+| 2026-11-10 | Iisang room lobby (hanggang 4) para sa lahat ng bagong laro; host ang may hawak ng estado kapag kailangan (Siege), at bawat isa ang may hawak ng sarili (Dash, Sudoku) | Libre (Realtime broadcast), walang game server; iisang code para sa lahat ng laro |
+| 2026-11-10 | Sky Dash si Tigo at sariling track (hindi Sonic); Gloom Siege cartoon na Gloomies (hindi madugong zombie) | Karapatan ng Sega; at 13+ sa Play Store |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

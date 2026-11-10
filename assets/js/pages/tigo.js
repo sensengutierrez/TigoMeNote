@@ -383,12 +383,13 @@
   }
   async function openGames() {
     var g = await mod("games-ui");
-    var p = live() || {}, info = { name: (window.TMN_USER && TMN_USER.username) || p.name || "friend", color: p.color || "coral" };
+    var p = live() || {}, info = { name: (window.TMN_USER && TMN_USER.username) || p.name || "friend", color: p.color || "coral",
+      tired: function () { var q = live() || {}; return q.asleep ? "Shh… Tigo is sleeping." : q.energy < 8 ? "Tigo is too tired to play. Let Tigo sleep." : ""; } };
     var node = g.gamesNode(function (id, opt) { m.close(); playGame(id, opt); }, info);
     var m = TMN_MODAL.open({ title: "Games", size: "sm", cls: "modal-sheet", body: node, onClose: function () { if (node._cleanup) node._cleanup(); } });
   }
   async function playGame(kind, opt) {
-    if (!sc) { toast("Games need 3D (WebGL) on this device."); if (opt && opt.net) opt.net.leave(); return; }
+    if (!sc && kind !== "sudoku") { toast("Games need 3D (WebGL) on this device."); if (opt && opt.net) opt.net.leave(); return; }
     if (playing) { if (opt && opt.net) opt.net.leave(); return; }
     var p = live();
     var bail = function (t) { toast(t); if (opt && opt.net) opt.net.leave(); };
@@ -401,7 +402,7 @@
     $("stage").scrollIntoView({ behavior: "smooth", block: "center" });
     var g = await mod("games-ui");
     if (talk) talk.idle(false);
-    var res = await g.runGame(kind, { sc: sc, stage: $("stage"), voice: voice, seconds: kind === "coins" ? Number($("stage").dataset.rush) || 30 : undefined, track: opt && opt.track, ghost: kind === "ghost" ? opt : undefined, // data-rush = mas maikli sa tests
+    var res = await g.runGame(kind, { sc: sc, stage: $("stage"), voice: voice, seconds: kind === "coins" ? Number($("stage").dataset.rush) || 30 : undefined, track: opt && opt.track, ghost: kind === "ghost" ? opt : undefined, opt: opt, // data-rush = mas maikli sa tests
       onJump: function (fn) { gameJump = fn; } });
     gameJump = null; playing = false; if (talk) talk.idle(true);
     say(res.win || res.place === 1 || res.score >= 10 ? "win" : "lose");
@@ -410,7 +411,7 @@
       var r = await TMN_API.call("pet", "game", { kind: kind, score: res.score, ms: res.ms });
       pet = r.pet; paint();
       toast(r.capped ? "Great run! Coin limit for today reached — come back tomorrow 🌙" : r.coins ? "+" + r.coins + " coins! 🪙" : "No coins this time — try again!");
-      if (r.coins) sc.effect("stars");
+      if (r.coins && sc) sc.effect("stars");
       if (r.levelUp) levelUp(r.levelUp);
     } catch (e) { toast(e.message); }
   }

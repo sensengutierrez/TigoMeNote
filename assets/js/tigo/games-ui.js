@@ -7,10 +7,14 @@
    Racing: may Brake (pindot nang matagal) at Turbo (may hintay) na pedal sa kanan.
    Habang naglalaro: ang Space / jump button ay para sa laro (onJump ay binibigyan ng handler ng laro). */
 import { startCoinGame } from "./coin-game.js";
+import { gameMenu, rankingView } from "./room-lobby.js";
 const TRACK_LIST = [["easy", "🟢", "Easy loop", "Wide, round track. Slower rivals."], ["classic", "🟡", "Classic", "Curves and a hairpin."], ["twisty", "🔴", "Twisty hills", "Zig-zags and tight turns. Fast rivals."]];
 
 export const GAMES = [
-  { id: "ghost", icon: "👻", name: "Lights Out", text: "Escape the dark school before the Hush finds you. Play solo or with a friend!", tag: "NEW" },
+  { id: "dash", icon: "🏃", name: "Sky Dash", text: "Race on a sky track! Switch lanes, jump, grab coins, ride the slipstream. Up to 4 friends.", tag: "NEW" },
+  { id: "siege", icon: "💦", name: "Gloom Siege", text: "Wave after wave of Gloomies! Bubble them away together. Co-op up to 4.", tag: "NEW" },
+  { id: "sudoku", icon: "🧩", name: "Sudoku", text: "Easy, Medium or Hard. Race your friends to solve the same puzzle.", tag: "NEW" },
+  { id: "ghost", icon: "👻", name: "Lights Out", text: "Escape the dark school before the Hush finds you. Play solo or with a friend!" },
   { id: "coins", icon: "🪙", name: "Coin Rush", text: "Grab coins in 30 seconds. Jump for the floating ones!" },
   { id: "pac", icon: "👾", name: "Pac-Tigo", text: "Eat all the dots in the maze. Mangoes make the Gloomies run away!" },
   { id: "race", icon: "🏁", name: "Tigo Racing", text: "3 laps against 3 Tigos. Hit ⚡ pads to go faster!" },
@@ -99,6 +103,7 @@ function ghostMenu(box, onPick, info, back) {
   }
   const onMenu = (e) => {
     const x = e.target.closest("[data-x]");
+    if (x && x.dataset.x !== "rank" && info && info.tired && info.tired()) { if (window.TMN_UI) TMN_UI.toast(info.tired()); return; }
     if (x) { const k = x.dataset.x; if (k === "solo") go({ mode: "solo" }); if (k === "host") host(); if (k === "join") join(); if (k === "rank") rankingNode(box, () => { box.onclick = onMenu; menu(); }); return; }
     if (e.target.closest("[data-menu]")) { menu(); return; }
     if (e.target.closest("[data-back]")) { box._cleanup(); box.onclick = null; back(); }
@@ -106,6 +111,20 @@ function ghostMenu(box, onPick, info, back) {
   box.onclick = onMenu;
   menu();
 }
+
+
+// Sky Dash, Gloom Siege, Sudoku: Solo · Create a room (hanggang 4) · Join · Ranking (room-lobby.js)
+const SDK_LV = [["easy", "Easy"], ["medium", "Medium"], ["hard", "Hard"]];
+const MULTI = {
+  dash: { title: "Sky Dash", blurb: "Switch lanes, jump the bars, dodge the boxes. Stay behind a rival to ride the slipstream!", soloSub: "Race 3 Tigo bots", rankSub: "Fastest races",
+    rank: (box, back) => rankingView(box, back, { game: "dash", metric: "ms" }) },
+  siege: { title: "Gloom Siege", blurb: "Tigo bubbles the nearest Gloomy by itself. Move, grab ❤️, and use 💦 Splash when they crowd you.", soloSub: "How many waves can you last?", rankSub: "Highest scores",
+    rank: (box, back) => rankingView(box, back, { game: "siege", metric: "score" }) },
+  sudoku: { title: "Sudoku", blurb: "Fill every row, column and box with 1–9. 3 mistakes and you're out.", rankSub: "Fastest solves",
+    soloOpts: SDK_LV.map(([k, l]) => ({ label: l, sub: { easy: "Relaxed · 41 clues", medium: "A real puzzle · 32 clues", hard: "For experts · 26 clues" }[k], opt: { level: k, label: l } })),
+    hostOpts: SDK_LV.map(([k, l]) => ({ label: l, opt: { level: k, label: l } })),
+    rank: (box, back) => rankingView(box, back, { game: "sudoku", metric: "ms", levels: SDK_LV }) },
+};
 
 export function gamesNode(onPick, info) {
   const box = document.createElement("div"); box.className = "tg-games";
@@ -118,6 +137,12 @@ export function gamesNode(onPick, info) {
     if (tb) { try { localStorage.setItem("tmnRaceTrack", tb.dataset.track); } catch (x) {} onPick("race", { track: tb.dataset.track }); return; }
     if (e.target.closest("[data-back]")) { const n = gamesNode(onPick, info); box._cleanup = n._cleanup; box.replaceChildren(...n.childNodes); return; }
     const b = e.target.closest("[data-g]"); if (!b) return;
+    if (MULTI[b.dataset.g]) {
+      const id = b.dataset.g, m = MULTI[id], g = GAMES.find((x) => x.id === id);
+      gameMenu(box, Object.assign({ id, icon: g.icon, info, onStart: (opt) => onPick(id, opt),
+        back: () => { const n = gamesNode(onPick, info); box.replaceChildren(...n.childNodes); box._cleanup = () => {}; } }, m));
+      return;
+    }
     if (b.dataset.g === "ghost") { ghostMenu(box, onPick, info, () => { const n = gamesNode(onPick, info); box.replaceChildren(...n.childNodes); box._cleanup = () => {}; }); return; }
     if (b.dataset.g !== "race") { onPick(b.dataset.g); return; }
     // Racing: pumili ng track
@@ -129,7 +154,7 @@ export function gamesNode(onPick, info) {
   return box;
 }
 
-export async function runGame(kind, { sc, stage, voice, seconds, track, onJump, ghost: gopt }) {
+export async function runGame(kind, { sc, stage, voice, seconds, track, onJump, ghost: gopt, opt: mopt }) {
   const hud = document.createElement("div"); hud.className = "tg-hud";
   const big = document.createElement("div"); big.className = "tg-count";
   const quit = document.createElement("button"); quit.type = "button"; quit.className = "tg-quit"; quit.setAttribute("aria-label", "Quit game"); quit.textContent = "✕";
@@ -152,6 +177,39 @@ export async function runGame(kind, { sc, stage, voice, seconds, track, onJump, 
           onEnd: (r) => end(Object.assign(r, { label: r.win ? "🎉 Cleared! 🪙 " + r.score : "🪙 " + r.score })) });
         countdown();
       });
+    } else if (kind === "dash" || kind === "siege" || kind === "sudoku") {
+      const o = mopt || { mode: "solo" }, net = o.mode === "multi" ? o.net : null;
+      const send = (r) => { if (!quitNow && window.TMN_API) TMN_API.call("games", "finish", { game: kind, mode: net ? "multi" : "solo", ms: r.ms, score: r.score || 0, win: !!(r.finished !== undefined ? r.finished : r.solved !== undefined ? r.solved : true), level: o.level }).catch(() => {}); };
+      const done = (r) => { if (net) setTimeout(() => net.leave(), 1500); send(r); end(r); };
+      if (kind === "sudoku") {
+        hud.remove(); quit.classList.add("sdk-quit");
+        import("./sudoku-game.js").then((x) => { game = x.startSudoku(stage, { voice, seed: o.seed, level: o.level || "easy", net, me: o.me, onEnd: done }); stage._game = game; t0 = performance.now(); game.go = () => {}; });
+      } else if (kind === "dash") {
+        stage.classList.add("sky");
+        import("./dash-game.js").then((x) => {
+          game = x.startDash(sc, { voice, seed: o.seed, net, me: o.me,
+            onHud: (h) => { show(["🏁 " + h.pct + "%", h.place + " / " + h.of, "🪙 " + h.coins].concat(h.boost ? ["⚡"] : h.slip ? ["💨 Slipstream"] : [])); },
+            onEnd: (r) => { stage.classList.remove("sky"); done(r); } });
+          stage._game = game; onJump(() => game.jump()); countdown();
+        });
+      } else {
+        const btns = document.createElement("div"); btns.className = "tg-pedals tg-gbtns";
+        btns.innerHTML = '<button type="button" class="tg-pedal splash" aria-label="Splash">💦<small>Splash</small></button>';
+        stage.append(btns); stage.classList.add("dusk");
+        const sb = btns.querySelector(".splash");
+        sb.addEventListener("pointerdown", (e) => { e.preventDefault(); if (game) game.splash(); });
+        import("./siege-game.js").then((x) => {
+          game = x.startSiege(sc, { voice, seed: o.seed, net, me: o.me,
+            onHud: (h) => {
+              if (h.note) { if (window.TMN_UI) TMN_UI.toast(h.note); return; }
+              show(["❤️ " + h.hp, "🌊 " + h.wave, "⭐ " + h.score].concat(h.team ? ["👥 " + h.team] : []).concat(h.down ? ["💤 Wait for help"] : h.help ? ["🆘 Help!"] : []));
+              if (h.breakT) pop("Wave " + (h.wave + 1) + " in " + h.breakT);
+            },
+            onButtons: (b) => { sb.disabled = !b.splash; sb.querySelector("small").textContent = b.cd ? b.cd + " s" : "Splash"; },
+            onEnd: (r) => { btns.remove(); stage.classList.remove("dusk"); done(r); } });
+          stage._game = game; onJump(() => game.splash()); countdown();
+        });
+      }
     } else if (kind === "ghost") {
       // Lights Out: 🚪 Hide at 🔦 Flash sa kanan; H = hide, F / Space = flash
       const o = gopt || { mode: "solo" };
