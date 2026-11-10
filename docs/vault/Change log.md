@@ -673,6 +673,8 @@ Bawat edit: **Ano** ang ginawa, **Bakit**, **Files**, at **Paano gumagana**. Pin
   - **Sky Dash:** swipe sa screen — kaliwa/kanan = lane, pataas = talon (`tigo/touch-look.js`, gamit din ng Siege).
   - **Lights Out:** wala nang malaking mensahe habang nagtatago; maliit na "🚪 5" sa HUD.
   - **Racing:** bagong mahabang track **Grand tour** 🏁 (2 ikot, 7 boost pad, mas maraming coins).
+  - **Bahay:** bagong istilo — dalawang palapag (kapalit ng bahay kubo): bubong na tatsulok, tsimenea, balkonahe sa harap na may rehas, veranda sa itaas, pintong may salamin, mga bintanang may paso; bumubukas ang ilaw kapag gabi (`backdrops.js` `kubo()`). Hindi nagbago ang loob (kwarto).
+  - **Si Tigo (note) ay nandiyan pa rin at siya pa rin ang default** — dagdag lang ang Kid; sa Avatar: 📝 Tigo o 🧒 Kid, puwedeng magpalit anumang oras.
   - **Isla:** RADIUS 4.0 → 5.4 (lupa 6.1); upuan sa tabi ng lawa, karatula, dagdag na puno; mas mahabang daan at bakod.
   - **Mas maliliit na button:** hilera sa taas (46 → 40), Dance/Stop/Run/Jump at joystick, Splash/Hide/Flash/Brake/Turbo (64 → 54), listahan ng Games at menu ng bawat laro.
   - Privacy Policy: avatar, "nasa Tigo ngayon / may bukas na room" (mga follower lang), at ang exchange-rate API; Third-party: ExchangeRate-API (may attribution sa card). Version 0.11.43.

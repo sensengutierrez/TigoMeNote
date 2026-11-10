@@ -1,17 +1,17 @@
-/* TigoMeNote · tigo/backdrops.js — mga lugar ni Tigo (3D) at ang bahay kubo na tinutulugan niya
+/* TigoMeNote · tigo/backdrops.js — mga lugar ni Tigo (3D) at ang bahay na tinutulugan niya
    import { buildBackdrop, RADIUS, HOUSE } from "./backdrops.js"
    buildBackdrop(id) → { group, house, obstacles, night(on), update(t), dispose() }   id = island | beach | coral | snow | clouds | desert | moon
    RADIUS = hanggang saan puwedeng maglakad si Tigo. PLAT = laki ng lupa. HOUSE = kung nasaan ang bahay (r = hindi matatagos) at ang pinto (para matulog).
    obstacles = [{ x, z, r }] na iniikutan ni Tigo (lawa, taniman, poste ng ilaw).
-   0.11.42–43: mas malaking isla (2.9 → 4.0 → 5.4), may upuan at karatula, mas detalyadong bahay kubo (balkonahe, bintana, paso ng bulaklak, ilaw), bakod sa gilid,
+   0.11.42–43: mas malaking isla (2.9 → 4.0 → 5.4), may upuan at karatula, bagong bahay na dalawang palapag (0.11.43; dati bahay kubo): bubong na tatsulok, balkonahe, veranda, bintana, paso ng bulaklak, ilaw, bakod sa gilid,
    taniman, lawa na may lily, daanang bato, at mga ilaw na bumubukas kapag gabi (parol, poste, ilaw sa bubong).
    Sariling disenyo lahat. */
 import * as THREE from "../../vendor/three/three.module.min.js";
 
 export const RADIUS = 5.4;
 export const PLAT = 6.1;
-const HS = 1.25, HROT = -0.6;   // laki at ikot ng bahay
-export const HOUSE = { x: 3.4, z: -3.1, r: 1.2, door: { x: 3.4 + Math.sin(HROT) * 1.3, z: -3.1 + Math.cos(HROT) * 1.3 } };
+const HS = 1.4, HROT = -0.6;   // laki at ikot ng bahay
+export const HOUSE = { x: 3.4, z: -3.1, r: 1.36, door: { x: 3.4 + Math.sin(HROT) * 1.5, z: -3.1 + Math.cos(HROT) * 1.5 } };
 
 const M = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.85, ...o });
 const put = (g, m, x, y, z, shadow = true) => { m.position.set(x, y, z); m.castShadow = shadow; m.receiveShadow = true; g.add(m); return m; };
@@ -40,59 +40,67 @@ function platform(g, top, side, r = PLAT) {
   put(g, new THREE.Mesh(new THREE.CylinderGeometry(r + 0.12, r - 0.6, 0.8, 72), M(side, { roughness: 1 })), 0, -0.7, 0, false);
   return a;
 }
-// Bahay kubo: kawayan na poste, dingding na sawali, bubong na nipa, balkonahe, bintana, paso ng bulaklak, at mga ilaw
+// Bahay ni Tigo (0.11.43: bagong istilo — dalawang palapag, bubong na tatsulok, balkonahe sa harap, veranda sa itaas; dati: bahay kubo)
 // lit = listahan ng [material, liwanag kapag gabi]; lamps = mga liwanag sa lupa na lumilitaw lang kapag gabi
+function gable(w, h, d) {   // tatsulok na bubong: lapad w, taas h, lalim d (nakasentro)
+  const sh = new THREE.Shape(); sh.moveTo(-w / 2, 0); sh.lineTo(w / 2, 0); sh.lineTo(0, h); sh.closePath();
+  const g = new THREE.ExtrudeGeometry(sh, { depth: d, bevelEnabled: false }); g.translate(0, 0, -d / 2); return g;
+}
 function kubo(g, lit, lamps) {
   const h = new THREE.Group(); h.position.set(HOUSE.x, 0, HOUSE.z); h.rotation.y = HROT; h.scale.setScalar(HS);
-  const bamboo = M(0xc8a165, { roughness: 0.7 }), dark = M(0x8a6238, { roughness: 0.8 }), wall = M(0xe2c48f, { roughness: 0.95 }), nipa = M(0x9c7a3c, { roughness: 1 }), nipa2 = M(0x86672f, { roughness: 1 });
+  const wall = M(0xffd9c2, { roughness: 0.9 }), wall2 = M(0xfff1e3, { roughness: 0.9 }), trim = M(0xffffff, { roughness: 0.6 }), roofM = M(0xf2685a, { roughness: 0.75 }), roofD = M(0xd9503f, { roughness: 0.8 });
+  const stone = M(0xd9d4cc, { roughness: 1 }), doorM = M(0x2bb3a3, { roughness: 0.5 }), wood = M(0xb98a55, { roughness: 0.8 });
   const box = (w, hh, d, m, x, y, z, sh = true) => put(h, new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), m), x, y, z, sh);
-  const pole = (r, len, m, x, y, z) => put(h, new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 8), m), x, y, z);
-  // mga poste (hanggang bubong) at sahig
-  [[-0.6, -0.5], [0.6, -0.5], [-0.6, 0.5], [0.6, 0.5]].forEach(([x, z]) => pole(0.06, 1.34, bamboo, x, 0.67, z));
-  [[-0.6, 0.86], [0.6, 0.86]].forEach(([x, z]) => pole(0.045, 1.3, bamboo, x, 0.65, z));   // poste ng balkonahe
-  box(1.36, 0.08, 1.16, bamboo, 0, 0.5, 0);
-  box(1.36, 0.06, 0.4, bamboo, 0, 0.5, 0.72);                                             // balkonahe
-  [-1, 1].forEach((k) => { const c = box(0.03, 0.03, 0.9, dark, k * 0.6, 0.27, 0, false); c.rotation.x = k * 0.5; });   // tukod sa ilalim
-  // dingding + guhit ng sawali
-  box(1.2, 0.78, 1.0, wall, 0, 0.93, 0);
-  for (let i = 0; i < 3; i++) box(1.22, 0.02, 1.02, bamboo, 0, 0.7 + i * 0.22, 0, false);
-  // pinto (may hamba at hawakan)
-  box(0.42, 0.58, 0.03, bamboo, 0, 0.83, 0.5, false);
-  box(0.34, 0.52, 0.03, M(0x7a5530), 0, 0.81, 0.515, false);
-  put(h, new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), M(0xf2c14e, { metalness: 0.5, roughness: 0.4 })), 0.11, 0.8, 0.54, false);
-  // mga bintana (nagliliwanag kapag gabi), may hamba, krus at paso ng bulaklak
-  const glow = M(0xffe2a6, { emissive: 0xffa000, emissiveIntensity: 0 }); lit.push([glow, 1.6]);
+  const glow = M(0xffe2a6, { emissive: 0xffa000, emissiveIntensity: 0 }); lit.push([glow, 1.7]);
   const petal = [M(0xff6f91), M(0xffd166), M(0xffffff)];
-  const win = (x, y, z, ry) => {
-    const w = new THREE.Group(); w.position.set(x, y, z); w.rotation.y = ry; h.add(w);
-    put(w, new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.28, 0.02), bamboo), 0, 0, 0, false);
-    put(w, new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.03), glow), 0, 0, 0.005, false);
-    put(w, new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.22, 0.04), bamboo), 0, 0, 0.008, false);
-    put(w, new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.02, 0.04), bamboo), 0, 0, 0.008, false);
-    put(w, new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.06, 0.08), dark), 0, -0.18, 0.04, false);   // paso
-    for (let i = 0; i < 3; i++) put(w, new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), petal[i]), -0.1 + i * 0.1, -0.13, 0.05, false);
+  // pundasyon at unang palapag
+  box(1.6, 0.1, 1.2, stone, 0, 0.05, 0);
+  box(1.5, 0.78, 1.1, wall, 0, 0.49, 0);
+  box(1.56, 0.05, 1.16, trim, 0, 0.9, 0, false);                                          // guhit sa pagitan ng palapag
+  // ikalawang palapag (nasa kaliwa) at veranda (kanan)
+  box(0.98, 0.56, 0.96, wall2, -0.24, 1.2, -0.04);
+  box(0.5, 0.04, 1.06, wood, 0.5, 0.94, 0);                                               // sahig ng veranda
+  [[0.74, 0.5], [0.74, -0.5], [0.27, 0.5]].forEach(([x, z]) => box(0.035, 0.24, 0.035, trim, x, 1.06, z, false));
+  box(0.5, 0.03, 0.03, trim, 0.5, 1.17, 0.5, false); box(0.03, 0.03, 1.0, trim, 0.74, 1.17, 0, false);
+  for (let i = 0; i < 4; i++) box(0.02, 0.2, 0.02, trim, 0.34 + i * 0.1, 1.06, 0.5, false);
+  for (let i = 0; i < 5; i++) box(0.02, 0.2, 0.02, trim, 0.74, 1.06, -0.4 + i * 0.2, false);
+  // bubong: tatsulok sa itaas (harap ang mukha), may puting gilid; maliit na bubong sa pinto
+  put(h, new THREE.Mesh(gable(1.2, 0.5, 1.12), roofM), -0.24, 1.48, -0.04);
+  put(h, new THREE.Mesh(gable(1.04, 0.4, 0.04), wall2), -0.24, 1.48, 0.47, false);          // mukha ng tatsulok
+  [-1, 1].forEach((k) => { const e = box(0.72, 0.045, 1.16, trim, -0.24 + k * 0.31, 1.725, -0.04, false); e.rotation.z = -k * 0.694; });
+  put(h, new THREE.Mesh(new THREE.CircleGeometry(0.09, 16), glow), -0.24, 1.66, 0.495, false);   // bilog na bintana sa tuktok
+  box(0.16, 0.34, 0.16, stone, -0.52, 1.86, -0.3); box(0.2, 0.05, 0.2, roofD, -0.52, 2.04, -0.3, false);   // tsimenea
+  put(h, new THREE.Mesh(gable(0.78, 0.26, 0.5), roofD), 0, 0.93, 0.78);
+  put(h, new THREE.Mesh(gable(0.66, 0.2, 0.03), trim), 0, 0.93, 1.03, false);
+  // balkonahe sa harap: sahig, 2 poste, rehas, 2 baitang
+  box(1.1, 0.06, 0.42, wood, 0, 0.13, 0.76);
+  [-0.34, 0.34].forEach((x) => box(0.05, 0.76, 0.05, trim, x, 0.54, 0.95));
+  [-1, 1].forEach((k) => { box(0.2, 0.03, 0.03, trim, k * 0.45, 0.4, 0.95, false); for (let i = 0; i < 2; i++) box(0.02, 0.24, 0.02, trim, k * (0.4 + i * 0.1), 0.28, 0.95, false); box(0.03, 0.03, 0.4, trim, k * 0.54, 0.4, 0.76, false); });
+  box(0.5, 0.05, 0.14, stone, 0, 0.08, 1.04); box(0.5, 0.04, 0.14, stone, 0, 0.03, 1.17);
+  // pinto (may salamin at hawakan)
+  box(0.4, 0.62, 0.03, trim, 0, 0.47, 0.555, false);
+  box(0.32, 0.56, 0.03, doorM, 0, 0.45, 0.57, false);
+  box(0.2, 0.16, 0.03, glow, 0, 0.6, 0.575, false);
+  put(h, new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), M(0xf2c14e, { metalness: 0.5, roughness: 0.4 })), 0.11, 0.42, 0.6, false);
+  // mga bintana (nagliliwanag kapag gabi): hamba, krus, paso ng bulaklak
+  const win = (x, y, z, ry, w = 0.3, flowers = true) => {
+    const W = new THREE.Group(); W.position.set(x, y, z); W.rotation.y = ry; h.add(W);
+    put(W, new THREE.Mesh(new THREE.BoxGeometry(w + 0.07, 0.31, 0.02), trim), 0, 0, 0, false);
+    put(W, new THREE.Mesh(new THREE.BoxGeometry(w, 0.24, 0.03), glow), 0, 0, 0.005, false);
+    put(W, new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.24, 0.04), trim), 0, 0, 0.008, false);
+    put(W, new THREE.Mesh(new THREE.BoxGeometry(w, 0.02, 0.04), trim), 0, 0, 0.008, false);
+    if (!flowers) return;
+    put(W, new THREE.Mesh(new THREE.BoxGeometry(w + 0.06, 0.06, 0.08), wood), 0, -0.19, 0.04, false);
+    for (let i = 0; i < 3; i++) put(W, new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), petal[i]), -0.1 + i * 0.1, -0.14, 0.05, false);
   };
-  win(0.4, 1.0, 0.505, 0); win(-0.4, 1.0, 0.505, 0); win(0.605, 0.98, 0, Math.PI / 2); win(-0.605, 0.98, 0, -Math.PI / 2);
-  // rehas ng balkonahe (bukas sa gitna para sa hagdan)
-  [-1, 1].forEach((k) => {
-    box(0.36, 0.03, 0.03, bamboo, k * 0.42, 0.78, 0.9, false);
-    for (let i = 0; i < 3; i++) pole(0.014, 0.26, bamboo, k * (0.28 + i * 0.13), 0.65, 0.9);
-    box(0.03, 0.03, 0.36, bamboo, k * 0.6, 0.78, 0.72, false);
-  });
-  // bubong na nipa: dalawang patong + tuktok
-  const roof = put(h, new THREE.Mesh(new THREE.ConeGeometry(1.18, 0.5, 4, 1), nipa2), 0, 1.52, 0.1); roof.rotation.y = Math.PI / 4; roof.scale.set(1.12, 1, 1.22);
-  const roof2 = put(h, new THREE.Mesh(new THREE.ConeGeometry(0.86, 0.62, 4, 1), nipa), 0, 1.84, 0.05); roof2.rotation.y = Math.PI / 4; roof2.scale.set(1.1, 1, 1.1);
-  put(h, new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), bamboo), 0, 2.17, 0.05);
-  // hagdan
-  for (let i = 0; i < 3; i++) box(0.4, 0.04, 0.12, bamboo, 0, 0.12 + i * 0.14, 0.98 + (2 - i) * 0.12);
-  // parol sa balkonahe + tunay na ilaw kapag gabi
-  const parol = M(0xfff1c4, { emissive: 0xffb347, emissiveIntensity: 0.15 }); lit.push([parol, 2.4]);
-  pole(0.006, 0.16, dark, 0.34, 1.2, 0.86);
-  put(h, new THREE.Mesh(new THREE.OctahedronGeometry(0.07), parol), 0.34, 1.08, 0.86, false);
-  // makukulay na ilaw sa gilid ng bubong
+  win(0.52, 0.52, 0.555, 0); win(-0.52, 0.52, 0.555, 0);                                    // unang palapag, harap
+  win(-0.24, 1.2, 0.445, 0, 0.36); win(0.755, 0.5, 0, Math.PI / 2, 0.3, false); win(-0.755, 0.5, 0, -Math.PI / 2, 0.3, false); win(-0.735, 1.2, -0.04, -Math.PI / 2, 0.3, false);
+  // ilaw sa balkonahe at makukulay na ilaw sa gilid ng bubong ng pinto
+  const lampM = M(0xfff1c4, { emissive: 0xffb347, emissiveIntensity: 0.15 }); lit.push([lampM, 2.4]);
+  put(h, new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), lampM), 0, 0.86, 0.9, false);
   [0xff6f61, 0xffd166, 0x6fd3ff, 0x9be564, 0xff9ad5].forEach((c, i) => {
     const m = M(c, { emissive: c, emissiveIntensity: 0.1 }); lit.push([m, 2]);
-    put(h, new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 6), m), -0.56 + i * 0.28, 1.3 - Math.abs(i - 2) * 0.012, 1.02, false);
+    put(h, new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 6), m), -0.3 + i * 0.15, 0.93 + (0.2 - Math.abs(i - 2) * 0.1) * 0.62, 1.05, false);
   });
   g.add(h);
   return { group: h, glow };
