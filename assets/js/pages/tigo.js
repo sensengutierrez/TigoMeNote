@@ -383,14 +383,17 @@
   }
   async function openGames() {
     var g = await mod("games-ui");
-    var m = TMN_MODAL.open({ title: "Games", size: "sm", cls: "modal-sheet", body: g.gamesNode(function (id, opt) { m.close(); playGame(id, opt); }) });
+    var p = live() || {}, info = { name: (window.TMN_USER && TMN_USER.username) || p.name || "friend", color: p.color || "coral" };
+    var node = g.gamesNode(function (id, opt) { m.close(); playGame(id, opt); }, info);
+    var m = TMN_MODAL.open({ title: "Games", size: "sm", cls: "modal-sheet", body: node, onClose: function () { if (node._cleanup) node._cleanup(); } });
   }
   async function playGame(kind, opt) {
-    if (!sc) { toast("Games need 3D (WebGL) on this device."); return; }
-    if (playing) return;
+    if (!sc) { toast("Games need 3D (WebGL) on this device."); if (opt && opt.net) opt.net.leave(); return; }
+    if (playing) { if (opt && opt.net) opt.net.leave(); return; }
     var p = live();
-    if (p.asleep) { toast("Shh… Tigo is sleeping."); return; }
-    if (p.energy < 8) { toast("Tigo is too tired to play. Let Tigo sleep."); return; }
+    var bail = function (t) { toast(t); if (opt && opt.net) opt.net.leave(); };
+    if (p.asleep) { bail("Shh… Tigo is sleeping."); return; }
+    if (p.energy < 8) { bail("Tigo is too tired to play. Let Tigo sleep."); return; }
     playing = true;
     if (decor) decor.close();
     if (closet) closet.close();
@@ -398,7 +401,7 @@
     $("stage").scrollIntoView({ behavior: "smooth", block: "center" });
     var g = await mod("games-ui");
     if (talk) talk.idle(false);
-    var res = await g.runGame(kind, { sc: sc, stage: $("stage"), voice: voice, seconds: kind === "coins" ? Number($("stage").dataset.rush) || 30 : undefined, track: opt && opt.track, // data-rush = mas maikli sa tests
+    var res = await g.runGame(kind, { sc: sc, stage: $("stage"), voice: voice, seconds: kind === "coins" ? Number($("stage").dataset.rush) || 30 : undefined, track: opt && opt.track, ghost: kind === "ghost" ? opt : undefined, // data-rush = mas maikli sa tests
       onJump: function (fn) { gameJump = fn; } });
     gameJump = null; playing = false; if (talk) talk.idle(true);
     say(res.win || res.place === 1 || res.score >= 10 ? "win" : "lose");

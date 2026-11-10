@@ -66,6 +66,25 @@ import com.getcapacitor.BridgeWebViewClient;
 
 public class MainActivity extends BridgeActivity {{
     private static long lastGone = 0; private static int goneCount = 0;
+    // Kapag pinatay ng phone ang WebView habang nasa background: huwag mag-reload agad (papatayin lang ulit) —
+    // sa pagbalik na lang (onResume), at sa parehong page (extra "tmn_url" → openFromIntent)
+    private boolean paused = false, reloadOnResume = false;
+    private void reopenAt(WebView view) {{
+        try {{
+            String u = view != null ? view.getUrl() : null, base = getBridge().getLocalUrl();
+            if (u != null && base != null && u.startsWith(base + "/")) {{
+                String rel = u.substring(base.length() + 1);
+                if (!rel.isEmpty() && !rel.startsWith("index.html") && !rel.contains(":") && !rel.contains("..")) getIntent().putExtra("tmn_url", rel);
+            }}
+        }} catch (Exception e) {{ }}
+    }}
+    @Override
+    public void onPause() {{ paused = true; super.onPause(); }}
+    @Override
+    public void onResume() {{
+        super.onResume(); paused = false;
+        if (reloadOnResume) {{ reloadOnResume = false; recreate(); }}
+    }}
     @Override
     public void onCreate(Bundle savedInstanceState) {{
         // Crash report: isinusulat ang dahilan sa tmn-crash.txt; ipinapadala ng app-mode.js sa susunod na bukas (crash-fast)
@@ -104,10 +123,18 @@ public class MainActivity extends BridgeActivity {{
         getBridge().setWebViewClient(new BridgeWebViewClient(getBridge()) {{
             @Override
             public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {{
+                String info = (Build.VERSION.SDK_INT >= 26 ? "didCrash=" + detail.didCrash() + " priority=" + detail.rendererPriorityAtExit() : "") + " url=" + view.getUrl();
+                reopenAt(view);
+                if (paused && (Build.VERSION.SDK_INT < 26 || !detail.didCrash())) {{
+                    // nasa background: ang phone ang nagsara para makatipid ng memory — hindi crash; bubuksan ulit sa pagbalik
+                    if (!reloadOnResume) saveCrash("bgkill", info);
+                    reloadOnResume = true;
+                    return true;
+                }}
                 long now = System.currentTimeMillis();
                 if (now - lastGone > 60000) goneCount = 0;
                 lastGone = now; goneCount++;
-                saveCrash("webview", (Build.VERSION.SDK_INT >= 26 ? "didCrash=" + detail.didCrash() + " priority=" + detail.rendererPriorityAtExit() : "") + " count=" + goneCount + " url=" + view.getUrl());
+                saveCrash("webview", info + " count=" + goneCount);
                 if (goneCount <= 3) runOnUiThread(() -> recreate()); else runOnUiThread(() -> finish());
                 return true;
             }}

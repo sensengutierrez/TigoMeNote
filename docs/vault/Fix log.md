@@ -65,6 +65,8 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-02 · Daily → Sleep & breaks: ang "Sleep time" ay naipit (isang salita bawat linya) at ang switch ay nakapatong sa text sa malaking text size → walang wrap ang row (`.set-row` ay nasa settings.css lang, hindi naka-load sa Daily) → `.wb-rows .row` ay nag-wa-wrap; bumababa ang From/To at controls sa ilalim ng text (`safety.css`, class `wb-sleep`). Version 0.11.38
 - 2026-11-02 · Tigo: naging "Times New Roman" ang text (Happy, Tip) at nagka-border/padding ang buong page habang naglalaro → ang body class na `tg-game` ay kapareho ng class ng game buttons (`.tg-game { font: inherit; display: flex; border… }`) → pinalitan ng `tg-in-game` (`pages/tigo.js`, `tigo.css`). Version 0.11.38
 - 2026-11-02 · Login: hindi lumalabas ang "Your account was deleted" → pinapalitan ng `fill()` ang `#authSub` pagkatapos ng setTimeout → nasa `fill()` na mismo (`login.js`). Version 0.11.38
+- 2026-11-10 · App: paulit-ulit na reload pagbalik (85 "WebView stopped" sa nubia NX659J) → isinasara ng phone ang WebView habang nasa background (`didCrash=false`) at nag-`recreate()` agad ang app habang nasa background pa → reload sa onResume lang, sa parehong page; `bgkill` ≠ crash (`patch-android.py`, `crash-fast.ts`). Version 0.11.40
+- 2026-11-10 · Lights Out: pagbalik mula sa Ranking, hindi na gumagana ang mga button ng menu → nawawala ang click handler → ibinabalik (`games-ui.js`). Version 0.11.40
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

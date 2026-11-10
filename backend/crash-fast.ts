@@ -69,9 +69,11 @@ async function report(p: any, me: any) {
   const rep = s(p.report, 12000);
   if (!a || !rep.trim()) return fail("Nothing to report.");
   if (await tooMany()) return reply({ ok: true, skipped: true });
-  const kind = /kind=webview/.test(rep) ? "WebView stopped (memory)" : /kind=crash/.test(rep) ? "App crashed" : "App closed";
+  // kind=bgkill lang = isinara ng phone ang app habang nasa background (para makatipid ng memory) — hindi crash
+  const onlyBg = /kind=bgkill/.test(rep) && !/kind=(webview|crash)/.test(rep);
+  const kind = onlyBg ? "Closed by the phone in the background (not a crash)" : /kind=webview/.test(rep) ? "WebView stopped (memory)" : /kind=crash/.test(rep) ? "App crashed" : "App closed";
   const first = (rep.match(/(?:Exception|Error)[^\n]{0,200}/) || [""])[0];
-  await addLog({ kind: "crash", app: a, version: s(p.version, 20) || "?", user_id: me?.id ?? null, page: (rep.match(/page=(\S+)/) || [])[1] || null,
+  await addLog({ kind: onlyBg ? "bg" : "crash", app: a, version: s(p.version, 20) || "?", user_id: me?.id ?? null, page: (rep.match(/page=(\S+)/) || [])[1] || null,
     message: s(kind + (first ? " · " + first : ""), 500), detail: rep, device: s(p.device, 160) || null });
   console.error("app crash", a, p.version, kind);
   return reply({ ok: true });
@@ -125,8 +127,8 @@ async function stats() {
   for (const t of ts ?? []) if (t.last_at >= d7) versions[t.app + " " + t.version] = (versions[t.app + " " + t.version] || 0) + 1;
   const { count: reports } = await db.from("reports").select("id", { count: "exact", head: true }).eq("status", "open");
   return reply({ ok: true,
-    day: { crash: by("crash", d1), error: by("error", d1), slow: by("slow", d1), bug: by("bug", d1) },
-    week: { crash: by("crash", d7), error: by("error", d7), slow: by("slow", d7), bug: by("bug", d7) },
+    day: { crash: by("crash", d1), error: by("error", d1), slow: by("slow", d1), bug: by("bug", d1), bg: by("bg", d1) },
+    week: { crash: by("crash", d7), error: by("error", d7), slow: by("slow", d7), bug: by("bug", d7), bg: by("bg", d7) },
     openBugs: openBugs ?? 0, reports: reports ?? 0,
     testers: { total: new Set((ts ?? []).map((t) => t.user_id)).size, today: people(new Date(Date.now() - DAY).toISOString()), week: people(d7),
       days14: new Set((ts ?? []).filter((t) => t.days >= 14).map((t) => t.user_id)).size },
@@ -135,8 +137,9 @@ async function stats() {
 // deno-lint-ignore no-explicit-any
 async function list(p: any) {
   const kind = ["crash", "error", "slow", "bug"].includes(p.kind) ? p.kind : "error";
+  // Crashes tab: kasama ang "bg" (isinara ng phone sa background), para makita kung gaano kadalas
   let q = db.from("app_logs").select("id, kind, app, version, user_id, page, message, detail, ms, device, hits, status, created_at, last_at" + (kind === "bug" ? ", shot" : ""))
-    .eq("kind", kind).order("last_at", { ascending: false }).limit(Math.min(200, Number(p.limit) || 100));
+    .in("kind", kind === "crash" ? ["crash", "bg"] : [kind]).order("last_at", { ascending: false }).limit(Math.min(200, Number(p.limit) || 100));
   if (p.status === "open" || p.status === "fixed") q = q.eq("status", p.status);
   if (APPS.includes(p.app)) q = q.eq("app", p.app);
   if (p.q) q = q.ilike("message", "%" + s(p.q, 60).replace(/[%_]/g, "") + "%");
@@ -156,7 +159,7 @@ async function testers() {
   // deno-lint-ignore no-explicit-any
   const people = new Map<string, any>();
   for (const t of ts ?? []) {
-    const p = people.get(t.user_id) || { user: U.get(t.user_id) ?? { id: t.user_id }, apps: [], last_at: t.last_at, days: 0, opens: 0, crash: 0, error: 0, slow: 0, bug: 0 };
+    const p = people.get(t.user_id) || { user: U.get(t.user_id) ?? { id: t.user_id }, apps: [], last_at: t.last_at, days: 0, opens: 0, crash: 0, error: 0, slow: 0, bug: 0, bg: 0 };
     p.apps.push({ app: t.app, version: t.version, device: t.device, last_at: t.last_at, days: t.days, first_at: t.first_at });
     p.days = Math.max(p.days, t.days); p.opens += t.opens; if (t.last_at > p.last_at) p.last_at = t.last_at;
     people.set(t.user_id, p);

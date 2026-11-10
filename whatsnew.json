@@ -1,4 +1,10 @@
 {
+  "0.11.40": [
+    "New game: Lights Out 👻 — escape the dark school, solo or online with a friend, with a ranking",
+    "Daily: tap the date for a colorful calendar with each day's classes, work, reminders and notes",
+    "Daily: tap the weather for details — humidity, wind, pressure, UV, sunrise, 24 hours and 7 days",
+    "The app no longer reloads again and again when your phone closes it in the background — it opens where you left off"
+  ],
   "0.11.39": [
     "Report a bug: Settings → Report a bug (you can add a screenshot)",
     "Behind the scenes: errors and slow screens are sent to us so we can fix them faster"

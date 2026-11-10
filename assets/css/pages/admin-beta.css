@@ -24,6 +24,7 @@
 .bm-card.error { border-inline-start: 4px solid #d97706; }
 .bm-card.slow { border-inline-start: 4px solid #6366f1; }
 .bm-card.bug { border-inline-start: 4px solid #0ea5e9; }
+.bm-card.bg { border-inline-start: 4px solid var(--line); }
 .bm-card.fixed { opacity: .7; }
 .bm-row { display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
 .bm-main { flex: 1; min-width: 0; display: grid; gap: 6px; }

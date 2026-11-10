@@ -140,11 +140,15 @@
           "<span>" + I("rain", "ic-sm") + (day.precipitation_probability_max[0] != null ? day.precipitation_probability_max[0] : 0) + "% rain</span>" +
         "</div>" +
         '<div class="wx-days">' + days + "</div>" +
+        (window.TMN_WX_DETAIL ? '<button type="button" class="link-btn wx-more">Details ›</button>' : "") +
         '<div class="wx-foot faint">' +
           (c.source === "gps" ? "Location: device GPS" : 'Approximate location (internet). <button type="button" class="link-btn wx-precise">Use GPS</button>') +
           ' · Updated ' + new Date(c.at).toLocaleTimeString(window.TMN_I18N ? TMN_I18N.locale : undefined, { hour: "numeric", minute: "2-digit" }) +
         "</div>";
       el.querySelector(".wx-refresh").addEventListener("click", function () { load(true); });
+      // pindot ang panahon → Weather details (components/weather-detail.js)
+      el.querySelectorAll(".wx-now, .wx-meta, .wx-days").forEach(function (n) { n.classList.add("wx-tap"); n.addEventListener("click", function () { if (window.TMN_WX_DETAIL) TMN_WX_DETAIL.open(c); }); });
+      var mo = el.querySelector(".wx-more"); if (mo) mo.addEventListener("click", function () { TMN_WX_DETAIL.open(c); });
       var p = el.querySelector(".wx-precise");
       if (p) p.addEventListener("click", function () { load(true, true); });
     }
@@ -174,5 +178,5 @@
     return { refresh: function () { load(true); } };
   }
 
-  window.TMN_WEATHER = { mount: mount, _describe: describe };
+  window.TMN_WEATHER = { mount: mount, _describe: describe, _get: getJSON };
 })();

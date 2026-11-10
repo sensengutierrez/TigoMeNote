@@ -1,7 +1,7 @@
 // TigoMeNote · pet-fast (Supabase Edge Function, verify_jwt = off) — si "Tigo", ang virtual pet ng bawat user
 // Isang trabaho lang: alagaan si Tigo (stats na bumababa habang lumilipas ang oras) at ang "Gather" ng magkakalapit na kaibigan.
 // Actions (session token): get, act { do: feed|play|clean|pet|sleep|wake|daily }, style { name, color },
-//                          wear { outfit }, buy { id }, game { kind: coins|pac|race, score, ms },
+//                          wear { outfit }, buy { id }, game { kind: coins|pac|race|ghost, score, ms },
 //                          nearby { on, lat, lng }, gather { user_id }, visits,
 //                          room { room: { wall, floor, items: [{ id, x, z, r }] } } → ayos ng loob ng bahay (gamit na pag-aari lang)
 // Kaligtasan: ang "nearby" ay para lang sa magkaibigan (mutual follow o Family/Friends circle), kapag NAKA-ON sa dalawa,
@@ -38,7 +38,7 @@ const ITEMS: Record<string, [string, number, number]> = {
 const SLOTS = ["hat", "face", "body", "hand", "buddy", "backdrop"];
 // Coins bawat bagong level (+ dagdag sa Lv8 at Lv9). Lv10 = golden glow.
 const levelCoins = (l: number) => 20 + (l === 8 ? 100 : l === 9 ? 150 : 0);
-const GAME = { perDay: 10, maxCoins: 30, minGapMs: 20_000, kinds: ["coins", "pac", "race"] }; // bawat laro: 10 beses bawat araw
+const GAME = { perDay: 10, maxCoins: 30, minGapMs: 20_000, kinds: ["coins", "pac", "race", "ghost"] }; // bawat laro: 10 beses bawat araw
 // Bawat oras: gaano bumababa (gising / tulog). Energy: 2.5/oras gising (dati 5 — masyadong mabilis maubos ayon kay Bench)
 const RATE = { hunger: [6, 3], joy: [4, 2], energy: [2.5, -14], clean: [3, 1] };
 const TIRED = 8;   // mas mababa rito: pagod, bawal maglaro

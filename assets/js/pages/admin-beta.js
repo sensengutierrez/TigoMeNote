@@ -10,7 +10,7 @@
   var esc = function (s) { return UI.esc(s == null ? "" : String(s)); };
   var view = "testers", list = [], GOAL_PEOPLE = 12, GOAL_DAYS = 14;
   var APPN = { main: "TigoMeNote", chat: "Chat", tigo: "Tigo", web: "Web" };
-  var KIND = { crash: ["💥", "Crash"], error: ["⚠️", "Error"], slow: ["🐢", "Slow"], bug: ["🐞", "Bug"] };
+  var KIND = { crash: ["💥", "Crash"], error: ["⚠️", "Error"], slow: ["🐢", "Slow"], bug: ["🐞", "Bug"], bg: ["🌙", "Closed in background"] };
 
   function ago(iso) {
     var s = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -35,7 +35,7 @@
       $("bmStats").innerHTML =
         tile("users", "Testers", t.total, t.today + " today · " + t.week + " this week") +
         tile("calendar", GOAL_DAYS + "+ days", t.days14 + " / " + GOAL_PEOPLE, "Google Play closed test", t.days14 >= GOAL_PEOPLE ? "ok" : "") +
-        tile("flag", "Crashes", r.day.crash, r.week.crash + " this week", r.day.crash ? "bad" : "") +
+        tile("flag", "Crashes", r.day.crash, r.week.crash + " this week" + (r.week.bg ? " · " + r.week.bg + " closed by phone in background" : ""), r.day.crash ? "bad" : "") +
         tile("info", "Errors", r.day.error, r.week.error + " this week", r.day.error ? "warn" : "") +
         tile("clock", "Slow", r.day.slow, r.week.slow + " this week", r.day.slow ? "warn" : "") +
         tile("comment", "Open bugs", r.openBugs, r.week.bug + " sent this week", r.openBugs ? "warn" : "") +

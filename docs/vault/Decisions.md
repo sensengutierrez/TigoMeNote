@@ -113,6 +113,10 @@ updated: 2026-10-24
 | 2026-11-02 | School & work schedule = reminders table (kind class/work, repeat "days", `sched` jsonb na may tz) sa halip na bagong table | Iisang cron at push (daily-fast); ang oras ay kinukwenta sa timezone ng user (Intl) kaya tama kahit may DST |
 | 2026-11-02 | Widget see-through: iisang setting (0–100%) para sa Music at Messages widget, naka-save sa phone (`tmn_widget` "bg"), ImageView sa likod + setImageAlpha | Hindi kaya ng RemoteViews na palitan ang alpha ng background; ImageView.setImageAlpha ay pwede |
 | 2026-11-02 | Beta monitor gamit ang sariling logs (`crash-fast` + app_logs/app_testers), hindi Firebase Crashlytics o Sentry | Libre, walang bagong SDK o account; pareho para sa web at sa 3 APK. Iisang row bawat parehong problema (fp) para hindi lumaki ang database |
+| 2026-11-10 | Lights Out: sariling multo ("the Hush"), hindi si Sadako | Character ng ibang may-ari (The Ring); bawal kopyahin, kahit iba ang kulay o pose |
+| 2026-11-10 | Duo online gamit ang Supabase Realtime broadcast (walang bagong server); host ang may hawak ng multo at susi | Libre; isang source of truth para walang away sa estado. Ang code ng room ay 5 titik; walang laman na personal maliban sa username at kulay |
+| 2026-11-10 | Ranking: panalo lang, pinakamabilis bawat tao/pares; 25 s–5 min lang ang tinatanggap | Simpleng bantay laban sa pandaraya (walang server simulation) |
+| 2026-11-10 | Kapag isinara ng phone ang app sa background: reload sa pagbalik, hindi agad | Ang agad na reload ay pinapatay lang ulit at kumakain ng baterya; hindi kayang pigilan ng app ang pagsara ng phone |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

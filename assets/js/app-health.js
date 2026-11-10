@@ -1,7 +1,7 @@
 /* TigoMeNote · app-health.js — para sa beta: ipinapadala sa server (crash-fast) ang errors at bagal ng app, at kung sino ang gumagamit
      • error: JavaScript error / promise na walang catch / server error (500+) ng isang function
      • slow:  tawag sa server na lampas 4 s, o page na lampas 6 s bago bumukas
-     • hello: isang beses bawat bukas ng app (naka-sign in lang) → Beta monitor → Testers (ilang araw na ginagamit)
+     • hello: isang beses bawat bukas ng app, hanggang isa bawat 30 min (naka-sign in lang) → Beta monitor → Testers (ilang araw na ginagamit)
    Tahimik: walang lumalabas sa user. Hanggang 15 bawat page; sabay-sabay ipinapadala bawat 10 s at kapag umalis sa page.
    TMN_HEALTH.recent() → huling mga error (para sa Report a bug) · TMN_HEALTH.device() · TMN_HEALTH.pages()
    Kailangan: config.js, api.js (sinusukat ang TMN_API.call). Admin: app/admin/beta.html */
@@ -77,7 +77,8 @@
 
   // tester: isang beses bawat bukas ng app (bawat session)
   setTimeout(function () {
-    try { if (!window.TMN_TOKEN || sessionStorage.getItem("tmnHello")) return; sessionStorage.setItem("tmnHello", "1"); } catch (e) { return; }
+    // isang "open" lang bawat 30 minuto (ang pag-reload ng app pagbalik ay hindi bagong bukas)
+    try { var k = "tmnHello-" + APP, last = Number(localStorage.getItem(k) || 0); if (!window.TMN_TOKEN || Date.now() - last < 30 * 60000) return; localStorage.setItem(k, String(Date.now())); } catch (e) { return; }
     try { fetch(C.fn.crash, { method: "POST", headers: { "Content-Type": "text/plain;charset=UTF-8" }, body: JSON.stringify({ action: "hello", token: window.TMN_TOKEN, app: APP, version: C.version, device: device() }) }).catch(function () {}); } catch (e) {}
   }, 4000);
 

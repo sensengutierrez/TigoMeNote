@@ -48,6 +48,13 @@
   function setDay(k) { day = k; notes.setDay(k); paintDays(); otd(); }
   $("week").addEventListener("click", function (e) { var b = e.target.closest("[data-day]"); if (b) setDay(b.dataset.day); });
   $("calBtn").addEventListener("click", function () { window.TMN_CAL.open({ day: day, onPick: setDay }); });
+  // pindot ang petsa sa itaas → Smart calendar
+  (function () {
+    var t = $("today"); t.classList.add("tap"); t.setAttribute("role", "button"); t.tabIndex = 0; t.setAttribute("aria-label", "Open calendar");
+    function go() { window.TMN_CAL.open({ day: day, onPick: setDay }); }
+    t.addEventListener("click", go);
+    t.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  })();
   document.addEventListener("tmn:daily", paintDays);
 
   // ---------- On this day: notes sa parehong petsa noong nakaraan ----------
