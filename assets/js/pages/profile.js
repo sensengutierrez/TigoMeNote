@@ -193,6 +193,7 @@
   });
   // Followers / Following list
   document.querySelector(".p-hero .stats").addEventListener("click", function (e) {
+    if (e.target.closest("[data-go]")) { $("pPosts").scrollIntoView({ behavior: "smooth", block: "start" }); return; }   // Posts → diretso sa grid
     var b = e.target.closest("[data-list]"); if (!b || !window.TMN_SOCIAL) return;
     var u = window.TMN_USER || {};
     TMN_SOCIAL.followList({ id: u.id, username: u.username }, b.dataset.list);
@@ -216,6 +217,7 @@
     } catch (e) {}
   }
 
+  if (window.TMN_STORIES) TMN_STORIES.mountMine($("pStatus"));
   renderQueue();
   loadPosts();
   loadProfile();

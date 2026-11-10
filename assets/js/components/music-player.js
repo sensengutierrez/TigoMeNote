@@ -33,8 +33,9 @@
     function savePref() { try { localStorage.setItem(PREF, JSON.stringify(pref)); } catch (e) {} }
 
     el.innerHTML =
-      '<div class="mu-head"><h3>' + I("music", "ic-sm") + 'My music</h3>' +
-        '<label class="btn btn-ghost btn-sm">' + I("plus", "ic-sm") + 'Add songs<input type="file" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.opus,.flac" multiple class="sr-only mu-add"></label></div>' +
+      '<div class="mu-head"><h3>' + I("music", "ic-sm") + 'My music</h3><span class="mu-adds">' +
+        '<label class="btn btn-ghost btn-sm">' + I("plus", "ic-sm") + 'Add songs<input type="file" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.opus,.flac" multiple class="sr-only mu-add"></label>' +
+        '<label class="btn btn-ghost btn-sm mu-folderbtn">' + I("folder", "ic-sm") + 'Add a folder<input type="file" webkitdirectory multiple class="sr-only mu-add mu-add-folder"></label></span></div>' +
       '<p class="faint small mu-note">Only you can hear this. Songs stay on this device and are not uploaded.</p>' +
       '<div class="mu-now hidden">' + (window.TMN_MUSIC_TIGO ? TMN_MUSIC_TIGO.html() : "") + '<div class="mu-main">' +
         '<div class="mu-now-info"><b class="mu-title"></b><span class="faint small mu-artist"></span></div>' +
@@ -162,8 +163,12 @@
         paint();
       });
     }
-    $(".mu-add").addEventListener("change", async function () {
-      var files = [].slice.call(this.files || []); this.value = ""; if (!files.length) return;
+    async function onAdd() {
+      var folder = this.classList.contains("mu-add-folder");
+      var files = [].slice.call(this.files || []); this.value = "";
+      // folder: ang mga kanta lang (hindi kasama ang litrato atbp.)
+      if (folder) files = files.filter(function (f) { return /^audio\//.test(f.type) || /\.(mp3|m4a|aac|wav|ogg|oga|opus|flac)$/i.test(f.name); });
+      if (!files.length) { if (folder) UI.toast("No songs found in that folder."); return; }
       UI.toast("Adding " + files.length + " song(s)…", 1500);
       try {
         var added = await DB.add(files);
@@ -171,7 +176,9 @@
         else UI.toast(added.length + " song(s) added ✓");
         await load();
       } catch (e) { UI.toast(e.message || "Couldn't add the songs."); }
-    });
+    }
+    [].forEach.call(el.querySelectorAll(".mu-add"), function (i) { i.addEventListener("change", onAdd); });
+    if (!("webkitdirectory" in document.createElement("input"))) $(".mu-folderbtn").classList.add("hidden");
     window.addEventListener("pagehide", function () { if (url) URL.revokeObjectURL(url); });
     load().catch(function () { $(".mu-empty").textContent = "Music isn't available in this browser."; });
     return { play: play, toggle: toggle, audio: audio };

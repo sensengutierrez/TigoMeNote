@@ -144,14 +144,32 @@
       });
     }
 
-    async function add() {
+    // Add songs: pili ng mga kanta, o ng buong folder sa phone (lahat ng kanta sa loob)
+    function add() {
+      var body = document.createElement("div");
+      body.className = "mu-sheet";
+      body.innerHTML =
+        '<button type="button" class="btn btn-ghost" data-k="files">' + I("music", "ic-sm") + "Pick songs</button>" +
+        '<button type="button" class="btn btn-ghost" data-k="folder">' + I("folder", "ic-sm") + "Pick a folder</button>" +
+        '<p class="faint small">A folder adds every song inside it (up to 300). Songs already in your playlist are skipped.</p>';
+      var m = TMN_MODAL.open({ title: "Add songs", size: "sm", cls: "modal-sheet", body: body });
+      body.addEventListener("click", function (e) {
+        var b = e.target.closest("[data-k]"); if (!b) return;
+        m.close(); pick(b.dataset.k === "folder");
+      });
+    }
+    async function pick(folder) {
       // Android 13+: hingi muna ng permission para sa notification ng player (isang beses lang)
       try { if (window.TMN_APP && TMN_APP.pushToken) TMN_APP.pushToken({ ask: true }); } catch (e) {}
       try {
-        var r = await N.musicPick();
-        if (r && r.added) UI.toast(r.added + " song(s) added ✓" + (r.skipped ? " · " + r.skipped + " skipped" : ""));
+        if (folder) UI.toast("Choose the folder, then tap “Use this folder”.", 3000);
+        var r = await (folder ? N.musicPickFolder() : N.musicPick());
+        if (r && r.cancelled) { /* walang pinili */ }
+        else if (r && r.added) UI.toast(r.added + " song(s) added ✓" + (r.had ? " · " + r.had + " already there" : "") + (r.skipped ? " · " + r.skipped + " skipped" : ""), 3500);
+        else if (r && r.had) UI.toast("Those songs are already in your playlist.");
+        else if (folder && r && !r.found) UI.toast("No songs found in that folder.");
         else if (r && r.skipped) UI.toast(r.skipped + " file(s) couldn't be added.");
-      } catch (e) { UI.toast("Couldn't add the songs."); }
+      } catch (e) { UI.toast(folder ? "Couldn't open the folder." : "Couldn't add the songs."); }
       await refresh();
     }
 

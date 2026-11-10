@@ -198,29 +198,83 @@ public class TmnNative extends Plugin {
         else if (data.getData() != null) uris.add(data.getData());
         new Thread(() -> {
             int added = 0, skipped = 0;
+            java.util.HashSet<String> have = musicNames();
             for (Uri u : uris) {
-                try {
-                    if (Build.VERSION.SDK_INT < 29) { skipped++; continue; }
-                    ContentResolver cr = getContext().getContentResolver();
-                    String nm = null;
-                    try (Cursor c = cr.query(u, new String[] { "_display_name" }, null, null, null)) { if (c != null && c.moveToFirst()) nm = c.getString(0); }
-                    if (nm == null) nm = "Song_" + System.currentTimeMillis() + ".mp3";
-                    String mime = cr.getType(u); if (mime == null || !mime.startsWith("audio")) mime = "audio/mpeg";
-                    android.content.ContentValues v = new android.content.ContentValues();
-                    v.put(MediaStore.MediaColumns.DISPLAY_NAME, nm); v.put(MediaStore.MediaColumns.MIME_TYPE, mime);
-                    v.put(MediaStore.MediaColumns.RELATIVE_PATH, "Music/TigoMeNote"); v.put(MediaStore.MediaColumns.IS_PENDING, 1);
-                    Uri dest = cr.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, v);
-                    if (dest == null) { skipped++; continue; }
-                    try (InputStream in = cr.openInputStream(u); OutputStream os = cr.openOutputStream(dest)) {
-                        byte[] b = new byte[64 * 1024]; int n; while ((n = in.read(b)) > 0) os.write(b, 0, n);
-                    } catch (Exception e) { cr.delete(dest, null, null); skipped++; continue; }
-                    android.content.ContentValues done = new android.content.ContentValues(); done.put(MediaStore.MediaColumns.IS_PENDING, 0);
-                    cr.update(dest, done, null, null);
-                    added++;
-                } catch (Exception e) { skipped++; }
+                int k = musicCopy(u, null, null, have);
+                if (k > 0) added++; else if (k < 0) skipped++;
             }
             JSObject o = new JSObject(); o.put("added", added); o.put("skipped", skipped); call.resolve(o);
         }).start();
+    }
+
+    /** Mga pangalan ng kanta na nasa Music/TigoMeNote na (para hindi madoble). */
+    private java.util.HashSet<String> musicNames() {
+        java.util.HashSet<String> have = new java.util.HashSet<>();
+        try (Cursor c = getContext().getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[] { MediaStore.MediaColumns.DISPLAY_NAME },
+                Build.VERSION.SDK_INT >= 29 ? MediaStore.MediaColumns.RELATIVE_PATH + " LIKE ?" : null, Build.VERSION.SDK_INT >= 29 ? new String[] { "Music/TigoMeNote%" } : null, null)) {
+            while (c != null && c.moveToNext()) { String n = c.getString(0); if (n != null) have.add(n.toLowerCase()); }
+        } catch (Exception e) { }
+        return have;
+    }
+    /** Kopya ng isang kanta papunta sa Music/TigoMeNote. 1 = naidagdag, 0 = nandoon na (nilaktawan), -1 = hindi nakopya. */
+    private int musicCopy(Uri u, String nm, String mime, java.util.HashSet<String> have) {
+        try {
+            if (Build.VERSION.SDK_INT < 29) return -1;
+            ContentResolver cr = getContext().getContentResolver();
+            if (nm == null) try (Cursor c = cr.query(u, new String[] { "_display_name" }, null, null, null)) { if (c != null && c.moveToFirst()) nm = c.getString(0); }
+            if (nm == null) nm = "Song_" + System.currentTimeMillis() + ".mp3";
+            if (have != null && have.contains(nm.toLowerCase())) return 0;
+            if (mime == null) mime = cr.getType(u);
+            if (mime == null || !mime.startsWith("audio")) mime = "audio/mpeg";
+            android.content.ContentValues v = new android.content.ContentValues();
+            v.put(MediaStore.MediaColumns.DISPLAY_NAME, nm); v.put(MediaStore.MediaColumns.MIME_TYPE, mime);
+            v.put(MediaStore.MediaColumns.RELATIVE_PATH, "Music/TigoMeNote"); v.put(MediaStore.MediaColumns.IS_PENDING, 1);
+            Uri dest = cr.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, v);
+            if (dest == null) return -1;
+            try (InputStream in = cr.openInputStream(u); OutputStream os = cr.openOutputStream(dest)) {
+                byte[] b = new byte[64 * 1024]; int n; while ((n = in.read(b)) > 0) os.write(b, 0, n);
+            } catch (Exception e) { cr.delete(dest, null, null); return -1; }
+            android.content.ContentValues done = new android.content.ContentValues(); done.put(MediaStore.MediaColumns.IS_PENDING, 0);
+            cr.update(dest, done, null, null);
+            if (have != null) have.add(nm.toLowerCase());
+            return 1;
+        } catch (Exception e) { return -1; }
+    }
+
+    /** Pili ng buong FOLDER sa phone → lahat ng kanta sa loob (at sa mga folder sa loob nito, hanggang 3 lalim; hanggang 300 kanta). */
+    @PluginMethod
+    public void musicPickFolder(PluginCall call) {
+        startActivityForResult(call, new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), "musicFolderPicked");
+    }
+    @ActivityCallback
+    private void musicFolderPicked(final PluginCall call, final ActivityResult r) {
+        if (call == null) return;
+        final Intent data = r.getData();
+        if (r.getResultCode() != android.app.Activity.RESULT_OK || data == null || data.getData() == null) { JSObject o = new JSObject(); o.put("added", 0); o.put("cancelled", true); call.resolve(o); return; }
+        final Uri tree = data.getData();
+        new Thread(() -> {
+            int[] n = new int[4];   // 0 naidagdag · 1 nandoon na · 2 hindi nakopya · 3 nakitang kanta
+            try { musicWalk(tree, android.provider.DocumentsContract.getTreeDocumentId(tree), 0, n, musicNames()); } catch (Exception e) { }
+            JSObject o = new JSObject(); o.put("added", n[0]); o.put("had", n[1]); o.put("skipped", n[2]); o.put("found", n[3]); call.resolve(o);
+        }).start();
+    }
+    private static final String AUDIO_EXT = "mp3|m4a|aac|wav|ogg|oga|opus|flac|wma|amr|mid|midi|3gp";
+    private void musicWalk(Uri tree, String docId, int depth, int[] n, java.util.HashSet<String> have) {
+        Uri kids = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(tree, docId);
+        ArrayList<String[]> dirs = new ArrayList<>();
+        try (Cursor c = getContext().getContentResolver().query(kids, new String[] { "document_id", "_display_name", "mime_type" }, null, null, null)) {
+            while (c != null && c.moveToNext() && n[3] < 300) {
+                String id = c.getString(0), nm = c.getString(1), mime = c.getString(2);
+                if (id == null || nm == null) continue;
+                if (android.provider.DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)) { if (!nm.startsWith(".")) dirs.add(new String[] { id }); continue; }
+                boolean audio = (mime != null && mime.startsWith("audio/")) || nm.toLowerCase().matches(".*\\.(" + AUDIO_EXT + ")$");
+                if (!audio) continue;
+                n[3]++;
+                int k = musicCopy(android.provider.DocumentsContract.buildDocumentUriUsingTree(tree, id), nm, mime, have);
+                if (k > 0) n[0]++; else if (k == 0) n[1]++; else n[2]++;
+            }
+        } catch (Exception e) { }
+        if (depth < 3) for (String[] d : dirs) { if (n[3] >= 300) break; musicWalk(tree, d[0], depth + 1, n, have); }
     }
 
     // Permiso para makita ang kanta na idinagdag ng ibang TigoMeNote app (Android 13+: Music and audio)

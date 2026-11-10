@@ -384,7 +384,7 @@
   async function openGames() {
     var g = await mod("games-ui");
     var p = live() || {}, info = { name: (window.TMN_USER && TMN_USER.username) || p.name || "friend", color: p.color || "coral",
-      tired: function () { var q = live() || {}; return q.asleep ? "Shh… Tigo is sleeping." : q.energy < 8 ? "Tigo is too tired to play. Let Tigo sleep." : ""; } };
+      tired: function () { var q = live() || {}; return q.asleep ? "Shh… Tigo is sleeping." : ""; } };
     var node = g.gamesNode(function (id, opt) { m.close(); playGame(id, opt); }, info);
     var m = TMN_MODAL.open({ title: "Games", size: "sm", cls: "modal-sheet", body: node, onClose: function () { if (node._cleanup) node._cleanup(); } });
   }
@@ -394,7 +394,6 @@
     var p = live();
     var bail = function (t) { toast(t); if (opt && opt.net) opt.net.leave(); };
     if (p.asleep) { bail("Shh… Tigo is sleeping."); return; }
-    if (p.energy < 8) { bail("Tigo is too tired to play. Let Tigo sleep."); return; }
     playing = true;
     if (decor) decor.close();
     if (closet) closet.close();

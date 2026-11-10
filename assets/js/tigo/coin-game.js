@@ -18,7 +18,7 @@ export function startCoinGame(sc, { seconds = 30, onScore, onEnd } = {}) {
     for (let k = 0; k < 20; k++) {
       const a = Math.random() * Math.PI * 2, d = 0.4 + Math.random() * (RADIUS - 0.6);
       const x = Math.cos(a) * d, z = Math.sin(a) * d;
-      if (Math.hypot(x - HOUSE.x, z - HOUSE.z) < 1.0) continue;
+      if (Math.hypot(x - HOUSE.x, z - HOUSE.z) < HOUSE.r + 0.15) continue;
       const me = sc.mainState(); if (Math.hypot(x - me.x, z - me.z) < 0.8) continue;
       return [x, z];
     }

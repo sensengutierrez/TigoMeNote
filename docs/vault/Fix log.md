@@ -67,6 +67,8 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-02 · Login: hindi lumalabas ang "Your account was deleted" → pinapalitan ng `fill()` ang `#authSub` pagkatapos ng setTimeout → nasa `fill()` na mismo (`login.js`). Version 0.11.38
 - 2026-11-10 · App: paulit-ulit na reload pagbalik (85 "WebView stopped" sa nubia NX659J) → isinasara ng phone ang WebView habang nasa background (`didCrash=false`) at nag-`recreate()` agad ang app habang nasa background pa → reload sa onResume lang, sa parehong page; `bgkill` ≠ crash (`patch-android.py`, `crash-fast.ts`). Version 0.11.40
 - 2026-11-10 · Lights Out: pagbalik mula sa Ranking, hindi na gumagana ang mga button ng menu → nawawala ang click handler → ibinabalik (`games-ui.js`). Version 0.11.40
+- 2026-11-10 · Profile: "hindi lumalabas ang post ko" → ang ibinahagi ay **Status** (sa Explore lang lumalabas, 24 oras), at ang grid ng posts ay nasa pinakailalim (sa ilalim ng My music at Family & Safety); kumpleto ang 7 posts sa server → idinagdag ang **My status** sa Profile at ginawang pindutan ang bilang na Posts (scroll papunta sa grid) (`stories.js`, `profile.html`, `profile.js`)
+- 2026-11-10 · Tigo: kapag puno na ang energy at pinatulog, agad na nagigising → `decay()` ay gumigising tuwing energy ≥ 100 → gigising lang kapag *umabot* sa 100 habang tulog (`backend/pet-fast.ts`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

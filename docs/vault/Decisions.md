@@ -119,6 +119,9 @@ updated: 2026-10-24
 | 2026-11-10 | Kapag isinara ng phone ang app sa background: reload sa pagbalik, hindi agad | Ang agad na reload ay pinapatay lang ulit at kumakain ng baterya; hindi kayang pigilan ng app ang pagsara ng phone |
 | 2026-11-10 | Iisang room lobby (hanggang 4) para sa lahat ng bagong laro; host ang may hawak ng estado kapag kailangan (Siege), at bawat isa ang may hawak ng sarili (Dash, Sudoku) | Libre (Realtime broadcast), walang game server; iisang code para sa lahat ng laro |
 | 2026-11-10 | Sky Dash si Tigo at sariling track (hindi Sonic); Gloom Siege cartoon na Gloomies (hindi madugong zombie) | Karapatan ng Sega; at 13+ sa Play Store |
+| 2026-11-10 | Hindi na bumababa nang kusa ang mga bar ni Tigo, at hindi na napapagod sa laro | Hiling ni Bench ("life span nya hindi na nababawasan"); ang pag-aalaga ay dagdag-saya na lang, hindi obligasyon |
+| 2026-11-10 | Exchange rate: diretso ang browser sa libreng API (open.er-api.com, reserba jsDelivr currency-api), walang key at hindi dumadaan sa server | Libre, walang sikreto, isang update bawat araw ay sapat; "gabay lang" ang nakasulat dahil iba ang palitan sa bangko/remittance |
+| 2026-11-10 | Folder ng kanta: kinokopya sa Music/TigoMeNote (hanggang 300), hindi nagbabasa nang direkta sa folder | Iisang playlist ng TigoMeNote at Chat, at walang dagdag na permission sa buong storage |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

@@ -1,6 +1,7 @@
 /* TigoMeNote · components/stories.js
    Status / Stories (nawawala pagkalipas ng 24 oras), parang Instagram.
      TMN_STORIES.mount(el)   → bilog-bilog sa taas: "Status mo" + mga fina-follow mo na may status
+     TMN_STORIES.mountMine(el) → Profile: "My status" (sariling status lang, may nanood at natitirang oras)
      TMN_STORIES.add()       → pili ng photo/video → caption → upload
    Viewer: tap kanan = susunod, tap kaliwa = balik, pindutin nang matagal = pause, Esc / X = sara.
    May sound (TigoMeNote Sounds, auto-pick gaya ng post) na tumutugtog habang nakikita ang status.
@@ -22,7 +23,42 @@
     return 'class="st-ring ' + cls + (n === 1 ? " one" : "") + '" style="--n:' + n + '"';
   }
   // ---------- Bar ----------
+  // ---------- "My status" sa Profile: mga status mo na buhay pa (24 oras), may bilang ng nanood ----------
+  function left(iso) {
+    var m = Math.max(0, Math.round((new Date(iso) - Date.now()) / 60000));
+    return m >= 60 ? Math.round(m / 60) + "h left" : m + "m left";
+  }
+  function renderMine() {
+    var el = state.mineEl; if (!el) return;
+    var mine = state.groups.filter(function (g) { return g.me; })[0];
+    var items = mine ? mine.items : [];
+    el.innerHTML =
+      '<div class="st-mine-head"><h3>' + I("camera", "ic-sm") + "My status</h3>" +
+        '<span class="faint small">' + (items.length ? items.length + " active · gone after 24 hours" : "Photos you share for 24 hours") + "</span></div>" +
+      '<div class="st-mine-row" role="list">' +
+        '<button type="button" class="st-mine-add" data-st="add" role="listitem">' + I("plus") + "<span>Add</span></button>" +
+        items.map(function (it, k) {
+          return '<button type="button" class="st-mine-tile" data-st="mine" data-k="' + k + '" role="listitem" aria-label="Open status">' +
+            (it.url ? '<img alt="" loading="lazy" src="' + esc(it.url) + '">' : '<span class="pt-missing">' + I("image") + "</span>") +
+            '<span class="st-mine-meta">' + I("eye", "ic-sm") + (it.views || 0) + (it.likes ? " · ❤️ " + it.likes : "") + "</span>" +
+            '<span class="st-mine-left">' + left(it.expires_at) + "</span></button>";
+        }).join("") +
+        (state.loading && !items.length ? '<span class="st-mine-tile skel"></span>' : "") +
+      "</div>";
+  }
+  function mountMine(el) {
+    state.mineEl = el;
+    el.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-st]"); if (!b) return;
+      if (b.dataset.st === "add") return add();
+      view(state.groups.findIndex(function (g) { return g.me; }), Number(b.dataset.k), true);
+    });
+    renderMine(); load();
+    window.addEventListener("online", load);
+    return { reload: load };
+  }
   function render() {
+    renderMine();
     var el = state.el; if (!el) return;
     var me = window.TMN_USER || {};
     var mine = state.groups.filter(function (g) { return g.me; })[0];
@@ -129,7 +165,8 @@
   }
 
   // ---------- Viewer ----------
-  function view(gi) {
+  // only = true → ang grupong ito lang (Profile: sariling status lang, hindi tutuloy sa status ng iba)
+  function view(gi, at, only) {
     if (gi < 0 || !state.groups[gi]) return;
     var g, ii = 0, timer = null, started = 0, elapsed = 0, dur = PHOTO_MS, paused = false, raf = null;
     var ov = document.createElement("div");
@@ -223,12 +260,12 @@
     }
     function next() {
       if (ii < g.items.length - 1) { ii++; show(); }
-      else if (gi < state.groups.length - 1) { gi++; ii = firstUnseen(state.groups[gi]); show(); }
+      else if (!only && gi < state.groups.length - 1) { gi++; ii = firstUnseen(state.groups[gi]); show(); }
       else close();
     }
     function prev() {
       if (ii > 0) { ii--; show(); }
-      else if (gi > 0) { gi--; ii = 0; show(); }
+      else if (!only && gi > 0) { gi--; ii = 0; show(); }
       else { show(); }
     }
     function firstUnseen(gr) { var k = gr.items.findIndex(function (x) { return !x.seen; }); return k < 0 ? 0 : k; }
@@ -310,7 +347,7 @@
         } else pause(false);
       }
     });
-    ii = firstUnseen(state.groups[gi]);
+    ii = at >= 0 && at < state.groups[gi].items.length ? at : firstUnseen(state.groups[gi]);
     requestAnimationFrame(function () { ov.classList.add("show"); });
     show();
   }
@@ -334,5 +371,5 @@
     });
   }
 
-  window.TMN_STORIES = { mount: mount, add: add, reload: load };
+  window.TMN_STORIES = { mount: mount, mountMine: mountMine, add: add, reload: load };
 })();
