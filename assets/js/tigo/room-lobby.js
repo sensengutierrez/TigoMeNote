@@ -5,7 +5,7 @@
      rank: { node(box, back) } — ipinapakita ang ranking
      onStart(opt): { mode: "solo"|"multi", net?, seed, ...soloOpt }
    Room: 5 titik na code; ang host ang gumagawa; hanggang 4. Ang listahan ng kasali (roster) ay galing sa host.
-   net (para sa laro): { me: pid, host: bool, roster: [{ p, name, color }], send(ev, data), on(fn(ev, data, from)), leave() }
+   net (para sa laro): { me: pid, host: bool, roster: [{ p, name, color, av }], send(ev, data), on(fn(ev, data, from)), leave() }
      Bawat message ay may kasamang "p" (pid ng nagpadala). Gamit ang TMN_RT (Supabase Realtime broadcast). */
 const ABC = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const esc = (s) => (window.TMN_UI ? TMN_UI.esc(s) : String(s));
@@ -24,10 +24,11 @@ export function makeNet(topic, me) {
 }
 
 export function gameMenu(box, o) {
-  const max = o.max || 4, me = { name: (o.info && o.info.name) || "friend", color: (o.info && o.info.color) || "coral" };
+  const max = o.max || 4, me = { name: (o.info && o.info.name) || "friend", color: (o.info && o.info.color) || "coral", av: (o.info && o.info.av) || null };
+  const here = (r) => { if (window.TMN_HERE) TMN_HERE.set(r); };   // ipakita sa mga follower na may bukas kang room (o wala na)
   let net = null, handed = false, timer = null, lobbyFn = null;
-  box._cleanup = () => { clearInterval(timer); if (net && !handed) net.leave(); net = null; };
-  const go = (opt) => { handed = true; clearInterval(timer); if (net && lobbyFn) net.off(lobbyFn); o.onStart(Object.assign({ me }, opt)); };
+  box._cleanup = () => { clearInterval(timer); if (net && !handed) net.leave(); net = null; here(null); };
+  const go = (opt) => { handed = true; here(null); clearInterval(timer); if (net && lobbyFn) net.off(lobbyFn); o.onStart(Object.assign({ me }, opt)); };
   function menu() {
     box._cleanup(); handed = false;
     const solos = o.soloOpts || [{ label: "Play solo", sub: o.soloSub || "Practice and set your best", opt: {} }];
@@ -43,7 +44,7 @@ export function gameMenu(box, o) {
   function host() {
     if (!window.TMN_RT) { menu(); if (window.TMN_UI) TMN_UI.toast("Online play isn't available here."); return; }
     const code = rid(5), seed = (Math.random() * 1e9) | 0, pid = "h" + rid(6);
-    let roster = [{ p: pid, name: me.name, color: me.color }], extra = (o.hostOpts && o.hostOpts[0] && o.hostOpts[0].opt) || {};
+    let roster = [{ p: pid, name: me.name, color: me.color, av: me.av }], extra = (o.hostOpts && o.hostOpts[0] && o.hostOpts[0].opt) || {};
     box.innerHTML = '<div class="tg-lobby"><small>Room code</small><b class="tg-code" translate="no">' + code + '</b><button type="button" class="btn btn-ghost btn-sm" data-copy>Copy code</button>' +
       '<p class="small">Friends open <b>Tigo → Games → ' + esc(o.title) + " → Join a room</b> and type this code. Up to " + max + " players.</p>" +
       (o.hostOpts ? '<div class="segmented rl-opts">' + o.hostOpts.map((h, i) => '<button type="button" data-ho="' + i + '" aria-pressed="' + (i === 0) + '">' + esc(h.label) + "</button>").join("") + "</div>" : "") +
@@ -55,12 +56,13 @@ export function gameMenu(box, o) {
       stat().textContent = roster.length > 1 ? roster.length + " / " + max + " players" : "Waiting for friends…";
       box.querySelector("[data-start]").disabled = roster.length < 2;
       net.send("roster", { roster, extra });
+      here({ game: o.id, code, players: roster.length, max });
     };
     lobbyFn = (ev, d, from) => {
       if (ev === "join" && from && d.name) {
         if (!roster.some((x) => x.p === from)) {
           if (roster.length >= max) { net.send("full", { to: from }); return; }
-          roster.push({ p: from, name: String(d.name).slice(0, 30), color: String(d.color || "sky").slice(0, 12) });
+          roster.push({ p: from, name: String(d.name).slice(0, 30), color: String(d.color || "sky").slice(0, 12), av: d.av && typeof d.av === "object" ? d.av : null });
         }
         paint();
       }
@@ -75,7 +77,7 @@ export function gameMenu(box, o) {
       go(Object.assign({ mode: "multi", net, seed }, extra));
     };
   }
-  function join() {
+  function join(auto) {
     box.innerHTML = '<div class="tg-lobby"><small>Room code</small><input class="input tg-code-in" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC12" aria-label="Room code">' +
       '<button type="button" class="btn btn-primary" data-join>Join</button><div class="rl-list"></div><p class="tg-lobby-s small"></p></div><button type="button" class="btn btn-ghost btn-sm" data-menu>‹ Back</button>';
     const inp = box.querySelector(".tg-code-in"); setTimeout(() => inp.focus(), 50);
@@ -96,9 +98,10 @@ export function gameMenu(box, o) {
         if (ev === "bye" && inRoom && net.roster[0] && d.p === net.roster[0].p) { stat().textContent = "The host closed the room."; inRoom = false; }
       };
       net.on(lobbyFn);
-      timer = setInterval(() => { if (inRoom) return; if (++tries > 8) { clearInterval(timer); stat().textContent = "No room with that code. Check the code and try again."; return; } net.send("join", { name: me.name, color: me.color }); }, 1200);
-      net.send("join", { name: me.name, color: me.color });
+      timer = setInterval(() => { if (inRoom) return; if (++tries > 8) { clearInterval(timer); stat().textContent = "No room with that code. Check the code and try again."; return; } net.send("join", { name: me.name, color: me.color, av: me.av }); }, 1200);
+      net.send("join", { name: me.name, color: me.color, av: me.av });
     };
+    if (auto) { inp.value = auto; box.querySelector("[data-join]").click(); }   // galing sa "Friends playing → Join"
   }
   // pagod o tulog si Tigo: huwag pumasok sa room (para hindi maiwan ang mga kaibigan)
   const tired = () => { const t = o.info && o.info.tired && o.info.tired(); if (t && window.TMN_UI) TMN_UI.toast(t); return !!t; };
@@ -113,6 +116,7 @@ export function gameMenu(box, o) {
   };
   box.onclick = onMenu;
   menu();
+  if (o.joinCode && !tired()) join(o.joinCode);
 }
 
 // Ranking (pare-pareho sa lahat ng laro): tabs ng "level" (opsyonal) at panahon

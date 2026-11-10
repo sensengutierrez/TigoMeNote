@@ -117,7 +117,7 @@
       '<div class="fx-big" aria-live="polite"></div>' +
       '<p class="faint small fx-one" translate="no"></p>' +
       '<div class="fx-more" role="group" aria-label="Other currencies"></div>' +
-      '<p class="faint small fx-foot">Updated ' + ago(at) + (navigator.onLine ? "" : " · offline") + ". Mid-market rate, a guide only — banks and remittance centers use their own.</p>";
+      '<p class="faint small fx-foot">Updated ' + ago(at) + (navigator.onLine ? "" : " · offline") + ". Mid-market rate, a guide only — banks and remittance centers use their own. <a href=\"https://www.exchangerate-api.com\" target=\"_blank\" rel=\"noopener\">Rates by Exchange Rate API</a></p>";
     paintResult();
   }
   function save() { write(KEY, { from: st.from, to: st.to, amt: st.amt }); }

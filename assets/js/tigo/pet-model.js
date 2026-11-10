@@ -6,6 +6,7 @@
      t.setMood("happy"|"ok"|"sad"|"sleepy"|"sick")   t.sleep(true|false)
      t.jump() · t.eat() · t.spin() · t.wiggle() · t.lookAt(x, y)  (x,y = -1..1)
      t.setColor(id) · t.setGear(id) · t.wear(slot, id) · t.setGlow(on) · t.dispose()
+     t.setAvatar(avatar | null) · t.kind()  → note (Tigo) o Kid (parang tao, human-model.js); createTigo({ avatar }) para sa simula
      t.move("dance"|"budots"|"robot"|"highfive"|"cheer"|"bow", sec) → sayaw/galaw (solo o kasama ang kaibigan)
      t.walk(speed 0..1, heading rad)  → lakad (gumagalaw ang paa at kamay); heading = saan nakaharap
    Mga isusuot (wear): outfit.js. Ang hat na sprout/bow/cap/headphones/crown ay nandito (setGear).
@@ -13,6 +14,7 @@
 import * as THREE from "../../vendor/three/three.module.min.js";
 import { RoundedBoxGeometry } from "../../vendor/three/RoundedBoxGeometry.js";
 import { buildWear } from "./outfit.js";
+import { createKid } from "./human-model.js";
 
 export const COLORS = {
   coral: ["#ff7a59", "#e85d3c"], amber: ["#ffc04d", "#e9a21f"], mint: ["#3dd6c0", "#14b8a6"], sky: ["#7cc4ff", "#4a9fe8"],
@@ -21,8 +23,81 @@ export const COLORS = {
 export const GEAR = ["none", "sprout", "bow", "cap", "headphones", "crown"];
 const INK = 0x2b1d1a;
 
+// Mga lumang sumbrero (sprout, bow, cap, headphones, crown): iisang gawa para kay Tigo at sa Kid (human-model.js)
+function fillGear(gear, id, geo, mat) {
+  if (id === "sprout") {
+    const stem = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.025, 0.03, 0.22, 8)), mat({ color: 0x4caf50 })); stem.position.y = 0.1;
+    const leafG = geo(new THREE.SphereGeometry(0.11, 12, 8));
+    const l1 = new THREE.Mesh(leafG, mat({ color: 0x66bb6a, roughness: 0.6 })); l1.scale.set(1, 0.35, 0.6); l1.position.set(-0.1, 0.22, 0); l1.rotation.z = 0.5;
+    const l2 = l1.clone(); l2.position.x = 0.1; l2.rotation.z = -0.5;
+    gear.add(stem, l1, l2);
+  } else if (id === "bow") {
+    const m = mat({ color: 0xff4f8b, roughness: 0.45 });
+    const k = new THREE.Mesh(geo(new THREE.SphereGeometry(0.06, 12, 8)), m); k.position.set(-0.4, 0.02, 0.2);
+    const w1 = new THREE.Mesh(geo(new THREE.ConeGeometry(0.11, 0.2, 12)), m); w1.rotation.z = Math.PI / 2; w1.position.set(-0.51, 0.02, 0.2);
+    const w2 = w1.clone(); w2.rotation.z = -Math.PI / 2; w2.position.x = -0.29;
+    gear.add(k, w1, w2);
+  } else if (id === "cap") {
+    const m = mat({ color: 0x2f6fde, roughness: 0.5 });
+    const dome = new THREE.Mesh(geo(new THREE.SphereGeometry(0.42, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2)), m); dome.scale.set(1.25, 0.6, 1); dome.position.y = -0.05;
+    const brim = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.34, 0.34, 0.04, 24, 1, false, -Math.PI / 2, Math.PI)), m); brim.position.set(0, -0.04, 0.3); brim.scale.z = 0.8;
+    const btn = new THREE.Mesh(geo(new THREE.SphereGeometry(0.05, 10, 8)), mat({ color: 0xff5a36 })); btn.position.y = 0.21;
+    dome.castShadow = true; gear.add(dome, brim, btn);
+  } else if (id === "headphones") {
+    const m = mat({ color: 0x222228, roughness: 0.35, metalness: 0.3 });
+    const band = new THREE.Mesh(geo(new THREE.TorusGeometry(0.62, 0.04, 10, 32, Math.PI)), m); band.position.y = -0.55;
+    const c1 = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.16, 0.16, 0.12, 20)), mat({ color: 0xff5a36, roughness: 0.4 })); c1.rotation.z = Math.PI / 2; c1.position.set(-0.68, -0.6, 0);
+    const c2 = c1.clone(); c2.position.x = 0.68;
+    gear.add(band, c1, c2);
+  } else if (id === "crown") {
+    const m = mat({ color: 0xf4c342, metalness: 0.7, roughness: 0.25 });
+    const ring = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.3, 0.32, 0.14, 20, 1, true)), m); ring.position.y = 0.06;
+    gear.add(ring);
+    for (let i = 0; i < 5; i++) {
+      const sp = new THREE.Mesh(geo(new THREE.ConeGeometry(0.06, 0.16, 8)), m), a = (i / 5) * Math.PI * 2;
+      sp.position.set(Math.sin(a) * 0.3, 0.2, Math.cos(a) * 0.3); gear.add(sp);
+    }
+    const gem = new THREE.Mesh(geo(new THREE.OctahedronGeometry(0.05)), mat({ color: 0xff3b6b, emissive: 0x551122, roughness: 0.2 })); gem.position.set(0, 0.07, 0.32); gear.add(gem);
+  }
+}
+const LEGACY = ["sprout", "bow", "cap", "headphones", "crown"];
+function gearGroup(id) {
+  if (!LEGACY.includes(id)) return null;
+  const g = new THREE.Group(); fillGear(g, id, (x) => x, (o) => new THREE.MeshStandardMaterial(o)); return g;
+}
+
+/* createTigo: ang ginagamit ng lahat. Ibinabalik ang iisang "balat" na puwedeng maging note (Tigo) o Kid (parang tao):
+     t.setAvatar({ kind: "kid", skin, hair, … }) / t.setAvatar(null) → palit nang hindi nagbabago ang t.group (posisyon, laki, at mga nakakabit ay nananatili)
+     t.kind() → "tigo" | "kid" */
 export function createTigo(opts = {}) {
-  const group = new THREE.Group();          // posisyon sa mundo
+  const group = new THREE.Group();
+  const mem = { color: opts.color || "coral", gear: opts.gear || "none", glow: false, mood: "happy", asleep: false, wear: {} };
+  let impl = null, kind = "";
+  function build(av) {
+    if (impl) { impl.dispose(); group.clear(); }
+    kind = av && av.kind === "kid" ? "kid" : "tigo";
+    impl = kind === "kid" ? createKid({ avatar: av, gearGroup }, group) : createNote({ color: mem.color, gear: mem.gear }, group);
+    if (kind === "kid" && mem.gear !== "none" && !mem.wear.hat) impl.wear("hat", mem.gear);
+    Object.keys(mem.wear).forEach((s) => { if (mem.wear[s]) impl.wear(s, mem.wear[s]); });
+    impl.setGlow(mem.glow); impl.setMood(mem.mood); impl.sleep(mem.asleep);
+  }
+  build(opts.avatar);
+  return {
+    group, get worn() { return impl.worn; }, kind: () => kind,
+    setAvatar(av) { const k = av && av.kind === "kid" ? "kid" : "tigo"; if (k !== kind) build(av); else if (k === "kid") impl.setLook(av); },
+    update: (dt, t) => impl.update(dt, t),
+    setMood(m) { mem.mood = m; impl.setMood(m); }, sleep(on) { mem.asleep = !!on; impl.sleep(on); },
+    jump: () => impl.jump(), height: () => impl.height(), jumping: () => impl.jumping(), eat: () => impl.eat(), spin: () => impl.spin(), wiggle: () => impl.wiggle(),
+    lookAt: (x, y) => impl.lookAt(x, y),
+    setColor(id) { mem.color = id; impl.setColor(id); }, setGear(id) { mem.gear = id || "none"; impl.setGear(mem.gear); },
+    wear(slot, id) { mem.wear[slot] = id || null; impl.wear(slot, id); }, setGlow(on) { mem.glow = !!on; impl.setGlow(on); },
+    walk: (sp, h) => impl.walk(sp, h), face: (h) => impl.face(h), move: (k, sec) => impl.move(k, sec), moving: () => impl.moving(),
+    dispose() { impl.dispose(); },
+  };
+}
+
+function createNote(opts = {}, group = new THREE.Group()) {
+  // group = posisyon sa mundo
   const rig = new THREE.Group();            // tumatalon (kasama ang paa)
   const body = new THREE.Group();           // humihinga
   group.add(rig); rig.add(body);
@@ -91,46 +166,9 @@ export function createTigo(opts = {}) {
 
   // ---------- gamit (unlock ayon sa level) ----------
   const gear = new THREE.Group(); gear.position.y = 1.72; body.add(gear);
-  function setGear(id) {
-    gear.clear();
-    if (id === "sprout") {
-      const stem = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.025, 0.03, 0.22, 8)), mat({ color: 0x4caf50 })); stem.position.y = 0.1;
-      const leafG = geo(new THREE.SphereGeometry(0.11, 12, 8));
-      const l1 = new THREE.Mesh(leafG, mat({ color: 0x66bb6a, roughness: 0.6 })); l1.scale.set(1, 0.35, 0.6); l1.position.set(-0.1, 0.22, 0); l1.rotation.z = 0.5;
-      const l2 = l1.clone(); l2.position.x = 0.1; l2.rotation.z = -0.5;
-      gear.add(stem, l1, l2);
-    } else if (id === "bow") {
-      const m = mat({ color: 0xff4f8b, roughness: 0.45 });
-      const k = new THREE.Mesh(geo(new THREE.SphereGeometry(0.06, 12, 8)), m); k.position.set(-0.4, 0.02, 0.2);
-      const w1 = new THREE.Mesh(geo(new THREE.ConeGeometry(0.11, 0.2, 12)), m); w1.rotation.z = Math.PI / 2; w1.position.set(-0.51, 0.02, 0.2);
-      const w2 = w1.clone(); w2.rotation.z = -Math.PI / 2; w2.position.x = -0.29;
-      gear.add(k, w1, w2);
-    } else if (id === "cap") {
-      const m = mat({ color: 0x2f6fde, roughness: 0.5 });
-      const dome = new THREE.Mesh(geo(new THREE.SphereGeometry(0.42, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2)), m); dome.scale.set(1.25, 0.6, 1); dome.position.y = -0.05;
-      const brim = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.34, 0.34, 0.04, 24, 1, false, -Math.PI / 2, Math.PI)), m); brim.position.set(0, -0.04, 0.3); brim.scale.z = 0.8;
-      const btn = new THREE.Mesh(geo(new THREE.SphereGeometry(0.05, 10, 8)), mat({ color: 0xff5a36 })); btn.position.y = 0.21;
-      dome.castShadow = true; gear.add(dome, brim, btn);
-    } else if (id === "headphones") {
-      const m = mat({ color: 0x222228, roughness: 0.35, metalness: 0.3 });
-      const band = new THREE.Mesh(geo(new THREE.TorusGeometry(0.62, 0.04, 10, 32, Math.PI)), m); band.position.y = -0.55;
-      const c1 = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.16, 0.16, 0.12, 20)), mat({ color: 0xff5a36, roughness: 0.4 })); c1.rotation.z = Math.PI / 2; c1.position.set(-0.68, -0.6, 0);
-      const c2 = c1.clone(); c2.position.x = 0.68;
-      gear.add(band, c1, c2);
-    } else if (id === "crown") {
-      const m = mat({ color: 0xf4c342, metalness: 0.7, roughness: 0.25 });
-      const ring = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.3, 0.32, 0.14, 20, 1, true)), m); ring.position.y = 0.06;
-      gear.add(ring);
-      for (let i = 0; i < 5; i++) {
-        const sp = new THREE.Mesh(geo(new THREE.ConeGeometry(0.06, 0.16, 8)), m), a = (i / 5) * Math.PI * 2;
-        sp.position.set(Math.sin(a) * 0.3, 0.2, Math.cos(a) * 0.3); gear.add(sp);
-      }
-      const gem = new THREE.Mesh(geo(new THREE.OctahedronGeometry(0.05)), mat({ color: 0xff3b6b, emissive: 0x551122, roughness: 0.2 })); gem.position.set(0, 0.07, 0.32); gear.add(gem);
-    }
-  }
+  function setGear(id) { gear.clear(); fillGear(gear, id, geo, mat); }
 
   // ---------- mga isinusuot (outfit.js) ----------
-  const LEGACY = ["sprout", "bow", "cap", "headphones", "crown"];
   const anchors = {
     hat: new THREE.Group(), face: new THREE.Group(), body: new THREE.Group(), hand: new THREE.Group(),
   };

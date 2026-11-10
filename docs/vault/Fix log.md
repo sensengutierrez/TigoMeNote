@@ -69,6 +69,8 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-10 · Lights Out: pagbalik mula sa Ranking, hindi na gumagana ang mga button ng menu → nawawala ang click handler → ibinabalik (`games-ui.js`). Version 0.11.40
 - 2026-11-10 · Profile: "hindi lumalabas ang post ko" → ang ibinahagi ay **Status** (sa Explore lang lumalabas, 24 oras), at ang grid ng posts ay nasa pinakailalim (sa ilalim ng My music at Family & Safety); kumpleto ang 7 posts sa server → idinagdag ang **My status** sa Profile at ginawang pindutan ang bilang na Posts (scroll papunta sa grid) (`stories.js`, `profile.html`, `profile.js`)
 - 2026-11-10 · Tigo: kapag puno na ang energy at pinatulog, agad na nagigising → `decay()` ay gumigising tuwing energy ≥ 100 → gigising lang kapag *umabot* sa 100 habang tulog (`backend/pet-fast.ts`)
+- 2026-11-11 · Gloom Siege: malaking "Wave 11 in 1" na nakaharang at paulit-ulit sa gitna → `pop()` tuwing nagbabago ang bilang ng hintay → `.tg-flash` na "Wave N" isang beses na kusang nawawala + maliit na ⏳ sa HUD (`games-ui.js`, `tigo.css`)
+- 2026-11-11 · Isla: bumagal ang 3D nang lumaki (483 draw call) → bawat bulaklak, poste ng bakod at bato ay hiwalay na mesh, at may 2 PointLight → InstancedMesh + malabong bilog sa lupa kapalit ng PointLight (170 draw call) (`backdrops.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

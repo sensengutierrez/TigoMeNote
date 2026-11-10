@@ -3,9 +3,11 @@
 // Actions (session token):
 //   finish { game, mode: "solo"|"duo"|"multi", ms, score?, keys?, win, level?, partner? (username, ghost duo) } → nai-save; 60 bawat araw
 //   top    { game, mode?, level?, period: "week"|"all" } → { list:[{ rank, users:[{username,display_name}], ms, score, me }], mine, total }
+//   here   { game?, code?, players?, max?, off? } → tibok ng "online ako sa Tigo" (bawat ~40 s); may game + code = may bukas na room; off = umalis
+//   friends {} → { list:[{ user, game, code, players, max, joinable }] } — mga FINA-FOLLOW mo na online sa Tigo ngayon (huling 90 s); may room = puwedeng Join
 // Mga laro: ghost (Lights Out, oras; duo = bawat pares) · dash (Sky Dash, oras ng natapos) · siege (Gloom Siege, puntos) · sudoku (oras, bawat level)
 // Ranking: "win" lang (natapos/nalutas; siege: lahat ng laro); pinakamagaling bawat tao (o pares sa ghost duo).
-// Bantay: may tamang hangganan ng oras/puntos bawat laro. Table: game_runs (sql/106, 108). Files: index.ts lang.
+// Bantay: may tamang hangganan ng oras/puntos bawat laro. Tables: game_runs (sql/106, 108), game_rooms (sql/112). Files: index.ts lang.
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
@@ -95,6 +97,35 @@ async function top(p: any, me: any) {
   return reply({ ok: true, list, total: all.length, mine: mi >= 0 ? { rank: mi + 1, ms: all[mi].ms, score: all[mi].score } : null });
 }
 
+// ---------- sino ang naglalaro ----------
+const FRESH_MS = 90_000;
+// deno-lint-ignore no-explicit-any
+async function here(p: any, me: any) {
+  if (p.off) { await db.from("game_rooms").delete().eq("user_id", me.id); return reply({ ok: true }); }
+  const game = GAMES[p.game] ? String(p.game) : null;
+  const code = game && /^[A-Z0-9]{5}$/.test(String(p.code ?? "")) ? String(p.code) : null;
+  const n = (v: unknown, d: number) => Math.max(1, Math.min(8, Math.floor(Number(v) || d)));
+  const { error } = await db.from("game_rooms").upsert({ user_id: me.id, game: code ? game : null, code, players: n(p.players, 1), max_players: n(p.max, 4), updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+  if (error) throw error;
+  return reply({ ok: true });
+}
+// deno-lint-ignore no-explicit-any
+async function friends(_p: any, me: any) {
+  const { data: fol } = await db.from("follows").select("following_id").eq("follower_id", me.id).limit(2000);
+  const ids = (fol ?? []).map((r) => r.following_id);
+  if (!ids.length) return reply({ ok: true, list: [] });
+  const { data: rooms } = await db.from("game_rooms").select("user_id, game, code, players, max_players, updated_at").in("user_id", ids)
+    .gte("updated_at", new Date(Date.now() - FRESH_MS).toISOString()).order("updated_at", { ascending: false }).limit(40);
+  if (!rooms || !rooms.length) return reply({ ok: true, list: [] });
+  const { data: us } = await db.from("users").select(PUB + ", status").in("id", rooms.map((r) => r.user_id));
+  const U = new Map((us ?? []).filter((u) => u.status === "Active").map((u) => [u.id, u]));
+  const list = rooms.filter((r) => U.has(r.user_id)).map((r) => {
+    const u = U.get(r.user_id)!;
+    return { user: { id: u.id, username: u.username, display_name: u.display_name, avatar_url: u.avatar_url }, game: r.game, code: r.game ? r.code : null, players: r.players, max: r.max_players, joinable: !!r.game && !!r.code && r.players < r.max_players };
+  });
+  return reply({ ok: true, list });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return fail("POST only.", 405);
@@ -105,6 +136,8 @@ Deno.serve(async (req) => {
     switch (p.action) {
       case "finish": return await finish(p, me);
       case "top":    return await top(p, me);
+      case "here":   return await here(p, me);
+      case "friends": return await friends(p, me);
       default:       return fail("Unknown action.");
     }
   } catch (e) {

@@ -104,7 +104,7 @@ function has(p: any, id: string) {
 function shape(p: any) {
   const lvl = levelOf(p.xp);
   return {
-    coins: p.coins ?? 0, owned: p.owned ?? [], outfit: p.outfit ?? {}, glow: lvl >= 10, room: p.room ?? null,
+    coins: p.coins ?? 0, owned: p.owned ?? [], outfit: p.outfit ?? {}, glow: lvl >= 10, room: p.room ?? null, avatar: p.avatar ?? null,
     name: p.name, color: p.color, gear: p.gear, hunger: p.hunger, joy: p.joy, energy: p.energy, clean: p.clean,
     xp: p.xp, level: lvl, next: xpFor(lvl + 1), prev: xpFor(lvl), asleep: p.asleep, mood: moodOf(p),
     stats_at: p.stats_at, born_at: p.born_at, near_on: !!p.near_on && !!p.near_at && Date.now() - new Date(p.near_at).getTime() < NEAR_MINUTES * 60_000,
@@ -287,6 +287,26 @@ async function style(p: any, me: any) {
   return reply({ ok: true, pet: shape(await store(pet)) });
 }
 
+// Avatar: "tigo" (ang note) o "kid" (parang tao). Mga pagpipilian: maiikling salita lang (ang itsura ay nasa tigo/human-model.js).
+const AV_KEYS = ["kind", "skin", "hair", "hairColor", "top", "topColor", "bottom", "bottomColor", "shoes", "preset"];
+// deno-lint-ignore no-explicit-any
+async function avatar(p: any, me: any) {
+  const a = p.avatar && typeof p.avatar === "object" ? p.avatar : null;
+  if (!a) return fail("Missing avatar.");
+  const out: Record<string, string> = {};
+  for (const k of AV_KEYS) {
+    if (a[k] === undefined || a[k] === null || a[k] === "") continue;
+    const v = String(a[k]);
+    if (!/^[a-z0-9-]{1,16}$/.test(v)) return fail("Unknown avatar option.");
+    out[k] = v;
+  }
+  if (out.kind !== "kid") out.kind = "tigo";
+  await load(me.id);
+  const { data, error } = await db.from("pets").update({ avatar: out, updated_at: nowIso() }).eq("user_id", me.id).select("*").single();
+  if (error) throw error;
+  return reply({ ok: true, pet: shape(decay(data)) });
+}
+
 // ---------- magkakalapit na kaibigan ----------
 function meters(a: number, b: number, c: number, d: number) {
   const r = Math.PI / 180, x = Math.sin(((c - a) * r) / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin(((d - b) * r) / 2) ** 2;
@@ -324,7 +344,7 @@ async function nearList(me: any, pet: any) {
     const d = decay(r);
     return {
       user: (users ?? []).find((u) => u.id === r.user_id) ?? null,
-      pet: { name: r.name, color: r.color, gear: r.gear, outfit: r.outfit ?? {}, glow: levelOf(r.xp) >= 10, level: levelOf(r.xp), mood: moodOf(d) },
+      pet: { name: r.name, color: r.color, gear: r.gear, outfit: r.outfit ?? {}, avatar: r.avatar ?? null, glow: levelOf(r.xp) >= 10, level: levelOf(r.xp), mood: moodOf(d) },
       dist: m < 40 ? "right here" : m < 100 ? "very close" : "nearby", met_today: metSet.has(r.user_id),
     };
   });
@@ -381,12 +401,12 @@ async function visits(_p: any, me: any) {
   const { data } = await db.from("pet_meets").select("*").or(`a_id.eq.${me.id},b_id.eq.${me.id}`).gte("day", since).order("created_at", { ascending: false }).limit(30);
   const ids = [...new Set((data ?? []).map((m) => (m.a_id === me.id ? m.b_id : m.a_id)))];
   const [{ data: users }, { data: pets }] = ids.length
-    ? await Promise.all([db.from("users").select("id, username, display_name, avatar_url").in("id", ids), db.from("pets").select("user_id, name, color, gear, outfit, xp").in("user_id", ids)])
+    ? await Promise.all([db.from("users").select("id, username, display_name, avatar_url").in("id", ids), db.from("pets").select("user_id, name, color, gear, outfit, avatar, xp").in("user_id", ids)])
     : [{ data: [] }, { data: [] }];
   return reply({ ok: true, list: (data ?? []).map((m) => {
     const o = m.a_id === me.id ? m.b_id : m.a_id, pt = (pets ?? []).find((x) => x.user_id === o);
     return { at: m.created_at, day: m.day, by_me: m.by_id === me.id, user: (users ?? []).find((u) => u.id === o) ?? null,
-      pet: pt ? { name: pt.name, color: pt.color, gear: pt.gear, outfit: pt.outfit ?? {}, level: levelOf(pt.xp) } : null };
+      pet: pt ? { name: pt.name, color: pt.color, gear: pt.gear, outfit: pt.outfit ?? {}, avatar: pt.avatar ?? null, level: levelOf(pt.xp) } : null };
   }) });
 }
 
@@ -414,6 +434,7 @@ Deno.serve(async (req) => {
       case "gather": return await gather(p, me);
       case "visits": return await visits(p, me);
       case "room":   return await room(p, me);
+      case "avatar": return await avatar(p, me);
       default:       return fail("Unknown action.");
     }
   } catch (e) {

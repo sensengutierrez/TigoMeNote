@@ -3,15 +3,15 @@
    buildBackdrop(id) → { group, house, obstacles, night(on), update(t), dispose() }   id = island | beach | coral | snow | clouds | desert | moon
    RADIUS = hanggang saan puwedeng maglakad si Tigo. PLAT = laki ng lupa. HOUSE = kung nasaan ang bahay (r = hindi matatagos) at ang pinto (para matulog).
    obstacles = [{ x, z, r }] na iniikutan ni Tigo (lawa, taniman, poste ng ilaw).
-   0.11.42: mas malaking isla (2.9 → 4.0), mas detalyadong bahay kubo (balkonahe, bintana, paso ng bulaklak, ilaw), bakod sa gilid,
+   0.11.42–43: mas malaking isla (2.9 → 4.0 → 5.4), may upuan at karatula, mas detalyadong bahay kubo (balkonahe, bintana, paso ng bulaklak, ilaw), bakod sa gilid,
    taniman, lawa na may lily, daanang bato, at mga ilaw na bumubukas kapag gabi (parol, poste, ilaw sa bubong).
    Sariling disenyo lahat. */
 import * as THREE from "../../vendor/three/three.module.min.js";
 
-export const RADIUS = 4.0;
-export const PLAT = 4.6;
+export const RADIUS = 5.4;
+export const PLAT = 6.1;
 const HS = 1.25, HROT = -0.6;   // laki at ikot ng bahay
-export const HOUSE = { x: 2.5, z: -2.3, r: 1.2, door: { x: 2.5 + Math.sin(HROT) * 1.3, z: -2.3 + Math.cos(HROT) * 1.3 } };
+export const HOUSE = { x: 3.4, z: -3.1, r: 1.2, door: { x: 3.4 + Math.sin(HROT) * 1.3, z: -3.1 + Math.cos(HROT) * 1.3 } };
 
 const M = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.85, ...o });
 const put = (g, m, x, y, z, shadow = true) => { m.position.set(x, y, z); m.castShadow = shadow; m.receiveShadow = true; g.add(m); return m; };
@@ -110,14 +110,14 @@ function lantern(g, x, z, lit, lamps) {
 // Daanang bato mula sa pinto papunta sa gitna
 function path(g, col = 0xcfc8ba) {
   const R = rand(21), m = M(col, { roughness: 1 });
-  for (let i = 0; i < 6; i++) {
-    const k = 0.12 + i * 0.16, st = put(g, new THREE.Mesh(new THREE.CylinderGeometry(0.17 + R() * 0.05, 0.19, 0.03, 9), m), HOUSE.door.x * (1 - k) + 0.2 * k + (R() - 0.5) * 0.12, 0.012, HOUSE.door.z * (1 - k) + 0.5 * k + (R() - 0.5) * 0.12, false);
+  for (let i = 0; i < 9; i++) {
+    const k = 0.08 + i * 0.105, st = put(g, new THREE.Mesh(new THREE.CylinderGeometry(0.17 + R() * 0.05, 0.19, 0.03, 9), m), HOUSE.door.x * (1 - k) + 0.2 * k + (R() - 0.5) * 0.12, 0.012, HOUSE.door.z * (1 - k) + 0.5 * k + (R() - 0.5) * 0.12, false);
     st.rotation.y = R() * 3; st.scale.z = 0.8;
   }
 }
 // Bakod na kahoy sa gilid ng isla (bukas sa harap para kita si Tigo)
 function fence(g, col = 0xf3ead7) {
-  const m = M(col, { roughness: 0.9 }), r = PLAT - 0.22, n = 30, a0 = Math.PI * 0.86, a1 = Math.PI * 2.14;
+  const m = M(col, { roughness: 0.9 }), r = PLAT - 0.22, n = 40, a0 = Math.PI * 0.86, a1 = Math.PI * 2.14;
   const posts = [], caps = [], rails = [];
   let prev = null;
   for (let i = 0; i <= n; i++) {
@@ -165,6 +165,21 @@ function pond(g, x, z, r = 0.9) {
   });
   return { ob: { x, z, r: r + 0.08 }, update(t) { lilies.forEach((l, i) => { l.position.y = 0.02 + Math.sin(t * 1.3 + i * 2) * 0.006; l.rotation.y = Math.sin(t * 0.5 + i) * 0.15; }); } };
 }
+// Upuang kahoy (nakaharap sa lawa) at karatula
+function bench(g, x, z, ry = 0) {
+  const B = new THREE.Group(); B.position.set(x, 0, z); B.rotation.y = ry; g.add(B);
+  const wood = M(0xb98a55, { roughness: 0.8 }), dark = M(0x7a5530);
+  put(B, new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.05, 0.3), wood), 0, 0.26, 0);
+  put(B, new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.26, 0.04), wood), 0, 0.46, -0.14);
+  [-0.38, 0.38].forEach((lx) => put(B, new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.26, 0.28), dark), lx, 0.13, 0));
+  return { x, z, r: 0.5 };
+}
+function signpost(g, x, z) {
+  put(g, new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.7, 6), M(0x8a6238)), x, 0.35, z);
+  const b = put(g, new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.2, 0.04), M(0xf3ead7)), x, 0.62, z + 0.03); b.rotation.y = 0.2;
+  const a = put(g, new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.14, 3), M(0xff7a59)), x + 0.1, 0.62, z + 0.06, false); a.rotation.z = -Math.PI / 2; a.rotation.y = 0.2;
+  return { x, z, r: 0.2 };
+}
 function bush(g, x, z, s = 1, col = 0x58b368) {
   [[0, 0, 0.26], [0.2, 0.05, 0.2], [-0.19, 0.03, 0.19]].forEach(([dx, dz, r]) => put(g, new THREE.Mesh(new THREE.SphereGeometry(r * s, 9, 6), M(col)), x + dx * s, r * s * 0.8, z + dz * s));
 }
@@ -191,18 +206,19 @@ function flowers(g, n, r, col = 0xffffff) {
 
 const BUILD = {
   island(g, x) {
-    platform(g, 0x8fd18a, 0xc89a6b); flowers(g, 22, 2.6); flowers(g, 8, 2.4, 0xffc4dd);
-    tree(g, -3.1, -1.7, 1.25); tree(g, -2.1, -3.0, 1.0); tree(g, -0.5, -3.7, 1.15); tree(g, 0.6, -3.5, 0.8); tree(g, -3.8, 0.1, 0.9);
-    bush(g, -3.5, -0.9); bush(g, 3.9, -0.6, 0.9); bush(g, -1.3, -3.4, 0.8, 0x6cc47a);
-    put(g, new THREE.Mesh(new THREE.DodecahedronGeometry(0.22), M(0xb8b2a8)), -3.6, 0.05, 1.0).scale.y = 0.6;
+    platform(g, 0x8fd18a, 0xc89a6b); flowers(g, 30, 3.9); flowers(g, 12, 3.6, 0xffc4dd);
+    tree(g, -4.2, -2.3, 1.3); tree(g, -2.8, -4.1, 1.05); tree(g, -0.7, -5.0, 1.2); tree(g, 0.9, -4.8, 0.85); tree(g, -5.1, 0.2, 0.95); tree(g, -4.6, 3.0, 1.1); tree(g, 5.2, 1.9, 1.0);
+    bush(g, -4.7, -1.2); bush(g, 5.3, -0.9, 0.9); bush(g, -1.8, -4.6, 0.8, 0x6cc47a); bush(g, 4.6, 3.0, 0.85, 0x6cc47a);
+    put(g, new THREE.Mesh(new THREE.DodecahedronGeometry(0.22), M(0xb8b2a8)), -4.9, 0.05, 1.4).scale.y = 0.6;
     fence(g); path(g);
-    const pd = pond(g, -2.5, 1.7); x.obstacles.push(pd.ob); x.ticks.push(pd.update);
-    x.obstacles.push(garden(g, 3.15, 0.35, -0.35));
+    const pd = pond(g, -3.3, 2.4, 1.1); x.obstacles.push(pd.ob); x.ticks.push(pd.update);
+    x.obstacles.push(garden(g, 4.3, 0.5, -0.35));
+    x.obstacles.push(bench(g, -1.7, 3.3, 2.6)); x.obstacles.push(signpost(g, 1.2, 4.2));
   },
   beach(g) {
     platform(g, 0xf3d9a4, 0xd9b77c);
     const sea = put(g, new THREE.Mesh(new THREE.RingGeometry(PLAT, PLAT + 1.3, 72), new THREE.MeshStandardMaterial({ color: 0x4fc3f7, transparent: true, opacity: 0.8, roughness: 0.2 })), 0, -0.05, 0, false); sea.rotation.x = -Math.PI / 2;
-    palm(g, -3.0, -1.6); palm(g, -1.8, -3.2, 0.8); palm(g, -3.7, 0.4, 0.9); path(g, 0xe9dcc0);
+    palm(g, -4.0, -2.1); palm(g, -2.4, -4.3, 0.8); palm(g, -5.0, 0.5, 0.9); palm(g, 4.9, 2.4, 0.85); path(g, 0xe9dcc0);
     const pole = put(g, new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.4, 8), M(0xffffff)), -1.2, 0.7, 1.4);
     const top = put(g, new THREE.Mesh(new THREE.ConeGeometry(0.8, 0.35, 10), M(0xff6f61)), -1.2, 1.4, 1.4); top.castShadow = true; pole.castShadow = true;
     const s = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2, r = i % 2 ? 0.06 : 0.15; i ? s.lineTo(Math.cos(a) * r, Math.sin(a) * r) : s.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
@@ -213,14 +229,14 @@ const BUILD = {
     const cols = [0xff9aa2, 0xffb7b2, 0xa0e7e5, 0xffdac1];
     const R = rand(3);
     for (let i = 0; i < 11; i++) {
-      const a = Math.PI * (0.55 + R() * 1.05), d = 2.8 + R() * 1.2, c = new THREE.Group(); c.position.set(Math.cos(a) * d, 0, Math.sin(a) * d * 0.9); g.add(c);
+      const a = Math.PI * (0.55 + R() * 1.05), d = 3.4 + R() * 2.0, c = new THREE.Group(); c.position.set(Math.cos(a) * d, 0, Math.sin(a) * d * 0.9); g.add(c);
       for (let k = 0; k < 4; k++) { const b = put(c, new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.4 + R() * 0.4, 6, 10), M(cols[i % 4], { roughness: 0.6 })), (k - 1.5) * 0.1, 0.35, 0); b.rotation.z = (k - 1.5) * 0.35; }
     }
     [[1.2, 1.8], [1.45, 1.95], [-0.9, 2.1]].forEach(([x, z]) => put(g, new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 12), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.15, clearcoat: 1, iridescence: 0.8 })), x, 0.1, z));
   },
   snow(g) {
     platform(g, 0xf5f9ff, 0xb7c7d9);
-    [[-3.0, -1.6], [-1.9, -3.1], [-3.6, 0.3], [-0.4, -3.8], [0.8, -3.6]].forEach(([x, z], i) => {
+    [[-4.1, -2.2], [-2.6, -4.2], [-4.9, 0.4], [-0.5, -5.1], [1.1, -4.9], [4.9, 2.3]].forEach(([x, z], i) => {
       [0.9, 0.65, 0.42].forEach((r, k) => put(g, new THREE.Mesh(new THREE.ConeGeometry(r * 0.55, 0.7, 10), M(k ? 0x2e7d5b : 0x2e7d5b)), x, 0.45 + k * 0.4, z));
       put(g, new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.25, 10), M(0xffffff)), x, 1.45, z);
     });
@@ -231,19 +247,19 @@ const BUILD = {
     const m = M(0xffffff, { roughness: 1 });
     put(g, new THREE.Mesh(new THREE.CylinderGeometry(PLAT, PLAT - 0.3, 0.3, 64), M(0xf3f0ff)), 0, -0.15, 0, false);
     const R = rand(11);
-    for (let i = 0; i < 30; i++) { const a = (i / 30) * Math.PI * 2, s = 0.45 + R() * 0.3; put(g, new THREE.Mesh(new THREE.SphereGeometry(s, 16, 12), m), Math.cos(a) * (PLAT - 0.1), -0.3 + R() * 0.2, Math.sin(a) * (PLAT - 0.1), false); }
+    for (let i = 0; i < 38; i++) { const a = (i / 38) * Math.PI * 2, s = 0.45 + R() * 0.3; put(g, new THREE.Mesh(new THREE.SphereGeometry(s, 16, 12), m), Math.cos(a) * (PLAT - 0.1), -0.3 + R() * 0.2, Math.sin(a) * (PLAT - 0.1), false); }
     for (let i = 0; i < 3; i++) { const c = new THREE.Group(); c.position.set(-2 + i * 1.8, 2.6 + i * 0.3, -2.5); [[0, 0], [0.3, 0.1], [-0.3, 0.05]].forEach(([x, y]) => put(c, new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 10), m), x, y, 0, false)); g.add(c); c.userData.float = i; }
   },
   desert(g) {
     platform(g, 0xf0cf8f, 0xc99a5b);
     put(g, new THREE.Mesh(new THREE.SphereGeometry(1.2, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), M(0xe8bf75)), -3.0, -0.35, -2.0, false).scale.y = 0.5;
     const pool = put(g, new THREE.Mesh(new THREE.CircleGeometry(0.75, 32), M(0x3fb6d8, { roughness: 0.15 })), -1.0, 0.01, 1.5, false); pool.rotation.x = -Math.PI / 2;
-    palm(g, -1.8, 1.2, 0.9); palm(g, -0.3, 2.2, 0.75); palm(g, -3.6, -0.2, 1); path(g, 0xe3c48a);
+    palm(g, -1.8, 1.2, 0.9); palm(g, -0.3, 2.2, 0.75); palm(g, -4.8, -0.3, 1); palm(g, 4.7, 2.6, 0.9); path(g, 0xe3c48a);
   },
   moon(g) {
     platform(g, 0xd9dbe2, 0x9a9caa);
     const R = rand(5);
-    for (let i = 0; i < 9; i++) { const a = Math.PI * (0.5 + R() * 1.2), d = 1.5 + R() * 2.4, c = put(g, new THREE.Mesh(new THREE.TorusGeometry(0.22 + R() * 0.15, 0.05, 8, 24), M(0xbfc1ca)), Math.cos(a) * d, 0.01, Math.sin(a) * d, false); c.rotation.x = Math.PI / 2; }
+    for (let i = 0; i < 9; i++) { const a = Math.PI * (0.5 + R() * 1.2), d = 1.5 + R() * 3.6, c = put(g, new THREE.Mesh(new THREE.TorusGeometry(0.22 + R() * 0.15, 0.05, 8, 24), M(0xbfc1ca)), Math.cos(a) * d, 0.01, Math.sin(a) * d, false); c.rotation.x = Math.PI / 2; }
     put(g, new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 1, 6), M(0xcccccc)), -1.4, 0.5, 1.4);
     put(g, new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.26), M(0xff5a36, { side: THREE.DoubleSide })), -1.2, 0.85, 1.4);
     const sat = new THREE.Group(); sat.position.set(-2.2, 2.8, -2); g.add(sat); sat.userData.float = 1;

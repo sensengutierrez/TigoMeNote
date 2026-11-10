@@ -2,7 +2,7 @@
    import { startRace } from "./race-game.js"
    const g = startRace(sc, { track, voice, onHud({ lap, laps, place, coins, turbo }), onEnd({ score, place, coins }) })
    g.go() · g.stop() · g.brake(true|false) · g.turbo() · g.jump()
-   Track: "easy" (bilog, mabagal ang kalaban) · "classic" · "twisty" (paliko-liko, mabilis ang kalaban) — TRACKS sa ibaba.
+   Track: "easy" (bilog, mabagal ang kalaban) · "classic" · "twisty" (paliko-liko, mabilis ang kalaban) · "grand" (mahabang daan, 2 ikot) — TRACKS sa ibaba.
    Kontrol: kusang umaandar; kaliwa/kanan (A D / ← → / joystick / swipe) = liko (may tulong para manatili sa daan),
    S / ↓ o ang Brake pedal = preno, Turbo pedal = bilis (may hintay bago ulit), Space = talon.
    ⚡ boost pad = bilis sandali. Coins sa daan. Coins = nakuha + bonus ayon sa puwesto (1st 15, 2nd 10, 3rd 6, 4th 3). */
@@ -10,7 +10,7 @@ import * as THREE from "../../vendor/three/three.module.min.js";
 import { RoundedBoxGeometry } from "../../vendor/three/RoundedBoxGeometry.js";
 import { createTigo } from "./pet-model.js";
 
-const LAPS = 3, MAX = 7.2, TURBO_WAIT = 6;
+const LAPS0 = 3, MAX = 7.2, TURBO_WAIT = 6;
 export const TRACKS = {
   easy: { name: "Easy loop", icon: "🟢", text: "Wide, round track. Slower rivals.", w: 3.0, rival: 0.86,
     pts: [[0, -8], [6.5, -6], [8.5, 0], [6.5, 6], [0, 8], [-6.5, 6], [-8.5, 0], [-6.5, -6]] },
@@ -18,21 +18,25 @@ export const TRACKS = {
     pts: [[0, -7.5], [6, -6.5], [8.5, -1.5], [5, 2.5], [7, 7], [1, 8.5], [-5, 6.5], [-4.5, 1.5], [-8.5, -2], [-6, -7]] },
   twisty: { name: "Twisty hills", icon: "🔴", text: "Zig-zags and tight turns. Fast rivals.", w: 2.2, rival: 1.08,
     pts: [[0, -9], [5, -8], [9, -5], [6, -2], [9.5, 2], [7, 7], [2.5, 5], [0, 9.5], [-4, 7], [-8, 8], [-9.5, 3], [-5, 1], [-9, -3], [-7, -8]] },
+  // Mahabang track: tuwid na mahaba, malalaking kurba, 2 ikot lang, mas maraming coins at boost
+  grand: { name: "Grand tour", icon: "🏁", text: "A long road with big straights and sweeping bends. 2 laps.", w: 3.2, rival: 1, laps: 2, ground: 40, k: 3, seconds: 260, boosts: [0.06, 0.2, 0.34, 0.5, 0.63, 0.78, 0.9],
+    pts: [[0, -26], [14, -26], [26, -22], [30, -12], [24, -3], [12, -2], [8, 6], [16, 14], [28, 16], [30, 25], [20, 30], [6, 27], [-4, 18], [-14, 24], [-26, 28], [-31, 18], [-24, 8], [-12, 6], [-8, -4], [-18, -10], [-30, -12], [-30, -22], [-18, -27]] },
 };
 const ORD = ["1st", "2nd", "3rd", "4th"], BONUS = [15, 10, 6, 3];
 
 export function startRace(sc, { track = "easy", voice, onHud, onEnd, seconds = 150 } = {}) {
-  const TR = TRACKS[track] || TRACKS.easy, W = TR.w, PTS = TR.pts;
+  const TR = TRACKS[track] || TRACKS.easy, W = TR.w, PTS = TR.pts, LAPS = TR.laps || LAPS0, K = TR.k || 1;
+  if (TR.seconds) seconds = TR.seconds;
   const world = new THREE.Group(); sc.scene.add(world);
   const own = []; const keep = (x) => { own.push(x); return x; };
   const curve = new THREE.CatmullRomCurve3(PTS.map(([x, z]) => new THREE.Vector3(x, 0, z)), true, "catmullrom", 0.5);
-  const N = 600, P = [], Tn = [];
+  const N = 600 * K, P = [], Tn = [];
   for (let i = 0; i < N; i++) { P.push(curve.getPointAt(i / N)); Tn.push(curve.getTangentAt(i / N)); }
   const nrm = (i) => new THREE.Vector3(Tn[i].z, 0, -Tn[i].x); // pakaliwa ng daan
   const at = (t) => { const i = ((Math.round(t * N) % N) + N) % N; return i; };
 
   // ---------- lupa, daan, gilid ----------
-  const ground = new THREE.Mesh(keep(new THREE.CircleGeometry(30, 64)), keep(new THREE.MeshStandardMaterial({ color: 0x7cc576, roughness: 1 })));
+  const ground = new THREE.Mesh(keep(new THREE.CircleGeometry(TR.ground || 30, 64)), keep(new THREE.MeshStandardMaterial({ color: 0x7cc576, roughness: 1 })));
   ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02; ground.receiveShadow = true; world.add(ground);
   function ribbon(off0, off1, y, colorFn) {
     const pos = [], col = [], idx = [];
@@ -60,7 +64,7 @@ export function startRace(sc, { track = "easy", voice, onHud, onEnd, seconds = 1
   // puno sa paligid
   const trunk = keep(new THREE.MeshStandardMaterial({ color: 0x8d6e4a })), leafM = keep(new THREE.MeshStandardMaterial({ color: 0x3fa34d, roughness: 0.8 }));
   const tg = keep(new THREE.CylinderGeometry(0.1, 0.13, 0.6, 8)), lg = keep(new THREE.ConeGeometry(0.6, 1.4, 10));
-  for (let k = 0; k < 26; k++) {
+  for (let k = 0; k < 26 * K; k++) {
     const i = (k * 23) % N, side = k % 2 ? 1 : -1, n = nrm(i), off = W / 2 + 1.6 + (k % 3) * 0.9;
     const x = P[i].x + n.x * side * off, z = P[i].z + n.z * side * off;
     if (P.some((p, j) => j % 10 === 0 && Math.hypot(p.x - x, p.z - z) < W / 2 + 1)) continue;
@@ -70,7 +74,7 @@ export function startRace(sc, { track = "easy", voice, onHud, onEnd, seconds = 1
   const boostM = keep(new THREE.MeshStandardMaterial({ color: 0x40e0ff, emissive: 0x00b8ff, emissiveIntensity: 0.9, transparent: true, opacity: 0.9, side: THREE.DoubleSide }));
   const arrow = new THREE.Shape(); arrow.moveTo(-0.35, -0.3); arrow.lineTo(0, 0.05); arrow.lineTo(0.35, -0.3); arrow.lineTo(0.35, 0); arrow.lineTo(0, 0.35); arrow.lineTo(-0.35, 0); arrow.closePath();
   const ag = keep(new THREE.ShapeGeometry(arrow));
-  const boosts = [0.18, 0.47, 0.76].map((t) => {
+  const boosts = (TR.boosts || [0.18, 0.47, 0.76]).map((t) => {
     const i = at(t), g = new THREE.Group(); g.position.set(P[i].x, 0.04, P[i].z); g.rotation.y = Math.atan2(Tn[i].x, Tn[i].z);
     // +π/2: ang dulo ng arrow ay nakaturo sa direksyon ng takbo (dati ay pabalik)
     [0, 0.45].forEach((z) => { const m = new THREE.Mesh(ag, boostM); m.rotation.x = Math.PI / 2; m.position.z = z; g.add(m); });
@@ -80,8 +84,8 @@ export function startRace(sc, { track = "easy", voice, onHud, onEnd, seconds = 1
   const coinM = keep(new THREE.MeshStandardMaterial({ color: 0xffc83d, metalness: 0.75, roughness: 0.25, emissive: 0x5a3c00, emissiveIntensity: 0.4 }));
   const cg = keep(new THREE.CylinderGeometry(0.2, 0.2, 0.05, 20)); cg.rotateX(Math.PI / 2);
   const coins = [];
-  for (let k = 0; k < 24; k++) {
-    const t = 0.06 + k * 0.038, i = at(t), n = nrm(i), lane = [-0.6, 0, 0.6][k % 3];
+  for (let k = 0; k < 24 * K; k++) {
+    const t = 0.06 + k * 0.038 / K, i = at(t), n = nrm(i), lane = [-0.6, 0, 0.6][k % 3];
     const m = new THREE.Mesh(cg, coinM); m.position.set(P[i].x + n.x * lane, 0.45, P[i].z + n.z * lane); m.castShadow = true; world.add(m);
     coins.push({ m, back: 0 });
   }

@@ -55,7 +55,7 @@ export function createScene(canvas, opts = {}) {
   const hemi = new THREE.HemisphereLight(0xfff4e8, 0x6b8f71, 1.1); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffffff, 2.2);
   sun.position.set(3.5, 6, 4); sun.castShadow = true;
-  sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -5.6, right: 5.6, top: 5.6, bottom: -5.6 }); sun.shadow.radius = 4; sun.shadow.bias = -0.0005;
+  sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -7, right: 7, top: 7, bottom: -7 }); sun.shadow.radius = 4; sun.shadow.bias = -0.0005;
   scene.add(sun);
   const rim = new THREE.DirectionalLight(0xff9a6b, 1.2); rim.position.set(-4, 3, -4); scene.add(rim);
 
@@ -467,7 +467,7 @@ export function createScene(canvas, opts = {}) {
     updateFx(dt);
     // camera (camera-rig.js): sumusunod kay Tigo; ikot/zoom gamit ang joystick, mouse o pinch
     // layo ayon sa hugis ng screen: patayo (phone) = mas malayo para kasya ang isla (o ang kwarto)
-    const half = inRoom ? 3.6 : 4.1, cz = Math.min(15, Math.max(camBase.z, half / (Math.tan((camera.fov * Math.PI) / 360) * camera.aspect)));
+    const half = inRoom ? 3.6 : 4.6, cz = Math.min(15, Math.max(camBase.z, half / (Math.tan((camera.fov * Math.PI) / 360) * camera.aspect)));
     look.set(me.x, inside ? 0.6 : 0.95, me.z);
     rig.update(dt, look, Math.hypot(camBase.y * (cz / camBase.z), cz));
     renderer.render(scene, camera);

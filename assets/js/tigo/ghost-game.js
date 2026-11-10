@@ -132,7 +132,7 @@ export function startGhost(sc, { voice, mode = "solo", role = "host", seed = 1, 
   T.group.position.set(me.x, 0, me.z); lamp.position.set(me.x, 0.85, me.z + 0.3);
   let mate = null;
   if (duo) {
-    const t2 = createTigo({ color: (pInfo && pInfo.color) || "sky" }); t2.group.scale.setScalar(TS); world.add(t2.group);
+    const t2 = createTigo({ color: (pInfo && pInfo.color) || "sky", avatar: pInfo && pInfo.av }); t2.group.scale.setScalar(TS); world.add(t2.group);
     const l2 = new THREE.PointLight(0xffe2b0, 3.5, 3.4, 1.3); world.add(l2);
     mate = { t: t2, l: l2, x: X(theirs[1]), z: Z(theirs[0]), tx: X(theirs[1]), tz: Z(theirs[0]), h: 0, hid: false, down: false, moving: false, seen: 0 };
     t2.group.position.set(mate.x, 0, mate.z);

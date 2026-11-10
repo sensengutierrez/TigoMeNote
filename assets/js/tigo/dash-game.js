@@ -1,7 +1,7 @@
 /* TigoMeNote · tigo/dash-game.js — "Sky Dash": karera ni Tigo sa track sa langit (3 lane)
    import { startDash } from "./dash-game.js"
    const g = startDash(sc, { voice, seed, net, me:{name,color}, onHud(h), onEnd(res) })   g.go() · g.stop() · g.jump()
-   Kontrol: kaliwa/kanan = palit ng lane (stick, swipe, A/D, ←/→) · Jump (button o Space) para sa harang.
+   Kontrol: kaliwa/kanan = palit ng lane (swipe sa screen, stick, A/D, ←/→) · talon = swipe pataas, button o Space.
      🪙 coins · ⚡ boost pad · 🟥 kahon = iwasan · 🚧 harang = talunin · Slipstream: sumunod sa likod ng kalaban sa parehong lane = mas mabilis.
    Solo: 3 bot. Multi (2–4, net galing sa room-lobby.js): bawat isa ay nagpapadala ng sariling puwesto (event "me"), at "fin" sa dulo.
    Pare-pareho ang track ng lahat (seed). Resulta: { score: coins + bonus, win, place, ms, coins }. Sariling disenyo. */
@@ -104,7 +104,7 @@ export function startDash(sc, { voice, seed = 1, net = null, me: meInfo = {}, on
     }
   } else {
     (net.roster || []).filter((x) => x.p !== net.me).forEach((x) => {
-      const t = createTigo({ color: x.color || "sky" }); t.group.scale.setScalar(TS); world.add(t.group);
+      const t = createTigo({ color: x.color || "sky", avatar: x.av }); t.group.scale.setScalar(TS); world.add(t.group);
       runners.push(runner(t, { name: x.name, pid: x.p, remote: true, last: 0, gone: false }));
     });
   }
@@ -227,6 +227,7 @@ export function startDash(sc, { voice, seed = 1, net = null, me: meInfo = {}, on
     go() { running = true; t0 = performance.now(); },
     stop() { if (net) net.send("bye", {}); meR.done = false; endRace(); },
     jump() { if (running) jump(meR); },
+    swipe(dir) { if (!running || meR.done) return; if (dir === "left") lane(meR, -1); else if (dir === "right") lane(meR, 1); else if (dir === "up") jump(meR); },   // swipe sa screen
     _s: { me: meR, runners, course, LEN },   // para sa tests
   };
 }

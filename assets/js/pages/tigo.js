@@ -59,7 +59,7 @@
   async function start3d() {
     try {
       var m = await mod("pet-scene"), c = await mod("controls");
-      sc = m.createScene($("tgCanvas"), { reduced: reduced, pet: { color: pet.color }, backdrop: (pet.outfit || {}).backdrop, el: $("stage"), onDoor: doorBar, size: loadSize(),
+      sc = m.createScene($("tgCanvas"), { reduced: reduced, pet: { color: pet.color, avatar: pet.avatar }, backdrop: (pet.outfit || {}).backdrop, el: $("stage"), onDoor: doorBar, size: loadSize(),
         onRoom: function (on) { $("stage").classList.toggle("in-room", on); if (!on && decor) decor.close(); if (on) say("home", { still: true }); },
         onPose: function (p) {
           var st = $("stage"), j = $("tgJump");
@@ -364,7 +364,7 @@
   }
   async function openCloset() {
     if (closet) return;
-    if (decor) decor.close();
+    if (decor) decor.close(); if (avatarUi) avatarUi.close();
     var c = await mod("closet-ui");
     document.body.classList.add("tg-closet-on");
     var inGame = uiGame();
@@ -377,13 +377,40 @@
     });
     if (inGame) $("stage").scrollIntoView({ behavior: "smooth", block: "start" });
   }
+  // Avatar: Tigo (note) o Kid (parang tao) — tigo/avatar-ui.js
+  var avatarUi = null;
+  async function openAvatar() {
+    if (avatarUi) return;
+    if (!sc) { toast("The avatar needs 3D (WebGL) on this device."); return; }
+    if (closet) closet.close(); if (decor) decor.close();
+    var a = await mod("avatar-ui");
+    document.body.classList.add("tg-closet-on");
+    var inGame = uiGame();
+    avatarUi = a.openAvatar({
+      host: inGame ? openSheet("🧒 Avatar", function () { if (avatarUi) avatarUi.close(); }) : $("tgSide"), pet: pet,
+      call: function (act, b) { return TMN_API.call("pet", act, b); },
+      onPreview: function (av) { sc.main.setAvatar(av); sc.jump(); },
+      onPet: function (p) { pet = p; paint(); sc.main.setAvatar(p.avatar); },
+      onClose: function () { avatarUi = null; document.body.classList.remove("tg-closet-on"); if (inGame) closeSheet(); },
+    });
+    if (inGame) $("stage").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
   async function openJourney() {
     var j = await mod("journey-ui");
     TMN_MODAL.open({ title: "Growth journey", size: "sm", cls: "modal-sheet", body: j.journeyNode(live(), UI.esc) });
   }
+  // "Nasa Tigo ako ngayon": tibok bawat 40 s para makita ng mga follower (Games → Friends playing). May bukas na room = puwede silang mag-Join.
+  (function () {
+    var room = null, timer = 0;
+    function beat() { if (document.hidden || !navigator.onLine || !window.TMN_API) return; TMN_API.call("games", "here", room || {}).catch(function () {}); }
+    window.TMN_HERE = { set: function (r) { var was = JSON.stringify(room); room = r || null; if (JSON.stringify(room) !== was) beat(); } };
+    timer = setInterval(beat, 40000); setTimeout(beat, 1500);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) beat(); });
+    window.addEventListener("pagehide", function () { clearInterval(timer); if (window.TMN_API && navigator.onLine) TMN_API.call("games", "here", { off: true }).catch(function () {}); });
+  })();
   async function openGames() {
     var g = await mod("games-ui");
-    var p = live() || {}, info = { name: (window.TMN_USER && TMN_USER.username) || p.name || "friend", color: p.color || "coral",
+    var p = live() || {}, info = { name: (window.TMN_USER && TMN_USER.username) || p.name || "friend", color: p.color || "coral", av: p.avatar && p.avatar.kind === "kid" ? p.avatar : null,
       tired: function () { var q = live() || {}; return q.asleep ? "Shh… Tigo is sleeping." : ""; } };
     var node = g.gamesNode(function (id, opt) { m.close(); playGame(id, opt); }, info);
     var m = TMN_MODAL.open({ title: "Games", size: "sm", cls: "modal-sheet", body: node, onClose: function () { if (node._cleanup) node._cleanup(); } });
@@ -417,6 +444,7 @@
   function doAction(a) {
     if (a === "feed") return feedMenu();
     if (a === "closet") return openCloset();
+    if (a === "avatar") return openAvatar();
     if (a === "games") return openGames();
     if (a === "journey") return openJourney();
     if (a === "house") return goHome();
@@ -493,7 +521,7 @@
       if (sc) {
         if (sc.inRoom() && !(live() || {}).asleep) sc.leaveRoom();
         if (!visitors[b.dataset.gather]) {
-          var v0 = visitors[b.dataset.gather] = sc.add({ color: f.pet.color }); v0.petName = f.pet.name;
+          var v0 = visitors[b.dataset.gather] = sc.add({ color: f.pet.color, avatar: f.pet.avatar }); v0.petName = f.pet.name;
           var o = f.pet.outfit || (f.pet.gear && f.pet.gear !== "none" ? { hat: f.pet.gear } : {});
           ["hat", "face", "body", "hand"].forEach(function (s) { if (o[s]) v0.wear(s, o[s]); });
           v0.setGlow(!!f.pet.glow);
