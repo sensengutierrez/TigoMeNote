@@ -77,3 +77,22 @@ html.bg-clear :is(.drawer, .topbar, .tabbar) :is(.nav-link, .tab, .brand, .topba
 html.bg-dark.bg-clear :is(.drawer, .topbar, .tabbar) :is(.nav-link, .tab, .topbar-title, .drawer-head, .icon-btn, .brand, .nav-group, .faint) { color: #fff; }
 html.bg-dark.bg-clear :is(.drawer, .topbar, .tabbar) :is(.nav-link, .tab, .topbar-title, .brand) { text-shadow: 0 1px 6px rgba(0, 0, 0, .55); }
 html.bg-dark.bg-clear :is(.drawer, .sidebar) :is(.nav-link.active, .nav-link[aria-current="page"]) { background: rgba(255, 255, 255, .2); color: #fff; }
+
+/* ---------- 0.11.46: Calendar at Weather ay sumasabay sa transparent na theme (makintab na salamin) ---------- */
+html.has-bg :is(.modal-cal, .modal-wd) { background: color-mix(in srgb, var(--bg) calc(var(--look-panel, 88%) * .62), transparent); backdrop-filter: blur(22px) saturate(1.5); -webkit-backdrop-filter: blur(22px) saturate(1.5); border: 1px solid rgba(255,255,255,.16); }
+html.has-bg :is(.sc2-month, .sc2-day, .sc2-next, .wd-hero) {
+  position: relative; overflow: hidden; isolation: isolate;
+  backdrop-filter: blur(18px) saturate(1.6); -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  border: 1px solid rgba(255,255,255,.3);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), inset 0 -1px 0 rgba(0,0,0,.12), 0 14px 34px rgba(0,0,0,.28);
+}
+html.has-bg :is(.sc2-month, .sc2-day, .sc2-next) { background: linear-gradient(150deg, color-mix(in srgb, var(--sc-c) 46%, transparent), color-mix(in srgb, var(--sc-a) 38%, transparent) 55%, color-mix(in srgb, var(--sc-b) 44%, transparent)); }
+html.has-bg .wd-hero { background: linear-gradient(160deg, color-mix(in srgb, var(--wa) 46%, transparent), color-mix(in srgb, var(--wb) 36%, transparent)); }
+/* kintab sa itaas ng salamin */
+html.has-bg :is(.sc2-month, .sc2-day, .sc2-next, .wd-hero)::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 46%; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.06) 60%, transparent); border-radius: inherit; }
+html.has-bg .wd-card { background: color-mix(in srgb, var(--surface-2) calc(var(--look-panel, 88%) * .7), transparent); backdrop-filter: blur(16px) saturate(1.4); -webkit-backdrop-filter: blur(16px) saturate(1.4); border: 1px solid rgba(255,255,255,.14); box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
+html.has-bg .wd-h { background: color-mix(in srgb, var(--surface) calc(var(--look-panel, 88%) * .6), transparent); border: 1px solid rgba(255,255,255,.1); }
+html.has-bg .wd-bar { background: rgba(255,255,255,.14); }
+html.has-bg .wd-stats > * { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.22); box-shadow: inset 0 1px 0 rgba(255,255,255,.3); }
+@supports not (backdrop-filter: blur(1px)) { html.has-bg :is(.modal-cal, .modal-wd) { background: color-mix(in srgb, var(--bg) 92%, transparent); } }

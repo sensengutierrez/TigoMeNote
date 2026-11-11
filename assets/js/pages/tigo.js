@@ -203,7 +203,7 @@
     if (size) { size.style.bottom = ""; size.style.left = ""; var tr = size.querySelector(".tg-size-track"); if (tr) tr.style.height = ""; }
     if (!on || !mini || !dock) return;
     var top0 = st.getBoundingClientRect().top;
-    var mb = mini.getBoundingClientRect().bottom - top0;
+    var xp = st.querySelector(".tg-xp"), mb = Math.max(mini.getBoundingClientRect().bottom, xp ? xp.getBoundingClientRect().bottom : 0) - top0;   // sa ilalim ng mga bar AT ng XP bar (dati natatakpan ang XP bar)
     if (mb > 0) dock.style.top = Math.round(mb + 6) + "px";
     if (!size || getComputedStyle(size).display === "none") return;
     var db = dock.getBoundingClientRect().bottom - top0, y = Math.round(db + 10);
@@ -261,7 +261,8 @@
     sc.enterRoom();
     if (uiGame()) $("stage").scrollIntoView({ behavior: "smooth", block: "start" });
   }
-  async function openDecor() {
+  // hit = gamit na ni-long-press: bubukas ang Decorate na napili na ito (at nakababa ang listahan para kita ang kwarto)
+  async function openDecor(hit) {
     if (decor || !sc || !sc.inRoom()) return;
     if (closet) closet.close();
     var r = await mod("room-ui");
@@ -274,7 +275,27 @@
       onClose: function () { decor = null; document.body.classList.remove("tg-closet-on"); if (inGame) closeSheet(); },
     });
     if (inGame) $("stage").scrollIntoView({ behavior: "smooth", block: "start" });
+    if (hit && decor) { decor.select(hit); if (inGame) $("tgSheet").classList.add("min"); }
   }
+  // Long-press (0.55 s) sa isang gamit sa loob ng bahay = i-edit agad (ilipat, ikutin, alisin)
+  (function () {
+    var cv = $("tgCanvas"), t = 0, x0 = 0, y0 = 0;
+    function cancel() { clearTimeout(t); t = 0; }
+    cv.addEventListener("pointerdown", function (e) {
+      cancel(); if (!sc || decor || !sc.inRoom() || sc.inGame() || !sc.room()) return;
+      x0 = e.clientX; y0 = e.clientY;
+      t = setTimeout(function () {
+        t = 0; if (decor || !sc.inRoom()) return;
+        var r = cv.getBoundingClientRect(), hit = sc.room().pick(sc.ray(((x0 - r.left) / r.width) * 2 - 1, -(((y0 - r.top) / r.height) * 2 - 1)));
+        if (!hit) return;
+        try { navigator.vibrate && navigator.vibrate(30); } catch (er) {}
+        openDecor(hit);
+      }, 550);
+    });
+    cv.addEventListener("pointermove", function (e) { if (t && Math.hypot(e.clientX - x0, e.clientY - y0) > 10) cancel(); });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(function (n) { cv.addEventListener(n, cancel); });
+    cv.addEventListener("contextmenu", function (e) { if (sc && sc.inRoom()) e.preventDefault(); });
+  })();
 
   // ---------- boses ni Tigo ----------
   async function startVoice() {

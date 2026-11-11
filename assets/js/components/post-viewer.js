@@ -34,6 +34,7 @@
       var m = p.media[0] || {};
       var route = !p.media.length && p.activity && p.activity.route && window.TMN_ROUTE;
       var inner = route ? '<div class="pt-route">' + TMN_ROUTE.svg(p.activity.route, 300, 300, { attr: false }) + "</div>"
+        : !p.media.length && p.caption ? '<div class="pt-text" style="background:' + (window.TMN_POST_CARD && TMN_POST_CARD.textBg ? TMN_POST_CARD.textBg(p) : "#7c5cff") + '"><span>' + esc(p.caption.slice(0, 90)) + "</span></div>"
         : !m.url ? '<div class="pt-missing">' + I("image") + "</div>"
         : m.kind === "video" ? '<video src="' + esc(m.url) + '#t=0.1" muted playsinline preload="metadata"></video>'
         : '<img alt="" loading="lazy" decoding="async" src="' + esc(m.thumb || m.url) + '">';
@@ -91,6 +92,7 @@
     function showSlide() {
       var p = cur(), m = p.media[slide] || {};
       media.innerHTML = !p.media.length && p.activity && p.activity.route && window.TMN_ROUTE ? '<div class="pv-route">' + TMN_ROUTE.svg(p.activity.route, 800, 800) + "</div>"
+        : !p.media.length && p.caption ? '<div class="pv-text" style="background:' + (window.TMN_POST_CARD && TMN_POST_CARD.textBg ? TMN_POST_CARD.textBg(p) : "#7c5cff") + '"><p>' + esc(p.caption) + "</p></div>"
         : !m.url ? '<div class="pt-missing">' + I("image", "ic-lg") + "<span>Couldn't load. Please try again.</span></div>"
         : m.kind === "video" ? '<video src="' + esc(m.url) + '" playsinline autoplay muted loop></video><span class="pv-play" aria-hidden="true">' + I("play") + "</span>"
         : '<img alt="" src="' + esc(m.url) + '">';

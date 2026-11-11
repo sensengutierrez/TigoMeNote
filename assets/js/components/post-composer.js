@@ -1,6 +1,7 @@
 /* TigoMeNote · components/post-composer.js
    "Gumawa ng post" na modal. Gumagana kahit OFFLINE: sine-save sa device (TMN_POSTQ) at kusang ia-upload pag may internet.
-     TMN_COMPOSER.open(items, { onPosted, activity })   items = mga item galing sa TMN_MEDIA (photo/video, max 10)
+     TMN_COMPOSER.open(items, { onPosted, activity, text, caption })   items = mga item galing sa TMN_MEDIA (photo/video, max 10)
+       text = true → "What's on your mind?": puwedeng TEXT lang (walang photo), may "Add photos" sa loob; caption = paunang text
        activity = Explore post (activity-composer.js): { type, title, route, stats } → puwedeng walang photo
    Pinipili dito: caption, sound (sound-picker.js; auto-pick kung wala pa), sino ang makakakita (Public / Followers / Ako lang),
    at kailan lalabas (Ngayon o I-schedule).
@@ -26,7 +27,8 @@
     var vids = items.filter(function (it) { return it.type === "video"; }).length;
     if (vids) { items = items.filter(function (it) { return it.type === "photo"; }); UI.toast(vids === 1 ? "Videos stay on your phone — only photos can be posted." : vids + " videos skipped — only photos can be posted.", 3500); }
     var act = o.activity && window.TMN_ROUTE ? o.activity : null;
-    if (!items.length && !act) { if (!vids) UI.toast("Choose a photo first."); return; }
+    var textMode = !!o.text;   // "What's on your mind?": puwedeng text lang, puwede ring dagdagan ng photos
+    if (!items.length && !act && !textMode) { if (!vids) UI.toast("Choose a photo first."); return; }
     if (items.length > MAX) { UI.toast("Up to " + MAX + " per post. The first " + MAX + " were used."); items = items.slice(0, MAX); }
 
     var urls = [];
@@ -50,8 +52,9 @@
       (items.some(function (it) { return it.type === "video" && it.duration > 15.5; })
         ? '<p class="pc-warn small">' + I("clock", "ic-sm") + "Videos longer than 15 seconds will be cut to the first 15 s.</p>" : "") +
       (window.TMN_SOUND_PICK && items.length ? '<div class="field"><span class="pe-label">Sound</span><div class="pc-soundpick"></div></div>' : "") +
-      '<label class="field"><span class="pe-label">Caption</span>' +
-        '<textarea class="input pc-cap" maxlength="' + CAP + '" rows="3" placeholder="' + (act ? "How was it?" : "What\'s the story?") + '" data-autogrow="220"></textarea>' +
+      (textMode ? '<button type="button" class="btn btn-ghost btn-sm pc-addphoto">' + I("image", "ic-sm") + (items.length ? "Change photos" : "Add photos") + "</button>" : "") +
+      '<label class="field"><span class="pe-label">' + (textMode && !items.length ? "Your post" : "Caption") + "</span>" +
+        '<textarea class="input pc-cap" maxlength="' + CAP + '" rows="3" placeholder="' + (act ? "How was it?" : textMode ? "What\'s on your mind?" : "What\'s the story?") + '" data-autogrow="220"></textarea>' +
         '<span class="pc-count faint small">' + (window.TMN_EMOJI_PICK ? '<button type="button" class="icon-btn pc-emo" aria-label="Emoji" aria-expanded="false">' + I("smile", "ic-sm") + "</button>" : "") + '<span class="pc-count-n">0 / ' + CAP + "</span></span></label>" +
       '<div class="field"><span class="pe-label">Who can see this</span>' +
         '<div class="segmented pc-vis" role="group" aria-label="Visibility">' + VIS.map(function (x) {
@@ -120,11 +123,29 @@
     });
     date.addEventListener("input", paintWhen);
     root.addEventListener("submit", function (e) { e.preventDefault(); submit(); });
+    if (o.caption) { cap.value = o.caption; cap.dispatchEvent(new Event("input")); }
+    // Add photos (text mode): pumili, tapos buksan ulit ang composer na may photos at parehong text
+    var ap = root.querySelector(".pc-addphoto");
+    if (ap) ap.addEventListener("click", async function () {
+      if (state.busy) return;
+      var next = null;
+      try {
+        if (window.TMN_PHONE_PICK && TMN_PHONE_PICK.ok()) next = await TMN_PHONE_PICK.open({ max: MAX });
+        else if (window.TMN_MEDIA) {
+          var files = await new Promise(function (res) { var i = document.createElement("input"); i.type = "file"; i.accept = "image/*"; i.multiple = true; i.style.display = "none"; document.body.appendChild(i); i.addEventListener("change", function () { var f = [].slice.call(i.files || []); i.remove(); res(f); }); i.click(); });
+          if (files.length) next = await TMN_MEDIA.addFiles(files.slice(0, MAX), null);
+        } else { UI.toast("Photos aren't available on this page."); return; }
+      } catch (er) { UI.toast(er.message || "Couldn't add the photos."); return; }
+      if (!next || !next.length) return;
+      var keep = cap.value; done = true; m.close(true);
+      open(next, Object.assign({}, o, { text: true, caption: keep }));
+    });
     if (window.TMN_GUARD) TMN_GUARD.watch(cap); // babala habang nagta-type
 
     async function submit() {
       if (state.busy) return;
       if (window.TMN_GUARD && !TMN_GUARD.ok(cap.value)) { cap.focus(); return; }
+      if (!items.length && !act && !cap.value.trim()) { UI.toast("Write something first."); cap.focus(); return; }
       var publishAt = null;
       if (state.when === "later") {
         var d = new Date(date.value);

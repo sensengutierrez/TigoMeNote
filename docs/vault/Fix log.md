@@ -75,6 +75,7 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-11 · Kid: nakatayo sa sofa / sa kart, at wala sa unan kapag natutulog → ang upo at higa ay para sa hugis ng note, at ang puwesto ng higa ay nakabatay sa paa (maliit pa ang Tigo sa mababang level) → `sitPose()` (pasulong ang binti) at puwesto ng higa na nakabatay sa haba ng katawan (`human-model.js`, `pet-scene.js`, `race-game.js`)
 - 2026-11-11 · Decorate: kailangang mag-scroll sa pinakababa para sa Buy → inilipat ang Buy bar sa itaas ng listahan (sticky) (`room-ui.js`, `closet-ui.js`)
 - 2026-11-11 · Tigo: hindi lumalabas ang pindutan sa labas → `.tg-sheet:not(.min)` ay laging nasa pahina → `stage.sheet-open` ang tamang tsek (`pages/tigo.js`)
+- 2026-11-11 · Tigo (landscape): natatakpan ng dock ang XP bar → ang `stack()` ay sumusukat lang sa `#tgMini` na lumipat na sa itaas → `Math.max(mini.bottom, xp.bottom)` (`pages/tigo.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

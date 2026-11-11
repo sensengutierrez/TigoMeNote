@@ -564,3 +564,9 @@ body.tg-full, body.tg-in-game { overflow: hidden; }   /* hindi "tg-game": iyon a
 .tg-plot.s3 { border-style: solid; border-color: #1f9d6b; background: color-mix(in srgb, #1f9d6b 14%, var(--surface)); }
 .tg-plot.s1, .tg-plot.s2 { border-style: solid; }
 @media (max-width: 620px) { .tg-ctx, .tg-stage:not(.ui-game) .tg-ctx { bottom: 150px; max-width: calc(100% - 40px); } }
+/* 0.11.46: mas maliit na hilera ng mga button sa landscape (hindi na natatakpan ang XP bar; tingnan ang stack() sa pages/tigo.js) */
+@media (orientation: landscape) and (max-height: 520px) {
+  .tg-stage.game .tg-dbtn { width: 36px; height: 36px; font-size: 16px; border-radius: 11px; }
+  .tg-stage.game .tg-dock-min { height: 36px; width: 26px; }
+  .tg-stage.game .tg-dock, .tg-stage.game .tg-dock-acts, .tg-stage.game .tg-dock-ctx { gap: 5px; }
+}

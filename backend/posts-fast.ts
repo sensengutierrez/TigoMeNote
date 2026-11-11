@@ -262,7 +262,8 @@ async function createPost(p: any, me: any) {
   const publishAt = parsePublishAt(p.publish_at);
   if (!publishAt) return fail("Invalid schedule date/time.");
   const media = Array.isArray(p.media) ? p.media.slice(0, MAX_MEDIA_PER_POST) : [];
-  if (!media.length && !activity) return fail("No photo or video.");
+  // 0.11.46: puwede nang TEXT lang ang post (parang Facebook "What's on your mind?") — kailangan lang may nakasulat
+  if (!media.length && !activity && !caption.trim()) return fail("Write something or add a photo.");
   const sound = await resolveSound(db, p.sound); // TigoMeNote Sounds o sariling gawa (Sound Maker)
 
   // Siguraduhing sa user na ito ang mga path at nandoon talaga ang files

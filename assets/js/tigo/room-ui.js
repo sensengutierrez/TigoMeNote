@@ -4,6 +4,7 @@
    Panel (side): tabs Furniture / Walls / Floors. Tap = ilagay sa kwarto (o subukan ang dingding/sahig). Hindi pa nabibili → "Buy 🪙 N".
    Sa 3D: pindutin at hilahin ang gamit para ilipat; may bar sa ibaba: ⟳ Ikot · 🗑 Alisin · ✓ Tapos.
    Gamit sa dingding (painting, clock…) = kusang dumidikit sa pinakamalapit na dingding.
+   Long-press sa gamit habang nasa bahay (pages/tigo.js) = bubukas ito na napili na ang gamit (ed.select).
    Kusang nase-save (pet-fast "room") ilang saglit pagkatapos ng bawat pagbabago. */
 import { HOME_TABS, HOME_ITEMS, homeItem } from "./catalog.js";
 
@@ -145,5 +146,5 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
     onClose && onClose(pet);
   }
   render();
-  return { close, update(p) { pet = p; render(); } };
+  return { close, update(p) { pet = p; render(); }, select(e) { select(e || null); } };   // select: galing sa long-press sa gamit
 }

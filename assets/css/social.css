@@ -231,3 +231,21 @@ body:has(.st-view) .modal-backdrop { z-index: 95; }
 .st-mine-meta, .st-mine-left { position: absolute; left: 0; right: 0; padding: 4px 6px; color: #fff; font-size: .7rem; font-weight: 600; display: flex; align-items: center; gap: 3px; }
 .st-mine-meta { bottom: 0; background: linear-gradient(transparent, rgba(0,0,0,.7)); padding-top: 14px; }
 .st-mine-left { top: 0; background: linear-gradient(rgba(0,0,0,.6), transparent); padding-bottom: 12px; }
+
+/* What's on your mind? (components/write-box.js) */
+.write-box { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 14px; }
+.write-box .wb-av { flex: none; }
+.wb-input { flex: 1; min-width: 0; text-align: left; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg-2, transparent); color: var(--muted); font: inherit; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wb-input:hover { border-color: var(--text-3, var(--muted)); }
+.wb-photo { flex: none; color: #1f9d6b; }
+/* Text post (walang photo) */
+.pcard-text { display: grid; place-items: center; min-height: 220px; padding: 26px 22px; color: #fff; text-align: center; }
+.pcard-text p { margin: 0; font: 700 1.55rem/1.3 var(--font-display, inherit); white-space: pre-wrap; overflow-wrap: anywhere; text-shadow: 0 1px 8px rgba(0,0,0,.18); }
+.pcard-text.mid p { font-size: 1.2rem; }
+.pcard-text.long { display: block; min-height: 0; padding: 4px 16px 10px; color: inherit; text-align: left; }
+.pcard-text.long p { font: inherit; font-size: 1rem; line-height: 1.5; text-shadow: none; }
+.pt-text { width: 100%; height: 100%; display: grid; place-items: center; padding: 8px; color: #fff; text-align: center; overflow: hidden; }
+.pt-text span { font-size: .78rem; font-weight: 700; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.pv-text { width: 100%; min-height: 320px; display: grid; place-items: center; padding: 28px; color: #fff; text-align: center; }
+.pv-text p { margin: 0; font: 700 1.4rem/1.35 var(--font-display, inherit); white-space: pre-wrap; overflow-wrap: anywhere; }
+.pc .pc-addphoto { justify-self: start; }

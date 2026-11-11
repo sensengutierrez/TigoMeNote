@@ -27,6 +27,14 @@
       (p.caption ? '<p class="pc-act-cap">' + esc(p.caption) + "</p>" : "") +
       (cells.length ? '<div class="pc-act-stats">' + cells.map(function (c) { return '<div><span class="faint small">' + c[0] + '</span><b translate="no">' + c[1] + "</b></div>"; }).join("") + "</div>" : "");
   }
+  // Text post (walang photo at walang ruta): kulay ayon sa id (laging pareho), laki ng titik ayon sa haba
+  var TXT_BG = ["linear-gradient(135deg,#ff7a59,#ff3d77)", "linear-gradient(135deg,#7c5cff,#3d8bff)", "linear-gradient(135deg,#14b8a6,#3dd6c0)", "linear-gradient(135deg,#ffb020,#ff7a59)", "linear-gradient(135deg,#243b55,#141e30)", "linear-gradient(135deg,#f953c6,#b91d73)"];
+  function isText(p) { return !p.media.length && !(p.activity && p.activity.route) && !!p.caption; }
+  function textBg(p) { var h = 0, s = String(p.id || p.caption); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return TXT_BG[h % TXT_BG.length]; }
+  function textBlock(p) {
+    var n = p.caption.length, long = n > 220;
+    return '<div class="pcard-text' + (long ? " long" : n > 90 ? " mid" : "") + '"' + (long ? "" : ' style="background:' + textBg(p) + '"') + '><p translate="yes">' + esc(p.caption) + "</p></div>";
+  }
   // Hugis ng media (parang Facebook): buong lapad, taas ayon sa photo/video (4:5 pinakamatangkad, 1.91:1 pinakamalapad).
   // Walang itim na gilid at walang scroll sa loob. Naaalala ang hugis bawat URL para hindi tumalon ang feed.
   var AR_KEY = "tmnMediaAR", arCache = null;
@@ -39,6 +47,7 @@
   }
   function mediaHtml(p) {
     var hasRoute = !!(p.activity && p.activity.route && window.TMN_ROUTE);
+    if (!p.media.length && !hasRoute && p.caption) return textBlock(p);   // text lang (walang photo): malaking sulat sa may kulay na kard
     if (!p.media.length) return hasRoute ? '<div class="pcard-media pc-route-only"><button type="button" class="pc-route-full" data-act="route" aria-label="Open map">' + routeSvg(p, 640, 460) + "</button></div>" : "";
     var slides = p.media.map(function (m, i) {
       var inner = !m.url ? '<div class="pt-missing">' + I("image") + "</div>"
@@ -94,7 +103,7 @@
       activityHead(p) +
       mediaHtml(p) +
       actionsHtml(p) +
-      (p.caption && !p.activity ? '<p class="pc-caption"><b data-act="user" data-uid="' + esc(a.id || "") + '">' + esc(a.username || "") + "</b> " + esc(p.caption) + "</p>" : "") +
+      (p.caption && !p.activity && !isText(p) ? '<p class="pc-caption"><b data-act="user" data-uid="' + esc(a.id || "") + '">' + esc(a.username || "") + "</b> " + esc(p.caption) + "</p>" : "") +
       (p.stats && p.stats.comments ? '<button type="button" class="pc-more-comments" data-act="comments">' + (p.stats.comments === 1 ? "View 1 comment" : "View all " + n(p.stats.comments) + " comments") + "</button>" : "") +
       '<div class="pc-time faint small">' + new Date(p.publish_at).toLocaleDateString(window.TMN_I18N ? TMN_I18N.locale : undefined, { month: "long", day: "numeric" }) + "</div>" +
     "</article>";
@@ -235,5 +244,5 @@
     return { repaint: repaint };
   }
 
-  window.TMN_POST_CARD = { html: html, bind: bind, actionsHtml: actionsHtml, avatar: avatar, EMOJIS: EMOJIS };
+  window.TMN_POST_CARD = { html: html, bind: bind, actionsHtml: actionsHtml, avatar: avatar, EMOJIS: EMOJIS, textBg: textBg, isText: isText };
 })();

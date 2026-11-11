@@ -129,6 +129,8 @@ updated: 2026-10-24
 | 2026-11-11 | "3D emoticon" = Tigo 3D stickers na SVG + CSS (may lalim at galaw) at boses na synth, hindi tunay na WebGL sa bawat mensahe | Magaan sa chat kahit maraming sticker; walang file na ida-download; gumagana rin sa Chat app |
 | 2026-11-11 | Bumababa ulit ang gutom, saya at linis (mabagal); ang energy ay hindi, at walang pagod sa laro | Binago ni Bench ang naunang hiling: gusto niyang may saysay pa rin ang pagpapakain, paligo at laro |
 | 2026-11-11 | Lights Out: ang malalaking mapa ay ginagawa ng code (`genMap`), hindi iginuguhit nang mano-mano | Laging may daan (walang nakakulong na kwarto) at madaling dagdagan ng antas |
+| 2026-11-11 | Text post = ordinaryong post na walang media (walang bagong table); kulay ng card ay galing sa id ng post | Walang schema change; parehong pila, moderation at privacy ng photo post |
+| 2026-11-11 | Long-press (0.55 s) sa gamit ang shortcut sa Decorate; tap at drag ay para pa rin sa lakad at ikot ng view | Hindi nasasagasaan ang dati nang kontrol sa loob ng bahay |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)
