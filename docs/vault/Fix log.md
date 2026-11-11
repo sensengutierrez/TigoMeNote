@@ -81,6 +81,8 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-11 · Bahay: ang alaga ay nasa ibabaw ng kama → sinusundan si Tigo kahit nakahiga → sa `bedSpot().beside` na siya humihiga (`tigo/pet-scene.js`)
 - 2026-11-11 · Bloom Clash: hindi kita ang laman ng HP bar → ang itim na likod ay transparent kaya huling iginuguhit at natatakpan ang kulay → ginawang transparent din ang kulay para masunod ang `renderOrder` (`tigo/moba-game.js`)
 - 2026-11-11 · Bahay: hindi makaupo sa sofa kapag nasa likod nito (naiipit sa lakad) → kung walang usad nang 0.9 s, itinutuloy na ang pag-upo (`tigo/pet-scene.js`)
+- 2026-11-11 · Bahay: naiipit ang alaga sa gamit → walang banggaan ang galaw nito → dumadaan na sa `collide()` at may lunas kapag walang usad nang 1.2 s (`tigo/pet-scene.js`)
+- 2026-11-11 · Salamin: itim lang (metal na walang repleksyon) → tunay na reflector na nagre-render ng kwarto (`tigo/furniture.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

@@ -102,6 +102,8 @@ export function createCameraRig({ camera, el, blocked = () => false, claim = () 
     },
     view() { return s.view; }, zoom() { return s.zoom; }, elev() { return s.elev; },
     yaw() { return s.yaw; },
+    peek(y) { let d = y - goal.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); goal.yaw += d; goal.zoom = 0.5; goal.elev = 0.32; },   // malapit at mababa (hal. sa salamin)
+    setYaw(y) { let d = y - goal.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); goal.yaw += d; },   // dahan-dahang iikot doon (pinakamaikling daan)
     dragging() { return dragged && pts.size > 0; },
     reset() { goal.yaw = 0; setView("follow"); },
     dispose() {

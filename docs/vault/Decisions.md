@@ -139,6 +139,8 @@ updated: 2026-10-24
 | 2026-11-11 | Bloom Clash: host ang may hawak ng laban (buhay, Sprouties, bots); ang iba ay nagpapadala lang ng lakad at hiling ng skill | Iisang pinagmumulan ng totoo; walang server ng laro na kailangan (free plan) |
 | 2026-11-11 | Bloom Clash: kusang atake + isang Skill lang bawat hero | Kayang laruin ng isang hinlalaki sa phone; bagay sa 13+ |
 | 2026-11-11 | Bloom Clash: sariling modelong mandirigma ang hero (hindi si Tigo) | Mas mukhang larong labanan; walang kinopyang karakter |
+| 2026-11-11 | Chat sa Tigo = sariling tables (tigo_threads/tigo_msgs), hiwalay sa Messenger; pribado/grupo para sa magka-follow lang | Hiling na "on game lang"; mas ligtas para sa 13+ |
+| 2026-11-11 | 🏝️ Here = `tigo_world.place` ("isle:<uid>"): may-ari at mga follower lang | Chat kung nasaan ka naglalaro, gamit ang parehong filter/Mute/Report |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

@@ -230,9 +230,20 @@ export function buildRoom() {
 
   return {
     group, setStyle, setItems, add, remove: removeEntry, select, pick, floorPoint, collide, bedSpot, seatNear, update,
+    // gamit na may magagawa si Tigo kapag malapit: 🐟 aquarium (pakain) · 🪞 salamin (silip)
+    near(x, z) {
+      let best = null, bd = 1e9;
+      for (const e of entries) {
+        if (e.id !== "aquarium" && e.id !== "mirror") continue;
+        const n = { x: Math.sin(e.r), z: Math.cos(e.r) }, fx = e.x + n.x * (e.id === "mirror" ? 1.0 : 0.6), fz = e.z + n.z * (e.id === "mirror" ? 1.0 : 0.6);
+        const d = Math.hypot(e.x - x, e.z - z); if (d < (e.id === "mirror" ? 1.9 : 1.3) && d < bd) { bd = d; best = { kind: e.id, x: e.x, z: e.z, stand: { x: fx, z: fz }, face: Math.atan2(-n.x, -n.z), feed: e.obj.group.userData.feed }; }
+      }
+      return best;
+    },
     tvNear(x, z, max = 4.5) { const e = entries.find((q) => q.id === "tv" && Math.hypot(q.x - x, q.z - z) < max); return e ? { x: e.x, z: e.z } : null; },   // para "manood" si Tigo
     style() { return { ...style }; },
     list() { return entries.map((e) => ({ id: e.id, x: e.x, z: e.z, r: e.r })); },
+    _entry(id) { return entries.find((e) => e.id === id) || null; },   // para sa tests
     move(e, x, z) { e.x = x; e.z = z; place(e); },
     rotate(e) { e.r = round((((Math.round((e.r || 0) / (Math.PI / 4)) + 1) % 8) * Math.PI) / 4); place(e); },   // laging eksaktong hakbang na 45° (walang naiipong mali)
     selected() { return selected; },

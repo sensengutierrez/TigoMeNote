@@ -103,12 +103,12 @@
   mod("farm-ui").then(function (m) { farmMod = m; syncFarm(); setInterval(syncFarm, 30000); }).catch(function () {});
   function farmCall(b) { return TMN_API.call("pet", "farm", b); }
   function setPet(p) { pet = p; paint(); syncFarm(); }
-  var CTX = { bench: "🪑 Sit", pond: "🎣 Fish", garden: "🌱 Garden", tree: "🍎 Pick fruit" };
+  var CTX = { bench: "🪑 Sit", pond: "🎣 Fish", garden: "🌱 Garden", tree: "🍎 Pick fruit", aquarium: "🐟 Feed fish", mirror: "🪞 Look", ball: "⚽ Done playing" };
   function ctxPaint(txt, kind, hot) { var b = $("tgCtx"); b.textContent = txt || ""; b.classList.toggle("hidden", !txt); b.classList.toggle("hot", !!hot); b.dataset.k = kind || ""; }
   setInterval(function () {
     if (!sc || !farmMod || fisher) return;
-    var q = !sc.inGame() && sc.pose() === "stand" && !uiSheetOpen() ? sc.spot() : null;
-    if (q && visit && q.kind !== "bench") q = null;   // sa isla ng iba: upo lang (kanila ang taniman, puno at lawa)
+    var q = !sc.inGame() && sc.pose() === "stand" && !uiSheetOpen() ? (sc.ballActive() ? { kind: "ball" } : sc.spot()) : null;
+    if (q && visit && ["bench", "ball", "mirror"].indexOf(q.kind) < 0) q = null;   // sa isla ng iba: upo lang (kanila ang taniman, puno at lawa)
     ctxKind = q ? q.kind : ""; ctxId = q ? q.id : null;
     ctxPaint(q ? CTX[q.kind] : "", ctxKind);
   }, 300);
@@ -116,6 +116,9 @@
   $("tgCtx").addEventListener("click", function () {
     if (!sc || !farmMod) return;
     if (fisher) { fisher.pull(); return; }
+    if (ctxKind === "ball") { sc.ball(false); ctxPaint(""); toast("Good game! ⚽"); return; }
+    if (ctxKind === "aquarium") { if (sc.feedFish()) { say("Here, fishies! 🐟", { still: true }); if (voice) voice.sfx("pop"); } return; }
+    if (ctxKind === "mirror") { if (sc.lookMirror()) say(["Looking good! ✨", "Is that me? 😄", "Hello, me! 👋"][Math.floor(Math.random() * 3)], { still: true }); ctxPaint(""); return; }
     if (ctxKind === "bench") { if (sc.sitBench()) say("Sit down!", { still: true }); ctxPaint(""); }
     else if (ctxKind === "garden") farmMod.openGarden({ getPet: function () { return pet; }, call: farmCall, onPet: setPet });
     else if (ctxKind === "tree") { var id = ctxId; farmCall({ do: "pick", tree: id }).then(function (r) { setPet(r.pet); toast("🍎 +🪙 " + r.got); if (voice) voice.sfx("coin"); sc.jump(); }).catch(function (e) { toast(e.message || "No fruit yet."); }); }
@@ -302,6 +305,32 @@
     ["pointerup", "pointercancel", "pointerleave"].forEach(function (n) { cv.addEventListener(n, cancel); });
     cv.addEventListener("contextmenu", function (e) { if (sc && sc.inRoom()) e.preventDefault(); });
   })();
+  // Pindutin ang alaga → 🐾 Come · ✋ Stay · 🌿 Free (hindi kapag hinila ang screen)
+  var BUDM = { follow: ["🐾", "Come"], stay: ["✋", "Stay"], free: ["🌿", "Free"] };
+  function budChips(px, py) {
+    var el = $("tgBud"), cur = sc.buddyMode();
+    el.innerHTML = Object.keys(BUDM).map(function (k) { return '<button type="button" data-bm="' + k + '" aria-pressed="' + (k === cur) + '">' + BUDM[k][0] + "<small>" + BUDM[k][1] + "</small></button>"; }).join("");
+    el.classList.remove("hidden");
+    var sr = $("stage").getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight;
+    el.style.left = Math.round(Math.max(8, Math.min(sr.width - w - 8, px - w / 2))) + "px"; el.style.top = Math.round(Math.max(60, Math.min(sr.height - h - 8, py - h - 14))) + "px";
+    clearTimeout(budChips.t); budChips.t = setTimeout(function () { el.classList.add("hidden"); }, 6000);
+  }
+  function budSet(k) {
+    if (!sc || !sc.hasBuddy()) return;
+    sc.buddyMode(k); $("tgBud").classList.add("hidden");
+    toast(k === "follow" ? "🐾 Here, buddy! Come!" : k === "stay" ? "✋ Stay… good buddy." : "🌿 Go play around!");
+  }
+  $("tgBud").addEventListener("click", function (e) { var b = e.target.closest("[data-bm]"); if (b) budSet(b.dataset.bm); });
+  (function () {
+    var cv = $("tgCanvas"), x0 = 0, y0 = 0;
+    cv.addEventListener("pointerdown", function (e) { x0 = e.clientX; y0 = e.clientY; });
+    cv.addEventListener("click", function (e) {
+      if (!sc || !sc.hasBuddy() || sc.inGame() || decor || Math.hypot(e.clientX - x0, e.clientY - y0) > 8) return;
+      var r = cv.getBoundingClientRect(), sr = $("stage").getBoundingClientRect();
+      if (sc.pickBuddy(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1))) budChips(e.clientX - sr.left, e.clientY - sr.top);
+      else $("tgBud").classList.add("hidden");
+    });
+  })();
 
   // ---------- boses ni Tigo ----------
   async function startVoice() {
@@ -359,7 +388,7 @@
     busy = true;
     if (sc) {
       if (what === "feed") { sc.effect("food"); setTimeout(function () { sc.main.eat(); }, 450); }
-      if (what === "play") { sc.effect("ball"); sc.jump(); setTimeout(function () { sc.jump(); }, 800); setTimeout(function () { sc.main.spin(); }, 1500); }
+      if (what === "play") { sc.ball(true); sc.jump(); }   // ⚽ nananatili ang bola: sipain habang naglalakad; "⚽ Done playing" para tapusin
       if (what === "clean") { sc.effect("bubbles"); sc.main.wiggle(); }
       if (what === "pet") { sc.effect("hearts"); sc.main.wiggle(); }
     }
@@ -371,7 +400,7 @@
       if (r.msg === "full") toast("Tigo is full! 😋");
       else if (r.msg === "clean") toast("Tigo is already clean ✨");
       else if (what === "feed") toast("Yum! " + (label || "") + " 😋");
-      else if (what === "play") toast("Wheee! ⚽");
+      else if (what === "play") toast("Kick the ball around! Tap ⚽ Done playing when you're finished.");
       else if (what === "clean") toast("Squeaky clean! 🫧");
       else if (what === "sleep") toast("Good night, " + pet.name + " 🌙 Going home to the bahay kubo…");
       else if (what === "wake") toast("Good morning! ☀️");
@@ -504,7 +533,7 @@
     var g = await mod("social-ui");
     if (socialM) { try { socialM.close(); } catch (e) {} }
     $("tgChatDot").classList.add("hidden"); tickHide();
-    var node = g.socialNode({ tab: tab || "world", me: window.TMN_USER || {}, toast: toast,
+    var node = g.socialNode({ tab: tab || "world", me: window.TMN_USER || {}, toast: toast, here: herePlace(),
       onVisit: function (f) { m.close(); visitFriend(f.user); },
       onJoin: function (game, code) { m.close(); openGames({ game: game, code: code }); } });
     var m;
@@ -516,12 +545,18 @@
     if (chatUid) node._chatWith(chatUid);
   }
   $("tgChatX").addEventListener("click", function () { if (socialM) socialM.close(); });
+  // chat ng isla kung nasaan ka (sariling isla o binibisita)
+  function herePlace() {
+    var me = window.TMN_USER || {};
+    if (visit) return { place: "isle:" + visit.user.id, key: visit.key, label: "@" + visit.user.username + "'s island" };
+    return myKey && me.id ? { place: "isle:" + me.id, key: myKey, label: "Your island" } : null;
+  }
   // ---- World chat sa ibabaw ng laro: huling 3 mensahe, kusang nawawala; pindutin = buksan ang chat ----
-  var tick = { last: 0, list: [], t: 0, at: 0, busy: false, first: true };
+  var tick = { last: 0, list: [], t: 0, at: 0, busy: false, first: true, hp: "", hl: 0, hch: null };
   function tickHide() { clearTimeout(tick.t); $("tgTicker").classList.add("hidden"); }
   function tickShow() {
     var el = $("tgTicker"); if (!tick.list.length || socialM) return;
-    el.innerHTML = tick.list.slice(-3).map(function (m) { return '<span><b translate="no">@' + UI.esc(m.user.username) + "</b> " + UI.esc(m.body) + "</span>"; }).join("");
+    el.innerHTML = tick.list.slice(-3).map(function (m) { return '<span>' + (m.here ? "🏝️ " : "") + '<b translate="no">@' + UI.esc(m.user.username) + "</b> " + UI.esc(m.body) + "</span>"; }).join("");
     el.classList.remove("hidden"); clearTimeout(tick.t); tick.t = setTimeout(tickHide, 9000);
   }
   async function worldPull() {
@@ -529,16 +564,28 @@
     if (Date.now() - tick.at < 2500) { clearTimeout(tick.w); tick.w = setTimeout(worldPull, 2600); return; }
     tick.busy = true; tick.at = Date.now();
     try {
-      var r = await TMN_API.call("tigoSocial", "world", tick.last ? { after: tick.last } : {}), l = r.list || [];
-      if (l.length) {
-        tick.last = Math.max(tick.last, l[l.length - 1].id);
-        var fresh = tick.first ? l.slice(-2) : l.filter(function (m) { return !m.me; });
-        if (fresh.length) { tick.list = tick.list.concat(fresh).slice(-3); if (!socialM) { tickShow(); if (!tick.first) $("tgChatDot").classList.remove("hidden"); } }
+      var r = await TMN_API.call("tigoSocial", "world", tick.last ? { after: tick.last } : {}), l = r.list || [], fresh = [];
+      if (l.length) { tick.last = Math.max(tick.last, l[l.length - 1].id); fresh = tick.first ? l.slice(-2) : l.filter(function (m) { return !m.me; }); }
+      // chat ng isla (kung nasaan ka)
+      var h = herePlace();
+      if (h && h.place !== tick.hp) {   // lumipat ng isla: bagong channel, simula sa huli
+        tick.hp = h.place; tick.hl = 0; if (tick.hch) { try { tick.hch.leave(); } catch (e) {} tick.hch = null; }
+        if (window.TMN_RT) tick.hch = TMN_RT.join("tmn-tigo-w-" + h.key, function () { worldPull(); });
+        var r0 = await TMN_API.call("tigoSocial", "world", { place: h.place }), l0 = r0.list || []; if (l0.length) tick.hl = l0[l0.length - 1].id;
+      } else if (h) {
+        var r2 = await TMN_API.call("tigoSocial", "world", { place: h.place, after: tick.hl }), l2 = r2.list || [];
+        if (l2.length) { tick.hl = Math.max(tick.hl, l2[l2.length - 1].id); fresh = fresh.concat(l2.filter(function (m) { return !m.me; }).map(function (m) { return Object.assign({ here: true }, m); })); }
       }
+      if (fresh.length) { tick.list = tick.list.concat(fresh).slice(-3); if (!socialM) { tickShow(); if (!tick.first) $("tgChatDot").classList.remove("hidden"); } }
     } catch (e) {}
     tick.first = false; tick.busy = false;
   }
-  $("tgTicker").addEventListener("click", function () { openSocial("world"); });
+  $("tgTicker").addEventListener("click", function () { var l = tick.list[tick.list.length - 1]; openSocial(l && l.here ? "here" : "world"); });
+  // pulang tuldok kapag may bagong pribadong chat (bawat 45 s)
+  setInterval(function () {
+    if (document.hidden || socialM || !window.TMN_API || !navigator.onLine) return;
+    TMN_API.call("tigoSocial", "unread", {}).then(function (r) { if (r.n > 0) $("tgChatDot").classList.remove("hidden"); }).catch(function () {});
+  }, 45000);
   setTimeout(function () { worldPull(); if (window.TMN_RT) TMN_RT.join("tmn-tigo-world", function () { worldPull(); }); }, 2500);
   // ---- ＋ Game menu: lahat ng pindutan at ang lagay ni Tigo sa isang lugar ----
   function openMenu() {
@@ -550,11 +597,13 @@
     var box = document.createElement("div"); box.className = "tgm";
     box.innerHTML = '<div class="tgm-stats"><div class="tgm-row"><span>🪙 Coins</span><b>' + (p.coins || 0) + '</b></div><div class="tgm-row"><span>⭐ Level</span><b>' + (p.level || 1) + " · " + Math.max(0, (p.next || 0) - (p.xp || 0)) + ' XP to next</b></div>' +
       bar("hunger", "🍙", "Food") + bar("joy", "🎈", "Fun") + bar("energy", "⚡", "Energy") + bar("clean", "🫧", "Clean") +
+      (sc && sc.hasBuddy() ? '<div class="tgm-row tgm-pet"><span>🐶 Pet</span>' + Object.keys(BUDM).map(function (k) { return '<button type="button" data-bm="' + k + '" aria-pressed="' + (k === sc.buddyMode()) + '">' + BUDM[k][0] + " " + BUDM[k][1] + "</button>"; }).join("") + "</div>" : "") +
       '<label class="tgm-row tgm-size"><span>📏 Size</span><input type="range" min="50" max="130" step="5" value="' + Math.round(loadSize() * 100) + '" aria-label="Tigo size"></label></div>' +
       '<div class="tgm-grid">' + it.map(function (x) { return '<button type="button" class="tgm-b" data-m="' + x[0] + '"' + (x[3] ? " disabled" : "") + "><span>" + x[1] + "</span>" + x[2] + "</button>"; }).join("") + "</div>";
     var m = TMN_MODAL.open({ title: "Game menu", size: "md", cls: "modal-sheet modal-tgm", body: box });
     box.querySelector("input[type=range]").addEventListener("input", function () { setSize(Number(this.value) / 100, true); });
     box.addEventListener("click", function (e) {
+      var bm = e.target.closest("[data-bm]"); if (bm) { m.close(); budSet(bm.dataset.bm); return; }
       var b = e.target.closest("[data-m]"); if (!b || b.disabled) return; var k = b.dataset.m; m.close();
       if (k === "guide") { location.href = "guide.html#g-tigo"; return; }
       if (k === "sound") { $("tgSound").click(); return; }
@@ -664,7 +713,7 @@
   }
   $("tgVisit").addEventListener("click", function (e) {
     var b = e.target.closest("[data-v]"); if (!b || !visit) return;
-    if (b.dataset.v === "home") flyHome(); else openSocial("chats", visit.user.id);
+    if (b.dataset.v === "home") flyHome(); else openSocial("here");
   });
   window.addEventListener("pagehide", isleLeave);
 

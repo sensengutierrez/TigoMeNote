@@ -18,6 +18,7 @@
      opts.onDoor(state)          → "near" (malapit sa pinto sa labas) | "room" (nasa loob) | null
      sc.add(opts) / remove(t)    → bisita (Tigo ng kaibigan); sumusunod siya kay Tigo habang naglalakad
      sc.puppet(opts) → { t, set({x,z,ry,room,pose}), screen(), remove() } → Tigo ng ibang tao na galaw ay galing sa network · sc.netState()
+     sc.buddyMode("follow"|"stay"|"free") / sc.buddyMode() · sc.pickBuddy(x, y) · sc.buddyScreen() · sc.ball(on) / sc.ballActive() (⚽ na nananatili)
      sc.dance("dance"|"budots"|"robot") → sec  → solo na sayaw (💃 Groove · 🕺 Budots · 🤖 Robot); sasabay ang bisita
      sc.together(kind) → sec     → sabay na galaw: "dance" | "highfive" | "chase" (habulan) | "spin" (ikot) | "bow"
      sc.hasFriends()
@@ -224,7 +225,78 @@ export function createScene(canvas, opts = {}) {
     if (buddy) { scene.remove(buddy.group); buddy.dispose(); buddy = null; }
     if (!id) return;
     buddy = createBuddy(id); if (!buddy) return;
-    buddy.group.position.set(me.x - 0.8, 0, me.z + 0.3); scene.add(buddy.group); buddy.hop();
+    buddy.group.position.set(me.x - 0.8, 0, me.z + 0.3); scene.add(buddy.group); buddy.hop(); bud.mode = "follow";
+  }
+  // Ang alaga: 🐾 Come (sumusunod) · ✋ Stay (naghihintay; humihiga pagkalipas ng ilang saglit) · 🌿 Free (naglalakad-lakad nang mag-isa)
+  // Hindi na naiipit sa gamit: bawat galaw ay dumadaan sa collide(); kapag walang usad, ibang direksyon ang pipiliin.
+  const bud = { mode: "follow", stay: null, goal: null, gT: 0, last: null, stuckT: 0, idleT: 0 };
+  function budTarget(dt, bedB) {
+    const off = (x, z) => ({ x: x + 0.75, z: z - 0.35 });   // buddy.update ay naglalagay ng (-0.75, +0.35) sa target
+    if (bedB) return { t: { x: bedB.beside.x + 0.75, z: bedB.beside.z - 0.1 }, sleep: true };
+    if (inside && !inRoom) return { t: { x: HOUSE.door.x + 0.3, z: HOUSE.door.z + 0.6 }, sleep: false };
+    if (toy && bud.mode !== "stay") return { t: off(toy.x, toy.z), sleep: false };   // hinahabol ang bola
+    if (bud.mode === "stay" && bud.stay) { bud.idleT += dt; return { t: off(bud.stay.x, bud.stay.z), sleep: bud.idleT > 12 }; }
+    if (bud.mode === "free") {
+      bud.gT -= dt;
+      if (!bud.goal || bud.gT <= 0) {
+        const lim = inRoom ? 2.2 : 4.6;
+        for (let i = 0; i < 8; i++) {
+          const x = (Math.random() * 2 - 1) * lim, z = (Math.random() * 2 - 1) * lim * (inRoom ? 0.8 : 1), c = collide(x, z);
+          if (Math.hypot(c[0] - x, c[1] - z) < 0.01) { bud.goal = { x, z }; break; }
+        }
+        bud.gT = 3 + Math.random() * 4;
+      }
+      const g = bud.goal || me, b = buddy.group.position;
+      if (Math.hypot(g.x - b.x, g.z - b.z) < 0.3) { bud.idleT += dt; if (bud.idleT > 2.5 + Math.random()) { bud.idleT = 0; bud.gT = 0; } } else bud.idleT = 0;
+      return { t: off(g.x, g.z), sleep: false };
+    }
+    return { t: me, sleep: false };
+  }
+  function budStep(dt, t, bedB) {
+    if (!buddy) return;
+    const q = budTarget(dt, bedB), b = buddy.group.position, bx = b.x, bz = b.z;
+    buddy.update(dt, t, q.t, q.sleep);
+    if (!buddy.flies) { const c = collide(b.x, b.z); b.x = c[0]; b.z = c[1]; }   // hindi tumatagos sa gamit, dingding, bahay o lawa
+    // naiipit: kung halos walang usad pero malayo pa ang pupuntahan → ibang daan (o ibang puntahan kung malaya)
+    const moved = Math.hypot(b.x - bx, b.z - bz), want = Math.hypot(q.t.x - 0.75 - b.x, q.t.z + 0.35 - b.z);
+    if (want > 0.6 && moved < dt * 0.25) { bud.stuckT += dt; if (bud.stuckT > 1.2) { bud.stuckT = 0; if (bud.mode === "free") bud.gT = 0; else { const a = Math.random() * 6.28; b.x += Math.cos(a) * 0.25; b.z += Math.sin(a) * 0.25; const c = collide(b.x, b.z); b.x = c[0]; b.z = c[1]; } } }
+    else bud.stuckT = 0;
+  }
+  function buddyMode(m) {
+    if (!buddy || !m) return bud.mode;
+    bud.mode = m; bud.idleT = 0; bud.goal = null; bud.gT = 0; buddy.hop();
+    if (m === "stay") bud.stay = { x: buddy.group.position.x, z: buddy.group.position.z };
+    return m;
+  }
+
+  // ---------- ⚽ bola: nananatili hanggang "Done"; sinisipa ni Tigo kapag nabangga, hinahabol ng alaga ----------
+  let toy = null;
+  const toyGeo = new THREE.SphereGeometry(0.15, 20, 14), toyMat = new THREE.MeshStandardMaterial({ color: 0xff5a36, roughness: 0.45 }), toyBand = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.45 }), toyBandGeo = new THREE.TorusGeometry(0.152, 0.025, 8, 24);
+  function ballOn() {
+    if (toy) return;
+    const g = new THREE.Group(), m = new THREE.Mesh(toyGeo, toyMat); m.castShadow = true; g.add(m);
+    const b1 = new THREE.Mesh(toyBandGeo, toyBand), b2 = new THREE.Mesh(toyBandGeo, toyBand); b2.rotation.y = Math.PI / 2; g.add(b1, b2);
+    const h = main.group.rotation.y || 0, [x, z] = collide(me.x + Math.sin(h) * 0.9, me.z + Math.cos(h) * 0.9);
+    toy = { g, x, z, y: 1.2, vx: 0, vz: 0, vy: 0, cd: 0 }; g.position.set(x, 1.2, z); scene.add(g);
+  }
+  function ballOff() { if (!toy) return; scene.remove(toy.g); toy = null; }
+  function tickToy(dt) {
+    if (!toy) return;
+    const R = 0.15; toy.cd = Math.max(0, toy.cd - dt);
+    toy.vy -= 9.8 * dt; toy.y += toy.vy * dt;
+    if (toy.y < R) { toy.y = R; toy.vy = Math.abs(toy.vy) > 0.6 ? -toy.vy * 0.55 : 0; toy.vx *= 0.96; toy.vz *= 0.96; }
+    const fr = toy.y <= R + 0.01 ? Math.max(0, 1 - dt * 1.1) : 1; toy.vx *= fr; toy.vz *= fr;
+    const nx = toy.x + toy.vx * dt, nz = toy.z + toy.vz * dt, [cx, cz] = collide(nx, nz);
+    if (Math.abs(cx - nx) > 1e-4) toy.vx = -toy.vx * 0.7; if (Math.abs(cz - nz) > 1e-4) toy.vz = -toy.vz * 0.7;   // tumatalbog sa dingding at gamit
+    toy.x = cx; toy.z = cz;
+    // sipa ni Tigo
+    const dx = toy.x - me.x, dz = toy.z - me.z, d = Math.hypot(dx, dz), sp = Math.hypot(me.vx || 0, me.vz || 0);
+    if (d < 0.42 && toy.y < 0.6 && toy.cd <= 0 && pose === "stand" && !inside) { const k = 2.4 + sp * 1.4; toy.vx = (dx / (d || 1)) * k; toy.vz = (dz / (d || 1)) * k; toy.vy = 2.2 + sp * 0.4; toy.cd = 0.35; if (opts.onKick) opts.onKick(); }
+    // sundot ng alaga (ibinabalik kay Tigo)
+    if (buddy && !buddy.flies) { const p = buddy.group.position, ex = toy.x - p.x, ez = toy.z - p.z, e = Math.hypot(ex, ez);
+      if (e < 0.32 && toy.y < 0.45 && toy.cd <= 0) { const tx = me.x - toy.x, tz = me.z - toy.z, td = Math.hypot(tx, tz) || 1; toy.vx = (tx / td) * 2.2; toy.vz = (tz / td) * 2.2; toy.vy = 1.4; toy.cd = 0.5; buddy.hop(); } }
+    const v = Math.hypot(toy.vx, toy.vz); toy.g.position.set(toy.x, toy.y, toy.z);
+    if (v > 0.01) { const ax = new THREE.Vector3(toy.vz, 0, -toy.vx).normalize(); toy.g.rotateOnWorldAxis(ax, (v * dt) / R); }
   }
 
   // ---------- galaw ----------
@@ -305,6 +377,7 @@ export function createScene(canvas, opts = {}) {
     return room;
   }
   function enterRoom(instant) {
+    ballOff();
     if (inRoom || game) return;
     if (!instant && !auto && Math.hypot(me.x - HOUSE.door.x, me.z - HOUSE.door.z) > 0.4) { walkTo(HOUSE.door.x, HOUSE.door.z, () => enterRoom(true)); return; }
     if (!room) ensureRoom();
@@ -319,6 +392,7 @@ export function createScene(canvas, opts = {}) {
     if (opts.onRoom) opts.onRoom(true);
   }
   function leaveRoom(instant) {
+    ballOff();
     if (!inRoom) return;
     inRoom = false; inside = false; auto = null;
     room.group.visible = false; room.select(null);
@@ -498,6 +572,7 @@ export function createScene(canvas, opts = {}) {
   let game = null;
   const hidden = [];
   function beginGame(g) {
+    ballOff();
     if (inRoom) leaveRoom(true);
     if (inside) inside = false;
     if (pose !== "stand") standUp();
@@ -528,7 +603,7 @@ export function createScene(canvas, opts = {}) {
     movePuppets(dt);
     pets.forEach((p) => p.update(opts.reduced ? dt * 0.4 : dt, t));
     const bedB = inRoom && pose === "bed" && room ? room.bedSpot() : null;   // tulog si Tigo sa kama → ang alaga ay humihiga sa sahig sa tabi ng kama
-    if (buddy) buddy.update(dt, t, bedB ? { x: bedB.beside.x + 0.75, z: bedB.beside.z - 0.35 + 0.25 } : inside && !inRoom ? { x: HOUSE.door.x + 0.3, z: HOUSE.door.z + 0.6 } : me, !!bedB);
+    budStep(dt, t, bedB); tickToy(dt);
     if (place) place.update(t);
     tickRod(t);
     sky.update(t);
@@ -553,7 +628,10 @@ export function createScene(canvas, opts = {}) {
   document.addEventListener("tmn:upd", vis);
 
   return {
-    main, add, remove, puppet, effect, night, renderer, scene, setBackdrop, setBuddy,
+    main, add, remove, puppet, effect, buddyMode, hasBuddy() { return !!buddy; },
+    ball(on) { if (on) ballOn(); else ballOff(); return !!toy; }, ballActive() { return !!toy; },
+    pickBuddy(x, y) { if (!buddy) return false; const r = new THREE.Raycaster(); r.setFromCamera(new THREE.Vector2(x, y), camera); return r.intersectObject(buddy.group, true).length > 0; },
+    buddyScreen() { if (!buddy) return null; const v = buddy.group.position.clone(); v.y += 0.5; v.project(camera); return { x: (v.x + 1) / 2, y: (1 - v.y) / 2 }; }, night, renderer, scene, setBackdrop, setBuddy,
     together, hasFriends() { return friends.length > 0; }, isShowing() { return !!show; },
     beginGame, endGame, sun, camera, rig, inGame() { return !!game; },
     enterRoom() { if (!isNight) enterRoom(); }, leaveRoom() { if (!inside) leaveRoom(); }, inRoom() { return inRoom; },
@@ -564,7 +642,17 @@ export function createScene(canvas, opts = {}) {
     setRun(fn) { running = fn || (() => false); },
     sit() { return sit(); }, pose() { return pose; },
     // sa labas: sc.spot() → { kind, id } ng pinakamalapit na puwedeng gawin · sc.sitBench() · sc.fish(true) (uupo sa upuan at maghahagis) · sc.bite(on) · sc.setFarm(f)
-    spot() { const q = spotNear(); return q ? { kind: q.kind, id: q.id } : null; },
+    spot() {
+      if (inRoom && room && room.near && pose === "stand" && !show) { const r = room.near(me.x, me.z); return r ? { kind: r.kind } : null; }
+      const q = spotNear(); return q ? { kind: q.kind, id: q.id } : null;
+    },
+    feedFish() { const r = inRoom && room.near ? room.near(me.x, me.z) : null; if (!r || r.kind !== "aquarium" || !r.feed) return false; main.face(r.face); main.group.rotation.y = r.face; return r.feed(); },
+    lookMirror() {   // lalakad sa harap ng salamin, haharap dito, at ang camera ay nasa likod ni Tigo (kita ang sarili)
+      const r = inRoom && room.near ? room.near(me.x, me.z) : null; if (!r || r.kind !== "mirror") return false;
+      const [sx, sz] = room.collide(r.stand.x, r.stand.z);
+      walkTo(sx, sz, () => { main.face(r.face); main.group.rotation.y = r.face; rig.peek(r.face + Math.PI + 0.6); if (main.wiggle) main.wiggle(); });   // sa likod at gilid: kita si Tigo at ang repleksyon niya
+      return true;
+    },
     sitBench() { const q = place && place.spots && place.spots.find((x) => x.kind === "bench"); return q ? sit(q.seat) : false; },
     fish(on) {
       if (!on) { setFishing(false); return true; }
@@ -614,7 +702,7 @@ export function createScene(canvas, opts = {}) {
     jump() { if (!inside) { main.jump(); if (buddy) buddy.hop(); } },
     mainState() { return { x: me.x, z: me.z, y: main.height() }; },
     netState() { return { x: Math.round(me.x * 100) / 100, z: Math.round(me.z * 100) / 100, ry: Math.round((main.group.rotation.y || 0) * 100) / 100, room: inRoom, pose: pose === "sit" ? "sit" : "stand", in: inside && !inRoom }; },
-    _warp(x, z) { if (!game && !inRoom && pose === "stand") { auto = null; me.x = x; me.z = z; main.group.position.set(x, 0, z); } },   // para sa tests
+    _warp(x, z) { if (!game && pose === "stand") { auto = null; [x, z] = collide(x, z); me.x = x; me.z = z; main.group.position.set(x, 0, z); } },   // para sa tests
     onTick(fn) { ticks.add(fn); return () => ticks.delete(fn); },
     isInside() { return inside; },
     pick(x, y) {

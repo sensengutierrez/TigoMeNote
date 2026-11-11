@@ -118,7 +118,7 @@ export function createBuddy(id) {
   const st = { hop: 0, t: Math.random() * 10, pos: new THREE.Vector3(-0.9, 0, 0.6) };
   group.position.copy(st.pos);
   return {
-    id, group,
+    id, group, flies: !!u.fly,
     hop() { st.hop = 0.5; },
     update(dt, t, target, sleeping) {
       // sundan si Tigo (sa likod-gilid), at tumigil kapag malapit na

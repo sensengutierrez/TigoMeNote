@@ -15,6 +15,48 @@ export const FURN = {
   mirror: { w: 0.6, d: 0.08, wall: true }, garland: { w: 1.6, d: 0.1, wall: true }, "banner-ph": { w: 0.9, d: 0.05, wall: true }, "banner-bh": { w: 0.9, d: 0.05, wall: true },
 };
 
+// ---- tunay na salamin: nire-render ang kwarto mula sa "kabilang panig" (gaya ng Reflector ng three.js) ----
+// Maliit na render target (para magaan sa phone); nagre-render lang kapag nakikita ang salamin at nasa harap nito ang camera.
+function reflector(geo, w, h) {
+  const rt = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType });
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { tDiffuse: { value: rt.texture }, textureMatrix: { value: new THREE.Matrix4() } },
+    vertexShader: "uniform mat4 textureMatrix; varying vec4 vUv; void main(){ vUv = textureMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+    fragmentShader: "uniform sampler2D tDiffuse; varying vec4 vUv; void main(){ vec4 b = texture2DProj(tDiffuse, vUv); gl_FragColor = vec4(b.rgb * 0.94 + vec3(0.03, 0.04, 0.05), 1.0);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}",
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  const plane = new THREE.Plane(), normal = new THREE.Vector3(), pos = new THREE.Vector3(), camPos = new THREE.Vector3(), rot = new THREE.Matrix4(), look = new THREE.Vector3(),
+    clip = new THREE.Vector4(), view = new THREE.Vector3(), target = new THREE.Vector3(), q = new THREE.Vector4(), vcam = new THREE.PerspectiveCamera();
+  let skip = 0;
+  mesh.onBeforeRender = (renderer, scene, camera) => {
+    if (camera === vcam || (skip++ & 1)) return;   // bawat ikalawang frame lang (gaan)
+    pos.setFromMatrixPosition(mesh.matrixWorld); camPos.setFromMatrixPosition(camera.matrixWorld);
+    rot.extractRotation(mesh.matrixWorld); normal.set(0, 0, 1).applyMatrix4(rot);
+    view.subVectors(pos, camPos); if (view.dot(normal) > 0) return;
+    view.reflect(normal).negate().add(pos);
+    rot.extractRotation(camera.matrixWorld); look.set(0, 0, -1).applyMatrix4(rot).add(camPos);
+    target.subVectors(pos, look).reflect(normal).negate().add(pos);
+    vcam.position.copy(view); vcam.up.set(0, 1, 0).applyMatrix4(rot).reflect(normal); vcam.lookAt(target);
+    vcam.far = camera.far; vcam.updateMatrixWorld(); vcam.projectionMatrix.copy(camera.projectionMatrix);
+    const tm = mat.uniforms.textureMatrix.value;
+    tm.set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1); tm.multiply(vcam.projectionMatrix); tm.multiply(vcam.matrixWorldInverse); tm.multiply(mesh.matrixWorld);
+    plane.setFromNormalAndCoplanarPoint(normal, pos); plane.applyMatrix4(vcam.matrixWorldInverse);
+    clip.set(plane.normal.x, plane.normal.y, plane.normal.z, plane.constant);
+    const pm = vcam.projectionMatrix.elements;
+    q.x = (Math.sign(clip.x) + pm[8]) / pm[0]; q.y = (Math.sign(clip.y) + pm[9]) / pm[5]; q.z = -1; q.w = (1 + pm[10]) / pm[14];
+    clip.multiplyScalar(2 / clip.dot(q)); pm[2] = clip.x; pm[6] = clip.y; pm[10] = clip.z + 1; pm[14] = clip.w;
+    mesh.visible = false;
+    const prevRT = renderer.getRenderTarget(), prevShadow = renderer.shadowMap.autoUpdate;
+    renderer.shadowMap.autoUpdate = false; renderer.setRenderTarget(rt); renderer.state.buffers.depth.setMask(true);
+    if (renderer.autoClear === false) renderer.clear();
+    renderer.render(scene, vcam);
+    renderer.shadowMap.autoUpdate = prevShadow; renderer.setRenderTarget(prevRT);
+    const vp = camera.viewport; if (vp !== undefined) renderer.state.viewport(vp);
+    mesh.visible = true;
+  };
+  return { mesh, dispose() { rt.dispose(); mat.dispose(); } };
+}
+
 export function buildFurniture(id) {
   const group = new THREE.Group(), disp = [], anim = [];
   const M = (color, o = {}) => { const m = new THREE.MeshStandardMaterial({ color, roughness: 0.75, ...o }); disp.push(m); return m; };
@@ -85,11 +127,62 @@ export function buildFurniture(id) {
       box(0.4, 0.015, 0.14, M(0x444444), 0, 0.755, 0.1); break; }
     case "toybox": { box(0.7, 0.4, 0.5, M(0xffc04d), 0, 0.2, 0); box(0.72, 0.05, 0.52, M(0xff5a36), 0, 0.43, 0);
       ball(0.1, M(0x3dd6c0), 0.2, 0.5, 0.05); const bear = ball(0.09, M(0xb07a4a), -0.15, 0.52, 0); bear.scale.y = 1.1; break; }
-    case "aquarium": { const st = dark(); box(1.0, 0.5, 0.45, st, 0, 0.25, 0);
-      const glass = add(new THREE.BoxGeometry(0.96, 0.55, 0.42), new THREE.MeshPhysicalMaterial({ color: 0x9fe3ff, transmission: 0.5, transparent: true, opacity: 0.45, roughness: 0.05 }), 0, 0.78, 0); disp.push(glass.material); glass.castShadow = false;
-      box(0.94, 0.06, 0.4, M(0xf3d9a4), 0, 0.53, 0);
-      const fish = [0xff7a1a, 0xffd166, 0xff5aa0].map((c, i) => { const f = new THREE.Group(); group.add(f); const b = ball(0.045, M(c), 0, 0, 0, f); b.scale.set(1.4, 1, 0.6); const tl = add(new THREE.ConeGeometry(0.035, 0.06, 4), M(c), -0.07, 0, 0, f); tl.rotation.z = Math.PI / 2; return { f, k: i * 2.1 }; });
-      anim.push((t) => fish.forEach((x) => { const a = t * 0.6 + x.k; x.f.position.set(Math.sin(a) * 0.35, 0.72 + Math.sin(a * 1.7) * 0.1, Math.cos(a * 1.3) * 0.1); x.f.rotation.y = Math.cos(a) > 0 ? 0 : Math.PI; })); break; }
+    case "aquarium": {   // makatotohanang aquarium: kabinet, salamin, tubig, graba, halamang umiindayog, bula, ilaw, at isdang may buntot na kumakampay
+      const cab = M(0x3b2a20, { roughness: 0.6 }); box(1.0, 0.5, 0.45, cab, 0, 0.25, 0); box(0.02, 0.36, 0.01, M(0xc8a165), 0, 0.27, 0.228);
+      const frame = M(0x1d1d22, { roughness: 0.4 }); [[-0.49, 0], [0.49, 0]].forEach(([x]) => { box(0.025, 0.58, 0.025, frame, x, 0.79, 0.205); box(0.025, 0.58, 0.025, frame, x, 0.79, -0.205); });
+      box(1.0, 0.03, 0.44, frame, 0, 0.515, 0); box(1.0, 0.05, 0.44, frame, 0, 1.095, 0);
+      const water = M(0x4fb8e8, { transparent: true, opacity: 0.32, roughness: 0.05, metalness: 0, emissive: 0x1d6fa8, emissiveIntensity: 0.25 }); water.depthWrite = false;
+      const wv = box(0.95, 0.5, 0.4, water, 0, 0.78, 0); wv.castShadow = false; wv.receiveShadow = false; wv.renderOrder = 2;
+      const surf = add(new THREE.PlaneGeometry(0.95, 0.4), M(0x9fe3ff, { transparent: true, opacity: 0.45, roughness: 0.02, side: THREE.DoubleSide }), 0, 1.03, 0); surf.rotation.x = -Math.PI / 2; surf.castShadow = false;
+      const glassM = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.12, roughness: 0.02, metalness: 0, depthWrite: false }); disp.push(glassM);
+      const gl = box(0.97, 0.56, 0.42, glassM, 0, 0.79, 0); gl.castShadow = false; gl.renderOrder = 3;
+      // graba at bato
+      const grav = [0xd9c49a, 0xb8a27a, 0xe8dcc0, 0x8f7a5a], gG = G(new THREE.DodecahedronGeometry(0.018));
+      for (let i = 0; i < 70; i++) { const p = new THREE.Mesh(gG, M(grav[i % 4])); p.position.set((Math.random() - 0.5) * 0.9, 0.545 + Math.random() * 0.02, (Math.random() - 0.5) * 0.36); p.scale.set(1, 0.6, 1); group.add(p); }
+      const rk = M(0x7d8590, { roughness: 0.9 }); [[-0.28, -0.08, 0.07], [0.3, -0.1, 0.055], [0.05, -0.12, 0.045]].forEach(([x, z, r]) => { const b = ball(r, rk, x, 0.55 + r * 0.5, z); b.scale.set(1.3, 0.8, 1); });
+      // halaman
+      const weeds = [];
+      [[-0.38, -0.1, 0x3fa34d, 5], [-0.2, -0.13, 0x58b56a, 4], [0.38, -0.12, 0x2e8b3d, 6], [0.18, -0.14, 0x7ccf5a, 3]].forEach(([x, z, c, n]) => {
+        for (let k = 0; k < n; k++) { const w = new THREE.Group(); w.position.set(x + (k - n / 2) * 0.018, 0.55, z); group.add(w); const h = 0.18 + Math.random() * 0.22; const bl = add(new THREE.BoxGeometry(0.014, h, 0.004), M(c), 0, h / 2, 0, w); bl.castShadow = false; weeds.push({ w, k: Math.random() * 6 }); }
+      });
+      // isda
+      const FISH = [[0xff7a1a, 0xffffff], [0xffd166, 0xff8a3d], [0xff5aa0, 0xffffff], [0x3dd6ff, 0x1d6fa8], [0xb9a2ff, 0xffffff]];
+      const fish = FISH.map(([c, c2], i) => {
+        const f = new THREE.Group(); group.add(f);
+        const b = ball(0.045, M(c, { roughness: 0.35 }), 0, 0, 0, f); b.scale.set(1.5, 1, 0.55); b.castShadow = false;
+        const st = ball(0.03, M(c2, { roughness: 0.35 }), 0.01, 0.006, 0, f); st.scale.set(0.6, 1, 0.6); st.castShadow = false;
+        const tail = new THREE.Group(); tail.position.x = -0.065; f.add(tail);
+        const tl = add(new THREE.ConeGeometry(0.035, 0.06, 4), M(c2), -0.025, 0, 0, tail); tl.rotation.z = Math.PI / 2; tl.scale.z = 0.25; tl.castShadow = false;
+        const eye = ball(0.008, M(0x111111), 0.05, 0.012, 0.022, f); eye.castShadow = false; const eye2 = ball(0.008, M(0x111111), 0.05, 0.012, -0.022, f); eye2.castShadow = false;
+        return { f, tail, k: i * 1.3, sp: 0.45 + i * 0.07, x: 0, y: 0.75, z: 0, h: 0, goal: null };
+      });
+      // bula
+      const bubM = M(0xffffff, { transparent: true, opacity: 0.6, roughness: 0.1 }), bubG = G(new THREE.SphereGeometry(0.01, 6, 5));
+      const bubs = Array.from({ length: 10 }, (_, i) => { const m = new THREE.Mesh(bubG, bubM); m.position.set(0.36, 0.56 + i * 0.05, -0.12); group.add(m); return m; });
+      const lamp = glowLight(0x8fd8ff, 1.05, 2.2);
+      // pakain: mga butil na lumulubog; lalapit ang isda at kakainin
+      const food = [], foodM = M(0xc9762d, { roughness: 0.8 }), foodG = G(new THREE.BoxGeometry(0.012, 0.004, 0.012));
+      group.userData.feed = () => { for (let i = 0; i < 8; i++) { const m = new THREE.Mesh(foodG, foodM); m.position.set((Math.random() - 0.5) * 0.6, 1.03, (Math.random() - 0.5) * 0.26); m.rotation.y = Math.random() * 3; group.add(m); food.push({ m, vy: 0.02 + Math.random() * 0.02, t: 0 }); } return true; };
+      group.userData.fed = () => food.length;
+      let lastT = 0;
+      anim.push((t, night) => {
+        const dt = Math.min(0.05, t - lastT || 0.016); lastT = t;
+        lamp.intensity = night ? 1.1 : 0.45; water.emissiveIntensity = night ? 0.6 : 0.25;
+        weeds.forEach((q) => { q.w.rotation.z = Math.sin(t * 1.4 + q.k) * 0.18; q.w.rotation.x = Math.cos(t * 1.1 + q.k) * 0.08; });
+        bubs.forEach((m, i) => { m.position.y = 0.56 + ((t * 0.18 + i * 0.047) % 0.46); m.position.x = 0.36 + Math.sin(t * 3 + i) * 0.008; });
+        for (let i = food.length - 1; i >= 0; i--) { const q = food[i]; q.t += dt; q.m.position.y = Math.max(0.56, q.m.position.y - q.vy * dt); q.m.rotation.y += dt * 2; if (q.t > 25) { group.remove(q.m); food.splice(i, 1); } }
+        fish.forEach((x, i) => {
+          let gx, gy, gz; const fd = food.length ? food[i % food.length] : null;
+          if (fd) { gx = fd.m.position.x; gy = fd.m.position.y; gz = fd.m.position.z; }
+          else { const a = t * x.sp + x.k; gx = Math.sin(a) * 0.36; gy = 0.72 + Math.sin(a * 1.7 + i) * 0.12; gz = Math.cos(a * 1.3) * 0.12; }
+          const dx = gx - x.x, dy = gy - x.y, dz = gz - x.z, d = Math.hypot(dx, dy, dz), sp = fd ? 0.42 : 0.22;
+          if (d > 0.005) { const st = Math.min(d, sp * dt); x.x += dx / d * st; x.y += dy / d * st; x.z += dz / d * st; }
+          if (fd && d < 0.03) { const j = food.indexOf(fd); if (j >= 0) { group.remove(fd.m); food.splice(j, 1); } }
+          x.x = Math.max(-0.42, Math.min(0.42, x.x)); x.y = Math.max(0.6, Math.min(0.99, x.y)); x.z = Math.max(-0.15, Math.min(0.15, x.z));
+          const want = Math.atan2(-dz, dx); let dd = want - x.h; dd = Math.atan2(Math.sin(dd), Math.cos(dd)); x.h += dd * Math.min(1, dt * 5);
+          x.f.position.set(x.x, x.y, x.z); x.f.rotation.y = x.h; x.tail.rotation.y = Math.sin(t * (fd ? 16 : 9) + i) * 0.5;
+        });
+      }); break; }
     case "majlis": { const red = M(0xa3263b, { roughness: 1 }), gold = M(0xd9a441, { roughness: 0.6 });
       box(2.0, 0.16, 0.8, red, 0, 0.08, 0); box(2.0, 0.04, 0.82, gold, 0, 0.17, 0); [-0.65, 0, 0.65].forEach((x) => box(0.6, 0.45, 0.16, red, x, 0.4, -0.3));
       [-0.95, 0.95].forEach((x) => { const a = cyl(0.12, 0.12, 0.76, gold, x, 0.3, 0); a.rotation.x = Math.PI / 2; }); break; }
@@ -109,8 +202,13 @@ export function buildFurniture(id) {
       box(0.025, 0.12, 0.01, M(0x1b1b1f), 0, 0.05, 0, hh); box(0.018, 0.18, 0.01, M(0x1b1b1f), 0, 0.08, 0, mm);
       anim.push(() => { const d = new Date(); mm.rotation.z = -(d.getMinutes() / 60) * Math.PI * 2; hh.rotation.z = -((d.getHours() % 12 + d.getMinutes() / 60) / 12) * Math.PI * 2; }); break; }
     case "shelf": { const w = wood(); box(0.9, 0.04, 0.25, w, 0, 0, 0.12); ball(0.07, M(0x3fa34d), -0.3, 0.08, 0.12); cyl(0.05, 0.05, 0.16, M(0xb9a2ff), 0, 0.1, 0.12); box(0.18, 0.14, 0.12, M(0xffc04d), 0.28, 0.09, 0.12); break; }
-    case "mirror": { const f = add(new THREE.CircleGeometry(0.34, 32), M(0xc8a165), 0, 0, 0.01); f.scale.y = 1.35;
-      const g = add(new THREE.CircleGeometry(0.3, 32), M(0xdff3ff, { metalness: 0.9, roughness: 0.05 }), 0, 0, 0.015); g.scale.y = 1.35; break; }
+    case "mirror": {   // salaming nakikita ang sarili (tunay na repleksyon)
+      const f = add(new THREE.CircleGeometry(0.36, 40), M(0xc8a165, { metalness: 0.3, roughness: 0.4 }), 0, 0, 0.01); f.scale.y = 1.35;
+      const rim = add(new THREE.TorusGeometry(0.35, 0.025, 8, 40), M(0xe0b866, { metalness: 0.5, roughness: 0.3 }), 0, 0, 0.02); rim.scale.y = 1.35;
+      const rf = reflector(G(new THREE.CircleGeometry(0.31, 40)), 320, 420); rf.mesh.position.z = 0.02; rf.mesh.scale.y = 1.35; group.add(rf.mesh); disp.push(rf);
+      group.position.y = -0.3; group.scale.setScalar(1.15);   // mas mababa at mas malaki: kita si Tigo nang buo
+      const sh = add(new THREE.PlaneGeometry(0.07, 0.5), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12, depthWrite: false }), -0.14, 0.08, 0.025); sh.rotation.z = -0.5; sh.castShadow = false; disp.push(sh.material);
+      break; }
     case "garland": { const cols = [0xffe066, 0xff9ec7, 0x7cc4ff, 0xb8e65c]; const bulbs = [];
       for (let i = 0; i < 11; i++) { const x = -0.8 + i * 0.16, y = -Math.sin((i / 10) * Math.PI) * 0.18; const m = M(cols[i % 4], { emissive: cols[i % 4], emissiveIntensity: 0.2 }); ball(0.035, m, x, y, 0.04); bulbs.push(m); }
       const l = glowLight(0xffe0a0, -0.2, 3); anim.push((t, n) => { bulbs.forEach((m, i) => { m.emissiveIntensity = n ? 0.6 + Math.sin(t * 3 + i) * 0.5 : 0.2; }); l.intensity = n ? 0.8 : 0; }); break; }
