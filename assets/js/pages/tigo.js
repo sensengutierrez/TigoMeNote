@@ -68,7 +68,7 @@
         } });
       paintSize(loadSize());
       sc.setRoom(pet.room);
-      dress(pet.outfit, pet.color); paint(); syncFarm();
+      dress(pet.outfit, pet.color); paint(); syncFarm(); setTimeout(homeIsle, 1200);
       var cv = $("tgCanvas");
       ctl = c.createControls({
         stage: $("stage"), pad: $("tgPad"), jumpBtn: $("tgJump"), runBtn: $("tgRun"), stopBtn: $("tgStop"),
@@ -107,6 +107,7 @@
   setInterval(function () {
     if (!sc || !farmMod || fisher) return;
     var q = !sc.inGame() && sc.pose() === "stand" && !uiSheetOpen() ? sc.spot() : null;
+    if (q && visit && q.kind !== "bench") q = null;   // sa isla ng iba: upo lang (kanila ang taniman, puno at lawa)
     ctxKind = q ? q.kind : ""; ctxId = q ? q.id : null;
     ctxPaint(q ? CTX[q.kind] : "", ctxKind);
   }, 300);
@@ -263,6 +264,7 @@
   }
   // hit = gamit na ni-long-press: bubukas ang Decorate na napili na ito (at nakababa ang listahan para kita ang kwarto)
   async function openDecor(hit) {
+    if (visit) { if (!hit) toast("This is @" + visit.user.username + "'s house — you can look around 🙂"); return; }
     if (decor || !sc || !sc.inRoom()) return;
     if (closet) closet.close();
     var r = await mod("room-ui");
@@ -458,11 +460,11 @@
     document.addEventListener("visibilitychange", function () { if (!document.hidden) beat(); });
     window.addEventListener("pagehide", function () { clearInterval(timer); if (window.TMN_API && navigator.onLine) TMN_API.call("games", "here", { off: true }).catch(function () {}); });
   })();
-  async function openGames() {
+  async function openGames(join) {
     var g = await mod("games-ui");
     var p = live() || {}, info = { name: (window.TMN_USER && TMN_USER.username) || p.name || "friend", color: p.color || "coral", av: p.avatar && p.avatar.kind === "kid" ? p.avatar : null,
       tired: function () { var q = live() || {}; return q.asleep ? "Shh… Tigo is sleeping." : ""; } };
-    var node = g.gamesNode(function (id, opt) { m.close(); playGame(id, opt); }, info);
+    var node = g.gamesNode(function (id, opt) { m.close(); playGame(id, opt); }, info, join && join.game ? join : null);
     var m = TMN_MODAL.open({ title: "Games", size: "sm", cls: "modal-sheet", body: node, onClose: function () { if (node._cleanup) node._cleanup(); } });
   }
   async function playGame(kind, opt) {
@@ -491,11 +493,130 @@
       if (r.levelUp) levelUp(r.levelUp);
     } catch (e) { toast(e.message); }
   }
+  // ---------- Friends & chat (tigo/social-ui.js) · pasyal sa isla ng kaibigan (tigo/flight.js) ----------
+  var visit = null, flying = false, isle = null, myKey = null, socialM = null;
+  async function openSocial(tab, chatUid) {
+    var g = await mod("social-ui");
+    if (socialM) { try { socialM.close(); } catch (e) {} }
+    var node = g.socialNode({ tab: tab || "friends", me: window.TMN_USER || {}, toast: toast,
+      onVisit: function (f) { m.close(); visitFriend(f.user); },
+      onJoin: function (game, code) { m.close(); openGames({ game: game, code: code }); } });
+    var m = socialM = TMN_MODAL.open({ title: "Friends & chat", size: "sm", cls: "modal-sheet modal-social", body: node, onClose: function () { node._cleanup(); if (socialM === m) socialM = null; } });
+    if (chatUid) node._chatWith(chatUid);
+  }
+  function myLook() { var p = pet || {}, o = p.outfit || {}; return { n: (window.TMN_USER && TMN_USER.username) || p.name || "friend", c: p.color, av: p.avatar && p.avatar.kind === "kid" ? p.avatar : null, o: { hat: o.hat || null, face: o.face || null, body: o.body || null, hand: o.hand || null } }; }
+  function makePup(look) {
+    var pp = sc.puppet({ color: look.c || "sky", avatar: look.av || null }), o = look.o || {};
+    ["hat", "face", "body", "hand"].forEach(function (k) { if (o[k]) { try { pp.t.wear(k, o[k]); } catch (e) {} } });
+    var tag = document.createElement("span"); tag.className = "tg-tag"; tag.textContent = "@" + (String(look.n || "").replace(/[^A-Za-z0-9_.]/g, "").slice(0, 30) || "friend"); $("tgTags").appendChild(tag);   // username lang (galing sa network, kaya nililinis)
+    return { pp: pp, tag: tag, at: Date.now(), fixed: false };
+  }
+  function dropPup(id) { var q = isle && isle.pups[id]; if (!q) return; q.pp.remove(); q.tag.remove(); delete isle.pups[id]; }
+  function isleLeave() {
+    if (!isle) return;
+    try { isle.ch.send("bye", { p: isle.me }); isle.ch.leave(); } catch (e) {}
+    clearInterval(isle.timer); if (isle.offTick) isle.offTick();
+    Object.keys(isle.pups).forEach(dropPup); isle = null;
+  }
+  // Sumali sa channel ng isla (akin o ng binibisita). Ang galaw lang ang dumadaan dito (walang chat): { p, s:{x,z,ry,room,pose} } at itsura sa "hi".
+  function isleJoin(key, owner) {
+    isleLeave();
+    if (!sc || !window.TMN_RT || !key) return;
+    var me = (window.TMN_USER && TMN_USER.id) || "me" + Math.random().toString(36).slice(2, 8), last = "", lastAt = 0;
+    var I = isle = { me: me, pups: {}, owner: owner ? owner.user.id : null, ch: null, timer: 0, offTick: null };
+    if (owner) {   // ang may-ari: nakatayo sa tabi ng bahay kahit offline; gagalaw kapag online siya rito
+      var q = I.pups[owner.user.id] = makePup({ n: owner.user.username, c: owner.pet.color, av: owner.pet.avatar, o: owner.pet.outfit }); q.fixed = true;
+      q.pp.set({ x: 1.9, z: 0.2, ry: -0.5, room: false, pose: "stand" });
+    }
+    I.ch = TMN_RT.join("tmn-isle-" + key, function (ev, d) {
+      if (isle !== I || !d || !d.p || d.p === me) return;
+      var id = String(d.p).slice(0, 40);
+      if (ev === "bye") { var b = I.pups[id]; if (b && b.fixed) b.pp.set({ x: 1.9, z: 0.2, ry: -0.5, room: false, pose: "stand" }); else dropPup(id); return; }
+      if (ev === "hi") {
+        if (!I.pups[id]) { if (Object.keys(I.pups).length >= 8) return; try { I.pups[id] = makePup(d); } catch (e) { return; } if (!owner) toast("👋 @" + String(d.n || "A friend").slice(0, 30) + " is visiting your island!"); }
+        if (!d.re) I.ch.send("hi", Object.assign({ p: me, re: true, s: sc.netState() }, myLook()));
+      }
+      var pq = I.pups[id];
+      if (!pq) { if (ev === "s") I.ch.send("who", { p: me }); return; }
+      pq.at = Date.now(); if (d.s && typeof d.s === "object") pq.pp.set(d.s);
+      if (ev === "who") I.ch.send("hi", Object.assign({ p: me, re: true, s: sc.netState() }, myLook()));
+    });
+    var hello = function () { if (isle === I) I.ch.send("hi", Object.assign({ p: me, s: sc.netState() }, myLook())); };
+    setTimeout(hello, 600); setTimeout(hello, 2500);
+    I.timer = setInterval(function () {
+      if (isle !== I) return;
+      var now = Date.now(), peers = 0;
+      Object.keys(I.pups).forEach(function (id) { var q = I.pups[id]; if (now - q.at < 12000 && !(q.fixed && q.at === q.at0)) peers++; if (!q.fixed && now - q.at > 12000) dropPup(id); });
+      if (document.hidden || playing || sc.inGame()) return;
+      var st = sc.netState(), k = JSON.stringify(st);
+      if ((peers && k !== last) || now - lastAt > (peers ? 3000 : 15000)) { last = k; lastAt = now; I.ch.send("s", { p: me, s: st }); }
+    }, 220);
+    Object.keys(I.pups).forEach(function (id) { I.pups[id].at0 = I.pups[id].at; });
+    I.offTick = sc.onTick(function () {
+      var r = $("tgCanvas").getBoundingClientRect(), sr = $("stage").getBoundingClientRect();
+      Object.keys(I.pups).forEach(function (id) {
+        var q = I.pups[id], p = q.pp.screen(), on = p.on && !sc.inGame() && p.x > 0 && p.x < 1 && p.y > 0 && p.y < 1;
+        q.tag.style.display = on ? "" : "none";
+        if (on) q.tag.style.transform = "translate(-50%,-100%) translate(" + Math.round(r.left - sr.left + p.x * r.width) + "px," + Math.round(r.top - sr.top + p.y * r.height) + "px)";
+      });
+    });
+  }
+  async function homeIsle() {   // sa sariling isla: bukas ang channel para makita ang mga bumibisita
+    if (!sc || !window.TMN_RT || !window.TMN_API) return;
+    try { if (!myKey) myKey = (await TMN_API.call("tigoSocial", "visit", {})).key; if (!visit && !flying) isleJoin(myKey, null); } catch (e) {}
+  }
+  function paintVisit() {
+    var b = $("tgVisit"); $("stage").classList.toggle("visiting", !!visit); b.classList.toggle("hidden", !visit);
+    if (visit) b.innerHTML = '<span class="tg-visit-t">🏝️ <b translate="no">@' + UI.esc(visit.user.username) + "</b>'s island" + (visit.online ? "" : " <small>(away)</small>") + "</span>" +
+      '<button type="button" class="tg-vbtn" data-v="chat" aria-label="Chat">💬</button><button type="button" class="tg-vbtn go" data-v="home">🏠 Home</button>';
+    else b.innerHTML = "";
+    placeVisit();
+  }
+  function placeVisit() {   // sa ilalim mismo ng dock (kahit anong ayos ng screen), para hindi tumama sa joystick, mga button o sa "Sit"
+    var b = $("tgVisit"); if (!visit || !b) return;
+    var s = $("stage").getBoundingClientRect(), d = $("tgDock").getBoundingClientRect(), x = $("stage").querySelector(".tg-xp").getBoundingClientRect();
+    b.style.top = Math.round(Math.max(d.bottom, x.bottom) - s.top + 8) + "px";
+  }
+  window.addEventListener("resize", function () { setTimeout(placeVisit, 250); });
+  async function takeOff(label) {
+    flying = true; playing = true; $("stage").classList.add("playing", "flying"); $("tgDoorBar").innerHTML = ""; ctxPaint("");
+    if (decor) decor.close(); if (closet) closet.close(); if (fisher) fisher.stop && fisher.stop();
+    if (talk) talk.idle(false);
+    try { var fl = await mod("flight"); if (voice) voice.sfx("go"); await fl.fly(sc, { stage: $("stage"), label: label, reduced: reduced, seconds: Number($("stage").dataset.fly) || 5 }); } catch (e) { console.error(e); }
+    flying = false; playing = false; $("stage").classList.remove("playing", "flying"); if (talk) talk.idle(true);
+  }
+  async function visitFriend(u) {
+    if (!sc) { toast("Visiting needs 3D (WebGL) on this device."); return; }
+    if (playing || flying) return;
+    if ((live() || {}).asleep) { toast("Shh… Tigo is sleeping. Wake up first ☀️"); return; }
+    if (visit && visit.user.id === u.id) { toast("You're already on @" + u.username + "'s island."); return; }
+    var r;
+    try { r = await TMN_API.call("tigoSocial", "visit", { user_id: u.id }); } catch (e) { toast(e.message); return; }
+    isleLeave();
+    await takeOff("✈️ Flying to @" + r.user.username + "'s island…");
+    visit = r; sc.setRoom(r.pet.room); sc.setFarm(null); paintVisit(); isleJoin(r.key, r);
+    toast("Welcome to @" + r.user.username + "'s island! 🏝️"); sc.jump();
+  }
+  async function flyHome() {
+    if (!visit || playing || flying) return;
+    isleLeave();
+    await takeOff("✈️ Flying home…");
+    visit = null; sc.setRoom(pet.room); syncFarm(); paintVisit(); homeIsle(); say("home", { still: true });
+  }
+  $("tgVisit").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-v]"); if (!b || !visit) return;
+    if (b.dataset.v === "home") flyHome(); else openSocial("chats", visit.user.id);
+  });
+  window.addEventListener("pagehide", isleLeave);
+
   function doAction(a) {
     if (a === "feed") return feedMenu();
     if (a === "closet") return openCloset();
     if (a === "avatar") return openAvatar();
     if (a === "games") return openGames();
+    if (a === "friends") return openSocial("friends");
+    if (a === "world") return openSocial("world");
+    if (visit && ["feed", "play", "clean", "sleep", "wake", "closet", "avatar"].indexOf(a) >= 0) { toast("Fly home first 🏠"); return; }
     if (a === "journey") return openJourney();
     if (a === "house") return goHome();
     if (a === "photo") return photo(lvPending);
@@ -503,7 +624,7 @@
   }
   $("tgSide").addEventListener("click", function (e) { var b = e.target.closest(".tg-act[data-a]"); if (b && !b.disabled) doAction(b.dataset.a); });
   $("tgName").addEventListener("click", openCloset);
-  $("tgCoinsBtn").addEventListener("click", openGames);
+  $("tgCoinsBtn").addEventListener("click", function () { openGames(); });
   $("tgSound").addEventListener("click", soundSheet);
 
   // ---------- Tigo app: laging buong screen (walang status bar), at ang ⛶ ay nagiging ✕ Exit ----------

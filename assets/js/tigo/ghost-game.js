@@ -2,7 +2,7 @@
    import { startGhost, MAP_INFO } from "./ghost-game.js"
    const g = startGhost(sc, { voice, mode: "solo"|"duo", role: "host"|"guest", level: "easy"|"medium"|"hard" (LEVELS), seed, net, me:{name,color}, partner:{name,color},
                               onHud(h), onButtons(b), onEnd({ score, win, keys, ms, label }) })
-     g.go() pagkatapos ng 3-2-1 · g.stop() · g.hide() · g.flash() · g.view() → palit ng camera ("top" / "close" sa likod, naiikot) · g.look(dx, dy)
+     g.go() pagkatapos ng 3-2-1 · g.stop() · g.hide() · g.flash() · g.view() → palit ng camera ("top" / "close" sa likod, naiikot) · g.look(dx, dy) (ikot; sa "top" pahalang lang) · g.zoom(k) (pinch/gulong)
    Laro: kunin ang lahat ng 🔑 (solo 3, duo 4), saka pumunta sa EXIT. Ang multo ay gumagala; kapag nakita ka, hahabulin ka.
      🚪 Hide sa tabi ng locker (hanggang 8 s) · 🔦 Flash (3 beses) = matitigilan ang multo nang 2.5 s · 5 minuto lang.
      Solo: 2 buhay. Duo: kapag nahuli, babagsak ka — tumayo sa tabi ng kasama nang 2 s para buhayin siya. Pareho = talo.
@@ -98,7 +98,7 @@ function sees(ax, az, bx, bz) {
 export function startGhost(sc, { voice, mode = "solo", role = "host", level = "easy", seed = 1, net = null, me: meInfo = {}, partner: pInfo = null, onHud, onButtons, onEnd } = {}) {
   const duo = mode === "duo" && !!net, host = !duo || role === "host";
   const LV = LEVELS[level] || LEVELS.easy; if (!LEVELS[level]) level = "easy"; useMap(level);
-  const view = { mode: "top", yaw: Math.PI, pitch: 0.8 };   // camera: "top" (mula sa itaas) o "close" (sa likod, naiikot)
+  const view = { mode: "top", yaw: Math.PI, pitch: 0.8, zoom: 1 };   // camera: "top" (mula sa itaas) o "close" (sa likod, naiikot)
   const R = rng(seed);
   const world = new THREE.Group(); sc.scene.add(world);
   const own = []; const keep = (x) => { own.push(x); return x; };
@@ -375,18 +375,21 @@ export function startGhost(sc, { voice, mode = "solo", role = "host", level = "e
   function cam(camera, dt) {
     const tall = camera.aspect < 0.8, k = tall ? 1.45 : 1.05;
     if (view.mode === "close") {   // sa likod ni Tigo, naiikot sa paghila ng screen
-      const fx = Math.sin(view.yaw), fz = Math.cos(view.yaw), d = 2.5 * (tall ? 1.3 : 1), cp = Math.cos(view.pitch);
+      const fx = Math.sin(view.yaw), fz = Math.cos(view.yaw), d = 2.5 * (tall ? 1.3 : 1) * view.zoom, cp = Math.cos(view.pitch);
       camPos.set(me.x - fx * d * cp, 0.3 + Math.sin(view.pitch) * d, me.z - fz * d * cp);
       camera.position.lerp(camPos, Math.min(1, dt * 7));
       look.set(me.x + fx * 0.5, 0.3, me.z + fz * 0.5); camera.lookAt(look); return;
     }
-    camPos.set(me.x, 5.2 * k, me.z + 3.9 * k);
+    // top: mula sa itaas; naiikot din (hila pakaliwa/pakanan) at nalalapit/nalalayo (pinch) — 0.11.47
+    const tx = Math.sin(view.yaw), tz = Math.cos(view.yaw), kz = k * view.zoom;
+    camPos.set(me.x - tx * 3.9 * kz, 5.2 * kz, me.z - tz * 3.9 * kz);
     camera.position.lerp(camPos, Math.min(1, dt * 5));
-    look.set(me.x, 0, me.z + (tall ? 0.9 : 0.2));
+    look.set(me.x - tx * (tall ? 0.9 : 0.2), 0, me.z - tz * (tall ? 0.9 : 0.2));
     camera.lookAt(look);
   }
   function setView(m) { view.mode = m === "close" ? "close" : "top"; if (view.mode === "top") view.yaw = Math.PI; return view.mode; }
-  function lookBy(dx, dy) { if (view.mode !== "close") return; view.yaw -= dx * 0.0062; view.pitch = Math.max(0.45, Math.min(1.3, view.pitch + dy * 0.0045)); }
+  function lookBy(dx, dy) { view.yaw -= dx * 0.0062; if (view.mode === "close") view.pitch = Math.max(0.45, Math.min(1.3, view.pitch + dy * 0.0045)); }
+  function zoomBy(kk) { if (kk > 0) view.zoom = Math.max(0.6, Math.min(1.6, view.zoom / kk)); return view.zoom; }
   function finish(win, fromNet) {
     if (done) return; done = true; running = false;
     if (net && host && !fromNet) net.send("end", { win: win ? 1 : 0 });
@@ -405,7 +408,7 @@ export function startGhost(sc, { voice, mode = "solo", role = "host", level = "e
   }
   hud();
   return {
-    view: (m) => setView(m || (view.mode === "top" ? "close" : "top")), look: lookBy, level,
+    view: (m) => setView(m || (view.mode === "top" ? "close" : "top")), look: lookBy, zoom: zoomBy, viewState: () => ({ mode: view.mode, yaw: view.yaw, zoom: view.zoom }), level,
     go() { running = true; t0 = performance.now(); },
     stop() { if (net) net.send("bye", {}); finish(false, true); },
     hide, flash,

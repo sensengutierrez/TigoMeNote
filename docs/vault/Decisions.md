@@ -131,6 +131,10 @@ updated: 2026-10-24
 | 2026-11-11 | Lights Out: ang malalaking mapa ay ginagawa ng code (`genMap`), hindi iginuguhit nang mano-mano | Laging may daan (walang nakakulong na kwarto) at madaling dagdagan ng antas |
 | 2026-11-11 | Text post = ordinaryong post na walang media (walang bagong table); kulay ng card ay galing sa id ng post | Walang schema change; parehong pila, moderation at privacy ng photo post |
 | 2026-11-11 | Long-press (0.55 s) sa gamit ang shortcut sa Decorate; tap at drag ay para pa rin sa lakad at ikot ng view | Hindi nasasagasaan ang dati nang kontrol sa loob ng bahay |
+| 2026-11-11 | Friends sa Tigo = mga fina-follow mo (walang hiwalay na friend request) | Iisang sistema lang; gumagana na ang private account at request |
+| 2026-11-11 | World chat: text lang, walang link, filter sa server (pati "flag" ay hinaharang), 1 kada 3 s, 300 kada araw, Mute + Report, nabubura pagkalipas ng 7 araw | Pampublikong chat sa app na 13+; mas ligtas kaysa habulin pagkatapos |
+| 2026-11-11 | Pasyal: galaw lang ang dumadaan sa realtime (channel na may lihim na `isle_key`); ang usapan ay sa DM na may filter | Walang chat na lumulusot sa moderation; hindi mahuhulaan ang channel |
+| 2026-11-11 | Ang 3v3 MOBA ay hiwalay na release pagkatapos nito | Malaki (4 na hero, tore, bots, online); mas madaling subukan nang hiwalay |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

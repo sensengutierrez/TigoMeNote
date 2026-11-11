@@ -13,7 +13,7 @@
 
   window.TMN_CONFIG = Object.freeze({
     appName: "TigoMeNote",
-    version: "0.11.46",
+    version: "0.11.47",
     root: root,
     supabaseUrl: SUPABASE_URL,
     // Public key lang ito (ligtas sa browser). Gagamitin sa Realtime ng messenger.
@@ -34,7 +34,8 @@
       pet: SUPABASE_URL + "/functions/v1/pet-fast" + REGION,
       sounds: SUPABASE_URL + "/functions/v1/sounds-fast" + REGION,
       crash: SUPABASE_URL + "/functions/v1/crash-fast" + REGION,
-      games: SUPABASE_URL + "/functions/v1/games-fast" + REGION
+      games: SUPABASE_URL + "/functions/v1/games-fast" + REGION,
+      tigoSocial: SUPABASE_URL + "/functions/v1/tigo-social" + REGION
       // brain: SUPABASE_URL + "/functions/v1/brain-fast" + REGION,
       // chat:  SUPABASE_URL + "/functions/v1/chat" + REGION,
     }),

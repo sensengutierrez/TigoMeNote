@@ -154,7 +154,7 @@ function friendsHtml(list) {
       (f.joinable ? '<button type="button" class="tg-go" data-fj="' + i + '">Join</button>' : f.game ? '<span class="tg-soon">Full</span>' : "") + "</div>";
   }).join("") + "</div>";
 }
-export function gamesNode(onPick, info) {
+export function gamesNode(onPick, info, join) {   // join = { game, code } → diretso sa room ng kaibigan (galing sa Friends)
   const box = document.createElement("div"); box.className = "tg-games";
   box._cleanup = () => {};
   const home = () => { const n = gamesNode(onPick, info); box.replaceChildren(...n.childNodes); box._cleanup = () => {}; box._friends = n._friends; n._adopt(box); };
@@ -172,6 +172,7 @@ export function gamesNode(onPick, info) {
     TMN_API.call("games", "friends", {}).then((r) => { target._friends = r.list || []; const slot = target.querySelector(".tg-fr-slot"); if (slot) slot.innerHTML = friendsHtml(target._friends); }).catch(() => {});
   };
   box._adopt(box);
+  if (join && join.game && join.code) setTimeout(() => openGame(join.game, join.code), 0);
   box.addEventListener("click", (e) => {
     if (box.onclick) return;   // nasa menu ng isang laro
     const fj = e.target.closest("[data-fj]");
@@ -270,7 +271,7 @@ export async function runGame(kind, { sc, stage, voice, seconds, track, onJump, 
       const vb = btns.querySelector(".view");
       const setView = (m) => { if (!game || !game.view) return; const v = game.view(m); vb.querySelector("small").textContent = v === "close" ? "Close" : "Top"; try { localStorage.setItem("tmnGhostView", v); } catch (e) {} };
       vb.addEventListener("pointerdown", (e) => { e.preventDefault(); setView(); });
-      const offLook = touchLook(stage, { onDrag: (dx, dy) => { if (game && game.look) game.look(dx, dy); } });
+      const offLook = touchLook(stage, { onDrag: (dx, dy) => { if (game && game.look) game.look(dx, dy); }, onPinch: (k) => { if (game && game.zoom) game.zoom(k); }, onWheel: (dy) => { if (game && game.zoom) game.zoom(Math.exp(-dy * 0.0012)); } });
       const keys = (e) => { if (e.repeat || !game) return; const k = e.key.toLowerCase(); if (k === "h") game.hide(); if (k === "f") game.flash(); };
       window.addEventListener("keydown", keys);
       import("./ghost-game.js").then((x) => {

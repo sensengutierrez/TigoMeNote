@@ -17,6 +17,7 @@
      sc.ray(x, y) → Raycaster    · sc.setClaim(fn) → kung may ibang gagamit ng hila sa screen (paglipat ng gamit)
      opts.onDoor(state)          → "near" (malapit sa pinto sa labas) | "room" (nasa loob) | null
      sc.add(opts) / remove(t)    → bisita (Tigo ng kaibigan); sumusunod siya kay Tigo habang naglalakad
+     sc.puppet(opts) → { t, set({x,z,ry,room,pose}), screen(), remove() } → Tigo ng ibang tao na galaw ay galing sa network · sc.netState()
      sc.dance("dance"|"budots"|"robot") → sec  → solo na sayaw (💃 Groove · 🕺 Budots · 🤖 Robot); sasabay ang bisita
      sc.together(kind) → sec     → sabay na galaw: "dance" | "highfive" | "chase" (habulan) | "spin" (ikot) | "bow"
      sc.hasFriends()
@@ -91,6 +92,37 @@ export function createScene(canvas, opts = {}) {
   function remove(t) {
     const i = pets.indexOf(t); if (i <= 0) return;
     pets.splice(i, 1); friends.splice(friends.findIndex((f) => f.t === t), 1); scene.remove(t.group); t.dispose();
+  }
+  // ---- puppet: Tigo ng ibang tao na ang galaw ay galing sa network (pasyal sa isla) ----
+  const puppets = [];
+  function puppet(o) {
+    const t = createTigo(o || {}); t.group.scale.setScalar(0.92); scene.add(t.group); pets.push(t);
+    const q = { t, x: 0.9, z: 1.2, tx: 0.9, tz: 1.2, ry: 0, room: false, pose: "stand", got: false };
+    t.group.position.set(q.x, 0, q.z); puppets.push(q);
+    return {
+      t,
+      set(d) {   // { x, z, ry, room, pose }
+        if (!Number.isFinite(d.x) || !Number.isFinite(d.z)) return;
+        q.tx = Math.max(-12, Math.min(12, d.x)); q.tz = Math.max(-12, Math.min(12, d.z)); q.ry = Number(d.ry) || 0; q.room = !!d.room;
+        const ps = d.pose === "sit" ? "sit" : "stand";
+        if (ps !== q.pose) { q.pose = ps; if (t.sitPose) t.sitPose(ps === "sit"); }
+        if (!q.got || Math.hypot(q.tx - q.x, q.tz - q.z) > 4) { q.x = q.tx; q.z = q.tz; q.got = true; }
+      },
+      screen() { const v = new THREE.Vector3(q.x, 1.25, q.z).project(camera); return { x: (v.x + 1) / 2, y: (1 - v.y) / 2, on: t.group.visible && v.z < 1 }; },
+      remove() {
+        const i = puppets.indexOf(q); if (i < 0) return;
+        puppets.splice(i, 1); const k = pets.indexOf(t); if (k > 0) pets.splice(k, 1); scene.remove(t.group); t.dispose();
+      },
+    };
+  }
+  function movePuppets(dt) {
+    puppets.forEach((q) => {
+      q.t.group.visible = q.room === inRoom && !(inside && !inRoom);
+      const dx = q.tx - q.x, dz = q.tz - q.z, d = Math.hypot(dx, dz);
+      if (d > 0.04 && q.pose === "stand") { const st = Math.min(d, dt * 3.2); q.x += dx / d * st; q.z += dz / d * st; q.t.walk(Math.min(1, d / 0.5), Math.atan2(dx, dz)); }
+      else { q.t.walk(0); q.t.face(q.ry); }
+      q.t.group.position.x = q.x; q.t.group.position.z = q.z;
+    });
   }
   // lakad ng bisita papunta sa (gx, gz)
   function steer(f, gx, gz, dt, speed = 2.1, faceTo) {
@@ -465,7 +497,7 @@ export function createScene(canvas, opts = {}) {
     if (inside) inside = false;
     if (pose !== "stand") standUp();
     game = g; show = null; auto = null; main.walk(0); main.move(null); setDoor(null);
-    [place && place.group, buddy && buddy.group, zzz, sky.group].concat(friends.map((f) => f.t.group)).forEach((o) => { if (o && o.visible) { o.visible = false; hidden.push(o); } });
+    [place && place.group, buddy && buddy.group, zzz, sky.group].concat(friends.map((f) => f.t.group), puppets.map((q) => q.t.group)).forEach((o) => { if (o && o.visible) { o.visible = false; hidden.push(o); } });
     main.group.visible = true;
   }
   function endGame() {
@@ -488,6 +520,7 @@ export function createScene(canvas, opts = {}) {
     moveMain(dt, updateShow(dt, t));
     updateDance(dt);
     moveFriends(dt);
+    movePuppets(dt);
     pets.forEach((p) => p.update(opts.reduced ? dt * 0.4 : dt, t));
     if (buddy) buddy.update(dt, t, inside && !inRoom ? { x: HOUSE.door.x + 0.3, z: HOUSE.door.z + 0.6 } : me, false);
     if (place) place.update(t);
@@ -514,7 +547,7 @@ export function createScene(canvas, opts = {}) {
   document.addEventListener("tmn:upd", vis);
 
   return {
-    main, add, remove, effect, night, renderer, scene, setBackdrop, setBuddy,
+    main, add, remove, puppet, effect, night, renderer, scene, setBackdrop, setBuddy,
     together, hasFriends() { return friends.length > 0; }, isShowing() { return !!show; },
     beginGame, endGame, sun, camera, rig, inGame() { return !!game; },
     enterRoom() { if (!isNight) enterRoom(); }, leaveRoom() { if (!inside) leaveRoom(); }, inRoom() { return inRoom; },
@@ -573,6 +606,7 @@ export function createScene(canvas, opts = {}) {
     input() { return input(); },
     jump() { if (!inside) { main.jump(); if (buddy) buddy.hop(); } },
     mainState() { return { x: me.x, z: me.z, y: main.height() }; },
+    netState() { return { x: Math.round(me.x * 100) / 100, z: Math.round(me.z * 100) / 100, ry: Math.round((main.group.rotation.y || 0) * 100) / 100, room: inRoom, pose: pose === "sit" ? "sit" : "stand", in: inside && !inRoom }; },
     _warp(x, z) { if (!game && !inRoom && pose === "stand") { auto = null; me.x = x; me.z = z; main.group.position.set(x, 0, z); } },   // para sa tests
     onTick(fn) { ticks.add(fn); return () => ticks.delete(fn); },
     isInside() { return inside; },

@@ -570,3 +570,62 @@ body.tg-full, body.tg-in-game { overflow: hidden; }   /* hindi "tg-game": iyon a
   .tg-stage.game .tg-dock-min { height: 36px; width: 26px; }
   .tg-stage.game .tg-dock, .tg-stage.game .tg-dock-acts, .tg-stage.game .tg-dock-ctx { gap: 5px; }
 }
+
+/* ---- 0.11.47: Friends & chat (social-ui.js), pasyal sa isla (banner, pangalan sa ulo), lipad (flight.js) ---- */
+.ts { display: grid; gap: 10px; min-width: 0; }
+.ts-tabs { display: grid; grid-template-columns: repeat(3, 1fr); }
+.ts-tabs button { white-space: nowrap; }
+.ts-body { display: grid; gap: 8px; min-width: 0; }
+.ts-note { margin: 0; color: var(--text-2, var(--muted)); font-size: 12.5px; text-align: center; }
+.ts-h { margin: 4px 0 0; font-size: 12px; font-weight: 700; color: var(--text-2, var(--muted)); text-transform: uppercase; letter-spacing: .04em; }
+.ts-msgs { display: flex; flex-direction: column; gap: 6px; height: min(44dvh, 360px); min-height: 120px; overflow-y: auto; overscroll-behavior: contain; padding: 8px; border-radius: 14px; background: var(--surface-2); }
+.ts-msg { display: block; text-align: left; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 6px 10px; overflow-wrap: anywhere; cursor: pointer; }
+.ts-msg.me { background: color-mix(in srgb, var(--accent, #ff6a3d) 12%, var(--surface)); }
+.ts-msg b { color: var(--accent, #ff6a3d); font-size: 12.5px; }
+.ts-msg small, .ts-b small { margin-left: 6px; color: var(--text-2, var(--muted)); font-size: 10.5px; white-space: nowrap; }
+.ts-menu { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); }
+.ts-menu-t { flex: 1 1 100%; font-size: 12.5px; color: var(--text-2, var(--muted)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ts-send, .ts-find { display: flex; gap: 8px; min-width: 0; }
+.ts-send .input, .ts-find .input { flex: 1; min-width: 0; }
+.ts-list, .ts-found { display: grid; gap: 6px; min-width: 0; }
+.ts-conv .ts-msgs { height: min(48dvh, 400px); }
+.ts-friends .ts-list, .ts-chats .ts-list, .ts-group .ts-list { max-height: min(48dvh, 400px); overflow-y: auto; overscroll-behavior: contain; align-content: start; }
+.ts-row { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 14px; background: var(--surface-2); min-width: 0; border: 0; font: inherit; color: var(--text); text-align: left; width: 100%; }
+button.ts-row, label.ts-row { cursor: pointer; }
+.ts-av { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line); font-weight: 700; object-fit: cover; }
+.ts-main { flex: 1; min-width: 0; display: grid; }
+.ts-main b, .ts-main small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ts-main small { color: var(--text-2, var(--muted)); font-size: 12px; }
+.ts-on { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #2fbf71; margin-right: 5px; }
+.ts-acts { display: flex; gap: 4px; flex: none; }
+.ts-acts .btn { padding-inline: 9px; white-space: nowrap; }
+.ts-badge { flex: none; min-width: 20px; padding: 2px 6px; border-radius: 999px; background: #ff5a36; color: #fff; font-size: 11px; font-style: normal; font-weight: 700; text-align: center; }
+.ts-bar { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ts-bar b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ts-bar > a:last-child, .ts-chats .ts-bar > a { margin-left: auto; }
+.ts-b { align-self: flex-start; max-width: 84%; padding: 6px 10px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); overflow-wrap: anywhere; }
+.ts-b.me { align-self: flex-end; background: var(--accent, #ff6a3d); color: #fff; border-color: transparent; }
+.ts-b.me small { color: rgba(255,255,255,.8); }
+.ts-b b { display: block; font-size: 11.5px; color: var(--accent, #ff6a3d); }
+.ts-b svg { display: block; }
+.ts-sys { margin: 2px 0; text-align: center; font-size: 11.5px; color: var(--text-2, var(--muted)); }
+.ts-pick input { width: 18px; height: 18px; flex: none; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .ts-msgs, .ts-conv .ts-msgs { height: max(96px, calc(100dvh - 250px)); }
+  .ts-friends .ts-list, .ts-chats .ts-list, .ts-group .ts-list { max-height: max(96px, calc(100dvh - 230px)); }
+  .ts-world > .ts-note { display: none; }
+}
+.tg-visit { position: absolute; left: 12px; top: 120px; z-index: 4; display: flex; align-items: center; gap: 6px; max-width: calc(100% - 24px);
+  padding: 5px 6px 5px 12px; border-radius: 999px; background: rgba(255,255,255,.92); color: #1d1d22; box-shadow: 0 4px 14px rgba(0,0,0,.16); font-size: 13px; }
+.tg-visit.hidden { display: none; }
+.tg-visit-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tg-vbtn { flex: none; border: 0; border-radius: 999px; min-height: 32px; padding: 4px 10px; background: #eef0f4; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+.tg-vbtn.go { background: #ff5a36; color: #fff; }
+.tg-stage.playing .tg-visit, .tg-stage.sheet-open .tg-visit { display: none; }
+.tg-stage.visiting .tg-dock-acts .tg-dbtn:not([data-a="friends"]):not([data-a="games"]):not([data-a="photo"]):not(#tgSound):not(#tgFull), .tg-stage.visiting [data-door="decor"], .tg-stage.visiting .tg-size { display: none !important; }
+.tg-tags { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; }
+.tg-tag { position: absolute; left: 0; top: 0; padding: 2px 8px; border-radius: 999px; background: rgba(20,20,24,.62); color: #fff; font-size: 11.5px; font-weight: 700; white-space: nowrap; will-change: transform; }
+.tg-stage.playing .tg-tags { display: none; }
+.tg-fly { position: absolute; left: 50%; bottom: max(26px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 6; max-width: calc(100% - 32px); padding: 9px 16px; border-radius: 999px;
+  background: rgba(20,20,24,.72); color: #fff; font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tg-stage.flying .tg-pad, .tg-stage.flying .tg-btns, .tg-stage.flying .tg-top, .tg-stage.flying .tg-xp, .tg-stage.flying .tg-toast { display: none !important; }
