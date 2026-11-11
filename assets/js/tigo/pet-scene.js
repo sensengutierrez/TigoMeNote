@@ -522,7 +522,8 @@ export function createScene(canvas, opts = {}) {
     moveFriends(dt);
     movePuppets(dt);
     pets.forEach((p) => p.update(opts.reduced ? dt * 0.4 : dt, t));
-    if (buddy) buddy.update(dt, t, inside && !inRoom ? { x: HOUSE.door.x + 0.3, z: HOUSE.door.z + 0.6 } : me, false);
+    const bedB = inRoom && pose === "bed" && room ? room.bedSpot() : null;   // tulog si Tigo sa kama → ang alaga ay humihiga sa sahig sa tabi ng kama
+    if (buddy) buddy.update(dt, t, bedB ? { x: bedB.beside.x + 0.75, z: bedB.beside.z - 0.35 + 0.25 } : inside && !inRoom ? { x: HOUSE.door.x + 0.3, z: HOUSE.door.z + 0.6 } : me, !!bedB);
     if (place) place.update(t);
     tickRod(t);
     sky.update(t);

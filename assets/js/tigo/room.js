@@ -110,6 +110,7 @@ export function buildRoom() {
   const clamp = (v, a) => Math.max(-a, Math.min(a, v));
   function place(e) {
     const f = FURN[e.id] || { w: 0.5, d: 0.5 };
+    if (!f.wall) e.r = round((((Math.round((e.r || 0) / (Math.PI / 4)) % 8) + 8) % 8) * Math.PI / 4);   // ituwid ang dating tabinging ikot (hal. 3.34 → 3.14)
     if (f.wall) {
       // dumikit sa pinakamalapit na dingding (hindi sa pinto)
       const dx = [e.x + HW, HW - e.x], dz = [e.z + HD, HD - e.z], m = Math.min(dx[0], dx[1], dz[0]);
@@ -232,7 +233,7 @@ export function buildRoom() {
     style() { return { ...style }; },
     list() { return entries.map((e) => ({ id: e.id, x: e.x, z: e.z, r: e.r })); },
     move(e, x, z) { e.x = x; e.z = z; place(e); },
-    rotate(e) { e.r = round(((e.r || 0) + Math.PI / 4) % (Math.PI * 2)); place(e); },
+    rotate(e) { e.r = round((((Math.round((e.r || 0) / (Math.PI / 4)) + 1) % 8) * Math.PI) / 4); place(e); },   // laging eksaktong hakbang na 45° (walang naiipong mali)
     selected() { return selected; },
     dispose() { entries.slice().forEach(removeEntry); disp.forEach((d) => { if (d.map) d.map.dispose(); d.dispose(); }); },
   };

@@ -206,6 +206,9 @@
     var top0 = st.getBoundingClientRect().top;
     var xp = st.querySelector(".tg-xp"), mb = Math.max(mini.getBoundingClientRect().bottom, xp ? xp.getBoundingClientRect().bottom : 0) - top0;   // sa ilalim ng mga bar AT ng XP bar (dati natatakpan ang XP bar)
     if (mb > 0) dock.style.top = Math.round(mb + 6) + "px";
+    // ang menu ay patayo sa kaliwa: ilang button ang kasya bago ang joystick (sobra = pangalawang hanay)
+    var bh = (dock.querySelector(".tg-dbtn.q") || dock).offsetHeight || 36, pt0 = pad ? pad.getBoundingClientRect().top - top0 : 0, room0 = (pt0 > mb + 40 ? pt0 : st.clientHeight - 130) - (mb + 6) - 10;
+    dock.style.setProperty("--rows", String(Math.max(2, Math.min(8, Math.floor((room0 + 5) / (bh + 5))))));
     if (!size || getComputedStyle(size).display === "none") return;
     var db = dock.getBoundingClientRect().bottom - top0, y = Math.round(db + 10);
     var lim = (pad ? pad.getBoundingClientRect().top - top0 : st.clientHeight) - 12;
@@ -495,15 +498,70 @@
   }
   // ---------- Friends & chat (tigo/social-ui.js) · pasyal sa isla ng kaibigan (tigo/flight.js) ----------
   var visit = null, flying = false, isle = null, myKey = null, socialM = null;
+  // Sa buong-screen na laro ("game"): panel sa kaliwa (kita pa rin ang laro, parang MMO). Kung hindi: sheet (modal).
   async function openSocial(tab, chatUid) {
     var g = await mod("social-ui");
     if (socialM) { try { socialM.close(); } catch (e) {} }
-    var node = g.socialNode({ tab: tab || "friends", me: window.TMN_USER || {}, toast: toast,
+    $("tgChatDot").classList.add("hidden"); tickHide();
+    var node = g.socialNode({ tab: tab || "world", me: window.TMN_USER || {}, toast: toast,
       onVisit: function (f) { m.close(); visitFriend(f.user); },
       onJoin: function (game, code) { m.close(); openGames({ game: game, code: code }); } });
-    var m = socialM = TMN_MODAL.open({ title: "Friends & chat", size: "sm", cls: "modal-sheet modal-social", body: node, onClose: function () { node._cleanup(); if (socialM === m) socialM = null; } });
+    var m;
+    if ($("stage").classList.contains("game")) {
+      $("tgChatB").replaceChildren(node); $("tgChatP").classList.remove("hidden"); $("stage").classList.add("chat-open");
+      m = { close: function () { if (socialM !== m) return; socialM = null; node._cleanup(); $("tgChatP").classList.add("hidden"); $("stage").classList.remove("chat-open"); $("tgChatB").innerHTML = ""; } };
+    } else m = TMN_MODAL.open({ title: "Friends & chat", size: "sm", cls: "modal-sheet modal-social", body: node, onClose: function () { node._cleanup(); if (socialM === m) socialM = null; } });
+    socialM = m;
     if (chatUid) node._chatWith(chatUid);
   }
+  $("tgChatX").addEventListener("click", function () { if (socialM) socialM.close(); });
+  // ---- World chat sa ibabaw ng laro: huling 3 mensahe, kusang nawawala; pindutin = buksan ang chat ----
+  var tick = { last: 0, list: [], t: 0, at: 0, busy: false, first: true };
+  function tickHide() { clearTimeout(tick.t); $("tgTicker").classList.add("hidden"); }
+  function tickShow() {
+    var el = $("tgTicker"); if (!tick.list.length || socialM) return;
+    el.innerHTML = tick.list.slice(-3).map(function (m) { return '<span><b translate="no">@' + UI.esc(m.user.username) + "</b> " + UI.esc(m.body) + "</span>"; }).join("");
+    el.classList.remove("hidden"); clearTimeout(tick.t); tick.t = setTimeout(tickHide, 9000);
+  }
+  async function worldPull() {
+    if (tick.busy || document.hidden || !window.TMN_API || !navigator.onLine) return;
+    if (Date.now() - tick.at < 2500) { clearTimeout(tick.w); tick.w = setTimeout(worldPull, 2600); return; }
+    tick.busy = true; tick.at = Date.now();
+    try {
+      var r = await TMN_API.call("tigoSocial", "world", tick.last ? { after: tick.last } : {}), l = r.list || [];
+      if (l.length) {
+        tick.last = Math.max(tick.last, l[l.length - 1].id);
+        var fresh = tick.first ? l.slice(-2) : l.filter(function (m) { return !m.me; });
+        if (fresh.length) { tick.list = tick.list.concat(fresh).slice(-3); if (!socialM) { tickShow(); if (!tick.first) $("tgChatDot").classList.remove("hidden"); } }
+      }
+    } catch (e) {}
+    tick.first = false; tick.busy = false;
+  }
+  $("tgTicker").addEventListener("click", function () { openSocial("world"); });
+  setTimeout(function () { worldPull(); if (window.TMN_RT) TMN_RT.join("tmn-tigo-world", function () { worldPull(); }); }, 2500);
+  // ---- ＋ Game menu: lahat ng pindutan at ang lagay ni Tigo sa isang lugar ----
+  function openMenu() {
+    var p = live() || {}, zz = !!p.asleep, exit = $("tgExit");
+    var it = [["feed", "🍽️", "Feed", zz], ["play", "⚽", "Play", zz], ["clean", "🛁", "Clean"], [zz ? "wake" : "sleep", zz ? "☀️" : "🌙", zz ? "Wake up" : "Sleep"], ["closet", "👗", "Closet"], ["avatar", "🧒", "Avatar"],
+      ["games", "🎮", "Games", zz], ["friends", "👥", "Friends"], ["world", "🌍", "World chat"], ["house", "🏠", "House"], ["journey", "🗺️", "Journey"], ["photo", "📸", "Photo"],
+      ["sound", "🔊", "Sound"], ["full", exit ? "✕" : "⛶", exit ? "Exit" : "Full screen"], ["guide", "📖", "Guide"]];
+    var bar = function (k, ic, nm) { var v = Math.round(p[k] || 0); return '<div class="tgm-row"><span>' + ic + " " + nm + '</span><i class="tgm-bar"><b style="width:' + v + '%"></b></i><b>' + v + "%</b></div>"; };
+    var box = document.createElement("div"); box.className = "tgm";
+    box.innerHTML = '<div class="tgm-stats"><div class="tgm-row"><span>🪙 Coins</span><b>' + (p.coins || 0) + '</b></div><div class="tgm-row"><span>⭐ Level</span><b>' + (p.level || 1) + " · " + Math.max(0, (p.next || 0) - (p.xp || 0)) + ' XP to next</b></div>' +
+      bar("hunger", "🍙", "Food") + bar("joy", "🎈", "Fun") + bar("energy", "⚡", "Energy") + bar("clean", "🫧", "Clean") +
+      '<label class="tgm-row tgm-size"><span>📏 Size</span><input type="range" min="50" max="130" step="5" value="' + Math.round(loadSize() * 100) + '" aria-label="Tigo size"></label></div>' +
+      '<div class="tgm-grid">' + it.map(function (x) { return '<button type="button" class="tgm-b" data-m="' + x[0] + '"' + (x[3] ? " disabled" : "") + "><span>" + x[1] + "</span>" + x[2] + "</button>"; }).join("") + "</div>";
+    var m = TMN_MODAL.open({ title: "Game menu", size: "md", cls: "modal-sheet modal-tgm", body: box });
+    box.querySelector("input[type=range]").addEventListener("input", function () { setSize(Number(this.value) / 100, true); });
+    box.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-m]"); if (!b || b.disabled) return; var k = b.dataset.m; m.close();
+      if (k === "guide") { location.href = "guide.html#g-tigo"; return; }
+      if (k === "sound") { $("tgSound").click(); return; }
+      if (k === "full") { (exit || $("tgFull")).click(); return; }
+      doAction(k);
+    });
+  }
+  $("tgMenu").addEventListener("click", openMenu);
   function myLook() { var p = pet || {}, o = p.outfit || {}; return { n: (window.TMN_USER && TMN_USER.username) || p.name || "friend", c: p.color, av: p.avatar && p.avatar.kind === "kid" ? p.avatar : null, o: { hat: o.hat || null, face: o.face || null, body: o.body || null, hand: o.hand || null } }; }
   function makePup(look) {
     var pp = sc.puppet({ color: look.c || "sky", avatar: look.av || null }), o = look.o || {};
@@ -615,6 +673,7 @@
     if (a === "avatar") return openAvatar();
     if (a === "games") return openGames();
     if (a === "friends") return openSocial("friends");
+    if (a === "chat") { if (socialM) { socialM.close(); return; } return openSocial("world"); }
     if (a === "world") return openSocial("world");
     if (visit && ["feed", "play", "clean", "sleep", "wake", "closet", "avatar"].indexOf(a) >= 0) { toast("Fly home first 🏠"); return; }
     if (a === "journey") return openJourney();

@@ -77,6 +77,8 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-11 · Tigo: hindi lumalabas ang pindutan sa labas → `.tg-sheet:not(.min)` ay laging nasa pahina → `stage.sheet-open` ang tamang tsek (`pages/tigo.js`)
 - 2026-11-11 · Tigo (landscape): natatakpan ng dock ang XP bar → ang `stack()` ay sumusukat lang sa `#tgMini` na lumipat na sa itaas → `Math.max(mini.bottom, xp.bottom)` (`pages/tigo.js`)
 - 2026-11-11 · Lipad: nahuhuli ang camera kapag mabagal ang phone → `lerp` na nakadepende sa frame → ginawang ayon sa `dt` (`1 - exp(-dt*6)`) (`tigo/flight.js`)
+- 2026-11-11 · Bahay: tabingi ang sofa/TV → ang ikot ay `round(r + π/4)` kaya naiipon ang mali ng rounding (0.79 × n) → hakbang na buo (0–7) × π/4, at itinutuwid ang luma sa `place()` (`tigo/room.js`)
+- 2026-11-11 · Bahay: ang alaga ay nasa ibabaw ng kama → sinusundan si Tigo kahit nakahiga → sa `bedSpot().beside` na siya humihiga (`tigo/pet-scene.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

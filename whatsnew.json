@@ -1,4 +1,10 @@
 {
+  "0.11.48": [
+    "Tigo: cleaner screen — a few quick buttons on the left, and a new ＋ Game menu for everything else",
+    "World chat now shows on the game screen; in landscape the chat opens as a side panel",
+    "House: press and hold to edit an item (one tap no longer moves it); crooked furniture is straightened",
+    "Tigo's pet now lies on the floor beside the bed"
+  ],
   "0.11.47": [
     "New in Tigo: 👥 Friends — find people, follow, see who is online and Join the game they are playing",
     "New: 🌍 World chat for everyone in Tigo (with filter, Mute and Report), plus your private chats and groups",

@@ -42,7 +42,7 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
     box.innerHTML =
       '<div class="tg-cl-head"><h3>🏠 Decorate</h3><span class="tg-save faint small">' + saving + '</span><span class="tg-coins">🪙 <b>' + pet.coins + '</b></span><button type="button" class="btn btn-ghost btn-sm" data-close>Done</button></div>' +
       '<div class="tg-tabs" role="tablist">' + HOME_TABS.map((t) => '<button type="button" role="tab" aria-selected="' + (t.id === tab) + '" data-tab="' + t.id + '"><span>' + t.icon + "</span><small>" + t.name + "</small></button>").join("") + "</div>" +
-      '<p class="faint small tg-decor-tip">' + (tab === "furn" ? "Tap to add. In the house, drag a thing to move it." : "Tap to try it on the house.") + "</p>" +
+      '<p class="faint small tg-decor-tip">' + (tab === "furn" ? "Tap to add. In the house, press and hold a thing, then drag it." : "Tap to try it on the house.") + "</p>" +
       // Buy / try-on bar: nasa ITAAS ng listahan (dati nasa pinakababa, kailangang mag-scroll)
       (buying ? '<div class="tg-cl-buy"><span>' + buying.icon + " " + esc(buying.name) + '</span><button type="button" class="btn btn-ghost btn-sm" data-cancel>Cancel</button>' +
         '<button type="button" class="btn btn-primary btn-sm" data-buy' + (buying.price > pet.coins ? " disabled" : "") + ">Buy 🪙 " + buying.price + "</button>" +
@@ -112,12 +112,20 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
 
   // ---------- hila ng gamit sa 3D ----------
   let drag = null;
+  const lp = { t: 0, x: 0, y: 0, id: 0 };
+  function lpEnd() { clearTimeout(lp.t); lp.t = 0; window.removeEventListener("pointermove", lpMove); window.removeEventListener("pointerup", lpEnd); window.removeEventListener("pointercancel", lpEnd); }
+  function lpMove(ev) { if (ev.pointerId === lp.id && Math.hypot(ev.clientX - lp.x, ev.clientY - lp.y) > 10) lpEnd(); }
   const ndc = (ev) => { const r = canvas.getBoundingClientRect(); return [((ev.clientX - r.left) / r.width) * 2 - 1, -(((ev.clientY - r.top) / r.height) * 2 - 1)]; };
   function claim(ev) {
     if (!sc.room()) return false;
     const [x, y] = ndc(ev), ray = sc.ray(x, y), hit = room.pick(ray);
     if (!hit) { if (room.selected()) select(null); return false; }
-    select(hit);
+    if (hit !== room.selected()) {   // hindi pa napili: kailangang pindutin nang matagal (isang tap = walang mangyayari; hila = ikot ng view)
+      clearTimeout(lp.t); lp.x = ev.clientX; lp.y = ev.clientY; lp.id = ev.pointerId;
+      lp.t = setTimeout(() => { lp.t = 0; if (sc.room()) { select(hit); if (navigator.vibrate) try { navigator.vibrate(12); } catch (e) {} } }, 400);
+      window.addEventListener("pointermove", lpMove); window.addEventListener("pointerup", lpEnd); window.addEventListener("pointercancel", lpEnd);
+      return false;
+    }
     const p = room.floorPoint(ray) || { x: hit.x, z: hit.z };
     drag = { id: ev.pointerId, e: hit, dx: hit.x - p.x, dz: hit.z - p.z, moved: false };
     window.addEventListener("pointermove", onMove); window.addEventListener("pointerup", onUp); window.addEventListener("pointercancel", onUp);
@@ -138,7 +146,7 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
 
   function close() {
     if (timer) save();
-    sc.setClaim(null); select(null); bar.remove(); box.remove(); keep.forEach((el) => { el.hidden = false; });
+    lpEnd(); sc.setClaim(null); select(null); bar.remove(); box.remove(); keep.forEach((el) => { el.hidden = false; });
     // ibalik ang hindi nabiling dingding/sahig
     const s = pet.room || {}, st = room.style();
     if (!owns(st.wall) || !owns(st.floor)) room.setStyle(owns(st.wall) ? st.wall : s.wall, owns(st.floor) ? st.floor : s.floor);
