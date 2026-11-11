@@ -5,7 +5,7 @@
 //   top    { game, mode?, level?, period: "week"|"all" } → { list:[{ rank, users:[{username,display_name}], ms, score, me }], mine, total }
 //   here   { game?, code?, players?, max?, off? } → tibok ng "online ako sa Tigo" (bawat ~40 s); may game + code = may bukas na room; off = umalis
 //   friends {} → { list:[{ user, game, code, players, max, joinable }] } — mga FINA-FOLLOW mo na online sa Tigo ngayon (huling 90 s); may room = puwedeng Join
-// Mga laro: ghost (Lights Out, oras; duo = bawat pares) · dash (Sky Dash, oras ng natapos) · siege (Gloom Siege, puntos) · sudoku (oras, bawat level)
+// Mga laro: moba (Bloom Clash, puntos) · ghost (Lights Out, oras; duo = bawat pares) · dash (Sky Dash, oras ng natapos) · siege (Gloom Siege, puntos) · sudoku (oras, bawat level)
 // Ranking: "win" lang (natapos/nalutas; siege: lahat ng laro); pinakamagaling bawat tao (o pares sa ghost duo).
 // Bantay: may tamang hangganan ng oras/puntos bawat laro. Tables: game_runs (sql/106, 108), game_rooms (sql/112). Files: index.ts lang.
 
@@ -26,6 +26,7 @@ const GAMES: Record<string, { minWinMs: number; maxMs: number; maxKeys: number; 
   dash: { minWinMs: 38_000, maxMs: 240_000, maxKeys: 0, by: "ms" },
   siege: { minWinMs: 0, maxMs: 3_600_000, maxKeys: 0, by: "score", maxScore: 60_000 },
   sudoku: { minWinMs: 45_000, maxMs: 3_600_000, maxKeys: 0, by: "ms", levels: ["easy", "medium", "hard"] },
+  moba: { minWinMs: 0, maxMs: 900_000, maxKeys: 0, by: "score", maxScore: 6_000 },   // 0.11.49: Bloom Clash (3v3) — puntos
 };
 const PUB = "id, username, display_name, avatar_url";
 

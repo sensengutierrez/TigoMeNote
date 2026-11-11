@@ -8,7 +8,7 @@
    World chat: text lang, walang link, may filter sa server; Mute at Report sa bawat tao. Ang DM/group ay parehong chat ng Messenger. */
 const esc = (s) => (window.TMN_UI ? TMN_UI.esc(s == null ? "" : s) : String(s == null ? "" : s));
 const api = (fn, a, b) => window.TMN_API.call(fn, a, b);
-const GAME_NAMES = { ghost: "Lights Out", dash: "Sky Dash", siege: "Gloom Siege", sudoku: "Sudoku", race: "Racing" };
+const GAME_NAMES = { ghost: "Lights Out", dash: "Sky Dash", siege: "Gloom Siege", sudoku: "Sudoku", race: "Racing", moba: "Bloom Clash" };
 const TABS = [["world", "🌍", "World"], ["friends", "👥", "Friends"], ["chats", "💬", "Chats"]];
 const hhmm = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); };
 const nameOf = (u) => (u && (u.display_name || "@" + u.username)) || "Someone";

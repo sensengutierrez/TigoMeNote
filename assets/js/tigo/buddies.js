@@ -131,13 +131,18 @@ export function createBuddy(id) {
       st.t += dt * (moving ? 10 : 2);
       let y = 0;
       if (u.fly) y = 1.25 + Math.sin(t * 2) * 0.12;
-      else if (sleeping) { inner.rotation.z = 0.0; inner.scale.y = 0.85 + Math.sin(t * 1.5) * 0.02; }
+      else if (sleeping) { inner.scale.y = 0.96 + Math.sin(t * 1.5) * 0.03; }
       else { inner.scale.y = 1; if (moving || u.hopper) y = Math.abs(Math.sin(st.t * (u.hopper ? 0.6 : 1))) * (u.hopper ? 0.12 : 0.04) * (moving || u.hopper ? 1 : 0); }
       if (st.hop > 0) { st.hop = Math.max(0, st.hop - dt); y += Math.sin((1 - st.hop / 0.5) * Math.PI) * 0.35; }
+      // tulog: may paa = nakahiga nang patagilid sa sahig; ibon/sisiw/kuneho = nakadapa (nakalapat); dahan-dahan ang paglipat
+      const lie = sleeping && !moving ? 1 : 0; st.lie = (st.lie || 0) + (lie - (st.lie || 0)) * Math.min(1, dt * 4);
+      if (u.fly) y = y * (1 - st.lie);
+      if (u.legs && !u.hopper) { inner.rotation.z = st.lie * 1.32; y += st.lie * 0.07; inner.rotation.x = 0; }
+      else inner.scale.y = (u.fly ? 1 : inner.scale.y || 1) * (1 - st.lie * 0.28);
       inner.position.y = y;
       if (u.wings) u.wings.forEach((w, i) => { w.rotation.z = (i ? -1 : 1) * (0.3 + Math.sin(t * 22) * 0.6); });
       if (u.tail) u.tail.rotation.z = Math.sin(t * (moving ? 14 : 5)) * 0.5;
-      if (u.legs) u.legs.forEach((l, i) => { l.rotation.x = sleeping ? 0 : moving ? Math.sin(st.t + (i === 0 || i === 3 ? 0 : Math.PI)) * 0.55 : 0; });
+      if (u.legs) u.legs.forEach((l, i) => { l.rotation.x = sleeping && !moving ? (i < 2 ? 0.5 : -0.5) * (st.lie || 0) : moving ? Math.sin(st.t + (i === 0 || i === 3 ? 0 : Math.PI)) * 0.55 : 0; });
       if (u.head && u.head.userData.ears) u.head.userData.ears.forEach((e, i) => { e.rotation.x = moving ? Math.sin(st.t * 1.0 + i) * 0.25 : 0; });
       if (u.head) u.head.rotation.x = sleeping ? 0.35 : Math.sin(t * 1.3) * 0.08;
     },

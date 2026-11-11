@@ -14,6 +14,7 @@ const TRACK_LIST = [["easy", "🌼", "Sunny meadow", "Wide, round track. Slower 
 
 export const GAMES = [
   { id: "dash", icon: "🏃", name: "Sky Dash", text: "Race on a sky track! Switch lanes, jump, grab coins, ride the slipstream. Up to 4 friends.", tag: "NEW" },
+  { id: "moba", icon: "🌻", name: "Bloom Clash", text: "3 vs 3 garden battle! Pick Archer, Fighter, Assassin or Mage and take down the enemy's Great Flower. Solo with bots or online.", tag: "NEW" },
   { id: "siege", icon: "💦", name: "Gloom Siege", text: "Wave after wave of Gloomies! Bubble them away together. Co-op up to 4.", tag: "NEW" },
   { id: "sudoku", icon: "🧩", name: "Sudoku", text: "Easy, Medium or Hard. Race your friends to solve the same puzzle.", tag: "NEW" },
   { id: "ghost", icon: "👻", name: "Lights Out", text: "Escape the dark school before the Hush finds you. Play solo or with a friend!" },
@@ -133,6 +134,8 @@ function ghostMenu(box, onPick, info, back, joinCode) {
 // Sky Dash, Gloom Siege, Sudoku: Solo · Create a room (hanggang 4) · Join · Ranking (room-lobby.js)
 const SDK_LV = [["easy", "Easy"], ["medium", "Medium"], ["hard", "Hard"]];
 const MULTI = {
+  moba: { title: "Bloom Clash", blurb: "Your hero attacks by itself — you walk, dodge and use ✨ Skill. Break their Tower, then their Great Flower. Sprouties march every 22 s.", soloSub: "You + 2 bots vs 3 bots", max: 6, rankSub: "Highest scores",
+    rank: (box, back) => rankingView(box, back, { game: "moba", metric: "score" }) },
   dash: { title: "Sky Dash", blurb: "Switch lanes, jump the bars, dodge the boxes. Stay behind a rival to ride the slipstream!", soloSub: "Race 3 Tigo bots", rankSub: "Fastest races",
     rank: (box, back) => rankingView(box, back, { game: "dash", metric: "ms" }) },
   siege: { title: "Gloom Siege", blurb: "Tigo bubbles the nearest Gloomy by itself. Drag the screen to look around, grab power-ups (⚡🔱💥🛡️❄️❤️), and 💦 Splash when they crowd you.", soloSub: "How many waves can you last?", rankSub: "Highest scores",
@@ -144,7 +147,7 @@ const MULTI = {
 };
 
 // Mga fina-follow mo na nasa Tigo ngayon (games-fast "friends"): may bukas na room = Join
-const GNAME = { ghost: "Lights Out", dash: "Sky Dash", siege: "Gloom Siege", sudoku: "Sudoku" };
+const GNAME = { ghost: "Lights Out", dash: "Sky Dash", siege: "Gloom Siege", sudoku: "Sudoku", moba: "Bloom Clash" };
 function friendsHtml(list) {
   if (!list.length) return "";
   return '<div class="tg-fr"><p class="tg-fr-h">Friends playing</p>' + list.slice(0, 8).map((f, i) => {
@@ -218,7 +221,7 @@ export async function runGame(kind, { sc, stage, voice, seconds, track, onJump, 
           onEnd: (r) => end(Object.assign(r, { label: r.win ? "🎉 Cleared! 🪙 " + r.score : "🪙 " + r.score })) });
         countdown();
       });
-    } else if (kind === "dash" || kind === "siege" || kind === "sudoku") {
+    } else if (kind === "dash" || kind === "siege" || kind === "sudoku" || kind === "moba") {
       const o = mopt || { mode: "solo" }, net = o.mode === "multi" ? o.net : null;
       const send = (r) => { if (!quitNow && window.TMN_API) TMN_API.call("games", "finish", { game: kind, mode: net ? "multi" : "solo", ms: r.ms, score: r.score || 0, win: !!(r.finished !== undefined ? r.finished : r.solved !== undefined ? r.solved : true), level: o.level }).catch(() => {}); };
       const done = (r) => { if (net) setTimeout(() => net.leave(), 1500); send(r); end(r); };
@@ -234,6 +237,44 @@ export async function runGame(kind, { sc, stage, voice, seconds, track, onJump, 
           const offSwipe = touchLook(stage, { onSwipe: (d) => game.swipe(d) });
           stage.classList.add("swipe-only");   // swipe lang ang kontrol: walang joystick at jump button (mas kita ang daan)   // swipe: kaliwa/kanan = lane, pataas = talon
           stage._game = game; onJump(() => game.jump()); countdown();
+        });
+      } else if (kind === "moba") {
+        // Bloom Clash: pumili muna ng hero (solo: agad pagkapili; online: 9 s, ang host ang nagsasabi ng "go" kasama ang pinili ng lahat)
+        import("./moba-game.js").then((x) => {
+          const pick = document.createElement("div"); pick.className = "tg-mpick";
+          pick.innerHTML = "<b>Pick your hero</b><div>" + Object.keys(x.HEROES).map((k) => { const h = x.HEROES[k]; return '<button type="button" data-h="' + k + '"><span>' + h.icon + "</span><b>" + h.name + "</b><small>" + h.text + "</small></button>"; }).join("") + '</div><small class="tg-mpick-t"></small>';
+          stage.append(pick); stage.classList.add("picking");
+          let mine = "archer", started = false, left = 9, tm = 0; const picks = {};
+          const mark = () => pick.querySelectorAll("[data-h]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.h === mine)));
+          const begin = (map) => {
+            if (started || quitNow) return; started = true; clearInterval(tm); pick.remove(); stage.classList.remove("picking");
+            if (net) net.roster.forEach((r) => { if (map && map[r.p]) r.cls = map[r.p]; });
+            const btns = document.createElement("div"); btns.className = "tg-pedals tg-gbtns";
+            btns.innerHTML = '<button type="button" class="tg-pedal skill" aria-label="Skill">✨<small>Skill</small></button>';
+            stage.append(btns); const sb = btns.querySelector(".skill");
+            sb.addEventListener("pointerdown", (e) => { e.preventDefault(); if (game) game.skill(); });
+            const mmss = (s) => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+            game = x.startMoba(sc, { voice, net, me: o.me, cls: mine,
+              onHud: (h) => {
+                if (h.note) { if (window.TMN_UI) TMN_UI.toast(h.note); return; }
+                if (h.toast) { flash(h.toast, "", true); return; }
+                show([x.HEROES[h.cls].icon + " Lv " + h.lv, "❤️ " + h.hp + "/" + h.mhp, "⚔️ " + h.k + "/" + h.d, "🔵 " + h.blue + " : " + h.red + " 🔴", "⏱ " + mmss(h.left)].concat(h.dead ? ["💤 Back in " + h.dead + " s"] : []));
+              },
+              onButtons: (b) => { sb.disabled = !b.skill; sb.querySelector("small").textContent = b.cd ? b.cd + " s" : b.name; },
+              onEnd: (r) => { offLook(); btns.remove(); done(r); } });
+            const offLook = touchLook(stage, { onDrag: (dx, dy) => game.look(dx, dy), onPinch: (k) => game.zoom(k), onWheel: (dy) => game.zoom(Math.exp(-dy * 0.0012)) });
+            stage._game = game; onJump(() => game.skill()); countdown();
+          };
+          game = { stop() { started = true; clearInterval(tm); pick.remove(); stage.classList.remove("picking"); if (net) net.send("bye", {}); done({ score: 0, win: false, finished: false, ms: 0, label: "👋" }); }, go() {} };
+          pick.addEventListener("click", (e) => { const b = e.target.closest("[data-h]"); if (!b) return; mine = b.dataset.h; mark(); if (net) { picks[net.me] = mine; net.send("cls", { c: mine }); } else begin(); });
+          mark();
+          if (net) {
+            picks[net.me] = mine; net.send("cls", { c: mine });
+            net.on((ev, d, from) => { if (started) return; if (ev === "cls" && x.HEROES[d.c]) picks[from] = d.c; if (ev === "mgo" && !net.host) begin(d.m || {}); });
+            const tEl = pick.querySelector(".tg-mpick-t");
+            tm = setInterval(() => { left--; tEl.textContent = left > 0 ? "Starting in " + left + " s…" : "Starting…"; if (left <= 0 && net.host) { net.send("mgo", { m: picks }); begin(picks); } if (left <= -6) begin(picks); }, 1000);
+            tEl.textContent = "Starting in 9 s…";
+          } else pick.querySelector(".tg-mpick-t").textContent = "Tap a hero to start.";
         });
       } else {
         const btns = document.createElement("div"); btns.className = "tg-pedals tg-gbtns";

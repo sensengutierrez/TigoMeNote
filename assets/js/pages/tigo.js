@@ -65,6 +65,7 @@
           var st = $("stage"), j = $("tgJump");
           st.classList.toggle("pose-sit", p === "sit"); st.classList.toggle("pose-bed", p === "bed");
           j.textContent = p === "stand" ? "⤒" : "⬆ Tayo"; j.setAttribute("aria-label", p === "stand" ? "Jump" : "Stand up");
+          if (p === "sit" && sc && sc.watching && sc.watching()) say(["📺 Ooh, my favorite show!", "📺 Movie time!", "📺 Shh… it's starting!"][Math.floor(Math.random() * 3)], { still: true });
         } });
       paintSize(loadSize());
       sc.setRoom(pet.room);

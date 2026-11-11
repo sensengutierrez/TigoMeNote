@@ -136,6 +136,9 @@ updated: 2026-10-24
 | 2026-11-11 | Pasyal: galaw lang ang dumadaan sa realtime (channel na may lihim na `isle_key`); ang usapan ay sa DM na may filter | Walang chat na lumulusot sa moderation; hindi mahuhulaan ang channel |
 | 2026-11-11 | Ang 3v3 MOBA ay hiwalay na release pagkatapos nito | Malaki (4 na hero, tore, bots, online); mas madaling subukan nang hiwalay |
 | 2026-11-11 | Tigo HUD: iilang mabilis na button sa kaliwa; lahat ng iba ay nasa ＋ Game menu | Mas malinis ang screen; hindi natatakpan ang laro |
+| 2026-11-11 | Bloom Clash: host ang may hawak ng laban (buhay, Sprouties, bots); ang iba ay nagpapadala lang ng lakad at hiling ng skill | Iisang pinagmumulan ng totoo; walang server ng laro na kailangan (free plan) |
+| 2026-11-11 | Bloom Clash: kusang atake + isang Skill lang bawat hero | Kayang laruin ng isang hinlalaki sa phone; bagay sa 13+ |
+| 2026-11-11 | Bloom Clash: sariling modelong mandirigma ang hero (hindi si Tigo) | Mas mukhang larong labanan; walang kinopyang karakter |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

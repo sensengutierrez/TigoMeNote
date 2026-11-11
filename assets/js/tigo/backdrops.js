@@ -155,23 +155,55 @@ function garden(g, x, z, ry = 0) {
   put(G, new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.14, 10), M(0x6fb7e9, { roughness: 0.5 })), 0.68, 0.07, 0.25);
   const sp = put(G, new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.16, 6), M(0x6fb7e9)), 0.78, 0.1, 0.25, false); sp.rotation.z = -0.9;
   const crops = new THREE.Group(); G.add(crops);
-  const leafM = new THREE.MeshStandardMaterial({ color: 0x4caf50, roughness: 0.8 }), vegM = {}, ripe = [];
+  // Bawat tanim ay may sariling hugis (0.11.49): karot (dahong parang pako + kahel na ulo sa lupa), kamatis (tulos, palumpong, pulang bunga),
+  // mais (matangkad na tangkay, mahahabang dahon, busal), strawberry (mababang dahon, pulang bunga, puting bulaklak), kalabasa (baging, malapad na dahon, kalabasang may guhit).
+  const mats = {}; const mat = (c, o) => mats[c] || (mats[c] = new THREE.MeshStandardMaterial({ color: c, roughness: 0.75, ...(o || {}) }));
+  const GEO = { cone: new THREE.ConeGeometry(1, 1, 7), ball: new THREE.SphereGeometry(1, 12, 9), cyl: new THREE.CylinderGeometry(1, 1, 1, 7), leaf: new THREE.SphereGeometry(1, 8, 6) };
+  const plants = [];
+  function part(P, g, c, x, y, z, sx, sy, sz, rx = 0, rz = 0, ry = 0) { const m = new THREE.Mesh(GEO[g], mat(c)); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.rotation.set(rx, ry, rz); m.castShadow = true; P.add(m); return m; }
+  const GREEN = 0x4caf50, DARK = 0x2e8b3d, LIGHT = 0x7ccf5a;
+  const BUILD = {
+    carrot(P, st) {
+      const n = st === 1 ? 2 : 5, h = [0, 0.06, 0.12, 0.16][st];
+      for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; part(P, "cone", i % 2 ? GREEN : LIGHT, Math.cos(a) * 0.012, h / 2, Math.sin(a) * 0.012, 0.012, h, 0.012, Math.sin(a) * 0.5, -Math.cos(a) * 0.5); }
+      if (st === 3) { part(P, "cyl", 0xff8a2a, 0, 0.012, 0, 0.028, 0.03, 0.028); part(P, "cyl", 0xe06f12, 0, 0.028, 0, 0.022, 0.004, 0.022); }
+    },
+    tomato(P, st) {
+      const h = [0, 0.05, 0.13, 0.19][st];
+      if (st > 1) part(P, "cyl", 0xb98a55, 0.03, h * 0.55, 0, 0.004, h * 1.1, 0.004);   // tulos
+      part(P, "cyl", DARK, 0, h / 2, 0, 0.006, h, 0.006);
+      [[0, h * 0.75, 0, 0.05], [-0.025, h * 0.5, 0.02, 0.04], [0.025, h * 0.45, -0.02, 0.038]].slice(0, st === 1 ? 1 : 3).forEach(([x, y, z, r]) => part(P, "leaf", GREEN, x, y, z, r * (st === 1 ? 0.5 : 1), r * 0.7 * (st === 1 ? 0.5 : 1), r * (st === 1 ? 0.5 : 1)));
+      if (st === 3) [[0.04, 0.1, 0.03], [-0.045, 0.075, 0.02], [0.01, 0.055, 0.05]].forEach(([x, y, z]) => { part(P, "ball", 0xe53935, x, y, z, 0.022, 0.02, 0.022); part(P, "cone", DARK, x, y + 0.02, z, 0.01, 0.008, 0.01); });
+    },
+    corn(P, st) {
+      const h = [0, 0.07, 0.2, 0.3][st];
+      part(P, "cyl", LIGHT, 0, h / 2, 0, 0.008, h, 0.008);
+      const n = st === 1 ? 2 : 5;
+      for (let i = 0; i < n; i++) { const a = i * 2.4, y = h * (0.3 + 0.14 * i); part(P, "leaf", i % 2 ? GREEN : LIGHT, Math.cos(a) * 0.045, Math.min(h, y), Math.sin(a) * 0.045, 0.06, 0.006, 0.014, 0, 0.5, -a); }
+      if (st === 3) { part(P, "ball", 0xf7d94c, 0.022, h * 0.55, 0.01, 0.018, 0.045, 0.018, 0, -0.25); part(P, "leaf", LIGHT, 0.03, h * 0.5, 0.012, 0.016, 0.04, 0.012, 0, -0.35); part(P, "cone", 0xd9c27a, 0, h + 0.02, 0, 0.012, 0.045, 0.012); }
+    },
+    strawberry(P, st) {
+      const r = [0, 0.03, 0.05, 0.06][st], n = st === 1 ? 2 : 5;
+      for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; part(P, "leaf", i % 2 ? GREEN : DARK, Math.cos(a) * r * 0.7, 0.02 + r * 0.25, Math.sin(a) * r * 0.7, r * 0.6, r * 0.14, r * 0.45, 0, 0.25, -a); }
+      if (st === 3) { [[0.05, 0.03], [-0.04, 0.045], [0.0, -0.055]].forEach(([x, z]) => { part(P, "cone", 0xe91e63, x, 0.03, z, 0.016, 0.03, 0.016, Math.PI); part(P, "cone", GREEN, x, 0.047, z, 0.014, 0.006, 0.014); }); part(P, "ball", 0xffffff, -0.01, 0.05, 0.01, 0.012, 0.004, 0.012); part(P, "ball", 0xffe066, -0.01, 0.054, 0.01, 0.005, 0.004, 0.005); }
+    },
+    pumpkin(P, st) {
+      const n = st === 1 ? 2 : 4, r = [0, 0.03, 0.055, 0.065][st];
+      for (let i = 0; i < n; i++) { const a = i * 1.7 + 0.4; part(P, "leaf", i % 2 ? GREEN : DARK, Math.cos(a) * r, 0.02 + i * 0.006, Math.sin(a) * r, r * 0.7, 0.006, r * 0.6, 0, 0.12, -a); }
+      if (st > 1) part(P, "cyl", DARK, 0, 0.012, 0, 0.005, 0.02, 0.005, 0, Math.PI / 2);
+      if (st === 3) { for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; part(P, "ball", i % 2 ? 0xf57c00 : 0xff9526, 0.03 + Math.cos(a) * 0.022, 0.04, 0.035 + Math.sin(a) * 0.022, 0.03, 0.036, 0.03); } part(P, "cyl", 0x6b8e3a, 0.03, 0.085, 0.035, 0.006, 0.022, 0.006, 0.2); }
+    },
+  };
   function setPlots(list) {
-    crops.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); crops.clear(); ripe.length = 0;
+    crops.clear(); plants.length = 0;
     (list || []).forEach((p, i) => {
       if (!p || !p.stage || !at[i]) return;
-      const [px, pz] = at[i], k = [0, 0.45, 0.75, 1][p.stage];
-      const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.075 * k, 0.24 * k, 6), leafM); leaf.position.set(px, 0.1 + 0.12 * k, pz); leaf.castShadow = true; crops.add(leaf);
-      if (p.stage === 3) {
-        const m = vegM[p.seed] || (vegM[p.seed] = new THREE.MeshStandardMaterial({ color: CROPS[p.seed] || 0xff5a4f, roughness: 0.5, emissive: CROPS[p.seed] || 0xff5a4f, emissiveIntensity: 0.25 }));
-        const v = new THREE.Mesh(p.seed === "corn" ? new THREE.CapsuleGeometry(0.035, 0.1, 4, 8) : p.seed === "carrot" ? new THREE.ConeGeometry(0.045, 0.14, 8) : new THREE.SphereGeometry(p.seed === "pumpkin" ? 0.085 : 0.055, 10, 8), m);
-        if (p.seed === "carrot") v.rotation.x = Math.PI; if (p.seed === "pumpkin") v.scale.y = 0.75;
-        v.position.set(px + 0.06, 0.17, pz + 0.07); crops.add(v); ripe.push(v);
-      }
+      const P = new THREE.Group(); P.position.set(at[i][0], 0.095, at[i][1]); P.rotation.y = i * 1.3; P.scale.setScalar(1.3); crops.add(P); plants.push(P);
+      (BUILD[p.seed] || BUILD.tomato)(P, Math.max(1, Math.min(3, p.stage)));
     });
   }
-  return { ob: { x, z, r: 1.2 }, setPlots, update(t) { ripe.forEach((v, i) => { v.position.y = 0.17 + Math.abs(Math.sin(t * 3 + i)) * 0.03; }); },
-    dispose() { leafM.dispose(); Object.values(vegM).forEach((m) => m.dispose()); } };
+  return { ob: { x, z, r: 1.2 }, setPlots, update(t) { plants.forEach((P, i) => { P.rotation.z = Math.sin(t * 1.4 + i * 1.7) * 0.035; P.rotation.x = Math.cos(t * 1.1 + i) * 0.025; }); },
+    dispose() { Object.values(mats).forEach((m) => m.dispose()); Object.values(GEO).forEach((g) => g.dispose()); } };
 }
 // Lawa: tubig, mga bato sa gilid, lily at tambo
 function pond(g, x, z, r = 0.9) {
@@ -191,7 +223,25 @@ function pond(g, x, z, r = 0.9) {
     put(P, new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.5 + i * 0.08, 5), reed), rx, 0.25 + i * 0.04, rz);
     put(P, new THREE.Mesh(new THREE.CapsuleGeometry(0.025, 0.08, 4, 6), tip), rx, 0.52 + i * 0.08, rz, false);
   });
-  return { ob: { x, z, r: r + 0.08 }, update(t) { lilies.forEach((l, i) => { l.position.y = 0.02 + Math.sin(t * 1.3 + i * 2) * 0.006; l.rotation.y = Math.sin(t * 0.5 + i) * 0.15; }); } };
+  // mga isda (0.11.49): koi at tilapia na lumalangoy sa ilalim ng tubig — katawan, buntot na kumakampay, palikpik; paminsan-minsan ay may tumatalon
+  const fishes = [[0xff8a3d, 0xffffff, 0.55, 0.5, 0], [0xf2f2f2, 0xff5a36, 0.4, -0.62, 2], [0x8f9aa6, 0x6f7b88, 0.68, 0.38, 4], [0xffc23d, 0xff8a3d, 0.3, 0.8, 1]].map(([c1, c2, rad, sp, ph]) => {
+    const F = new THREE.Group(); F.scale.y = 0.45; P.add(F);   // nasa ibabaw lang ng tubig (parang koi na kita mula sa itaas)
+    const body = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), M(c1, { roughness: 0.35 })); body.scale.set(0.035, 0.03, 0.095); F.add(body);
+    const spot = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), M(c2, { roughness: 0.35 })); spot.scale.set(0.028, 0.026, 0.035); spot.position.set(0, 0.008, 0.02); F.add(spot);
+    const tail = new THREE.Group(); tail.position.z = -0.09; F.add(tail);
+    const tf = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.07, 4), M(c2, { roughness: 0.4 })); tf.rotation.x = Math.PI / 2; tf.scale.x = 0.25; tf.position.z = -0.03; tail.add(tf);
+    [-1, 1].forEach((k) => { const fin = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.04, 4), M(c2)); fin.position.set(k * 0.034, -0.004, 0.02); fin.rotation.z = k * 1.9; fin.scale.z = 0.3; F.add(fin); });
+    const dorsal = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.03, 4), M(c1)); dorsal.position.set(0, 0.03, -0.01); dorsal.scale.x = 0.3; F.add(dorsal);
+    return { F, tail, rad, sp, ph };
+  });
+  return { ob: { x, z, r: r + 0.08 }, update(t) {
+    lilies.forEach((l, i) => { l.position.y = 0.02 + Math.sin(t * 1.3 + i * 2) * 0.006; l.rotation.y = Math.sin(t * 0.5 + i) * 0.15; });
+    fishes.forEach((f, i) => {
+      const a = t * f.sp + f.ph, rr = f.rad * r * (0.85 + Math.sin(t * 0.3 + i) * 0.12), jump = Math.max(0, Math.sin(t * 0.23 + i * 1.9) - 0.985) / 0.015;   // bihirang talon
+      f.F.position.set(Math.cos(a) * rr, 0.022 + jump * 0.16, Math.sin(a) * rr * 0.82); f.F.scale.y = 0.45 + Math.min(1, jump * 3) * 0.55;
+      f.F.rotation.y = -a + (f.sp > 0 ? 0 : Math.PI); f.F.rotation.x = -jump * 0.5; f.tail.rotation.y = Math.sin(t * 9 + i) * 0.5;
+    });
+  } };
 }
 // Upuang kahoy (nakaharap sa lawa) at karatula
 function bench(g, x, z, ry = 0) {

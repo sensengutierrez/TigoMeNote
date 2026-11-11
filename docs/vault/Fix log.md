@@ -79,6 +79,8 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-11 · Lipad: nahuhuli ang camera kapag mabagal ang phone → `lerp` na nakadepende sa frame → ginawang ayon sa `dt` (`1 - exp(-dt*6)`) (`tigo/flight.js`)
 - 2026-11-11 · Bahay: tabingi ang sofa/TV → ang ikot ay `round(r + π/4)` kaya naiipon ang mali ng rounding (0.79 × n) → hakbang na buo (0–7) × π/4, at itinutuwid ang luma sa `place()` (`tigo/room.js`)
 - 2026-11-11 · Bahay: ang alaga ay nasa ibabaw ng kama → sinusundan si Tigo kahit nakahiga → sa `bedSpot().beside` na siya humihiga (`tigo/pet-scene.js`)
+- 2026-11-11 · Bloom Clash: hindi kita ang laman ng HP bar → ang itim na likod ay transparent kaya huling iginuguhit at natatakpan ang kulay → ginawang transparent din ang kulay para masunod ang `renderOrder` (`tigo/moba-game.js`)
+- 2026-11-11 · Bahay: hindi makaupo sa sofa kapag nasa likod nito (naiipit sa lakad) → kung walang usad nang 0.9 s, itinutuloy na ang pag-upo (`tigo/pet-scene.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

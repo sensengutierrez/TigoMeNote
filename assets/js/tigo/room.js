@@ -230,6 +230,7 @@ export function buildRoom() {
 
   return {
     group, setStyle, setItems, add, remove: removeEntry, select, pick, floorPoint, collide, bedSpot, seatNear, update,
+    tvNear(x, z, max = 4.5) { const e = entries.find((q) => q.id === "tv" && Math.hypot(q.x - x, q.z - z) < max); return e ? { x: e.x, z: e.z } : null; },   // para "manood" si Tigo
     style() { return { ...style }; },
     list() { return entries.map((e) => ({ id: e.id, x: e.x, z: e.z, r: e.r })); },
     move(e, x, z) { e.x = x; e.z = z; place(e); },

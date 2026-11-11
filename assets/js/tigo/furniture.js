@@ -60,8 +60,20 @@ export function buildFurniture(id) {
       const cols = [0xff5a36, 0x3dd6c0, 0xffc04d, 0x7cc4ff, 0xb9a2ff, 0xff9ec7];
       [0.08, 0.58, 1.08].forEach((y, r) => { for (let i = 0; i < 7; i++) { const h = 0.3 + ((i * 7 + r) % 3) * 0.06; box(0.09, h, 0.28, M(cols[(i + r) % 6]), -0.38 + i * 0.12, y + h / 2 + 0.02, 0); } }); break; }
     case "tv": { const w = dark(); box(1.2, 0.45, 0.42, w, 0, 0.23, 0); box(1.0, 0.6, 0.05, M(0x1b1b1f), 0, 0.85, -0.05);
-      const scr = M(0x223355, { emissive: 0x3d7bff, emissiveIntensity: 0.6 }); box(0.92, 0.52, 0.01, scr, 0, 0.85, -0.02);
-      anim.push((t) => { scr.emissive.setHSL((t * 0.05) % 1, 0.6, 0.45); }); break; }
+      // may palabas: langit, araw na umaakyat-baba, burol, at maliit na karakter na tumatakbo at tumatalon (paulit-ulit, nag-iiba ang eksena)
+      const scr = M(0x6fc3ff, { emissive: 0x4aa8ff, emissiveIntensity: 0.75 }); box(0.92, 0.52, 0.01, scr, 0, 0.85, -0.02);
+      const E = (c) => M(c, { emissive: c, emissiveIntensity: 0.8 });
+      const sun = ball(0.06, E(0xffe066), 0.3, 0.98, -0.012); sun.scale.z = 0.1;
+      const hill = box(0.92, 0.14, 0.012, E(0x58c26a), 0, 0.66, -0.014), hill2 = ball(0.16, E(0x3fa858), -0.2, 0.7, -0.013); hill2.scale.set(1.6, 0.7, 0.05);
+      const guy = box(0.07, 0.1, 0.012, E(0xff5a36), 0, 0.78, -0.008), cloud = ball(0.05, E(0xffffff), 0, 1.02, -0.011); cloud.scale.set(2.2, 0.8, 0.1);
+      const glow = glowLight(0x7fc4ff, 0.5, 3.2); glow.position.set(0, 0.85, 0.5);
+      anim.push((t) => {
+        const sc2 = Math.floor(t / 9) % 3, sky = [0x6fc3ff, 0xffb37a, 0x27336b][sc2];   // umaga · hapon · gabi
+        scr.color.setHex(sky); scr.emissive.setHex(sky); sun.material.emissive.setHex(sc2 === 2 ? 0xf2f2ff : 0xffe066); sun.material.color.setHex(sc2 === 2 ? 0xf2f2ff : 0xffe066);
+        sun.position.y = 0.96 + Math.sin(t * 0.7) * 0.05; cloud.position.x = ((t * 0.08) % 1) * 0.8 - 0.4;
+        guy.position.x = Math.sin(t * 1.1) * 0.36; guy.position.y = 0.78 + Math.abs(Math.sin(t * 4.4)) * 0.06; hill2.position.x = -0.2 + Math.sin(t * 0.3) * 0.05;
+        glow.intensity = 0.45 + Math.sin(t * 7) * 0.08 + Math.sin(t * 2.3) * 0.1;
+      }); break; }
     case "fan": { const g = M(0x7cc4ff); cyl(0.18, 0.2, 0.05, g, 0, 0.03, 0); cyl(0.025, 0.025, 0.9, M(0xdddddd), 0, 0.48, 0);
       const head = new THREE.Group(); head.position.set(0, 0.98, 0.05); group.add(head); cyl(0.07, 0.07, 0.12, g, 0, 0, -0.05, head).rotation.x = Math.PI / 2;
       const blades = new THREE.Group(); blades.position.z = 0.04; head.add(blades);

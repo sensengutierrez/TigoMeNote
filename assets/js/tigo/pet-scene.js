@@ -258,7 +258,9 @@ export function createScene(canvas, opts = {}) {
       else if (sg.face !== undefined) main.face(sg.face);
     } else if (auto) {
       const dx = auto.x - me.x, dz = auto.z - me.z, d = Math.hypot(dx, dz);
-      if (d < 0.08) { const cb = auto.done; auto = null; cb && cb(); return; }
+      // naharangan (hal. nasa likod ng sofa ang daan): kung walang usad nang 0.9 s, ituloy na ang gagawin (uupo/hihiga rin naman sa mismong puwesto)
+      if (auto.best === undefined || d < auto.best - 0.04) { auto.best = d; auto.stuck = 0; } else auto.stuck = (auto.stuck || 0) + dt;
+      if (d < 0.08 || (inRoom && auto.stuck > 0.9)) { const cb = auto.done; auto = null; cb && cb(); return; }
       ix = dx / d; iz = dz / d; if (d < 0.4) { ix *= d / 0.4 + 0.3; iz *= d / 0.4 + 0.3; }
     } else if (!isNight) {
       // direksyon ayon sa camera: taas ng joystick = palayo sa camera
@@ -378,7 +380,10 @@ export function createScene(canvas, opts = {}) {
       seat = st;
       const kid = main.kind() === "kid"; main.sitPose(true);   // Kid: tunay na upo (pasulong ang binti, tuwid ang likod); note: bahagyang nakasandal
       if (st) { me.x = st.x; me.z = st.z; main.group.position.set(st.x, st.y - (kid ? 0.47 : 0.12) * sizeK, st.z); main.face(st.face); main.group.rotation.y = st.face; main.group.rotation.x = kid ? 0 : -0.22; }
-      else { main.group.position.y = (kid ? -0.47 : -0.14) * sizeK; main.face(rig.yaw()); main.group.rotation.x = kid ? 0 : -0.3; }
+      else {
+        const tv = inRoom && room.tvNear ? room.tvNear(me.x, me.z) : null, fy = tv ? Math.atan2(tv.x - me.x, tv.z - me.z) : rig.yaw();   // may TV sa malapit → humarap doon (nanonood)
+        main.group.position.y = (kid ? -0.47 : -0.14) * sizeK; main.face(fy); if (tv) main.group.rotation.y = fy; main.group.rotation.x = kid ? 0 : -0.3;
+      }
       setPose("sit");
     };
     if (s) walkTo(s.front.x, s.front.z, () => sitAt(s)); else sitAt(null);
@@ -553,6 +558,7 @@ export function createScene(canvas, opts = {}) {
     beginGame, endGame, sun, camera, rig, inGame() { return !!game; },
     enterRoom() { if (!isNight) enterRoom(); }, leaveRoom() { if (!inside) leaveRoom(); }, inRoom() { return inRoom; },
     room() { return inRoom ? room : null; },
+    watching() { if (!inRoom || pose !== "sit" || !room.tvNear) return false; const tv = room.tvNear(me.x, me.z); if (!tv) return false; const a = Math.atan2(tv.x - me.x, tv.z - me.z) - main.group.rotation.y; return Math.cos(a) > 0.2; },   // nakaupo at nakaharap sa TV
     setRoom(d) { roomData = d || null; if (room) ensureRoom(); },
     setLook(fn) { look2 = fn || (() => null); },
     setRun(fn) { running = fn || (() => false); },
