@@ -60,12 +60,12 @@ export function createScene(canvas, opts = {}) {
   const rim = new THREE.DirectionalLight(0xff9a6b, 1.2); rim.position.set(-4, 3, -4); scene.add(rim);
 
   // ---------- lugar (backdrop) ----------
-  let place = null, placeId = "";
+  let place = null, placeId = "", farm = null, fishing = false, biteT = 0;
   function setBackdrop(id) {
     if (id === placeId && place) return SKY[placeId];
     if (place) { scene.remove(place.group); place.dispose(); }
     placeId = SKY[id] ? id : "island"; place = buildBackdrop(placeId); scene.add(place.group);
-    place.night(isNight); place.group.visible = !inRoom && !game;
+    place.night(isNight); place.group.visible = !inRoom && !game; place.setFarm(farm);
     sky.set(skyColors(SKY[placeId]), isNight);
     return SKY[placeId];
   }
@@ -297,6 +297,33 @@ export function createScene(canvas, opts = {}) {
     setDoor(null);
     if (opts.onRoom) opts.onRoom(false);
   }
+  // ---------- sa labas: mga puwedeng gawin (upuan, lawa, taniman, puno) ----------
+  function spotNear() {
+    if (inRoom || inside || game || show || !place || !place.spots) return null;
+    let best = null, bd = 1e9;
+    for (const q of place.spots) { const d = Math.hypot(q.x - me.x, q.z - me.z); if (d < q.r && d - (q.kind === "tree" ? 0.6 : 0) < bd && (q.kind !== "tree" || q.ready)) { bd = d - (q.kind === "tree" ? 0.6 : 0); best = q; } }
+    return best;
+  }
+  // pamingwit: tungkod, pisi at palutang sa lawa (lumalabas habang nangingisda)
+  const rod = new THREE.Group(); rod.visible = false; scene.add(rod);
+  const rodM = new THREE.MeshStandardMaterial({ color: 0x8a6238, roughness: 0.7 }), lineM = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 }), bobM = new THREE.MeshStandardMaterial({ color: 0xff3b30, roughness: 0.4 });
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.022, 1, 6), rodM), line = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 1, 4), lineM), bob = new THREE.Group();
+  bob.add(new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 10), bobM)); const bobTop = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshStandardMaterial({ color: 0xffffff })); bobTop.position.y = 0.04; bob.add(bobTop);
+  const ripple = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.13, 24), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false })); ripple.rotation.x = -Math.PI / 2;
+  rod.add(pole, line, bob, ripple);
+  const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);
+  function stick(m, a, b) { m.position.copy(a).add(b).multiplyScalar(0.5); m.scale.y = a.distanceTo(b); m.quaternion.setFromUnitVectors(_up, _b.copy(b).sub(a).normalize()); }
+  let bobAt = null;
+  function setFishing(on, spot) { fishing = !!on; rod.visible = fishing; biteT = 0; if (on && spot) bobAt = spot.bob; }
+  function tickRod(t) {
+    if (!fishing || !bobAt) return;
+    const h = main.group.rotation.y, k = sizeK, hand = _a.set(me.x + Math.sin(h) * 0.25 * k + Math.cos(h) * 0.3 * k, main.group.position.y + 0.95 * k, me.z + Math.cos(h) * 0.25 * k - Math.sin(h) * 0.3 * k);
+    const tip = new THREE.Vector3(hand.x + (bobAt.x - hand.x) * 0.45, hand.y + 0.75, hand.z + (bobAt.z - hand.z) * 0.45);
+    const dip = biteT > 0 ? -0.07 - Math.abs(Math.sin(t * 22)) * 0.05 : Math.sin(t * 2) * 0.012;
+    bob.position.set(bobAt.x, 0.05 + dip, bobAt.z);
+    stick(pole, hand.clone(), tip); stick(line, tip, bob.position.clone());
+    ripple.position.set(bobAt.x, 0.02, bobAt.z); const rp = (t * (biteT > 0 ? 2.2 : 0.5)) % 1; ripple.scale.setScalar(1 + rp * 2.2); ripple.material.opacity = (1 - rp) * (biteT > 0 ? 0.9 : 0.35);
+  }
   // higa sa kama / bangon
   function lieDown() {
     const b = room && room.bedSpot();
@@ -304,32 +331,36 @@ export function createScene(canvas, opts = {}) {
     main.group.rotation.order = "YXZ";
     if (b) { me.x = b.x; me.z = b.z; main.group.position.set(b.x, b.y, b.z); main.face(b.face); main.group.rotation.y = b.face; }
     else { main.face(0); main.group.position.y = 0.12; }
-    main.group.rotation.x = -1.45; main.group.scale.setScalar(0.78 * sizeK); // nakahiga, ulo sa unan (medyo maliit para kasya sa kama)
+    main.group.rotation.x = -1.45; main.group.scale.setScalar(0.78 * sizeK); // nakahiga (medyo maliit para kasya sa kama)
+    // Ulo sa UNAN: ang haba ng katawan ay depende sa laki (level) at sa avatar, kaya iniaatras ang paa hanggang umabot ang ulo sa unan
+    if (b) { const len = 1.72 * 0.78 * sizeK, off = Math.min(0.72, -0.6 + len * 0.9), bx = b.x - Math.sin(b.face) * (0.72 - off), bz = b.z - Math.cos(b.face) * (0.72 - off); me.x = bx; me.z = bz; main.group.position.set(bx, b.y, bz); }
     seat = null; setPose("bed");
   }
   // upo: sa pinakamalapit na upuan (lalakad muna doon) o sa sahig
-  function sit() {
+  // target = upuan sa labas (bench) kung meron; kung wala: pinakamalapit na upuan sa bahay, o sa sahig
+  function sit(target) {
     if (inside || game || show || pose !== "stand") return false;
-    const s = inRoom && room.seatNear(me.x, me.z);
+    const s = target || (inRoom && room.seatNear(me.x, me.z));
     const sitAt = (st) => {
       auto = null; me.vx = me.vz = 0; main.walk(0); main.group.rotation.order = "YXZ";
       seat = st;
-      if (st) { me.x = st.x; me.z = st.z; main.group.position.set(st.x, st.y - 0.12 * sizeK, st.z); main.face(st.face); main.group.rotation.y = st.face; main.group.rotation.x = -0.22; }
-      else { main.group.position.y = -0.14 * sizeK; main.face(rig.yaw()); main.group.rotation.x = -0.3; }
+      const kid = main.kind() === "kid"; main.sitPose(true);   // Kid: tunay na upo (pasulong ang binti, tuwid ang likod); note: bahagyang nakasandal
+      if (st) { me.x = st.x; me.z = st.z; main.group.position.set(st.x, st.y - (kid ? 0.47 : 0.12) * sizeK, st.z); main.face(st.face); main.group.rotation.y = st.face; main.group.rotation.x = kid ? 0 : -0.22; }
+      else { main.group.position.y = (kid ? -0.47 : -0.14) * sizeK; main.face(rig.yaw()); main.group.rotation.x = kid ? 0 : -0.3; }
       setPose("sit");
     };
     if (s) walkTo(s.front.x, s.front.z, () => sitAt(s)); else sitAt(null);
     return true;
   }
   function standUp() {
-    const was = pose; seat = seat || null;
+    const was = pose; seat = seat || null; main.sitPose(false);
     if (main.group.rotation.x !== 0 || main.group.position.y !== 0) {
       main.group.rotation.x = 0; main.group.rotation.z = 0; main.group.position.y = 0; main.group.scale.setScalar(sizeK);
       const b = room && room.bedSpot();
-      if (was === "sit" && seat) { const f = room && room.seatNear(me.x, me.z, 0.6); if (f) { me.x = f.front.x; me.z = f.front.z; } main.group.position.set(me.x, 0, me.z); }
+      if (was === "sit" && seat) { if (seat.front) { me.x = seat.front.x; me.z = seat.front.z; } main.group.position.set(me.x, 0, me.z); }
       else if (b && inRoom && was === "bed") { me.x = b.beside.x; me.z = b.beside.z; main.group.position.set(me.x, 0, me.z); }
     }
-    seat = null; setPose("stand");
+    seat = null; setFishing(false); setPose("stand");
   }
 
   // ---------- gabi: pasok sa bahay kubo ----------
@@ -460,6 +491,7 @@ export function createScene(canvas, opts = {}) {
     pets.forEach((p) => p.update(opts.reduced ? dt * 0.4 : dt, t));
     if (buddy) buddy.update(dt, t, inside && !inRoom ? { x: HOUSE.door.x + 0.3, z: HOUSE.door.z + 0.6 } : me, false);
     if (place) place.update(t);
+    tickRod(t);
     sky.update(t);
     if (inRoom) room.update(t, isNight, camera);
     ticks.forEach((fn) => fn(dt, t));
@@ -490,7 +522,22 @@ export function createScene(canvas, opts = {}) {
     setRoom(d) { roomData = d || null; if (room) ensureRoom(); },
     setLook(fn) { look2 = fn || (() => null); },
     setRun(fn) { running = fn || (() => false); },
-    sit, pose() { return pose; },
+    sit() { return sit(); }, pose() { return pose; },
+    // sa labas: sc.spot() → { kind, id } ng pinakamalapit na puwedeng gawin · sc.sitBench() · sc.fish(true) (uupo sa upuan at maghahagis) · sc.bite(on) · sc.setFarm(f)
+    spot() { const q = spotNear(); return q ? { kind: q.kind, id: q.id } : null; },
+    sitBench() { const q = place && place.spots && place.spots.find((x) => x.kind === "bench"); return q ? sit(q.seat) : false; },
+    fish(on) {
+      if (!on) { setFishing(false); return true; }
+      const q = place && place.spots && place.spots.find((x) => x.kind === "pond"); if (!q) return false;
+      if (pose === "sit" && seat === q.seat) { setFishing(true, q); return true; }
+      if (pose === "sit") standUp();
+      if (!sit(q.seat)) return false;
+      const wait = setInterval(() => { if (pose === "sit") { clearInterval(wait); setFishing(true, q); } else if (!auto) clearInterval(wait); }, 150);
+      return true;
+    },
+    fishing() { return fishing; }, bite(on) { biteT = on ? 1 : 0; },
+    walking() { return !!auto; },
+    setFarm(f) { farm = f || null; if (place) place.setFarm(farm); },
     dance, dancing() { return danceT > 0; },
     standUp() { if (pose === "sit") standUp(); },
     setSize(k) {
@@ -526,6 +573,7 @@ export function createScene(canvas, opts = {}) {
     input() { return input(); },
     jump() { if (!inside) { main.jump(); if (buddy) buddy.hop(); } },
     mainState() { return { x: me.x, z: me.z, y: main.height() }; },
+    _warp(x, z) { if (!game && !inRoom && pose === "stand") { auto = null; me.x = x; me.z = z; main.group.position.set(x, 0, z); } },   // para sa tests
     onTick(fn) { ticks.add(fn); return () => ticks.delete(fn); },
     isInside() { return inside; },
     pick(x, y) {

@@ -103,6 +103,9 @@ export function buildRoom() {
   const entries = [];
   const ring = new THREE.Mesh(K(new THREE.RingGeometry(0.55, 0.64, 40)), K(new THREE.MeshBasicMaterial({ color: 0xff5a36, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthTest: false })));
   ring.rotation.x = -Math.PI / 2; ring.renderOrder = 5; ring.visible = false; group.add(ring);
+  // palaso sa itaas ng napiling gamit (kita kahit natatakpan ng ibang gamit) para madaling makita ang dekorasyon
+  const arrow = new THREE.Mesh(K(new THREE.ConeGeometry(0.16, 0.3, 4)), K(new THREE.MeshBasicMaterial({ color: 0xff5a36, depthTest: false, transparent: true, opacity: 0.95 })));
+  arrow.rotation.x = Math.PI; arrow.renderOrder = 6; arrow.visible = false; group.add(arrow);
   let selected = null;
   const clamp = (v, a) => Math.max(-a, Math.min(a, v));
   function place(e) {
@@ -155,7 +158,7 @@ export function buildRoom() {
     else ring.position.set(e.x, 0.03, e.z);
     ring.scale.setScalar(Math.max(0.6, Math.max(f.w, f.d) * 0.75));
   }
-  function select(e) { selected = e; ring.visible = !!e; if (e) moveRing(); }
+  function select(e) { selected = e; ring.visible = arrow.visible = !!e; if (e) moveRing(); }
 
   // ---------- banggaan ni Tigo ----------
   function collide(x, z, r = 0.32) {
@@ -221,7 +224,7 @@ export function buildRoom() {
       });
       entries.forEach((e) => { if (e.wallName) e.holder.visible = (walls.find((g) => g.userData.name === e.wallName) || { scale: { y: 1 } }).scale.y > 0.6; });
     }
-    if (ring.visible) ring.material.opacity = 0.6 + Math.sin(t * 5) * 0.3;
+    if (ring.visible) { ring.material.opacity = 0.6 + Math.sin(t * 5) * 0.3; arrow.position.set(ring.position.x, (selected && FURN[selected.id] && FURN[selected.id].wall ? 2.0 : 1.75) + Math.sin(t * 4) * 0.08, ring.position.z); arrow.rotation.y = t * 2; }
   }
 
   return {

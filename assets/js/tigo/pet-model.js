@@ -71,7 +71,7 @@ function gearGroup(id) {
      t.kind() → "tigo" | "kid" */
 export function createTigo(opts = {}) {
   const group = new THREE.Group();
-  const mem = { color: opts.color || "coral", gear: opts.gear || "none", glow: false, mood: "happy", asleep: false, wear: {} };
+  const mem = { color: opts.color || "coral", gear: opts.gear || "none", glow: false, mood: "happy", asleep: false, wear: {}, sit: false };
   let impl = null, kind = "";
   function build(av) {
     if (impl) { impl.dispose(); group.clear(); }
@@ -79,7 +79,7 @@ export function createTigo(opts = {}) {
     impl = kind === "kid" ? createKid({ avatar: av, gearGroup }, group) : createNote({ color: mem.color, gear: mem.gear }, group);
     if (kind === "kid" && mem.gear !== "none" && !mem.wear.hat) impl.wear("hat", mem.gear);
     Object.keys(mem.wear).forEach((s) => { if (mem.wear[s]) impl.wear(s, mem.wear[s]); });
-    impl.setGlow(mem.glow); impl.setMood(mem.mood); impl.sleep(mem.asleep);
+    impl.setGlow(mem.glow); impl.setMood(mem.mood); impl.sleep(mem.asleep); if (impl.sitPose) impl.sitPose(mem.sit);
   }
   build(opts.avatar);
   return {
@@ -92,6 +92,7 @@ export function createTigo(opts = {}) {
     setColor(id) { mem.color = id; impl.setColor(id); }, setGear(id) { mem.gear = id || "none"; impl.setGear(mem.gear); },
     wear(slot, id) { mem.wear[slot] = id || null; impl.wear(slot, id); }, setGlow(on) { mem.glow = !!on; impl.setGlow(on); },
     walk: (sp, h) => impl.walk(sp, h), face: (h) => impl.face(h), move: (k, sec) => impl.move(k, sec), moving: () => impl.moving(),
+    sitPose(on) { mem.sit = !!on; if (impl.sitPose) impl.sitPose(mem.sit); },   // Kid: pasulong ang binti (upuan, kart). Note: walang pagbabago
     dispose() { impl.dispose(); },
   };
 }

@@ -2,6 +2,7 @@
    Gawa sa SVG sa code (walang image file, walang copyright ng iba). Ang message ay may sticker id lang.
      TMN_STICKERS.list            → [{ id, label }]
      TMN_STICKERS.svg(id, size)   → "<svg …>" (o "" kung walang ganoong id)
+     TMN_STICKERS.list3d          → "Tigo 3D": gumagalaw na sticker (CSS sa components.css) na may boses ni Tigo → TMN_STICKERS.play(id) · is3d(id)
    Bagong sticker: magdagdag sa LIST gamit ang mga piyesa sa ibaba (kulay, mata, bibig, extra, text). */
 (function () {
   var INK = "#2b1d1a";
@@ -112,5 +113,69 @@
       body(s.color) + s.extra.map(extra).join("") + eyes(s.eyes) + mouth(s.mouth) + (s.text ? label(s.text) : "") + "</svg>";
   }
 
-  window.TMN_STICKERS = { list: LIST.map(function (s) { return { id: s.id, label: s.label }; }), svg: svg, get: get };
+  // ---------- Tigo 3D: gumagalaw na sticker na may lalim (liwanag, anino, gilid) at boses ni Tigo ----------
+  // id, label, kulay, mata, bibig, galaw (CSS sa components.css: .s3-<galaw>), palamuti, sasabihin ni Tigo, mood ng boses
+  var L3 = [
+    ["t3d-hello", "Hello!", "coral", "dot", "smile", "wave", "hand", "Hello po!", "happy"],
+    ["t3d-love", "Love you", "pink", "heart", "smile", "beat", "hearts", "Love you!", "happy"],
+    ["t3d-haha", "Hahaha", "amber", "happy", "laugh", "laugh", "tears", "Hahaha!", "happy"],
+    ["t3d-wow", "Wow!", "lime", "star", "o", "pop", "stars", "Wow!", "happy"],
+    ["t3d-kiss", "Mwah!", "pink", "wink", "kiss", "lean", "kiss", "Mwah!", "happy"],
+    ["t3d-yes", "OK!", "mint", "happy", "grin", "nod", "thumb", "Okay!", "happy"],
+    ["t3d-party", "Yehey!", "sky", "happy", "grin", "jump", "confetti", "Yehey!", "happy"],
+    ["t3d-dance", "Sayaw!", "lilac", "happy", "smile", "dance", "notes", "La la la!", "happy"],
+    ["t3d-sad", "Miss you", "sky", "sad", "frown", "droop", "tear", "Miss you…", "sad"],
+    ["t3d-cry", "Huhu", "lilac", "closed", "cry", "sob", "tearsfall", "Huhuhu…", "sad"],
+    ["t3d-angry", "Grr!", "coral", "angry", "frown", "rage", "steam", "Grrr!", "sad"],
+    ["t3d-sleep", "Good night", "lilac", "closed", "flat", "snooze", "zzz", "Good night…", "sleepy"]
+  ].map(function (r) { return { id: r[0], label: r[1], color: r[2], eyes: r[3], mouth: r[4], anim: r[5], deco: r[6], say: r[7], mood: r[8], d3: true }; });
+  var uid = 0;
+  function deco3(k) {
+    switch (k) {
+      case "hand": return '<g class="s3-hand"><circle cx="136" cy="62" r="12" fill="#fff" stroke="' + INK + '" stroke-width="3"/><path d="M130 56l2 8M136 54v10M142 56l-2 8" stroke="' + INK + '" stroke-width="2" stroke-linecap="round"/></g>';
+      case "hearts": return '<g class="s3-float">' + heart(136, 40, 12, "#ff4d6d") + '</g><g class="s3-float d2">' + heart(24, 44, 9, "#ff7a93") + '</g><g class="s3-float d3">' + heart(144, 78, 7, "#ff9eb1") + "</g>";
+      case "tears": return '<g class="s3-drip"><path d="M40 68q-7 11 0 16q7-5 0-16z" fill="#5ab8ff"/></g><g class="s3-drip d2"><path d="M120 68q-7 11 0 16q7-5 0-16z" fill="#5ab8ff"/></g>';
+      case "stars": return '<g class="s3-twinkle">' + star(140, 30, 11) + '</g><g class="s3-twinkle d2">' + star(20, 44, 8) + '</g><g class="s3-twinkle d3">' + star(146, 76, 6) + "</g>";
+      case "kiss": return '<g class="s3-float">' + heart(134, 70, 10, "#ff4d6d") + "</g>";
+      case "thumb": return '<g class="s3-hand"><path d="M122 100v-20l9-15q7 0 6 9l-2 7h13q7 0 6 8l-4 13q-1 6-8 6h-20z" fill="#fff" stroke="' + INK + '" stroke-width="3" stroke-linejoin="round"/></g>';
+      case "confetti": return '<g class="s3-fall"><rect x="30" y="6" width="7" height="7" fill="#ff4d6d" transform="rotate(20 33 9)"/><circle cx="120" cy="10" r="4" fill="#14b8a6"/></g><g class="s3-fall d2"><rect x="96" y="2" width="7" height="7" fill="#ffd23f" transform="rotate(-25 99 5)"/><circle cx="58" cy="8" r="4" fill="#7c5cff"/></g><g class="s3-fall d3"><rect x="140" y="12" width="6" height="6" fill="#3dd6c0"/><rect x="10" y="14" width="6" height="6" fill="#ff9ec7"/></g>';
+      case "notes": return '<g class="s3-float" fill="' + INK + '"><path d="M134 24v22a6 6 0 1 1-3-5V28l14-4v18a6 6 0 1 1-3-5V20z"/></g><g class="s3-float d2" fill="' + INK + '"><path d="M22 40v16a5 5 0 1 1-3-4V40z"/></g>';
+      case "tear": return '<g class="s3-drip"><path d="M94 72q-6 10 0 15q6-5 0-15z" fill="#5ab8ff"/></g>';
+      case "tearsfall": return '<g class="s3-drip"><path d="M52 70q-6 10 0 15q6-5 0-15z" fill="#5ab8ff"/></g><g class="s3-drip d2"><path d="M108 70q-6 10 0 15q6-5 0-15z" fill="#5ab8ff"/></g><g class="s3-drip d3"><path d="M52 70q-6 10 0 15q6-5 0-15z" fill="#8fd0ff"/></g>';
+      case "steam": return '<g class="s3-puff"><circle cx="30" cy="22" r="8" fill="#c9ced6"/></g><g class="s3-puff d2"><circle cx="130" cy="22" r="8" fill="#c9ced6"/></g>';
+      case "zzz": return '<g class="s3-float" font-family="sans-serif" font-weight="800" fill="' + INK + '"><text x="122" y="38" font-size="22">z</text></g><g class="s3-float d2" font-family="sans-serif" font-weight="800" fill="' + INK + '"><text x="138" y="22" font-size="15">z</text></g>';
+      default: return "";
+    }
+  }
+  function mouth3(k) { return k === "kiss" ? '<path d="M76 84q8 2 0 6q8 2 0 6" fill="none" stroke="' + INK + '" stroke-width="3.5" stroke-linecap="round"/>' : mouth(k); }
+  // katawan na may lalim: gilid (extrusion), liwanag mula sa kaliwa-itaas, kintab, paa, at aninong gumagalaw
+  function svg3(s, size) {
+    var c = C[s.color] || C.coral, g = "s3g" + (++uid);
+    return '<svg class="tmn-sticker tmn-s3 s3-' + s.anim + '" data-sid="' + s.id + '" translate="no" role="img" aria-label="' + esc(s.label) + '" viewBox="0 0 160 160" width="' + (size || 120) + '" height="' + (size || 120) + '" xmlns="http://www.w3.org/2000/svg">' +
+      '<defs><radialGradient id="' + g + '" cx="34%" cy="26%" r="85%"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".3" stop-color="' + c[0] + '"/><stop offset="1" stop-color="' + c[1] + '"/></radialGradient>' +
+      '<linearGradient id="' + g + 'b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c[1] + '"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></linearGradient></defs>' +
+      '<ellipse class="s3-shadow" cx="80" cy="150" rx="42" ry="6" fill="#000" opacity=".18"/>' +
+      '<g class="s3-body">' +
+        '<g class="s3-feet"><ellipse cx="58" cy="140" rx="13" ry="7" fill="' + c[1] + '"/><ellipse cx="102" cy="140" rx="13" ry="7" fill="' + c[1] + '"/></g>' +
+        '<path d="M40 30h72l22 22v70a14 14 0 0 1-14 14H40a14 14 0 0 1-14-14V44a14 14 0 0 1 14-14z" fill="url(#' + g + 'b)" transform="translate(5 5)"/>' +   // gilid (lalim)
+        '<path d="M34 24h72l22 22v70a14 14 0 0 1-14 14H34a14 14 0 0 1-14-14V38a14 14 0 0 1 14-14z" fill="url(#' + g + ')" stroke="' + c[1] + '" stroke-width="2"/>' +
+        '<path d="M106 24v14a8 8 0 0 0 8 8h14z" fill="' + c[1] + '"/><path d="M106 24l22 22" stroke="#fff" stroke-opacity=".5" stroke-width="2"/>' +
+        '<path d="M30 44q0-12 12-12h30" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="5" stroke-linecap="round"/>' +                       // kintab
+        '<ellipse cx="46" cy="84" rx="8" ry="4.5" fill="#ff5a7a" opacity=".4"/><ellipse cx="114" cy="84" rx="8" ry="4.5" fill="#ff5a7a" opacity=".4"/>' +
+        '<g class="s3-face">' + eyes(s.eyes) + mouth3(s.mouth) + "</g>" +
+      "</g>" + deco3(s.deco) + "</svg>";
+  }
+  var _svg = svg, _get = get;
+  get = function (id) { return _get(id) || L3.filter(function (s) { return s.id === id; })[0] || null; };
+  svg = function (id, size) { var s = get(id); return s && s.d3 ? svg3(s, size) : _svg(id, size); };
+  // Boses ni Tigo (tigo/voice.js, synth — walang audio file). Sumusunod sa Sound settings ng Tigo sa device.
+  var here = (document.currentScript && document.currentScript.src) || "", voiceP = null;
+  function play(id) {
+    var s = get(id); if (!s || !s.d3 || !here) return;
+    voiceP = voiceP || import(new URL("tigo/voice.js", here).href).then(function (m) { return m.createVoice(); });
+    voiceP.then(function (v) { v.unlock && v.unlock(); v.sfx("pop"); v.say(s.say, { mood: s.mood }); }).catch(function () {});
+  }
+
+  window.TMN_STICKERS = { list: LIST.map(function (s) { return { id: s.id, label: s.label }; }), list3d: L3.map(function (s) { return { id: s.id, label: s.label }; }),
+    svg: function (id, size) { return svg(id, size); }, get: function (id) { return get(id); }, play: play, is3d: function (id) { var s = get(id); return !!(s && s.d3); } };
 })();

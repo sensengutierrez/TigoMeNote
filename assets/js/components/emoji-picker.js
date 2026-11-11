@@ -55,7 +55,9 @@
       if (tab === "gif") { paintGifShell(); return; }
       if (tab === "stickers") {
         bodyEl.className = "emp-body emp-stickers";
-        bodyEl.innerHTML = ST.list.map(function (s) { return '<button type="button" class="emp-stk" data-s="' + s.id + '" aria-label="' + s.label + '">' + ST.svg(s.id, 84) + "</button>"; }).join("");
+        var stk = function (s) { return '<button type="button" class="emp-stk" data-s="' + s.id + '" aria-label="' + s.label + '">' + ST.svg(s.id, 84) + "</button>"; };
+        // Tigo 3D (gumagalaw, may boses) muna, tapos ang mga dating sticker
+        bodyEl.innerHTML = (ST.list3d && ST.list3d.length ? '<p class="emp-sub">Tigo 3D · moves and talks 🔊</p>' + ST.list3d.map(stk).join("") + '<p class="emp-sub">Stickers</p>' : "") + ST.list.map(stk).join("");
         return;
       }
       var list = tab === "recent" ? recent() : ((D.filter(function (c) { return c.id === tab; })[0] || {}).list || []);

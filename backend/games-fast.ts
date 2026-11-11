@@ -22,7 +22,7 @@ const reply = (b: Record<string, unknown>, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
 const fail = (e: string, s = 400) => reply({ ok: false, error: e }, s);
 const GAMES: Record<string, { minWinMs: number; maxMs: number; maxKeys: number; by: "ms" | "score"; maxScore?: number; levels?: string[] }> = {
-  ghost: { minWinMs: 25_000, maxMs: 310_000, maxKeys: 4, by: "ms" },
+  ghost: { minWinMs: 25_000, maxMs: 560_000, maxKeys: 8, by: "ms", levels: ["easy", "medium", "hard"] },   // 0.11.45: Easy / Medium / Hard (mas malaking mapa)
   dash: { minWinMs: 38_000, maxMs: 240_000, maxKeys: 0, by: "ms" },
   siege: { minWinMs: 0, maxMs: 3_600_000, maxKeys: 0, by: "score", maxScore: 60_000 },
   sudoku: { minWinMs: 45_000, maxMs: 3_600_000, maxKeys: 0, by: "ms", levels: ["easy", "medium", "hard"] },

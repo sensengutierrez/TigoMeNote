@@ -1,8 +1,8 @@
 /* TigoMeNote · tigo/ghost-game.js — "Lights Out": tumakas sa madilim na paaralan bago ka mahuli ng "the Hush"
    import { startGhost, MAP_INFO } from "./ghost-game.js"
-   const g = startGhost(sc, { voice, mode: "solo"|"duo", role: "host"|"guest", seed, net, me:{name,color}, partner:{name,color},
+   const g = startGhost(sc, { voice, mode: "solo"|"duo", role: "host"|"guest", level: "easy"|"medium"|"hard" (LEVELS), seed, net, me:{name,color}, partner:{name,color},
                               onHud(h), onButtons(b), onEnd({ score, win, keys, ms, label }) })
-     g.go() pagkatapos ng 3-2-1 · g.stop() · g.hide() · g.flash()
+     g.go() pagkatapos ng 3-2-1 · g.stop() · g.hide() · g.flash() · g.view() → palit ng camera ("top" / "close" sa likod, naiikot) · g.look(dx, dy)
    Laro: kunin ang lahat ng 🔑 (solo 3, duo 4), saka pumunta sa EXIT. Ang multo ay gumagala; kapag nakita ka, hahabulin ka.
      🚪 Hide sa tabi ng locker (hanggang 8 s) · 🔦 Flash (3 beses) = matitigilan ang multo nang 2.5 s · 5 minuto lang.
      Solo: 2 buhay. Duo: kapag nahuli, babagsak ka — tumayo sa tabi ng kasama nang 2 s para buhayin siya. Pareho = talo.
@@ -14,7 +14,7 @@ import { RoundedBoxGeometry } from "../../vendor/three/RoundedBoxGeometry.js";
 import { createTigo } from "./pet-model.js";
 
 // # pader · . sahig · L locker (taguan) · D mesa · k puwesto ng susi · P ikaw · p kasama · G multo · E labasan
-const MAP = [
+const MAP0 = [
   "###################",
   "#P...L#k..D.#L...k#",
   "#.p...............#",
@@ -29,19 +29,49 @@ const MAP = [
   "#.D...#L..k.#..D..#",
   "###################",
 ];
-const RS = MAP.length, CS = MAP[0].length, C = 0.6;
+// Mas malalaking mapa (buong bahay): hilera ng mga kwarto (5×3) at pasilyo (3 hilera) na may mga pinto. nx = kwarto bawat hilera, ny = hilera ng kwarto.
+function genMap(nx, ny) {
+  const cols = 1 + nx * 6, rows = 1 + ny * 3 + (ny - 1) * 5 + 1, g = Array.from({ length: rows }, () => Array(cols).fill("#"));
+  for (let j = 0; j < ny; j++) {
+    const r0 = 1 + j * 8;
+    for (let c = 1; c < cols - 1; c++) { const wall = c % 6 === 0; g[r0][c] = wall ? "#" : "."; g[r0 + 1][c] = "."; g[r0 + 2][c] = wall ? "#" : "."; }
+    for (let i = 0; i < nx; i++) {
+      const b = 1 + i * 6;
+      if (i || j) g[r0][b] = "L"; else g[r0 + 2][b + 4] = "L";
+      if ((i + j) % 2) g[r0 + 2][b + 2] = "D"; else g[r0][b + 4] = "D";
+      if ((i + j) % 2) g[r0 + 2][b] = "k"; else g[r0][b + 2] = "k";
+    }
+    if (j < ny - 1) {
+      for (let c = 1; c < cols - 1; c++) { if (c % 6 === 3) { g[r0 + 3][c] = "."; g[r0 + 7][c] = "."; } g[r0 + 4][c] = g[r0 + 5][c] = g[r0 + 6][c] = "."; }
+      g[r0 + 5][1] = "L"; g[r0 + 4][cols - 2] = "L";
+    }
+  }
+  const mid = 1 + Math.floor((ny - 1) / 2) * 8 + 5, last = 1 + (ny - 2) * 8 + 5;
+  g[mid][cols - 1] = "E"; g[1][1] = "P"; g[2][2] = "p";
+  g[ny > 2 ? last : mid][Math.floor(cols / 2)] = "G";
+  return g.map((r) => r.join(""));
+}
+// Antas: mapa, bilang ng susi [solo, duo], oras (s), bilis ng multo
+export const LEVELS = {
+  easy: { name: "Easy", icon: "🟢", text: "One floor · 3 keys · 5 min", map: MAP0, keys: [3, 4], time: 300, speed: 1 },
+  medium: { name: "Medium", icon: "🟡", text: "Whole house · 5 keys · 7 min", map: genMap(4, 3), keys: [5, 6], time: 420, speed: 1.08 },
+  hard: { name: "Hard", icon: "🔴", text: "Big house · 7 keys · 9 min · faster Hush", map: genMap(5, 4), keys: [7, 8], time: 540, speed: 1.16 },
+};
+let MAP = MAP0, RS = MAP.length, CS = MAP[0].length;
+const C = 0.6;
+function useMap(level) { MAP = (LEVELS[level] || LEVELS.easy).map; RS = MAP.length; CS = MAP[0].length; }
 const X = (c) => (c - (CS - 1) / 2) * C, Z = (r) => (r - (RS - 1) / 2) * C;
 const cellAt = (x, z) => [Math.round(z / C + (RS - 1) / 2), Math.round(x / C + (CS - 1) / 2)];
 const ch = (r, c) => (r < 0 || c < 0 || r >= RS || c >= CS ? "#" : MAP[r][c]);
 const solid = (r, c) => { const k = ch(r, c); return k === "#" || k === "D"; };
 const find = (k) => { const out = []; MAP.forEach((row, r) => [...row].forEach((x, c) => { if (x === k) out.push([r, c]); })); return out; };
-export const MAP_INFO = { rows: RS, cols: CS, map: MAP };
+export const MAP_INFO = { rows: RS, cols: CS, map: MAP0 };
 
 function rng(seed) { let s = (seed >>> 0) || 1; return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 100000) / 100000; }; }
 // pinakamaikling daan (BFS) sa grid → susunod na cell papunta sa target
 function nextStep(from, to) {
   if (from[0] === to[0] && from[1] === to[1]) return to;
-  const seen = new Map(), q = [from], key = (p) => p[0] * 100 + p[1];
+  const seen = new Map(), q = [from], key = (p) => p[0] * 1000 + p[1];
   seen.set(key(from), null);
   while (q.length) {
     const p = q.shift();
@@ -65,8 +95,10 @@ function sees(ax, az, bx, bz) {
   return true;
 }
 
-export function startGhost(sc, { voice, mode = "solo", role = "host", seed = 1, net = null, me: meInfo = {}, partner: pInfo = null, onHud, onButtons, onEnd } = {}) {
+export function startGhost(sc, { voice, mode = "solo", role = "host", level = "easy", seed = 1, net = null, me: meInfo = {}, partner: pInfo = null, onHud, onButtons, onEnd } = {}) {
   const duo = mode === "duo" && !!net, host = !duo || role === "host";
+  const LV = LEVELS[level] || LEVELS.easy; if (!LEVELS[level]) level = "easy"; useMap(level);
+  const view = { mode: "top", yaw: Math.PI, pitch: 0.8 };   // camera: "top" (mula sa itaas) o "close" (sa likod, naiikot)
   const R = rng(seed);
   const world = new THREE.Group(); sc.scene.add(world);
   const own = []; const keep = (x) => { own.push(x); return x; };
@@ -109,7 +141,7 @@ export function startGhost(sc, { voice, mode = "solo", role = "host", seed = 1, 
   const signLight = new THREE.PointLight(0xff3344, 0.8, 1.6); signLight.position.set(-0.3, 0.9, 0); door.add(signLight);
 
   // ---------- mga susi ----------
-  const spots = find("k").sort(() => R() - 0.5), need = duo ? 4 : 3;
+  const spots = find("k").sort(() => R() - 0.5), need = LV.keys[duo ? 1 : 0];
   const keyMat = M({ color: 0xffcc33, emissive: 0xffa800, emissiveIntensity: 0.9, metalness: 0.6, roughness: 0.3 });
   const keys = spots.slice(0, need).map(([r, c], i) => {
     const g = new THREE.Group(); g.position.set(X(c), 0.32, Z(r));
@@ -155,7 +187,7 @@ export function startGhost(sc, { voice, mode = "solo", role = "host", seed = 1, 
   const hushScale = 1.25; hush.scale.setScalar(hushScale);
 
   // ---------- estado ----------
-  let running = false, done = false, t0 = 0, left = 300, flashes = 3, freeze = 0, reviveT = 0, sendT = 0, beat = 0, lastHud = "";
+  let running = false, done = false, t0 = 0, left = LV.time, flashes = level === "easy" ? 3 : level === "medium" ? 4 : 5, freeze = 0, reviveT = 0, sendT = 0, beat = 0, lastHud = "";
   const taken = () => keys.filter((k) => k.taken).length;
   const nearLocker = () => lockers.find((l) => Math.hypot(X(l.c) - me.x, Z(l.r) - me.z) < C * 0.75);
   const ent = (who) => who === "me" ? me : mate;
@@ -178,7 +210,9 @@ export function startGhost(sc, { voice, mode = "solo", role = "host", seed = 1, 
     const i = sc.input ? sc.input() : { x: 0, z: 0 };
     const mag = Math.min(1, Math.hypot(i.x, i.z));
     if (mag < 0.15) { T.walk(0); me.moving = false; return; }
-    const sp = 2.4 * C * dt * mag, dx = i.x / (Math.hypot(i.x, i.z) || 1) * sp, dz = i.z / (Math.hypot(i.x, i.z) || 1) * sp;
+    // ayon sa camera (top: taas ng stick = palayo; close: ayon sa ikot ng view)
+    const fx = Math.sin(view.yaw), fz = Math.cos(view.yaw); let wx = -fz * i.x - fx * i.z, wz = fx * i.x - fz * i.z; const wk = 1 / (Math.hypot(wx, wz) || 1);
+    const sp = 2.4 * C * dt * mag, dx = wx * wk * sp, dz = wz * wk * sp;
     if (free(me.x + dx, me.z)) me.x += dx;
     if (free(me.x, me.z + dz)) me.z += dz;
     me.h = Math.atan2(dx, dz); me.moving = true;
@@ -225,7 +259,7 @@ export function startGhost(sc, { voice, mode = "solo", role = "host", seed = 1, 
     }
     if (!goal) return;
     const nx = nextStep(gc, goal), tx = X(nx[1]), tz = Z(nx[0]);
-    const sp = (ghost.state === "chase" ? 2.1 + 0.12 * taken() : ghost.state === "search" ? 1.8 : 1.35) * C * dt;
+    const sp = (ghost.state === "chase" ? 2.1 + 0.12 * Math.min(4, taken()) : ghost.state === "search" ? 1.8 : 1.35) * LV.speed * C * dt;
     const dx = tx - ghost.x, dz = tz - ghost.z, d = Math.hypot(dx, dz);
     if (d > 0.001) { const k = Math.min(1, sp / d); ghost.x += dx * k; ghost.z += dz * k; ghost.h = Math.atan2(dx, dz); }
     if (ghost.state === "search" && d < 0.05 && nx[0] === goal[0] && nx[1] === goal[1]) ghost.searchT = Math.min(ghost.searchT, 1);
@@ -307,7 +341,8 @@ export function startGhost(sc, { voice, mode = "solo", role = "host", seed = 1, 
     if (freeze > 0) { freeze -= dt; T.walk(0); hud(); return; }
     left -= host ? dt : 0;
     moveMe(dt);
-    if (me.hid) { me.hidT += dt; if (me.hidT >= 8) { me.hid = false; T.group.visible = true; } }
+    if (me.hid) { me.hidT += dt; if (me.hidT >= 8) me.hid = false; }
+    T.group.visible = !me.hid;   // laging tugma (dati: nahuli habang nakatago → hindi na lumilitaw pagbalik)
     T.group.position.set(me.x, 0, me.z); lamp.position.set(me.x, 0.85, me.z + 0.3);
     if (!me.down) pickKeys(me.x, me.z, "me");
     T.group.rotation.x = me.down ? -1.2 : 0;
@@ -339,18 +374,26 @@ export function startGhost(sc, { voice, mode = "solo", role = "host", seed = 1, 
   const camPos = new THREE.Vector3(), look = new THREE.Vector3();
   function cam(camera, dt) {
     const tall = camera.aspect < 0.8, k = tall ? 1.45 : 1.05;
+    if (view.mode === "close") {   // sa likod ni Tigo, naiikot sa paghila ng screen
+      const fx = Math.sin(view.yaw), fz = Math.cos(view.yaw), d = 2.5 * (tall ? 1.3 : 1), cp = Math.cos(view.pitch);
+      camPos.set(me.x - fx * d * cp, 0.3 + Math.sin(view.pitch) * d, me.z - fz * d * cp);
+      camera.position.lerp(camPos, Math.min(1, dt * 7));
+      look.set(me.x + fx * 0.5, 0.3, me.z + fz * 0.5); camera.lookAt(look); return;
+    }
     camPos.set(me.x, 5.2 * k, me.z + 3.9 * k);
     camera.position.lerp(camPos, Math.min(1, dt * 5));
     look.set(me.x, 0, me.z + (tall ? 0.9 : 0.2));
     camera.lookAt(look);
   }
+  function setView(m) { view.mode = m === "close" ? "close" : "top"; if (view.mode === "top") view.yaw = Math.PI; return view.mode; }
+  function lookBy(dx, dy) { if (view.mode !== "close") return; view.yaw -= dx * 0.0062; view.pitch = Math.max(0.45, Math.min(1.3, view.pitch + dy * 0.0045)); }
   function finish(win, fromNet) {
     if (done) return; done = true; running = false;
     if (net && host && !fromNet) net.send("end", { win: win ? 1 : 0 });
     const ms = Math.round(performance.now() - t0), k = taken();
     if (win) { voice && voice.sfx("win"); T.group.visible = true; T.move("cheer", 2); sc.effect("stars"); }
-    const score = k * 3 + (win ? 10 + Math.max(0, Math.round((300000 - ms) / 30000)) : 0);
-    const res = { score, win, keys: k, need, ms, label: win ? "🎉 Escaped! " + Math.floor(ms / 60000) + ":" + String(Math.floor(ms / 1000) % 60).padStart(2, "0") : "👻 Caught! 🔑 " + k + "/" + need };
+    const score = k * 3 + (win ? 10 + Math.max(0, Math.round((LV.time * 1000 - ms) / 30000)) : 0);
+    const res = { score, win, keys: k, need, ms, level, label: win ? "🎉 Escaped! " + Math.floor(ms / 60000) + ":" + String(Math.floor(ms / 1000) % 60).padStart(2, "0") : "👻 Caught! 🔑 " + k + "/" + need };
     setTimeout(() => { cleanup(); onEnd && onEnd(res); }, win ? 1500 : 900);
   }
   function cleanup() {
@@ -362,9 +405,10 @@ export function startGhost(sc, { voice, mode = "solo", role = "host", seed = 1, 
   }
   hud();
   return {
+    view: (m) => setView(m || (view.mode === "top" ? "close" : "top")), look: lookBy, level,
     go() { running = true; t0 = performance.now(); },
     stop() { if (net) net.send("bye", {}); finish(false, true); },
     hide, flash,
-    _s: { me, keys, ghost, need, exit: [X(exitCell[1]), Z(exitCell[0])], lockers: lockers.map((l) => [X(l.c), Z(l.r)]), mate: () => mate },   // para sa tests
+    _s: { me, keys, ghost, need, caught, exit: [X(exitCell[1]), Z(exitCell[0])], lockers: lockers.map((l) => [X(l.c), Z(l.r)]), mate: () => mate },   // para sa tests
   };
 }

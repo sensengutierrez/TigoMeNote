@@ -417,6 +417,7 @@
 
     // ---------- clicks ----------
     root.addEventListener("click", async function (e) {
+      var s3 = e.target.closest(".tmn-s3"); if (s3 && window.TMN_STICKERS) { TMN_STICKERS.play(s3.dataset.sid); s3.classList.remove("s3-again"); void s3.getBoundingClientRect(); s3.classList.add("s3-again"); }   // Tigo 3D: pindutin = magsasalita ulit si Tigo
       var b = e.target.closest("[data-ch]"); if (!b) return;
       var a = b.dataset.ch, row = b.closest("[data-id]"), m = row ? find(row.dataset.id) : null;
       try {
@@ -424,7 +425,7 @@
         else if (a === "emoji") {
           if (b.getAttribute("aria-expanded") === "true") { TMN_EMOJI_PICK.close(); return; }
           TMN_EMOJI_PICK.open(b, { stickers: S.chat && S.chat.status !== "request", onEmoji: function (em) { TMN_EMOJI_PICK.insert(input, em); },
-            onSticker: function (sid) { queue({ kind: "sticker", body: sid }); },
+            onSticker: function (sid) { queue({ kind: "sticker", body: sid }); if (window.TMN_STICKERS && TMN_STICKERS.play) TMN_STICKERS.play(sid); },
             gifs: !!(window.TMN_CONFIG && TMN_CONFIG.fn && TMN_CONFIG.fn.gifs),
             onGif: function (g) { queue({ kind: "gif", body: g.full.url, gif: g.full }); } });
         }

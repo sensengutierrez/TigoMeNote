@@ -71,6 +71,10 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-10 · Tigo: kapag puno na ang energy at pinatulog, agad na nagigising → `decay()` ay gumigising tuwing energy ≥ 100 → gigising lang kapag *umabot* sa 100 habang tulog (`backend/pet-fast.ts`)
 - 2026-11-11 · Gloom Siege: malaking "Wave 11 in 1" na nakaharang at paulit-ulit sa gitna → `pop()` tuwing nagbabago ang bilang ng hintay → `.tg-flash` na "Wave N" isang beses na kusang nawawala + maliit na ⏳ sa HUD (`games-ui.js`, `tigo.css`)
 - 2026-11-11 · Isla: bumagal ang 3D nang lumaki (483 draw call) → bawat bulaklak, poste ng bakod at bato ay hiwalay na mesh, at may 2 PointLight → InstancedMesh + malabong bilog sa lupa kapalit ng PointLight (170 draw call) (`backdrops.js`)
+- 2026-11-11 · Lights Out: nahuli ng Hush habang nakatago sa locker → pagbalik, hindi na kita si Tigo → `visible` ay ibinabalik lang sa "Leave" at sa 8 s → `T.group.visible = !me.hid` bawat frame (`ghost-game.js`)
+- 2026-11-11 · Kid: nakatayo sa sofa / sa kart, at wala sa unan kapag natutulog → ang upo at higa ay para sa hugis ng note, at ang puwesto ng higa ay nakabatay sa paa (maliit pa ang Tigo sa mababang level) → `sitPose()` (pasulong ang binti) at puwesto ng higa na nakabatay sa haba ng katawan (`human-model.js`, `pet-scene.js`, `race-game.js`)
+- 2026-11-11 · Decorate: kailangang mag-scroll sa pinakababa para sa Buy → inilipat ang Buy bar sa itaas ng listahan (sticky) (`room-ui.js`, `closet-ui.js`)
+- 2026-11-11 · Tigo: hindi lumalabas ang pindutan sa labas → `.tg-sheet:not(.min)` ay laging nasa pahina → `stage.sheet-open` ang tamang tsek (`pages/tigo.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

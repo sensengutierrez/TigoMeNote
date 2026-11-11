@@ -39,9 +39,9 @@ const SLOTS = ["hat", "face", "body", "hand", "buddy", "backdrop"];
 // Coins bawat bagong level (+ dagdag sa Lv8 at Lv9). Lv10 = golden glow.
 const levelCoins = (l: number) => 20 + (l === 8 ? 100 : l === 9 ? 150 : 0);
 const GAME = { perDay: 10, maxCoins: 30, minGapMs: 20_000, kinds: ["coins", "pac", "race", "ghost", "dash", "siege", "sudoku"] }; // bawat laro: 10 beses bawat araw
-// Bawat oras: gaano bumababa (gising / tulog). 0 = HINDI NA BUMABABA nang kusa (ayon kay Bench, 0.11.42: "ung life span nya hindi na nababawasan").
-// Tulog: bumabalik pa rin ang energy. Ang pagpapakain, laro, ligo at haplos ay nagdadagdag lang (walang bawas).
-const RATE = { hunger: [0, 0], joy: [0, 0], energy: [0, -14], clean: [0, 0] };
+// Bawat oras: gaano bumababa (gising / tulog). 0.11.45 (ayon kay Bench): bumababa ULIT nang dahan-dahan ang gutom, saya (laro) at linis (ligo);
+// ang energy ay hindi na bumababa nang kusa (tulog = bumabalik). Mga 33 oras bago maubos ang gutom mula sa puno. Walang bawas kapag naglaro.
+const RATE = { hunger: [3, 1.5], joy: [2, 1], energy: [0, -14], clean: [2, 1] };
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -105,6 +105,7 @@ function shape(p: any) {
   const lvl = levelOf(p.xp);
   return {
     coins: p.coins ?? 0, owned: p.owned ?? [], outfit: p.outfit ?? {}, glow: lvl >= 10, room: p.room ?? null, avatar: p.avatar ?? null,
+    farm: { ...farmOf(p), seeds: SEEDS, treeMs: TREE_MS, treeCoins: TREE_COINS, plots_n: PLOTS, trees_n: TREES, now: Date.now() },
     name: p.name, color: p.color, gear: p.gear, hunger: p.hunger, joy: p.joy, energy: p.energy, clean: p.clean,
     xp: p.xp, level: lvl, next: xpFor(lvl + 1), prev: xpFor(lvl), asleep: p.asleep, mood: moodOf(p),
     stats_at: p.stats_at, born_at: p.born_at, near_on: !!p.near_on && !!p.near_at && Date.now() - new Date(p.near_at).getTime() < NEAR_MINUTES * 60_000,
@@ -287,6 +288,54 @@ async function style(p: any, me: any) {
   return reply({ ok: true, pet: shape(await store(pet)) });
 }
 
+// ---------- sa labas: taniman, bunga ng puno, pangingisda (pets.farm, sql/114) ----------
+// farm = { plots: { "0": { s: seed, t: ISO ng pagtanim } }, trees: { "0": ISO ng huling pitas }, fish: { d: "YYYY-MM-DD", n, t: ms ng huling huli } }
+// Buto: [presyo, minuto bago anihin, coins kapag inani]. Ang oras ay sa server lang binibilang.
+const SEEDS: Record<string, [number, number, number]> = { carrot: [5, 20, 8], tomato: [10, 60, 18], corn: [20, 180, 42], strawberry: [35, 480, 85], pumpkin: [60, 960, 150] };
+const PLOTS = 10, TREES = 7, TREE_MS = 4 * 3600_000, TREE_COINS = 8, FISH_GAP = 12_000, FISH_DAY = 40;
+const CATCH: [string, string, string, number, number][] = [["boot", "🥾", "Old boot", 0, 4], ["small", "🐟", "Small fish", 3, 52], ["tilapia", "🐠", "Tilapia", 6, 26], ["bangus", "🐡", "Bangus", 10, 12], ["gold", "✨🐟", "Golden fish", 20, 6]];
+// deno-lint-ignore no-explicit-any
+const farmOf = (pet: any) => { const f = pet.farm && typeof pet.farm === "object" ? pet.farm : {}; return { plots: f.plots ?? {}, trees: f.trees ?? {}, fish: f.fish ?? {} }; };
+const grown = (pl: { s: string; t: string }) => !!SEEDS[pl.s] && Date.now() - new Date(pl.t).getTime() >= SEEDS[pl.s][1] * 60_000;
+// deno-lint-ignore no-explicit-any
+async function farm(p: any, me: any) {
+  const pet = decay(await load(me.id)), f = farmOf(pet), before = levelOf(pet.xp);
+  // deno-lint-ignore no-explicit-any
+  const out: any = {};
+  let coins = pet.coins ?? 0, xp = pet.xp;
+  const idx = (v: unknown, n: number) => { const i = Math.floor(Number(v)); return Number.isFinite(i) && i >= 0 && i < n ? i : -1; };
+  if (p.do === "plant") {
+    const i = idx(p.plot, PLOTS), sd = SEEDS[String(p.seed)];
+    if (i < 0 || !sd) return fail("Unknown seed or plot.");
+    if (f.plots[i]) return fail("Something is already growing there.", 409);
+    if (coins < sd[0]) return fail("Not enough coins for that seed.", 402);
+    coins -= sd[0]; f.plots[i] = { s: String(p.seed), t: nowIso() };
+  } else if (p.do === "harvest") {
+    const list = p.all ? Object.keys(f.plots) : [String(idx(p.plot, PLOTS))];
+    let got = 0, n = 0;
+    for (const k of list) { const pl = f.plots[k]; if (pl && grown(pl)) { got += SEEDS[pl.s][2]; n++; delete f.plots[k]; } }
+    if (!n) return fail("Nothing is ready to harvest yet.", 409);
+    coins += got; xp += n * 2; out.got = got; out.n = n;
+  } else if (p.do === "pick") {
+    const list = p.all ? Array.from({ length: TREES }, (_, i) => i) : [idx(p.tree, TREES)];
+    let n = 0;
+    for (const i of list) { if (i < 0) continue; const last = f.trees[i] ? new Date(f.trees[i]).getTime() : 0; if (Date.now() - last >= TREE_MS) { f.trees[i] = nowIso(); n++; } }
+    if (!n) return fail("No fruit yet. Trees grow fruit every 4 hours.", 409);
+    coins += n * TREE_COINS; xp += n; out.got = n * TREE_COINS; out.n = n;
+  } else if (p.do === "fish") {
+    const day = nowIso().slice(0, 10), fs = f.fish.d === day ? f.fish : { d: day, n: 0, t: 0 };
+    if (Date.now() - (fs.t || 0) < FISH_GAP) return fail("The fish need a moment. Try again.", 429);
+    if (fs.n >= FISH_DAY) return fail("The pond is quiet for today. Come back tomorrow!", 429);
+    let r = Math.random() * 100, c = CATCH[1];
+    for (const k of CATCH) { if (r < k[4]) { c = k; break; } r -= k[4]; }
+    f.fish = { d: day, n: fs.n + 1, t: Date.now() };
+    coins += c[3]; xp += c[3] ? 1 : 0; out.catch = { id: c[0], icon: c[1], name: c[2], coins: c[3] }; out.left = FISH_DAY - fs.n - 1;
+  } else return fail("Unknown action.");
+  const { data, error } = await db.from("pets").update({ farm: f, coins, xp, hunger: pet.hunger, joy: pet.joy, energy: pet.energy, clean: pet.clean, asleep: pet.asleep, stats_at: nowIso(), updated_at: nowIso() }).eq("user_id", me.id).select("*").single();
+  if (error) throw error;
+  return reply({ ok: true, pet: shape(data), levelUp: levelOf(xp) > before, ...out });
+}
+
 // Avatar: "tigo" (ang note) o "kid" (parang tao). Mga pagpipilian: maiikling salita lang (ang itsura ay nasa tigo/human-model.js).
 const AV_KEYS = ["kind", "skin", "hair", "hairColor", "top", "topColor", "bottom", "bottomColor", "shoes", "preset"];
 // deno-lint-ignore no-explicit-any
@@ -435,6 +484,7 @@ Deno.serve(async (req) => {
       case "visits": return await visits(p, me);
       case "room":   return await room(p, me);
       case "avatar": return await avatar(p, me);
+      case "farm":   return await farm(p, me);
       default:       return fail("Unknown action.");
     }
   } catch (e) {

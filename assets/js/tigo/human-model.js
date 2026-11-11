@@ -1,7 +1,7 @@
 /* TigoMeNote · tigo/human-model.js — "Kid": avatar na parang tao (ulo, katawan, braso, binti), kapalit ng note na Tigo kung pipiliin
    import { createKid, KID } from "./human-model.js"      (ginagamit ng pet-model.js createTigo kapag avatar.kind === "kid")
    const k = createKid({ avatar: { skin, hair, hairColor, top, topColor, bottom, bottomColor, shoes } }, group)
-   Pareho ang API ng Tigo (pet-model.js): update, setMood, sleep, jump, eat, spin, wiggle, lookAt, wear, setGlow, walk, face, move, dispose
+   Pareho ang API ng Tigo (pet-model.js): update, setMood, sleep, jump, eat, spin, wiggle, lookAt, wear, setGlow, walk, face, move, sitPose(on), dispose
      + setLook(avatar) → palitan ang buhok / damit / kulay nang hindi ginagawa ulit ang buong katawan
    KID = mga pagpipilian (para sa avatar-ui.js): SKIN, HAIR, HAIRC, TOP, BOTTOM, CLOTH, PRESETS
    Kasinlaki ni Tigo (~1.75 ang taas) para tugma sa camera, bahay, at mga laro. Sariling disenyo (gawa sa code), walang kinopyang character. */
@@ -135,15 +135,32 @@ export function createKid(opts = {}, group = new THREE.Group()) {
 
   // ---------- mga isinusuot (outfit.js): sumbrero, salamin, sa katawan, hawak ----------
   const anchors = { hat: new THREE.Group(), face: new THREE.Group(), body: new THREE.Group(), hand: new THREE.Group() };
-  anchors.hat.position.set(0, 0.3, 0); anchors.hat.scale.setScalar(0.66); head.add(anchors.hat);
+  anchors.hat.position.set(0, 0.34, 0); anchors.hat.scale.setScalar(0.78); head.add(anchors.hat);   // mas malaki (0.66 → 0.78) para halata ang suot
   face.add(anchors.face);
-  anchors.body.position.set(0, 0.84, 0.215); anchors.body.scale.setScalar(0.5); body.add(anchors.body);
-  anchors.hand.position.set(0, -0.46, 0.02); anchors.hand.scale.setScalar(0.85); limbs[1].add(anchors.hand); anchors.hand.rotation.order = "ZYX";
+  anchors.body.position.set(0, 0.86, 0.225); anchors.body.scale.setScalar(0.58); body.add(anchors.body);
+  anchors.hand.position.set(0, -0.46, 0.02); anchors.hand.scale.setScalar(1); limbs[1].add(anchors.hand); anchors.hand.rotation.order = "ZYX";
+  // Headphones na kasya sa ulo ng Kid: makapal na banda sa ibabaw ng buhok, malalaking tasa na may unan at makintab na takip
+  const phones = new THREE.Group();
+  {
+    const band = mat({ color: 0x2a2a30, roughness: 0.35, metalness: 0.5 }), cup = mat({ color: 0xff5a36, roughness: 0.25, metalness: 0.3 }), pad = mat({ color: 0x1b1b20, roughness: 0.9 }), chrome = mat({ color: 0xe6e9f0, roughness: 0.15, metalness: 0.9 });
+    const arc = new THREE.Mesh(geo(new THREE.TorusGeometry(0.5, 0.04, 10, 28, Math.PI)), band); arc.castShadow = true; phones.add(arc);
+    const top = new THREE.Mesh(geo(new THREE.TorusGeometry(0.5, 0.055, 10, 14, Math.PI * 0.4)), pad); top.rotation.z = Math.PI * 0.3; phones.add(top);
+    [-1, 1].forEach((k) => {
+      const c = new THREE.Group(); c.position.set(k * 0.47, -0.04, 0); c.rotation.z = Math.PI / 2; phones.add(c);
+      const shell = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.15, 0.17, 0.11, 22)), cup); shell.castShadow = true; c.add(shell);
+      const cushion = new THREE.Mesh(geo(new THREE.TorusGeometry(0.14, 0.045, 10, 22)), pad); cushion.rotation.x = Math.PI / 2; cushion.position.y = k * 0.05; c.add(cushion);
+      const capM = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.085, 0.085, 0.02, 18)), chrome); capM.position.y = -k * 0.062; c.add(capM);
+      const arm = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.022, 0.022, 0.16, 8)), chrome); arm.position.set(k * 0.49, 0.07, 0); phones.add(arm);
+    });
+    phones.position.y = 0.02;
+  }
   const worn = {};
   function wear(slot, id) {
     if (!anchors[slot]) return;
     anchors[slot].clear(); worn[slot] = id || null;
+    if (slot === "hat") { head.remove(phones); }
     if (!id) return;
+    if (id === "headphones") { head.add(phones); return; }   // sariling sukat para sa ulo ng Kid (kita ang banda at mga tasa)
     const w = opts.gearGroup && opts.gearGroup(id) || buildWear(id); if (!w) return;
     const g = w.group || w;
     g.traverse((o) => { if (o.geometry) disposables.push(o.geometry); if (o.material) disposables.push(o.material); });
@@ -157,7 +174,7 @@ export function createKid(opts = {}, group = new THREE.Group()) {
   [0, 1, 2].forEach((i) => { const z = new THREE.Mesh(geo(new THREE.TorusGeometry(0.06 + i * 0.02, 0.012, 6, 4)), zMat); z.position.set(i * 0.12, i * 0.22, 0); zzz.add(z); });
 
   // ---------- estado at galaw ----------
-  const st = { move: null, moveT: 0, walk: 0, walkT: 0, heading: null, mood: "happy", asleep: false, blinkT: 2 + Math.random() * 3, blink: 0, jump: 0, eat: 0, spin: 0, wiggle: 0, look: new THREE.Vector2(), lookNow: new THREE.Vector2(), phase: Math.random() * 10 };
+  const st = { sit: false, move: null, moveT: 0, walk: 0, walkT: 0, heading: null, mood: "happy", asleep: false, blinkT: 2 + Math.random() * 3, blink: 0, jump: 0, eat: 0, spin: 0, wiggle: 0, look: new THREE.Vector2(), lookNow: new THREE.Vector2(), phase: Math.random() * 10 };
   function paintFace() {
     const sleepy = st.asleep || st.mood === "sleepy", closed = st.asleep || st.blink > 0 || (st.mood === "happy" && st.eat > 0);
     eyes.forEach((e) => { e.visible = !closed; e.scale.y = sleepy && !st.asleep ? 0.55 : 1; });
@@ -191,6 +208,7 @@ export function createKid(opts = {}, group = new THREE.Group()) {
     st.walkT += dt * (6 + st.walk * 8) * (st.walk > 0.05 ? 1 : 0);
     const sw = walking ? Math.sin(st.walkT) * (0.55 + st.walk * 0.3) : 0;
     legs.forEach((l, i) => { l.pv.rotation.x = (i ? -sw : sw) + (y > 0.05 ? (i ? 0.35 : -0.25) : 0); l.pv.rotation.z = 0; });
+    if (st.sit) { legs.forEach((l) => { l.pv.rotation.x = -1.42; l.pv.rotation.z = 0; }); }   // nakaupo: pasulong ang mga binti
     if (walking) { body.position.y = Math.abs(Math.sin(st.walkT)) * 0.05; body.rotation.y = Math.sin(st.walkT) * 0.07; } else { body.position.y *= 0.8; body.rotation.y *= 0.8; }
     if (st.spin > 0) { st.spin = Math.max(0, st.spin - dt); group.rotation.y = (st.heading || 0) + (1 - st.spin / 0.9) * Math.PI * 2; }
     else if (st.heading !== null) { let d = st.heading - group.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); group.rotation.y += d * Math.min(1, dt * 10); }
@@ -203,6 +221,7 @@ export function createKid(opts = {}, group = new THREE.Group()) {
     limbs[1].rotation.z = worn.hand ? 0.2 : 0.28 - (st.jump > 0 ? 1.6 : happy ? Math.sin(t * 3 + 1) * 0.1 : 0);
     limbs[1].rotation.x = worn.hand ? -0.7 + sw * 0.2 : sw * 0.9;
     if (st.jump > 0 && !worn.hand) limbs[0].rotation.z = -0.28 - 1.6;
+    if (st.sit && !mv) { limbs[0].rotation.x = limbs[1].rotation.x = -0.75; if (!worn.hand) { limbs[0].rotation.z = -0.12; limbs[1].rotation.z = 0.12; } }   // kamay sa tuhod / manibela
     if (mv === "dance") { limbs[0].rotation.z = -1.5 + Math.sin(beat) * 0.9; limbs[1].rotation.z = 1.5 + Math.sin(beat) * 0.9; limbs[0].rotation.x = limbs[1].rotation.x = 0; legs.forEach((l, i) => { l.pv.rotation.z = Math.max(0, Math.sin(beat + i * Math.PI)) * (i ? 0.35 : -0.35); }); }
     else if (mv === "budots") { const b = t * 9; limbs[0].rotation.z = -1 + Math.sin(b) * 1.1; limbs[1].rotation.z = 1 + Math.sin(b + Math.PI) * 1.1; limbs[0].rotation.x = Math.sin(b * 0.5) * 0.9; limbs[1].rotation.x = -Math.sin(b * 0.5) * 0.9; body.rotation.y = Math.sin(t * 4.5) * 0.35; legs.forEach((l, i) => { l.pv.rotation.x = Math.max(0, Math.sin(b + i * Math.PI)) * -0.5; }); }
     else if (mv === "robot") { const q = Math.floor(t * 4) % 8; limbs[0].rotation.z = [-1.57, -1.57, -0.3, -2.7, -1.57, -0.3, -1.57, -2.7][q]; limbs[1].rotation.z = [1.57, 0.3, 1.57, 2.7, 0.3, 1.57, 2.7, 1.57][q]; limbs[0].rotation.x = [0, -1.2, 0, 0, -1.2, 0, 0, 0][q]; limbs[1].rotation.x = [0, 0, -1.2, 0, 0, -1.2, 0, 0][q]; body.rotation.y = [0, 0.45, 0, -0.45, 0, 0.45, 0, -0.45][q]; legs.forEach((l, i) => { l.pv.rotation.x = q % 2 === i ? -0.4 : 0; }); }
@@ -224,7 +243,7 @@ export function createKid(opts = {}, group = new THREE.Group()) {
     walk(speed, heading) { st.walk = Math.max(0, Math.min(1, speed || 0)); if (heading !== undefined) st.heading = heading; },
     face(heading) { st.heading = heading; },
     move(kind, sec) { st.move = kind || null; st.moveT = sec || 2; },
-    moving() { return st.move; },
+    moving() { return st.move; }, sitPose(on) { st.sit = !!on; },
     dispose() { disposables.forEach((d) => d.dispose && d.dispose()); temp.forEach((g) => g.dispose()); },
   };
 }

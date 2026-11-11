@@ -3,6 +3,7 @@
    buildBackdrop(id) → { group, house, obstacles, night(on), update(t), dispose() }   id = island | beach | coral | snow | clouds | desert | moon
    RADIUS = hanggang saan puwedeng maglakad si Tigo. PLAT = laki ng lupa. HOUSE = kung nasaan ang bahay (r = hindi matatagos) at ang pinto (para matulog).
    obstacles = [{ x, z, r }] na iniikutan ni Tigo (lawa, taniman, poste ng ilaw).
+   spots = [{ kind: "bench"|"pond"|"garden"|"tree", x, z, r, seat?, id?, ready? }] → mga puwedeng gawin sa labas (isla lang); setFarm({ plots:[{seed,stage}], trees:[bool] })
    0.11.42–43: mas malaking isla (2.9 → 4.0 → 5.4), may upuan at karatula, bagong bahay na dalawang palapag (0.11.43; dati bahay kubo): bubong na tatsulok, balkonahe, veranda, bintana, paso ng bulaklak, ilaw, bakod sa gilid,
    taniman, lawa na may lily, daanang bato, at mga ilaw na bumubukas kapag gabi (parol, poste, ilaw sa bubong).
    Sariling disenyo lahat. */
@@ -139,19 +140,38 @@ function fence(g, col = 0xf3ead7) {
   inst(g, new THREE.BoxGeometry(1, 0.035, 0.02), m, rails);
 }
 // Taniman: dalawang kama ng lupa, mga punla at gulay
+// 10 taniman (2 kama × 5). setPlots([{ seed, stage }]) → stage 0 walang tanim · 1 punla · 2 lumalaki · 3 puwede nang anihin (pet-fast "farm")
+export const CROPS = { carrot: 0xff8a2a, tomato: 0xe53935, corn: 0xf7d94c, strawberry: 0xe91e63, pumpkin: 0xf57c00 };
 function garden(g, x, z, ry = 0) {
-  const G = new THREE.Group(); G.position.set(x, 0, z); G.rotation.y = ry; g.add(G);
-  const soil = M(0x8a5a3c, { roughness: 1 }), edge = M(0xc8a165), leaf = M(0x4caf50), veg = [M(0xff5a4f), M(0xff9f1c), M(0xf7d94c)];
-  [-0.3, 0.3].forEach((dz, r) => {
+  const G = new THREE.Group(); G.position.set(x, 0, z); G.rotation.y = ry; G.scale.setScalar(1.6); g.add(G);
+  const soil = M(0x8a5a3c, { roughness: 1 }), edge = M(0xc8a165);
+  const at = [];
+  [-0.3, 0.3].forEach((dz) => {
     put(G, new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.08, 0.42), edge), 0, 0.04, dz);
     put(G, new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.09, 0.34), soil), 0, 0.05, dz, false);
-    inst(G, new THREE.ConeGeometry(0.07, 0.2, 6), leaf, [0, 1, 2, 3, 4].map((i) => [-0.4 + i * 0.2, 0.19, dz]), true);
-    for (let i = r; i < 5; i += 2) put(G, new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), veg[(i + r) % 3]), -0.35 + i * 0.2, 0.14, dz + 0.07, false);
+    for (let i = 0; i < 5; i++) at.push([-0.4 + i * 0.2, dz]);
   });
   // pandilig
   put(G, new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.14, 10), M(0x6fb7e9, { roughness: 0.5 })), 0.68, 0.07, 0.25);
   const sp = put(G, new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.16, 6), M(0x6fb7e9)), 0.78, 0.1, 0.25, false); sp.rotation.z = -0.9;
-  return { x, z, r: 0.78 };
+  const crops = new THREE.Group(); G.add(crops);
+  const leafM = new THREE.MeshStandardMaterial({ color: 0x4caf50, roughness: 0.8 }), vegM = {}, ripe = [];
+  function setPlots(list) {
+    crops.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); crops.clear(); ripe.length = 0;
+    (list || []).forEach((p, i) => {
+      if (!p || !p.stage || !at[i]) return;
+      const [px, pz] = at[i], k = [0, 0.45, 0.75, 1][p.stage];
+      const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.075 * k, 0.24 * k, 6), leafM); leaf.position.set(px, 0.1 + 0.12 * k, pz); leaf.castShadow = true; crops.add(leaf);
+      if (p.stage === 3) {
+        const m = vegM[p.seed] || (vegM[p.seed] = new THREE.MeshStandardMaterial({ color: CROPS[p.seed] || 0xff5a4f, roughness: 0.5, emissive: CROPS[p.seed] || 0xff5a4f, emissiveIntensity: 0.25 }));
+        const v = new THREE.Mesh(p.seed === "corn" ? new THREE.CapsuleGeometry(0.035, 0.1, 4, 8) : p.seed === "carrot" ? new THREE.ConeGeometry(0.045, 0.14, 8) : new THREE.SphereGeometry(p.seed === "pumpkin" ? 0.085 : 0.055, 10, 8), m);
+        if (p.seed === "carrot") v.rotation.x = Math.PI; if (p.seed === "pumpkin") v.scale.y = 0.75;
+        v.position.set(px + 0.06, 0.17, pz + 0.07); crops.add(v); ripe.push(v);
+      }
+    });
+  }
+  return { ob: { x, z, r: 1.2 }, setPlots, update(t) { ripe.forEach((v, i) => { v.position.y = 0.17 + Math.abs(Math.sin(t * 3 + i)) * 0.03; }); },
+    dispose() { leafM.dispose(); Object.values(vegM).forEach((m) => m.dispose()); } };
 }
 // Lawa: tubig, mga bato sa gilid, lily at tambo
 function pond(g, x, z, r = 0.9) {
@@ -175,12 +195,12 @@ function pond(g, x, z, r = 0.9) {
 }
 // Upuang kahoy (nakaharap sa lawa) at karatula
 function bench(g, x, z, ry = 0) {
-  const B = new THREE.Group(); B.position.set(x, 0, z); B.rotation.y = ry; g.add(B);
+  const B = new THREE.Group(); B.position.set(x, 0, z); B.rotation.y = ry; B.scale.setScalar(1.4); g.add(B);
   const wood = M(0xb98a55, { roughness: 0.8 }), dark = M(0x7a5530);
   put(B, new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.05, 0.3), wood), 0, 0.26, 0);
   put(B, new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.26, 0.04), wood), 0, 0.46, -0.14);
   [-0.38, 0.38].forEach((lx) => put(B, new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.26, 0.28), dark), lx, 0.13, 0));
-  return { x, z, r: 0.5 };
+  return { x, z, r: 0.62 };
 }
 function signpost(g, x, z) {
   put(g, new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.7, 6), M(0x8a6238)), x, 0.35, z);
@@ -191,9 +211,15 @@ function signpost(g, x, z) {
 function bush(g, x, z, s = 1, col = 0x58b368) {
   [[0, 0, 0.26], [0.2, 0.05, 0.2], [-0.19, 0.03, 0.19]].forEach(([dx, dz, r]) => put(g, new THREE.Mesh(new THREE.SphereGeometry(r * s, 9, 6), M(col)), x + dx * s, r * s * 0.8, z + dz * s));
 }
-function tree(g, x, z, s = 1) {
+// Puno. Ibinabalik ang grupo ng mga bunga (nakatago hangga't walang bunga) para sa "pick" (namumunga bawat ilang oras)
+const fruitM = [0xe53935, 0xff9f1c, 0xf7d94c];
+function tree(g, x, z, s = 1, kind = 0) {
   put(g, new THREE.Mesh(new THREE.CylinderGeometry(0.07 * s, 0.1 * s, 0.6 * s, 8), M(0x8d6e4a)), x, 0.3 * s, z);
   [0.75, 1.0, 1.2].forEach((y, i) => put(g, new THREE.Mesh(new THREE.SphereGeometry((0.42 - i * 0.08) * s, 14, 10), M(0x5cb85c + i * 0x050a05)), x + (i - 1) * 0.06 * s, y * s, z));
+  const fr = new THREE.Group(); fr.visible = false; g.add(fr);
+  const fm = M(fruitM[kind % 3], { roughness: 0.4, emissive: fruitM[kind % 3], emissiveIntensity: 0.2 });
+  [[0.3, 0.78, 0.26], [-0.28, 0.9, 0.24], [0.05, 1.08, 0.33], [0.34, 1.02, -0.05], [-0.12, 0.72, 0.36]].forEach(([dx, dy, dz]) => put(fr, new THREE.Mesh(new THREE.SphereGeometry(0.075 * s, 10, 8), fm), x + dx * s, dy * s, z + dz * s, false));
+  return { x, z, fruit: fr };
 }
 function palm(g, x, z, s = 1) {
   const trunk = new THREE.Group(); trunk.position.set(x, 0, z); g.add(trunk);
@@ -215,13 +241,19 @@ function flowers(g, n, r, col = 0xffffff) {
 const BUILD = {
   island(g, x) {
     platform(g, 0x8fd18a, 0xc89a6b); flowers(g, 30, 3.9); flowers(g, 12, 3.6, 0xffc4dd);
-    tree(g, -4.2, -2.3, 1.3); tree(g, -2.8, -4.1, 1.05); tree(g, -0.7, -5.0, 1.2); tree(g, 0.9, -4.8, 0.85); tree(g, -5.1, 0.2, 0.95); tree(g, -4.6, 3.0, 1.1); tree(g, 5.2, 1.9, 1.0);
+    const trees = [[-4.2, -2.3, 1.3], [-2.8, -4.1, 1.05], [-0.7, -5.0, 1.2], [0.9, -4.8, 0.85], [-5.1, 0.2, 0.95], [-4.6, 3.0, 1.1], [5.0, 2.6, 1.0]].map(([tx, tz, ts], i) => tree(g, tx, tz, ts, i));
     bush(g, -4.7, -1.2); bush(g, 5.3, -0.9, 0.9); bush(g, -1.8, -4.6, 0.8, 0x6cc47a); bush(g, 4.6, 3.0, 0.85, 0x6cc47a);
     put(g, new THREE.Mesh(new THREE.DodecahedronGeometry(0.22), M(0xb8b2a8)), -4.9, 0.05, 1.4).scale.y = 0.6;
     fence(g); path(g);
     const pd = pond(g, -3.3, 2.4, 1.1); x.obstacles.push(pd.ob); x.ticks.push(pd.update);
-    x.obstacles.push(garden(g, 4.3, 0.5, -0.35));
-    x.obstacles.push(bench(g, -1.7, 3.3, 2.6)); x.obstacles.push(signpost(g, 1.2, 4.2));
+    const gd = garden(g, 3.9, 0.9, -0.35); x.obstacles.push(gd.ob); x.ticks.push(gd.update); x.disposers.push(gd.dispose);
+    const BX = -1.7, BZ = 3.5, BF = Math.atan2(-3.3 - BX, 2.4 - BZ);   // upuan: nakaharap sa lawa (para sa pangingisda)
+    x.obstacles.push(bench(g, BX, BZ, BF)); x.obstacles.push(signpost(g, 1.2, 4.2));
+    const seat = { x: BX, z: BZ, y: 0.4, face: BF, front: { x: BX + Math.sin(BF) * 0.7, z: BZ + Math.cos(BF) * 0.7 } };
+    // mga puwedeng gawin sa labas: upo, pangingisda (mula sa upuan), taniman, pitas ng bunga
+    x.spots.push({ kind: "bench", x: BX, z: BZ, r: 1.2, seat }, { kind: "pond", x: -3.3, z: 2.4, r: 2.0, seat, bob: { x: -3.0, z: 2.55 } }, { kind: "garden", x: 3.9, z: 0.9, r: 2.0 });
+    trees.forEach((t, i) => x.spots.push({ kind: "tree", id: i, x: t.x, z: t.z, r: 1.15, ready: false }));
+    x.setFarm = (f) => { gd.setPlots(f && f.plots); trees.forEach((t, i) => { const on = !!(f && f.trees && f.trees[i]); t.fruit.visible = on; x.spots.find((q) => q.kind === "tree" && q.id === i).ready = on; }); };
   },
   beach(g) {
     platform(g, 0xf3d9a4, 0xd9b77c);
@@ -286,7 +318,7 @@ export const SKY = {
 };
 export function buildBackdrop(id) {
   const group = new THREE.Group();
-  const x = { obstacles: [], ticks: [] }, lit = [], lamps = [];
+  const x = { obstacles: [], ticks: [], spots: [], disposers: [], setFarm: null }, lit = [], lamps = [];
   (BUILD[id] || BUILD.island)(group, x);
   const house = kubo(group, lit, lamps);
   // dalawang poste ng ilaw sa magkabilang gilid ng daan papunta sa pinto
@@ -296,9 +328,9 @@ export function buildBackdrop(id) {
   const day = lit.map(([m]) => m.emissiveIntensity);
   const floats = []; group.traverse((o) => { if (o.userData && o.userData.float !== undefined) floats.push(o); });
   return {
-    group, house, obstacles: x.obstacles,
+    group, house, obstacles: x.obstacles, spots: x.spots, setFarm(f) { if (x.setFarm) x.setFarm(f); },
     night(on) { lit.forEach(([m, n], i) => { m.emissiveIntensity = on ? n : day[i]; }); lamps.forEach((l) => { l.visible = on; l.material.opacity = on ? l.userData.n : 0; }); },
     update(t) { floats.forEach((o, i) => { o.position.y += Math.sin(t * 0.8 + i) * 0.002; o.rotation.y += 0.002; }); x.ticks.forEach((f) => f(t)); },
-    dispose() { group.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); if (o.isInstancedMesh) o.dispose(); }); },
+    dispose() { x.disposers.forEach((d) => d()); group.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); if (o.isInstancedMesh) o.dispose(); }); },
   };
 }

@@ -9,7 +9,8 @@
 import { startCoinGame } from "./coin-game.js";
 import { gameMenu, rankingView } from "./room-lobby.js";
 import { touchLook } from "./touch-look.js";
-const TRACK_LIST = [["easy", "🟢", "Easy loop", "Wide, round track. Slower rivals."], ["classic", "🟡", "Classic", "Curves and a hairpin."], ["twisty", "🔴", "Twisty hills", "Zig-zags and tight turns. Fast rivals."], ["grand", "🏁", "Grand tour", "A long road: big straights and sweeping bends. 2 laps."]];
+// Mga mapa ng karera (bawat isa ay may sariling itsura: parang, gubat, disyerto, niyebe)
+const TRACK_LIST = [["easy", "🌼", "Sunny meadow", "Wide, round track. Slower rivals."], ["classic", "🌲", "Pine forest", "Curves and a hairpin."], ["twisty", "🌵", "Desert canyon", "Zig-zags and tight turns. Fast rivals."], ["grand", "❄️", "Snow tour", "A long road: big straights and sweeping bends. 2 laps."]];
 
 export const GAMES = [
   { id: "dash", icon: "🏃", name: "Sky Dash", text: "Race on a sky track! Switch lanes, jump, grab coins, ride the slipstream. Up to 4 friends.", tag: "NEW" },
@@ -18,7 +19,7 @@ export const GAMES = [
   { id: "ghost", icon: "👻", name: "Lights Out", text: "Escape the dark school before the Hush finds you. Play solo or with a friend!" },
   { id: "coins", icon: "🪙", name: "Coin Rush", text: "Grab coins in 30 seconds. Jump for the floating ones!" },
   { id: "pac", icon: "👾", name: "Pac-Tigo", text: "Eat all the dots in the maze. Mangoes make the Gloomies run away!" },
-  { id: "race", icon: "🏁", name: "Tigo Racing", text: "3 laps against 3 Tigos. Hit ⚡ pads to go faster!" },
+  { id: "race", icon: "🏁", name: "Tigo Racing", text: "Buggy race on 4 maps! Grab ❓ boxes for 🚀 🛡️ 🧲, and hit ⚡ pads." },
 ];
 // ---------- Lights Out: lobby (online duo gamit ang TMN_RT) at ranking ----------
 const ABC = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -30,15 +31,17 @@ function makeNet(code, lobby) {
 }
 function fmt(ms) { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
 async function rankingNode(box, back) {
-  let mode = "solo", period = "week";
+  let mode = "solo", period = "week", level = "easy";
   async function paint() {
     box.innerHTML = '<div class="tg-rk"><div class="segmented tg-rk-tabs"><button type="button" data-m="solo">Solo</button><button type="button" data-m="duo">Duo</button></div>' +
+      '<div class="segmented tg-rk-tabs"><button type="button" data-l="easy">🟢 Easy</button><button type="button" data-l="medium">🟡 Medium</button><button type="button" data-l="hard">🔴 Hard</button></div>' +
       '<div class="segmented tg-rk-tabs"><button type="button" data-p="week">This week</button><button type="button" data-p="all">All time</button></div><div class="tg-rk-list"><p class="faint small">Loading…</p></div></div>' +
       '<button type="button" class="btn btn-ghost btn-sm" data-back>‹ Lights Out</button>';
     box.querySelectorAll("[data-m]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.m === mode)));
     box.querySelectorAll("[data-p]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.p === period)));
+    box.querySelectorAll("[data-l]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.l === level)));
     try {
-      const r = await TMN_API.call("games", "top", { game: "ghost", mode, period });
+      const r = await TMN_API.call("games", "top", { game: "ghost", mode, period, level });
       const rows = (r.list || []).map((x) => '<div class="tg-rk-row' + (x.me ? " me" : "") + '"><b class="tg-rk-n">' + (x.rank <= 3 ? ["🥇", "🥈", "🥉"][x.rank - 1] : x.rank) + "</b><span>" +
         x.users.map((u) => "@" + esc(u.username)).join(" + ") + '</span><b translate="no">' + fmt(x.ms) + "</b></div>").join("");
       box.querySelector(".tg-rk-list").innerHTML = (rows || '<p class="faint small">No escapes yet. Be the first! 👻</p>') +
@@ -46,8 +49,8 @@ async function rankingNode(box, back) {
     } catch (e) { box.querySelector(".tg-rk-list").innerHTML = '<p class="faint small">' + esc(e.message || "Couldn't load the ranking.") + "</p>"; }
   }
   box.onclick = (e) => {
-    const m = e.target.closest("[data-m]"), p = e.target.closest("[data-p]");
-    if (m) { mode = m.dataset.m; paint(); } else if (p) { period = p.dataset.p; paint(); } else if (e.target.closest("[data-back]")) { box.onclick = null; back(); }
+    const m = e.target.closest("[data-m]"), p = e.target.closest("[data-p]"), l = e.target.closest("[data-l]");
+    if (l) { level = l.dataset.l; paint(); } else if (m) { mode = m.dataset.m; paint(); } else if (p) { period = p.dataset.p; paint(); } else if (e.target.closest("[data-back]")) { box.onclick = null; back(); }
   };
   paint();
 }
@@ -57,11 +60,18 @@ function ghostMenu(box, onPick, info, back, joinCode) {
   box._cleanup = () => { clearInterval(timer); if (net && !handed) net.leave(); net = null; here(null); };
   const me = { name: (info && info.name) || "friend", color: (info && info.color) || "coral", av: (info && info.av) || null };
   const go = (opt) => { handed = true; here(null); clearInterval(timer); onPick("ghost", opt); };
+  // Antas: Easy (isang palapag) · Medium (buong bahay) · Hard (malaking bahay). Tanda ang huling pinili.
+  const LV = [["easy", "🟢", "Easy", "One floor · 3 keys · 5 min"], ["medium", "🟡", "Medium", "Whole house · 5 keys · 7 min"], ["hard", "🔴", "Hard", "Big house · 7 keys · 9 min"]];
+  let level = "easy"; try { level = localStorage.getItem("tmnGhostLevel") || "easy"; } catch (e) {}
+  if (!LV.some((l) => l[0] === level)) level = "easy";
+  const lvChips = () => '<div class="segmented tg-lv" role="group" aria-label="Level">' + LV.map((l) => '<button type="button" data-lv="' + l[0] + '" aria-pressed="' + (l[0] === level) + '">' + l[1] + " " + l[2] + "</button>").join("") + '</div><p class="faint small tg-lv-t" style="margin:0">' + LV.find((l) => l[0] === level)[3] + "</p>";
+  const setLv = (v) => { level = v; try { localStorage.setItem("tmnGhostLevel", v); } catch (e) {} box.querySelectorAll("[data-lv]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lv === v))); const t = box.querySelector(".tg-lv-t"); if (t) t.textContent = LV.find((l) => l[0] === v)[3]; };
   function menu() {
     box._cleanup(); handed = false;
     box.innerHTML = '<div class="tg-gh-hero"><span>👻</span><div><b>Lights Out</b><small>Find the 🔑 keys, then reach the EXIT. Hide in lockers 🚪, flash the Hush 🔦.</small></div></div>' +
-      '<button type="button" class="tg-game" data-x="solo"><span class="tg-ic">🔦</span><span><b>Play solo</b><small>3 keys · 2 lives · 5 minutes</small></span><span class="tg-go">Play</span></button>' +
-      '<button type="button" class="tg-game" data-x="host"><span class="tg-ic">👥</span><span><b>Create a room</b><small>Get a code and play with a friend online (4 keys)</small></span><span class="tg-go">Create</span></button>' +
+      lvChips() +
+      '<button type="button" class="tg-game" data-x="solo"><span class="tg-ic">🔦</span><span><b>Play solo</b><small>2 lives · find every key, then the EXIT</small></span><span class="tg-go">Play</span></button>' +
+      '<button type="button" class="tg-game" data-x="host"><span class="tg-ic">👥</span><span><b>Create a room</b><small>Get a code and play with a friend online (one more key)</small></span><span class="tg-go">Create</span></button>' +
       '<button type="button" class="tg-game" data-x="join"><span class="tg-ic">🔑</span><span><b>Join a room</b><small>Type your friend\'s room code</small></span><span class="tg-go">Join</span></button>' +
       '<button type="button" class="tg-game" data-x="rank"><span class="tg-ic">🏆</span><span><b>Ranking</b><small>Fastest escapes · solo and duo</small></span><span class="tg-go">View</span></button>' +
       '<button type="button" class="btn btn-ghost btn-sm" data-back>‹ All games</button>';
@@ -71,7 +81,7 @@ function ghostMenu(box, onPick, info, back, joinCode) {
     const code = Array.from({ length: 5 }, () => ABC[(Math.random() * ABC.length) | 0]).join(""), seed = (Math.random() * 1e9) | 0;
     let mate = null;
     box.innerHTML = '<div class="tg-lobby"><small>Room code</small><b class="tg-code" translate="no">' + code + '</b><button type="button" class="btn btn-ghost btn-sm" data-copy>Copy code</button>' +
-      '<p class="small">Your friend opens <b>Tigo → Games → Lights Out → Join a room</b> and types this code.</p><p class="tg-lobby-s small">Waiting for your friend…</p>' +
+      '<p class="small">Your friend opens <b>Tigo → Games → Lights Out → Join a room</b> and types this code.</p>' + lvChips() + '<p class="tg-lobby-s small">Waiting for your friend…</p>' +
       '<button type="button" class="btn btn-primary" data-start disabled>Start game</button></div><button type="button" class="btn btn-ghost btn-sm" data-menu>‹ Back</button>';
     if (!needRt()) return;
     here({ game: "ghost", code, players: 1, max: 2 });
@@ -85,7 +95,7 @@ function ghostMenu(box, onPick, info, back, joinCode) {
       if (ev === "bye" && mate) { mate = null; here({ game: "ghost", code, players: 1, max: 2 }); box.querySelector(".tg-lobby-s").textContent = "Your friend left. Waiting…"; box.querySelector("[data-start]").disabled = true; }
     });
     box.querySelector("[data-copy]").onclick = () => { try { navigator.clipboard.writeText(code); } catch (e) {} if (window.TMN_UI) TMN_UI.toast("Code copied"); };
-    box.querySelector("[data-start]").onclick = () => { if (!mate) return; net.send("start", { seed }); go({ mode: "duo", role: "host", seed, net, partner: mate, me }); };
+    box.querySelector("[data-start]").onclick = () => { if (!mate) return; net.send("start", { seed, level }); go({ mode: "duo", role: "host", level, seed, net, partner: mate, me }); };
   }
   function join(auto) {
     box.innerHTML = '<div class="tg-lobby"><small>Room code</small><input class="input tg-code-in" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC12" aria-label="Room code">' +
@@ -99,7 +109,7 @@ function ghostMenu(box, onPick, info, back, joinCode) {
       box._cleanup(); st.textContent = "Joining…"; let host = null, tries = 0;
       net = makeNet(code, (ev, d) => {
         if (ev === "welcome" && !host) { host = { name: String(d.name || "friend").slice(0, 30), color: String(d.color || "coral").slice(0, 12), av: d.av && typeof d.av === "object" ? d.av : null }; clearInterval(timer); st.innerHTML = "✅ Joined <b>@" + esc(host.name) + "</b>'s room. Waiting for them to start…"; }
-        if (ev === "start" && host) go({ mode: "duo", role: "guest", seed: d.seed, net, partner: host, me });
+        if (ev === "start" && host) go({ mode: "duo", role: "guest", level: LV.some((l) => l[0] === d.level) ? d.level : "easy", seed: d.seed, net, partner: host, me });
         if (ev === "bye" && host) { st.textContent = "The host left the room."; host = null; }
       });
       timer = setInterval(() => { if (host) return; if (++tries > 8) { clearInterval(timer); st.textContent = "No room with that code. Check the code and try again."; return; } net.send("join", { name: me.name, color: me.color, av: me.av }); }, 1200);
@@ -107,9 +117,10 @@ function ghostMenu(box, onPick, info, back, joinCode) {
     if (auto) { inp.value = auto; box.querySelector("[data-join]").click(); }   // galing sa "Friends playing → Join"
   }
   const onMenu = (e) => {
+    const lv = e.target.closest("[data-lv]"); if (lv) { setLv(lv.dataset.lv); return; }
     const x = e.target.closest("[data-x]");
     if (x && x.dataset.x !== "rank" && info && info.tired && info.tired()) { if (window.TMN_UI) TMN_UI.toast(info.tired()); return; }
-    if (x) { const k = x.dataset.x; if (k === "solo") go({ mode: "solo" }); if (k === "host") host(); if (k === "join") join(); if (k === "rank") rankingNode(box, () => { box.onclick = onMenu; menu(); }); return; }
+    if (x) { const k = x.dataset.x; if (k === "solo") go({ mode: "solo", level }); if (k === "host") host(); if (k === "join") join(); if (k === "rank") rankingNode(box, () => { box.onclick = onMenu; menu(); }); return; }
     if (e.target.closest("[data-menu]")) { menu(); return; }
     if (e.target.closest("[data-back]")) { box._cleanup(); box.onclick = null; back(); }
   };
@@ -173,7 +184,7 @@ export function gamesNode(onPick, info) {
     if (b.dataset.g !== "race") { onPick(b.dataset.g); return; }
     // Racing: pumili ng track
     let last = "easy"; try { last = localStorage.getItem("tmnRaceTrack") || "easy"; } catch (x) {}
-    box.innerHTML = '<p class="faint small" style="margin:0">Choose a race track</p>' + TRACK_LIST.map((t) =>
+    box.innerHTML = '<p class="faint small" style="margin:0">Choose a map</p>' + TRACK_LIST.map((t) =>
       '<button type="button" class="tg-game' + (t[0] === last ? " last" : "") + '" data-track="' + t[0] + '"><span class="tg-ic">' + t[1] + "</span><span><b>" + t[2] + "</b><small>" + t[3] + '</small></span><span class="tg-go">Race</span></button>').join("") +
       '<button type="button" class="btn btn-ghost btn-sm" data-back>‹ All games</button>';
   });
@@ -218,8 +229,9 @@ export async function runGame(kind, { sc, stage, voice, seconds, track, onJump, 
         import("./dash-game.js").then((x) => {
           game = x.startDash(sc, { voice, seed: o.seed, net, me: o.me,
             onHud: (h) => { show(["🏁 " + h.pct + "%", h.place + " / " + h.of, "🪙 " + h.coins].concat(h.boost ? ["⚡"] : h.slip ? ["💨 Slipstream"] : [])); },
-            onEnd: (r) => { offSwipe(); stage.classList.remove("sky"); done(r); } });
-          const offSwipe = touchLook(stage, { onSwipe: (d) => game.swipe(d) });   // swipe: kaliwa/kanan = lane, pataas = talon
+            onEnd: (r) => { offSwipe(); stage.classList.remove("sky", "swipe-only"); done(r); } });
+          const offSwipe = touchLook(stage, { onSwipe: (d) => game.swipe(d) });
+          stage.classList.add("swipe-only");   // swipe lang ang kontrol: walang joystick at jump button (mas kita ang daan)   // swipe: kaliwa/kanan = lane, pataas = talon
           stage._game = game; onJump(() => game.jump()); countdown();
         });
       } else {
@@ -249,15 +261,20 @@ export async function runGame(kind, { sc, stage, voice, seconds, track, onJump, 
       // Lights Out: 🚪 Hide at 🔦 Flash sa kanan; H = hide, F / Space = flash
       const o = gopt || { mode: "solo" };
       const btns = document.createElement("div"); btns.className = "tg-pedals tg-gbtns";
-      btns.innerHTML = '<button type="button" class="tg-pedal hide" aria-label="Hide">🚪<small>Hide</small></button><button type="button" class="tg-pedal flash" aria-label="Flash">🔦<small>Flash</small></button>';
+      btns.innerHTML = '<button type="button" class="tg-pedal view" aria-label="Camera">🎥<small>Top</small></button><button type="button" class="tg-pedal hide" aria-label="Hide">🚪<small>Hide</small></button><button type="button" class="tg-pedal flash" aria-label="Flash">🔦<small>Flash</small></button>';
       stage.append(btns); stage.classList.add("dark");
       const hb = btns.querySelector(".hide"), fb = btns.querySelector(".flash");
       hb.addEventListener("pointerdown", (e) => { e.preventDefault(); if (game) game.hide(); });
       fb.addEventListener("pointerdown", (e) => { e.preventDefault(); if (game) game.flash(); });
+      // 🎥 camera: Top (mula sa itaas) ↔ Close (sa likod ni Tigo; hilahin ang screen para umikot). Tanda ang huling pinili.
+      const vb = btns.querySelector(".view");
+      const setView = (m) => { if (!game || !game.view) return; const v = game.view(m); vb.querySelector("small").textContent = v === "close" ? "Close" : "Top"; try { localStorage.setItem("tmnGhostView", v); } catch (e) {} };
+      vb.addEventListener("pointerdown", (e) => { e.preventDefault(); setView(); });
+      const offLook = touchLook(stage, { onDrag: (dx, dy) => { if (game && game.look) game.look(dx, dy); } });
       const keys = (e) => { if (e.repeat || !game) return; const k = e.key.toLowerCase(); if (k === "h") game.hide(); if (k === "f") game.flash(); };
       window.addEventListener("keydown", keys);
       import("./ghost-game.js").then((x) => {
-        game = x.startGhost(sc, { voice, mode: o.mode, role: o.role, seed: o.seed || ((Math.random() * 1e9) | 0), net: o.net || null, me: o.me, partner: o.partner,
+        game = x.startGhost(sc, { voice, mode: o.mode, role: o.role, level: o.level || "easy", seed: o.seed || ((Math.random() * 1e9) | 0), net: o.net || null, me: o.me, partner: o.partner,
           onHud: (h) => {
             if (h.note) { pop(h.note.length > 24 ? "⚠️" : h.note); if (window.TMN_UI) TMN_UI.toast(h.note); return; }
             const t = Math.floor(h.time / 60) + ":" + String(h.time % 60).padStart(2, "0");
@@ -267,12 +284,13 @@ export async function runGame(kind, { sc, stage, voice, seconds, track, onJump, 
           },
           onButtons: (b) => { hb.disabled = !b.hide; hb.classList.toggle("on", !!b.hidden); hb.querySelector("small").textContent = b.hidden ? "Leave" : "Hide"; fb.disabled = !b.flash; },
           onEnd: (r) => {
-            btns.remove(); window.removeEventListener("keydown", keys); stage.classList.remove("dark", "chased");
+            offLook(); btns.remove(); window.removeEventListener("keydown", keys); stage.classList.remove("dark", "chased");
             if (o.net) setTimeout(() => o.net.leave(), 1500);
-            if (!quitNow && window.TMN_API) TMN_API.call("games", "finish", { game: "ghost", mode: o.mode === "duo" ? "duo" : "solo", ms: r.ms, keys: r.keys, win: !!r.win, partner: o.partner && o.partner.name }).catch(() => {});
+            if (!quitNow && window.TMN_API) TMN_API.call("games", "finish", { game: "ghost", level: r.level || "easy", mode: o.mode === "duo" ? "duo" : "solo", ms: r.ms, keys: r.keys, win: !!r.win, partner: o.partner && o.partner.name }).catch(() => {});
             end(r);
           } });
         stage._game = game;   // para sa tests
+        try { if (localStorage.getItem("tmnGhostView") === "close") setView("close"); } catch (e) {}
         onJump(() => game.flash());
         countdown();
       });
@@ -289,7 +307,7 @@ export async function runGame(kind, { sc, stage, voice, seconds, track, onJump, 
       const keys = (e) => { if (e.repeat) return; if (e.key === "Shift" || e.key === "e" || e.key === "E") { if (game && game.turbo) game.turbo(); } };
       window.addEventListener("keydown", keys);
       import("./race-game.js").then((x) => {
-        game = x.startRace(sc, { track, voice, onHud: (h) => { show(["🏁 " + h.lap + "/" + h.laps, h.place, "🪙 " + h.coins]); tb.style.setProperty("--ready", h.turbo); tb.classList.toggle("ready", h.turbo >= 1); },
+        game = x.startRace(sc, { track, voice, onHud: (h) => { if (h.toast) { flash(h.toast, "", true); return; } show(["🏁 " + h.lap + "/" + h.laps, h.place, "🪙 " + h.coins].concat(h.fx ? [h.fx] : [])); tb.style.setProperty("--ready", h.turbo); tb.classList.toggle("ready", h.turbo >= 1); },
           onEnd: (r) => { pedals.remove(); window.removeEventListener("keydown", keys); end(Object.assign(r, { label: r.placeText + "! 🪙 " + r.score })); } });
         onJump(() => game.jump());
         countdown();

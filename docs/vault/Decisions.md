@@ -125,6 +125,10 @@ updated: 2026-10-24
 | 2026-11-11 | Avatar na Kid: sariling blocky na disenyo, libre, at iisang `createTigo()` na may `setAvatar()` | Hindi puwedeng kopyahin ang Roblox; iisang API kaya walang babaguhin sa mga laro at bahay |
 | 2026-11-11 | "Friends playing": ang nakakakita ay ang mga FOLLOWER mo lang, 90 s lang ang bisa, at code lang ng bukas na room ang ibinibigay | Privacy: walang lokasyon, walang kasaysayan; kusang nawawala; walang bagong permission |
 | 2026-11-11 | Gloom Siege: third-person na hinihila ang view; kusang baril pa rin (walang manual na aim) | Madaling laruin sa phone gamit ang isang hinlalaki sa stick at isa sa pag-ikot |
+| 2026-11-11 | Taniman, bunga at isda: oras at coins ay binibilang sa server (pet-fast), hindi sa phone | Hindi madadaya sa pagpalit ng orasan; iisang pinagmumulan ng coins |
+| 2026-11-11 | "3D emoticon" = Tigo 3D stickers na SVG + CSS (may lalim at galaw) at boses na synth, hindi tunay na WebGL sa bawat mensahe | Magaan sa chat kahit maraming sticker; walang file na ida-download; gumagana rin sa Chat app |
+| 2026-11-11 | Bumababa ulit ang gutom, saya at linis (mabagal); ang energy ay hindi, at walang pagod sa laro | Binago ni Bench ang naunang hiling: gusto niyang may saysay pa rin ang pagpapakain, paligo at laro |
+| 2026-11-11 | Lights Out: ang malalaking mapa ay ginagawa ng code (`genMap`), hindi iginuguhit nang mano-mano | Laging may daan (walang nakakulong na kwarto) at madaling dagdagan ng antas |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

@@ -48,10 +48,12 @@ export function openCloset({ host, pet, call, esc, onPreview, onPet, onClose }) 
     box.innerHTML =
       '<div class="tg-cl-head"><h3>Closet</h3><span class="tg-coins">🪙 <b>' + pet.coins + '</b></span><button type="button" class="btn btn-ghost btn-sm" data-close>Done</button></div>' +
       '<div class="tg-tabs" role="tablist">' + TABS.map((t) => '<button type="button" role="tab" aria-selected="' + (t.id === tab) + '" data-tab="' + t.id + '" title="' + t.name + '"><span>' + t.icon + "</span><small>" + t.name + "</small></button>").join("") + "</div>" +
-      '<div class="tg-cl-body">' + grid + "</div>" +
+      // Buy / try-on bar: nasa ITAAS ng listahan (dati nasa pinakababa, kailangang mag-scroll)
       (trying ? '<div class="tg-cl-buy"><span>Trying on: ' + trying.need.map((id) => item(id).icon).join(" ") + "</span>" +
         '<button type="button" class="btn btn-ghost btn-sm" data-cancel>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-buy' + (cost > pet.coins ? " disabled" : "") + ">Buy 🪙 " + cost + "</button>" +
-        (cost > pet.coins ? '<p class="faint small">Need ' + (cost - pet.coins) + " more coins — play Coin Rush!</p>" : "") + "</div>" : "");
+        (cost > pet.coins ? '<p class="faint small">Need ' + (cost - pet.coins) + " more coins — play Coin Rush!</p>" : "") + "</div>" : "") +
+      '<div class="tg-cl-body">' + grid + "</div>";
+
   }
   function preview() { onPreview(shown(), pet.color); }
 

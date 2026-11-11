@@ -524,3 +524,43 @@ body.tg-full, body.tg-in-game { overflow: hidden; }   /* hindi "tg-game": iyon a
 .tg-av-c.on { border-color: var(--ink, #111); box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink, #111); }
 .tg-av-chips { flex-wrap: wrap; gap: 6px; } .tg-av-chips .chip { padding: 5px 11px; font-size: 12.5px; }
 .tg-av-foot { position: sticky; bottom: 0; display: flex; justify-content: flex-end; padding-top: 6px; background: linear-gradient(transparent, var(--surface) 35%); }
+/* Buy bar: nakadikit sa itaas ng listahan (hindi na kailangang mag-scroll pababa); naka-highlight ang piniling item */
+.tg-cl-buy { position: sticky; top: 0; z-index: 2; box-shadow: 0 6px 16px rgba(0,0,0,.12); border: 1.5px solid #ff5a36; }
+.tg-item.pick { border-color: #ff5a36; box-shadow: 0 0 0 2px rgba(255,90,54,.3); }
+/* Sky Dash: swipe lang (walang joystick at jump button) */
+.tg-stage.swipe-only .tg-pad, .tg-stage.swipe-only .tg-btns { display: none !important; }
+/* Lights Out: pagpili ng antas */
+.tg-lv { width: 100%; } .tg-lv button { flex: 1; font-size: 12.5px; padding: 6px 4px; }
+.tg-gbtns .tg-pedal.view { width: 46px; height: 46px; align-self: flex-end; }
+/* 0.11.45: ang mga bar ng buhay ay katabi na ng pangalan (hindi na hiwalay na hilera sa malapad na screen) */
+.tg-top { flex-wrap: wrap; row-gap: 6px; }
+.tg-top .tg-mini { position: static; margin-right: auto; flex-wrap: nowrap; gap: 5px; }
+.tg-top .tg-mini span { padding: 3px 6px 3px 4px; font-size: 12px; }
+.tg-top .tg-mini i { width: 30px; }
+.tg-stage.ui-game .tg-xp { top: 54px; }
+@media (max-width: 620px) { .tg-top .tg-mini { order: 3; flex-basis: 100%; margin-top: 8px; } }
+@media (min-width: 621px) {
+  .tg-stage.ui-game .tg-dock, .tg-stage.game .tg-dock { top: 70px; }
+  .tg-stage.game .tg-xp { top: 52px; }
+}
+/* Sa labas: pindutan ng puwedeng gawin (🪑 Sit · 🎣 Fish · 🌱 Garden · 🍎 Pick) — gitna sa ibaba, sa pagitan ng joystick at mga button */
+.tg-ctx { position: absolute; left: 50%; bottom: max(22px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 3; max-width: calc(100% - 270px); min-width: 96px;
+  padding: 9px 16px; border-radius: 999px; border: 0; background: rgba(255,255,255,.94); color: #1b1b1f; font: 700 14px/1.2 var(--font-display, inherit); box-shadow: 0 6px 18px rgba(0,0,0,.2); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tg-ctx.hot { background: #ff5a36; color: #fff; animation: tg-ctx-hot .35s ease infinite alternate; }
+@keyframes tg-ctx-hot { to { transform: translateX(-50%) scale(1.12); } }
+.tg-stage:not(.ui-game) .tg-ctx { bottom: 14px; }
+.tg-stage.playing .tg-ctx { display: none; }
+@media (prefers-reduced-motion: reduce) { .tg-ctx.hot { animation: none; } }
+/* Garden (tigo/farm-ui.js) */
+.tg-farm { display: grid; gap: 8px; }
+.tg-farm-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .tg-farm-top .tg-coins { margin-right: auto; font-weight: 700; }
+.tg-seeds { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 6px; }
+.tg-seed { display: grid; justify-items: center; gap: 1px; padding: 8px 4px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; min-width: 0; }
+.tg-seed span { font-size: 24px; line-height: 1.1; } .tg-seed b { font-size: 12.5px; } .tg-seed small { font-size: 11px; color: var(--muted); } .tg-seed .tg-seed-sell { color: #1f9d6b; font-weight: 700; }
+.tg-seed.on { border-color: #ff5a36; box-shadow: 0 0 0 2px rgba(255,90,54,.25); }
+.tg-plots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.tg-plot { display: grid; justify-items: center; align-content: center; gap: 1px; min-height: 64px; padding: 6px 2px; border-radius: 12px; border: 1.5px dashed #b58a5e; background: color-mix(in srgb, #8a5a3c 16%, var(--surface)); color: var(--text); font: inherit; cursor: pointer; min-width: 0; }
+.tg-plot span { font-size: 22px; line-height: 1.1; } .tg-plot small { font-size: 10.5px; color: var(--muted); white-space: nowrap; } .tg-plot small.ok { color: #1f9d6b; font-weight: 800; }
+.tg-plot.s3 { border-style: solid; border-color: #1f9d6b; background: color-mix(in srgb, #1f9d6b 14%, var(--surface)); }
+.tg-plot.s1, .tg-plot.s2 { border-style: solid; }
+@media (max-width: 620px) { .tg-ctx, .tg-stage:not(.ui-game) .tg-ctx { bottom: 150px; max-width: calc(100% - 40px); } }

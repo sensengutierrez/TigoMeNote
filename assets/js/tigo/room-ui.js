@@ -35,17 +35,19 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
       const on = tab === "wall" ? st.wall === i.id : tab === "floor" ? st.floor === i.id : n > 0;
       const tag = lock ? "🔒 Lv " + i.level : !have ? "🪙 " + i.price : tab === "furn" ? (n ? "In room ×" + n : "Add") : on ? "Using" : i.price ? "Owned" : "Free";
       const sw = i.color ? ' style="--sw:' + i.color + '"' : "";
-      return '<button type="button" class="tg-item' + (on ? " on" : "") + (lock ? " lock" : "") + (have ? " have" : "") + (i.color ? " tg-swatch" : "") + '" data-id="' + i.id + '"' + sw + (lock ? ' aria-disabled="true"' : "") +
+      return '<button type="button" class="tg-item' + (on ? " on" : "") + (lock ? " lock" : "") + (have ? " have" : "") + (i.color ? " tg-swatch" : "") + (buying && buying.id === i.id ? " pick" : "") + '" data-id="' + i.id + '"' + sw + (lock ? ' aria-disabled="true"' : "") +
         '><span class="tg-ic">' + i.icon + "</span><b>" + esc(i.name) + "</b><small>" + tag + "</small></button>";
     }).join("");
     box.innerHTML =
       '<div class="tg-cl-head"><h3>🏠 Decorate</h3><span class="tg-save faint small">' + saving + '</span><span class="tg-coins">🪙 <b>' + pet.coins + '</b></span><button type="button" class="btn btn-ghost btn-sm" data-close>Done</button></div>' +
       '<div class="tg-tabs" role="tablist">' + HOME_TABS.map((t) => '<button type="button" role="tab" aria-selected="' + (t.id === tab) + '" data-tab="' + t.id + '"><span>' + t.icon + "</span><small>" + t.name + "</small></button>").join("") + "</div>" +
       '<p class="faint small tg-decor-tip">' + (tab === "furn" ? "Tap to add. In the house, drag a thing to move it." : "Tap to try it on the house.") + "</p>" +
-      '<div class="tg-cl-body"><div class="tg-grid">' + grid + "</div></div>" +
+      // Buy / try-on bar: nasa ITAAS ng listahan (dati nasa pinakababa, kailangang mag-scroll)
       (buying ? '<div class="tg-cl-buy"><span>' + buying.icon + " " + esc(buying.name) + '</span><button type="button" class="btn btn-ghost btn-sm" data-cancel>Cancel</button>' +
         '<button type="button" class="btn btn-primary btn-sm" data-buy' + (buying.price > pet.coins ? " disabled" : "") + ">Buy 🪙 " + buying.price + "</button>" +
-        (buying.price > pet.coins ? '<p class="faint small">Need ' + (buying.price - pet.coins) + " more coins — play games to earn!</p>" : "") + "</div>" : "");
+        (buying.price > pet.coins ? '<p class="faint small">Need ' + (buying.price - pet.coins) + " more coins — play games to earn!</p>" : "") + "</div>" : "") +
+      '<div class="tg-cl-body"><div class="tg-grid">' + grid + "</div></div>";
+
   }
 
   // ---------- save ----------

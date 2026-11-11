@@ -68,7 +68,7 @@
         } });
       paintSize(loadSize());
       sc.setRoom(pet.room);
-      dress(pet.outfit, pet.color); paint();
+      dress(pet.outfit, pet.color); paint(); syncFarm();
       var cv = $("tgCanvas");
       ctl = c.createControls({
         stage: $("stage"), pad: $("tgPad"), jumpBtn: $("tgJump"), runBtn: $("tgRun"), stopBtn: $("tgStop"),
@@ -96,6 +96,35 @@
     startVoice();
   }
   // ---------- camera: View at Zoom ----------
+  // ---------- sa labas (isla): upo sa upuan, pangingisda, taniman, pitas ng bunga — tigo/farm-ui.js ----------
+  var farmMod = null, fisher = null, ctxKind = "", ctxId = null;
+  function syncFarm() { if (sc && farmMod && pet) sc.setFarm(farmMod.farmView(pet)); }
+  mod("farm-ui").then(function (m) { farmMod = m; syncFarm(); setInterval(syncFarm, 30000); }).catch(function () {});
+  function farmCall(b) { return TMN_API.call("pet", "farm", b); }
+  function setPet(p) { pet = p; paint(); syncFarm(); }
+  var CTX = { bench: "🪑 Sit", pond: "🎣 Fish", garden: "🌱 Garden", tree: "🍎 Pick fruit" };
+  function ctxPaint(txt, kind, hot) { var b = $("tgCtx"); b.textContent = txt || ""; b.classList.toggle("hidden", !txt); b.classList.toggle("hot", !!hot); b.dataset.k = kind || ""; }
+  setInterval(function () {
+    if (!sc || !farmMod || fisher) return;
+    var q = !sc.inGame() && sc.pose() === "stand" && !uiSheetOpen() ? sc.spot() : null;
+    ctxKind = q ? q.kind : ""; ctxId = q ? q.id : null;
+    ctxPaint(q ? CTX[q.kind] : "", ctxKind);
+  }, 300);
+  function uiSheetOpen() { return $("stage").classList.contains("sheet-open") || document.body.classList.contains("modal-open"); }
+  $("tgCtx").addEventListener("click", function () {
+    if (!sc || !farmMod) return;
+    if (fisher) { fisher.pull(); return; }
+    if (ctxKind === "bench") { if (sc.sitBench()) say("Sit down!", { still: true }); ctxPaint(""); }
+    else if (ctxKind === "garden") farmMod.openGarden({ getPet: function () { return pet; }, call: farmCall, onPet: setPet });
+    else if (ctxKind === "tree") { var id = ctxId; farmCall({ do: "pick", tree: id }).then(function (r) { setPet(r.pet); toast("🍎 +🪙 " + r.got); if (voice) voice.sfx("coin"); sc.jump(); }).catch(function (e) { toast(e.message || "No fruit yet."); }); }
+    else if (ctxKind === "pond") {
+      fisher = farmMod.startFishing({ sc: sc, call: farmCall, onPet: setPet, voice: voice,
+        onState: function (txt, pull) { ctxPaint(txt, "fish", pull); },
+        onStop: function () { fisher = null; ctxPaint(""); } });
+      if (!fisher) toast("Fishing is at the pond on the island.");
+    }
+  });
+
   // ---------- sa loob ng bahay: 🪑 Sit at 🛏️ Sleep ----------
   $("tgSit").addEventListener("click", function () {
     if (!sc) return;
