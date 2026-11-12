@@ -1,7 +1,7 @@
 /* TigoMeNote · tigo/farm-ui.js — sa labas (isla): taniman 🌱, bunga ng puno 🍎, pangingisda 🎣
    import { farmView, openGarden, startFishing } from "./farm-ui.js"
-   farmView(pet) → { plots:[{ seed, stage 0–3, left ms }×10], trees:[bool×7], ready, fruit }   (para sa sc.setFarm at sa listahan)
-   openGarden({ getPet, call(body) → pet-fast "farm", onPet(pet) })  → modal: pumili ng buto (Seed store), itanim sa bakanteng taniman, anihin kapag ✅
+   farmView(pet) → { plots:[{ seed, stage 0–3, k 0–1, wet, left ms }×10], trees:[bool×7], ready, fruit, dry }   (para sa sc.setFarm at sa listahan)
+   openGarden({ getPet, call(body) → pet-fast "farm", onPet(pet), onWater() })   💧 Water → 2x bilis ng tubo nang 2 oras (kapareho ng server)  → modal: pumili ng buto (Seed store), itanim sa bakanteng taniman, anihin kapag ✅
    startFishing({ sc, call, onPet, voice, say, onState(txt, canPull) }) → { pull(), stop() }
      Uupo si Tigo sa upuan sa tabi ng lawa at maghahagis. Kapag gumalaw ang palutang ("‼️ Pull!") pindutin sa loob ng 1.4 s → pet-fast "farm" { do: "fish" }.
    Ang presyo, tagal at kita ay galing sa server (pet.farm.seeds); ang oras ay sa server binibilang (hindi madadaya sa orasan ng phone). */
@@ -16,16 +16,19 @@ export function farmView(pet) {
   const plots = [], trees = []; let ready = 0, fruit = 0;
   for (let i = 0; i < n; i++) {
     const p = f.plots && f.plots[i], sd = p && seeds[p.s];
-    if (!p || !sd) { plots.push({ seed: null, stage: 0, left: 0 }); continue; }
-    const total = sd[1] * 60000, el = now - skew - new Date(p.t).getTime(), k = el / total;
+    if (!p || !sd) { plots.push({ seed: null, stage: 0, k: 0, wet: false, left: 0 }); continue; }
+    const t0 = new Date(p.t).getTime(), wms = f.waterMs || 7200000, nowS = now - skew, bonus = p.w && p.w >= t0 ? Math.min(wms, nowS - p.w) : 0, wet = !!p.w && nowS - p.w < wms;
+    const total = sd[1] * 60000, el = nowS - t0 + bonus, k = el / total;
     const stage = k >= 1 ? 3 : k >= 0.4 ? 2 : 1; if (stage === 3) ready++;
-    plots.push({ seed: p.s, stage, left: Math.max(0, total - el) });
+    // natitira: habang basa, doble ang bilis
+    const rest = Math.max(0, total - el), wetLeft = wet ? wms - (nowS - p.w) : 0, left = rest <= wetLeft * 2 ? rest / 2 : rest - wetLeft;
+    plots.push({ seed: p.s, stage, k: Math.max(0, Math.min(1, k)), wet: wet && stage < 3, left });
   }
   for (let i = 0; i < tn; i++) { const last = f.trees && f.trees[i] ? new Date(f.trees[i]).getTime() : 0, on = now - skew - last >= (f.treeMs || 14400000); trees.push(on); if (on) fruit++; }
-  return { plots, trees, ready, fruit, seeds, treeCoins: f.treeCoins || 8 };
+  return { plots, trees, ready, fruit, seeds, treeCoins: f.treeCoins || 8, dry: plots.filter((p) => p.seed && p.stage < 3 && !p.wet).length };
 }
 
-export function openGarden({ getPet, call, onPet }) {
+export function openGarden({ getPet, call, onPet, onWater }) {
   let seed = null, busy = false, timer = 0;
   try { seed = localStorage.getItem("tmnSeed"); } catch (e) {}
   const body = document.createElement("div"); body.className = "tg-farm";
@@ -36,6 +39,7 @@ export function openGarden({ getPet, call, onPet }) {
     body.innerHTML =
       '<div class="tg-farm-top"><span class="tg-coins">🪙 <b>' + (pet.coins || 0) + "</b></span>" +
         '<button type="button" class="btn btn-primary btn-sm" data-f="all"' + (v.ready ? "" : " disabled") + ">Harvest all" + (v.ready ? " (" + v.ready + ")" : "") + "</button>" +
+        '<button type="button" class="btn btn-sm" data-f="water"' + (v.dry ? "" : " disabled") + ">💧 Water" + (v.dry ? " (" + v.dry + ")" : "") + "</button>" +
         '<button type="button" class="btn btn-ghost btn-sm" data-f="pick"' + (v.fruit ? "" : " disabled") + ">🍎 Pick fruit" + (v.fruit ? " (" + v.fruit + ")" : "") + "</button></div>" +
       '<p class="tg-av-l">Seed store — tap a seed, then tap an empty plot</p>' +
       '<div class="tg-seeds" role="group">' + Object.keys(v.seeds).map((k) => { const s = v.seeds[k], u = SEED_UI[k] || ["🌱", k];
@@ -44,9 +48,9 @@ export function openGarden({ getPet, call, onPet }) {
       '<div class="tg-plots">' + v.plots.map((p, i) => {
         const u = p.seed ? SEED_UI[p.seed] || ["🌱", p.seed] : null;
         return '<button type="button" class="tg-plot s' + p.stage + '" data-plot="' + i + '">' +
-          (p.stage === 0 ? "<span>➕</span><small>Plant</small>" : p.stage === 3 ? "<span>" + u[0] + '</span><small class="ok">✅ Harvest</small>' : "<span>" + (p.stage === 1 ? "🌱" : "🌿") + "</span><small>" + u[0] + " " + dur(p.left) + "</small>") + "</button>";
+          (p.stage === 0 ? "<span>➕</span><small>Plant</small>" : p.stage === 3 ? "<span>" + u[0] + '</span><small class="ok">✅ Harvest</small>' : "<span>" + (p.stage === 1 ? "🌱" : "🌿") + "</span><small>" + (p.wet ? "💧" : "") + u[0] + " " + dur(p.left) + "</small>") + "</button>";
       }).join("") + "</div>" +
-      '<p class="faint small">Plants keep growing while you are away. Trees give fruit every 4 hours (🪙 ' + v.treeCoins + " each).</p>";
+      '<p class="faint small">💧 Watered plants grow 2× faster for 2 hours. Plants keep growing while you are away. Trees give fruit every 4 hours (🪙 ' + v.treeCoins + " each).</p>";
   }
   async function act(b, okMsg) {
     if (busy) return; busy = true;
@@ -57,6 +61,12 @@ export function openGarden({ getPet, call, onPet }) {
   body.addEventListener("click", (e) => {
     const sd = e.target.closest("[data-seed]"), pl = e.target.closest("[data-plot]"), f = e.target.closest("[data-f]");
     if (sd) { seed = sd.dataset.seed; try { localStorage.setItem("tmnSeed", seed); } catch (x) {} render(); return; }
+    if (f && f.dataset.f === "water") {
+      if (busy) return; busy = true;
+      call({ do: "water", all: true }).then((r) => { onPet(r.pet); m.close(); if (onWater) onWater(r.n); else toast("💧 Watered " + r.n + "!"); })
+        .catch((er) => toast(er.message || "Couldn't water. Try again.")).finally(() => { busy = false; });
+      return;
+    }
     if (f) { if (f.dataset.f === "all") act({ do: "harvest", all: true }, (r) => "Harvested " + r.n + " · +🪙 " + r.got); else act({ do: "pick", all: true }, (r) => "Picked " + r.n + " · +🪙 " + r.got); return; }
     if (!pl) return;
     const i = +pl.dataset.plot, p = farmView(getPet()).plots[i];

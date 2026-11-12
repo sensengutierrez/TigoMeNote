@@ -7,7 +7,7 @@ import * as THREE from "../../vendor/three/three.module.min.js";
 
 export const FURN = {
   bed: { w: 1.2, d: 1.9, bed: true }, rug: { w: 1.6, d: 1.6, flat: true }, plant: { w: 0.5, d: 0.5 }, lamp: { w: 0.45, d: 0.45 },
-  banig: { w: 1.4, d: 2.0, flat: true }, table: { w: 1.2, d: 0.8 }, chair: { w: 0.5, d: 0.5, seat: 0.45 }, sofa: { w: 1.8, d: 0.8, seat: 0.5 },
+  banig: { w: 1.4, d: 2.0, flat: true }, table: { w: 1.2, d: 0.8 }, chair: { w: 0.5, d: 0.5, seat: 0.45 }, "gaming-chair": { w: 0.7, d: 0.7, seat: 0.5 }, sofa: { w: 1.8, d: 0.8, seat: 0.5 },
   beanbag: { w: 0.8, d: 0.8, seat: 0.4 }, bookshelf: { w: 1.0, d: 0.4 }, tv: { w: 1.2, d: 0.45 }, fan: { w: 0.5, d: 0.5 },
   desk: { w: 1.2, d: 0.6 }, toybox: { w: 0.7, d: 0.5 }, aquarium: { w: 1.0, d: 0.45 }, majlis: { w: 2.0, d: 0.8, seat: 0.18 },
   cactus: { w: 0.4, d: 0.4 }, piano: { w: 1.4, d: 0.6 }, fridge: { w: 0.7, d: 0.6 },
@@ -94,6 +94,17 @@ export function buildFurniture(id) {
     }
     case "table": { const w = wood(); box(1.2, 0.06, 0.8, w, 0, 0.62, 0); legs(1.2, 0.8, 0.6, w); ball(0.08, M(0xff5a36), 0.25, 0.71, 0); cyl(0.07, 0.05, 0.12, M(0xffffff), -0.2, 0.71, 0.1); break; }
     case "chair": { const w = wood(); box(0.46, 0.05, 0.46, w, 0, 0.42, 0); legs(0.46, 0.46, 0.42, w, 0.025); box(0.46, 0.5, 0.05, w, 0, 0.7, -0.21); break; }
+    case "gaming-chair": {   // upuang pang-gaming: 5 paa na may gulong, malambot na upuan at mataas na sandalan na may guhit, patungan ng braso, unan sa ulo
+      const blk = M(0x1d1d24, { roughness: 0.5 }), acc = M(0xff3b5c, { roughness: 0.45 }), chrome = M(0xc9cfd9, { metalness: 0.7, roughness: 0.25 });
+      for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2, leg = box(0.3, 0.04, 0.05, chrome, Math.cos(a) * 0.15, 0.08, Math.sin(a) * 0.15); leg.rotation.y = -a; ball(0.035, blk, Math.cos(a) * 0.3, 0.035, Math.sin(a) * 0.3); }
+      add(new THREE.CylinderGeometry(0.035, 0.045, 0.32, 10), chrome, 0, 0.25, 0);
+      const seat = box(0.56, 0.1, 0.54, blk, 0, 0.45, 0.02); seat.scale.y = 1;
+      box(0.4, 0.02, 0.46, acc, 0, 0.505, 0.03);
+      const back = box(0.54, 0.85, 0.1, blk, 0, 0.92, -0.25); back.rotation.x = -0.12;
+      const st1 = box(0.1, 0.8, 0.012, acc, -0.13, 0.92, -0.193); st1.rotation.x = -0.12; const st2 = box(0.1, 0.8, 0.012, acc, 0.13, 0.92, -0.193); st2.rotation.x = -0.12;
+      const pad = box(0.3, 0.13, 0.08, acc, 0, 1.24, -0.22); pad.rotation.x = -0.12;
+      [-1, 1].forEach((k) => { box(0.05, 0.22, 0.05, blk, k * 0.3, 0.6, 0.05); box(0.08, 0.04, 0.3, blk, k * 0.3, 0.72, 0.05); });
+      break; }
     case "sofa": { const c = M(0xff7a59, { roughness: 0.95 }); box(1.8, 0.35, 0.8, c, 0, 0.25, 0); box(1.8, 0.5, 0.2, c, 0, 0.6, -0.3); box(0.2, 0.3, 0.8, c, -0.8, 0.55, 0); box(0.2, 0.3, 0.8, c, 0.8, 0.55, 0);
       [-0.38, 0.38].forEach((x) => box(0.72, 0.1, 0.58, M(0xffa48a), x, 0.47, 0.06)); break; }
     case "beanbag": { const b = ball(0.42, M(0x7cc4ff, { roughness: 1 }), 0, 0.3, 0); b.scale.set(1, 0.72, 1); const d = ball(0.3, M(0x9ad2ff, { roughness: 1 }), 0, 0.42, -0.18); d.scale.set(1.1, 0.8, 0.6); break; }

@@ -30,6 +30,7 @@
   function paintSky(p) { $("stage").style.background = p.asleep ? NIGHT : sky || ""; }
   function paint() {
     var p = live(); if (!p) return;
+    syncWorld();
     $("tgNameTxt").textContent = p.name; $("tgLvl").textContent = "Lv " + p.level; $("tgCoins").textContent = p.coins;
     var m = MOOD[p.mood] || MOOD.ok; $("tgMood").innerHTML = m[0] + ' <span class="tg-mood-t">' + m[1] + "</span>"; $("tgMood").title = m[1];
     $("tgXp").style.width = Math.round(100 * (p.xp - p.prev) / Math.max(1, p.next - p.prev)) + "%";
@@ -102,15 +103,19 @@
   function syncFarm() { if (sc && farmMod && pet) sc.setFarm(farmMod.farmView(pet)); }
   mod("farm-ui").then(function (m) { farmMod = m; syncFarm(); setInterval(syncFarm, 30000); }).catch(function () {});
   function farmCall(b) { return TMN_API.call("pet", "farm", b); }
-  function setPet(p) { pet = p; paint(); syncFarm(); }
-  var CTX = { bench: "🪑 Sit", pond: "🎣 Fish", garden: "🌱 Garden", tree: "🍎 Pick fruit", aquarium: "🐟 Feed fish", mirror: "🪞 Look", ball: "⚽ Done playing" };
+  function setPet(p) { pet = p; paint(); syncFarm(); syncWorld(); }
+  var CTX = { bench: "🪑 Sit", pond: "🎣 Fish", garden: "🌱 Garden", tree: "🍎 Pick fruit", aquarium: "🐟 Feed fish", mirror: "🪞 Look", ball: "⚽ Done playing", ride: "Ride", dismount: "⬇ Get off" };
+  var RIDE_ICON = { bike: "🚲", scooter: "🛵", car: "🚗" };
+  // bahay at sasakyan: sa sariling isla = akin; kapag bumibisita = sa kaibigan
+  function myRides(p) { return ((p && p.owned) || []).filter(function (x) { return RIDE_ICON[x]; }); }
+  function syncWorld() { if (!sc || flying) return; if (visit) { sc.setHouse(visit.pet.house || 1); sc.setRides(visit.pet.rides || []); } else { sc.setHouse(pet.house || 1); sc.setRides(myRides(pet)); } }
   function ctxPaint(txt, kind, hot) { var b = $("tgCtx"); b.textContent = txt || ""; b.classList.toggle("hidden", !txt); b.classList.toggle("hot", !!hot); b.dataset.k = kind || ""; }
   setInterval(function () {
     if (!sc || !farmMod || fisher) return;
     var q = !sc.inGame() && sc.pose() === "stand" && !uiSheetOpen() ? (sc.ballActive() ? { kind: "ball" } : sc.spot()) : null;
-    if (q && visit && ["bench", "ball", "mirror"].indexOf(q.kind) < 0) q = null;   // sa isla ng iba: upo lang (kanila ang taniman, puno at lawa)
+    if (q && visit && ["bench", "ball", "mirror", "ride", "dismount"].indexOf(q.kind) < 0) q = null;   // sa isla ng iba: upo lang (kanila ang taniman, puno at lawa)
     ctxKind = q ? q.kind : ""; ctxId = q ? q.id : null;
-    ctxPaint(q ? CTX[q.kind] : "", ctxKind);
+    ctxPaint(q ? (q.kind === "ride" ? (RIDE_ICON[q.id] || "🚲") + " Ride" : CTX[q.kind]) : "", ctxKind);
   }, 300);
   function uiSheetOpen() { return $("stage").classList.contains("sheet-open") || document.body.classList.contains("modal-open"); }
   $("tgCtx").addEventListener("click", function () {
@@ -120,7 +125,10 @@
     if (ctxKind === "aquarium") { if (sc.feedFish()) { say("Here, fishies! 🐟", { still: true }); if (voice) voice.sfx("pop"); } return; }
     if (ctxKind === "mirror") { if (sc.lookMirror()) say(["Looking good! ✨", "Is that me? 😄", "Hello, me! 👋"][Math.floor(Math.random() * 3)], { still: true }); ctxPaint(""); return; }
     if (ctxKind === "bench") { if (sc.sitBench()) say("Sit down!", { still: true }); ctxPaint(""); }
-    else if (ctxKind === "garden") farmMod.openGarden({ getPet: function () { return pet; }, call: farmCall, onPet: setPet });
+    else if (ctxKind === "garden") farmMod.openGarden({ getPet: function () { return pet; }, call: farmCall, onPet: setPet,
+      onWater: function (n) { sc.water(); say("💧 Drink up, little plants!", { still: true }); if (voice) voice.sfx("pop"); toast("💧 Watered " + n + " — they'll grow 2× faster for 2 hours."); } });
+    else if (ctxKind === "ride") { if (sc.ride(ctxId)) { ctxPaint(""); say(["Vroom! " + RIDE_ICON[ctxId], "Let's go! " + RIDE_ICON[ctxId]][Math.floor(Math.random() * 2)], { still: true }); } }
+    else if (ctxKind === "dismount") { sc.ride(null); ctxPaint(""); }
     else if (ctxKind === "tree") { var id = ctxId; farmCall({ do: "pick", tree: id }).then(function (r) { setPet(r.pet); toast("🍎 +🪙 " + r.got); if (voice) voice.sfx("coin"); sc.jump(); }).catch(function (e) { toast(e.message || "No fruit yet."); }); }
     else if (ctxKind === "pond") {
       fisher = farmMod.startFishing({ sc: sc, call: farmCall, onPet: setPet, voice: voice,
@@ -702,14 +710,14 @@
     try { r = await TMN_API.call("tigoSocial", "visit", { user_id: u.id }); } catch (e) { toast(e.message); return; }
     isleLeave();
     await takeOff("✈️ Flying to @" + r.user.username + "'s island…");
-    visit = r; sc.setRoom(r.pet.room); sc.setFarm(null); paintVisit(); isleJoin(r.key, r);
+    visit = r; sc.setRoom(r.pet.room); sc.setFarm(null); syncWorld(); paintVisit(); isleJoin(r.key, r);
     toast("Welcome to @" + r.user.username + "'s island! 🏝️"); sc.jump();
   }
   async function flyHome() {
     if (!visit || playing || flying) return;
     isleLeave();
     await takeOff("✈️ Flying home…");
-    visit = null; sc.setRoom(pet.room); syncFarm(); paintVisit(); homeIsle(); say("home", { still: true });
+    visit = null; sc.setRoom(pet.room); syncFarm(); syncWorld(); paintVisit(); homeIsle(); say("home", { still: true });
   }
   $("tgVisit").addEventListener("click", function (e) {
     var b = e.target.closest("[data-v]"); if (!b || !visit) return;

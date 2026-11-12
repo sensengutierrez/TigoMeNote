@@ -156,7 +156,7 @@ async function visit(p: any, me: any) {
   }
   const [{ data: u }, { data: pt }, { data: r }] = await Promise.all([
     db.from("users").select(PUB + ", status").eq("id", id).maybeSingle(),
-    db.from("pets").select("name, color, gear, outfit, avatar, xp, room, isle_key").eq("user_id", id).maybeSingle(),
+    db.from("pets").select("name, color, gear, outfit, avatar, xp, room, isle_key, house, owned").eq("user_id", id).maybeSingle(),
     db.from("game_rooms").select("updated_at").eq("user_id", id).gte("updated_at", new Date(Date.now() - FRESH_MS).toISOString()).maybeSingle(),
   ]);
   if (!u || u.status !== "Active") return fail("User not found.", 404);
@@ -165,7 +165,7 @@ async function visit(p: any, me: any) {
   return reply({
     ok: true, online: !!r, key: pt.isle_key,
     user: { id: u.id, username: u.username, display_name: u.display_name, avatar_url: u.avatar_url },
-    pet: { name: pt.name, color: pt.color, gear: pt.gear, outfit: pt.outfit ?? {}, avatar: pt.avatar ?? null, level: lvl, glow: lvl >= 10, room: pt.room ?? null },
+    pet: { name: pt.name, color: pt.color, gear: pt.gear, outfit: pt.outfit ?? {}, avatar: pt.avatar ?? null, level: lvl, glow: lvl >= 10, room: pt.room ?? null, house: pt.house ?? 1, rides: ((pt.owned ?? []) as string[]).filter((x) => ["bike", "scooter", "car"].includes(x)) },
   });
 }
 

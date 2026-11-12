@@ -141,6 +141,9 @@ updated: 2026-10-24
 | 2026-11-11 | Bloom Clash: sariling modelong mandirigma ang hero (hindi si Tigo) | Mas mukhang larong labanan; walang kinopyang karakter |
 | 2026-11-11 | Chat sa Tigo = sariling tables (tigo_threads/tigo_msgs), hiwalay sa Messenger; pribado/grupo para sa magka-follow lang | Hiling na "on game lang"; mas ligtas para sa 13+ |
 | 2026-11-11 | 🏝️ Here = `tigo_world.place` ("isle:<uid>"): may-ari at mga follower lang | Chat kung nasaan ka naglalaro, gamit ang parehong filter/Mute/Report |
+| 2026-11-12 | Bahay: lumalaki mula sa pinto (hindi gumagalaw ang pinto, daan at parol); kwarto 6×5 → 7×5.6 → 8×6.2 → 9.2×7; 40/50/60/70 na gamit | Walang nasisirang ayos ng isla; mas maraming lugar sa loob |
+| 2026-11-12 | Dilig: 2x bilis nang 2 oras, walang namamatay; ang server ang nagbibilang (`plot.w`) | Gantimpala sa pagbalik nang hindi nagpaparusa |
+| 2026-11-12 | Sasakyan: nasa `owned` (walang bagong table); ang pagsakay ay sa phone lang | Simple; walang dayaan sa coins dahil sa server ang bili |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

@@ -78,6 +78,8 @@ export const SETS = [
 // Bahay ni Tigo (room-ui.js): gamit, dingding at sahig. Kapareho ng ITEMS sa backend/pet-fast.ts (slot furn / wall / floor)
 export const HOME_TABS = [
   { id: "furn", name: "Furniture", icon: "🛋️" },
+  { id: "house", name: "House", icon: "🏡" },
+  { id: "ride", name: "Rides", icon: "🚲" },
   { id: "wall", name: "Walls", icon: "🧱" },
   { id: "floor", name: "Floors", icon: "🟫" },
 ];
@@ -95,6 +97,10 @@ export const HOME_ITEMS = [
   { id: "fan", slot: "furn", name: "Electric fan", icon: "🌀", price: 60, level: 2 },
   { id: "bookshelf", slot: "furn", name: "Bookshelf", icon: "📚", price: 70, level: 2 },
   { id: "sofa", slot: "furn", name: "Sofa", icon: "🛋️", price: 90, level: 2 },
+  { id: "gaming-chair", slot: "furn", name: "Gaming chair", icon: "🎮", price: 120, level: 2 },
+  { id: "bike", slot: "ride", name: "Bike", icon: "🚲", price: 150, level: 1 },
+  { id: "scooter", slot: "ride", name: "Scooter", icon: "🛵", price: 450, level: 2 },
+  { id: "car", slot: "ride", name: "Car", icon: "🚗", price: 1500, level: 3 },
   { id: "desk", slot: "furn", name: "Desk", icon: "🖥️", price: 80, level: 3 },
   { id: "majlis", slot: "furn", name: "Majlis cushions", icon: "🕌", price: 100, level: 3 },
   { id: "fridge", slot: "furn", name: "Fridge", icon: "🧊", price: 110, level: 3 },
@@ -125,6 +131,9 @@ export const HOME_ITEMS = [
   { id: "floor-marble", slot: "floor", name: "Marble", icon: "🤍", price: 90, level: 4, color: "#f4f1ee" },
 ];
 export const homeItem = (id) => HOME_ITEMS.find((i) => i.id === id) || null;
+// Antas ng bahay (pet-fast "house"): mas malaki ang bahay sa isla at ang kwarto. Presyo ay galing sa server (pet.housePrices).
+export const HOUSES = [null, { name: "Little house", icon: "🏠" }, { name: "Cottage", icon: "🏡" }, { name: "Villa", icon: "🏘️" }, { name: "Mansion", icon: "🏰" }];
+export const RIDES = { bike: 1.7, scooter: 2.2, car: 2.8 };   // bilis kumpara sa lakad
 export const item = (id) => ITEMS.find((i) => i.id === id) || null;
 
 // Growth journey: anong makukuha sa bawat level

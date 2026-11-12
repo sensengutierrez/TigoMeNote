@@ -1,14 +1,15 @@
 /* TigoMeNote · tigo/room-ui.js — Decorate: ayusin ang loob ng bahay ni Tigo
    import { openRoomEditor } from "./room-ui.js"
    const ed = openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet(pet), onClose })
-   Panel (side): tabs Furniture / Walls / Floors. Tap = ilagay sa kwarto (o subukan ang dingding/sahig). Hindi pa nabibili → "Buy 🪙 N".
+   Panel (side): tabs Furniture / 🏡 House (upgrade: mas malaki, pamahal nang pamahal) / 🚲 Rides (nakaparada sa labas) / Walls / Floors. Tap = ilagay sa kwarto (o subukan ang dingding/sahig). Hindi pa nabibili → "Buy 🪙 N".
    Sa 3D: pindutin at hilahin ang gamit para ilipat; may bar sa ibaba: ⟳ Ikot · 🗑 Alisin · ✓ Tapos.
    Gamit sa dingding (painting, clock…) = kusang dumidikit sa pinakamalapit na dingding.
    Long-press sa gamit habang nasa bahay (pages/tigo.js) = bubukas ito na napili na ang gamit (ed.select).
    Kusang nase-save (pet-fast "room") ilang saglit pagkatapos ng bawat pagbabago. */
-import { HOME_TABS, HOME_ITEMS, homeItem } from "./catalog.js";
+import { HOME_TABS, HOME_ITEMS, homeItem, HOUSES } from "./catalog.js";
 
-const MAX_COPIES = 4, MAX_ITEMS = 40;
+const MAX_COPIES = 4;
+const maxItems = (pet) => 30 + 10 * Math.max(1, Math.min(4, pet.house || 1));   // kapareho ng pet-fast roomMax
 
 export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet, onClose }) {
   const room = sc.room(); if (!room) return null;
@@ -29,12 +30,20 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
   const placed = (id) => room.list().filter((x) => x.id === id).length;
   const view0 = sc.rig.view(); sc.rig.setView("top");
 
+  const houseGrid = () => {
+    const cur = pet.house || 1, pr = pet.housePrices || [0, 0, 800, 2500, 7000];
+    return HOUSES.slice(1).map((h, k) => {
+      const lv = k + 1, now = lv === cur, next = lv === cur + 1, done = lv < cur;
+      const tag = now ? "Your house" : done ? "✓" : next ? "Upgrade 🪙 " + pr[lv].toLocaleString() : "🔒 🪙 " + pr[lv].toLocaleString();
+      return '<button type="button" class="tg-item' + (now ? " on" : "") + (!next && !now && !done ? " lock" : "") + (done ? " have" : "") + '" data-house="' + lv + '"><span class="tg-ic">' + h.icon + "</span><b>" + esc(h.name) + "</b><small>" + tag + "</small></button>";
+    }).join("");
+  };
   function render() {
     const st = room.style();
-    const grid = HOME_ITEMS.filter((i) => i.slot === tab).map((i) => {
+    const grid = tab === "house" ? houseGrid() : HOME_ITEMS.filter((i) => i.slot === tab).map((i) => {
       const lock = pet.level < i.level, have = owns(i.id), n = tab === "furn" ? placed(i.id) : 0;
       const on = tab === "wall" ? st.wall === i.id : tab === "floor" ? st.floor === i.id : n > 0;
-      const tag = lock ? "🔒 Lv " + i.level : !have ? "🪙 " + i.price : tab === "furn" ? (n ? "In room ×" + n : "Add") : on ? "Using" : i.price ? "Owned" : "Free";
+      const tag = lock ? "🔒 Lv " + i.level : !have ? "🪙 " + i.price : tab === "ride" ? "Parked outside" : tab === "furn" ? (n ? "In room ×" + n : "Add") : on ? "Using" : i.price ? "Owned" : "Free";
       const sw = i.color ? ' style="--sw:' + i.color + '"' : "";
       return '<button type="button" class="tg-item' + (on ? " on" : "") + (lock ? " lock" : "") + (have ? " have" : "") + (i.color ? " tg-swatch" : "") + (buying && buying.id === i.id ? " pick" : "") + '" data-id="' + i.id + '"' + sw + (lock ? ' aria-disabled="true"' : "") +
         '><span class="tg-ic">' + i.icon + "</span><b>" + esc(i.name) + "</b><small>" + tag + "</small></button>";
@@ -42,10 +51,10 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
     box.innerHTML =
       '<div class="tg-cl-head"><h3>🏠 Decorate</h3><span class="tg-save faint small">' + saving + '</span><span class="tg-coins">🪙 <b>' + pet.coins + '</b></span><button type="button" class="btn btn-ghost btn-sm" data-close>Done</button></div>' +
       '<div class="tg-tabs" role="tablist">' + HOME_TABS.map((t) => '<button type="button" role="tab" aria-selected="' + (t.id === tab) + '" data-tab="' + t.id + '"><span>' + t.icon + "</span><small>" + t.name + "</small></button>").join("") + "</div>" +
-      '<p class="faint small tg-decor-tip">' + (tab === "furn" ? "Tap to add. In the house, press and hold a thing, then drag it." : "Tap to try it on the house.") + "</p>" +
+      '<p class="faint small tg-decor-tip">' + (({ furn: "Tap to add. In the house, press and hold a thing, then drag it.", house: "A bigger house outside and more room inside. Each upgrade costs more.", ride: "Rides park outside the house. Walk up and tap Ride." })[tab] || "Tap to try it on the house.") + "</p>" +
       // Buy / try-on bar: nasa ITAAS ng listahan (dati nasa pinakababa, kailangang mag-scroll)
       (buying ? '<div class="tg-cl-buy"><span>' + buying.icon + " " + esc(buying.name) + '</span><button type="button" class="btn btn-ghost btn-sm" data-cancel>Cancel</button>' +
-        '<button type="button" class="btn btn-primary btn-sm" data-buy' + (buying.price > pet.coins ? " disabled" : "") + ">Buy 🪙 " + buying.price + "</button>" +
+        '<button type="button" class="btn btn-primary btn-sm" data-buy' + (buying.price > pet.coins ? " disabled" : "") + ">" + (buying.slot === "house" ? "Upgrade 🪙 " : "Buy 🪙 ") + buying.price.toLocaleString() + "</button>" +
         (buying.price > pet.coins ? '<p class="faint small">Need ' + (buying.price - pet.coins) + " more coins — play games to earn!</p>" : "") + "</div>" : "") +
       '<div class="tg-cl-body"><div class="tg-grid">' + grid + "</div></div>";
 
@@ -68,7 +77,7 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
     if (e) { const it = homeItem(e.id); bar.querySelector(".tg-rb-name").textContent = it ? it.icon + " " + it.name : e.id; }
   }
   function addItem(id) {
-    if (room.list().length >= MAX_ITEMS) { toast("The house is full (" + MAX_ITEMS + " things)."); return; }
+    if (room.list().length >= maxItems(pet)) { toast("The house is full (" + maxItems(pet) + " things)."); return; }
     if (placed(id) >= MAX_COPIES) { toast("Up to " + MAX_COPIES + " of each."); return; }
     const e = room.add(id); if (!e) return;
     select(e); queueSave(); render();
@@ -89,15 +98,27 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
     if (e.target.closest("[data-cancel]")) { if (buying && buying.slot !== "furn") { const s = pet.room || {}; room.setStyle(owns(room.style().wall) ? room.style().wall : s.wall, owns(room.style().floor) ? room.style().floor : s.floor); } buying = null; render(); return; }
     if (e.target.closest("[data-buy]")) {
       busy = true;
-      try { pet = (await call("buy", { id: buying.id })).pet; onPet(pet); }
+      const it0 = buying;
+      try { pet = (await call(it0.slot === "house" ? "house" : "buy", it0.slot === "house" ? {} : { id: it0.id })).pet; }
       catch (er) { busy = false; toast(er.message); render(); return; }
       busy = false; const it = buying; buying = null;
+      if (it.slot === "house") { toast("🎉 Your house is now a " + it.name + "! More room inside."); close(); onPet(pet); return; }   // ang kwarto ay muling ginagawa (mas malaki)
+      onPet(pet);
+      if (it.slot === "ride") { toast(it.icon + " Your " + it.name.toLowerCase() + " is parked outside! Walk up and tap Ride."); render(); return; }
       if (it.slot === "furn") addItem(it.id); else { queueSave(); render(); }
       return;
+    }
+    const hb = e.target.closest("[data-house]");
+    if (hb) {
+      const lv = +hb.dataset.house, cur = pet.house || 1, pr = pet.housePrices || [0, 0, 800, 2500, 7000];
+      if (lv <= cur) return;
+      if (lv > cur + 1) { toast("Upgrade to " + HOUSES[cur + 1].name + " first."); return; }
+      buying = { id: "house-" + lv, slot: "house", name: HOUSES[lv].name, icon: HOUSES[lv].icon, price: pr[lv] }; render(); return;
     }
     if (b) {
       const it = homeItem(b.dataset.id); if (!it) return;
       if (pet.level < it.level) { toast(it.name + " unlocks at level " + it.level + "."); return; }
+      if (it.slot === "ride") { if (!owns(it.id)) { buying = it; render(); } else toast(it.icon + " It's parked outside. Walk up and tap Ride!"); return; }
       if (it.slot !== "furn") return useStyle(it.id);
       if (!owns(it.id)) { buying = it; render(); return; }
       buying = null; addItem(it.id);

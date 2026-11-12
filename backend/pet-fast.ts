@@ -4,6 +4,8 @@
 //                          wear { outfit }, buy { id }, game { kind: coins|pac|race|ghost, score, ms },
 //                          nearby { on, lat, lng }, gather { user_id }, visits,
 //                          room { room: { wall, floor, items: [{ id, x, z, r }] } } → ayos ng loob ng bahay (gamit na pag-aari lang)
+//                          house {} → i-upgrade ang bahay sa susunod na antas (Cottage 800 · Villa 2,500 · Mansion 7,000 coins); mas malaki ang kwarto
+//                          farm { do: water, plot? | all } → 💧 2x bilis ng tubo nang 2 oras (hindi namamatay kahit hindi diligan)
 // Kaligtasan: ang "nearby" ay para lang sa magkaibigan (mutual follow o Family/Friends circle), kapag NAKA-ON sa dalawa,
 //             distansya lang ang ibinabalik (hindi ang lokasyon), at nawawala pagkalipas ng 20 minuto.
 // Files: index.ts + webpush.ts + push.ts (para sa push ng "bumisita ang Tigo ni …").
@@ -28,6 +30,7 @@ const ITEMS: Record<string, [string, number, number]> = {
   // Bahay (room): gamit, dingding, sahig
   bed: ["furn", 0, 1], rug: ["furn", 0, 1], plant: ["furn", 0, 1], lamp: ["furn", 0, 1], chair: ["furn", 25, 1], table: ["furn", 40, 1], banig: ["furn", 30, 1],
   cactus: ["furn", 30, 1], toybox: ["furn", 40, 1], beanbag: ["furn", 50, 2], fan: ["furn", 60, 2], bookshelf: ["furn", 70, 2], sofa: ["furn", 90, 2],
+  "gaming-chair": ["furn", 120, 2], bike: ["ride", 150, 1], scooter: ["ride", 450, 2], car: ["ride", 1500, 3],
   desk: ["furn", 80, 3], majlis: ["furn", 100, 3], fridge: ["furn", 110, 3], tv: ["furn", 120, 3], aquarium: ["furn", 150, 4], piano: ["furn", 200, 5],
   painting: ["furn", 40, 1], clock: ["furn", 35, 1], shelf: ["furn", 30, 1], "banner-ph": ["furn", 20, 1], "banner-bh": ["furn", 20, 1], mirror: ["furn", 60, 2], garland: ["furn", 80, 2],
   "wall-cream": ["wall", 0, 1], "wall-sky": ["wall", 30, 1], "wall-mint": ["wall", 30, 1], "wall-blush": ["wall", 30, 1], "wall-lilac": ["wall", 40, 2],
@@ -105,7 +108,8 @@ function shape(p: any) {
   const lvl = levelOf(p.xp);
   return {
     coins: p.coins ?? 0, owned: p.owned ?? [], outfit: p.outfit ?? {}, glow: lvl >= 10, room: p.room ?? null, avatar: p.avatar ?? null,
-    farm: { ...farmOf(p), seeds: SEEDS, treeMs: TREE_MS, treeCoins: TREE_COINS, plots_n: PLOTS, trees_n: TREES, now: Date.now() },
+    house: p.house ?? 1, housePrices: HOUSE_PRICE,
+    farm: { ...farmOf(p), seeds: SEEDS, treeMs: TREE_MS, treeCoins: TREE_COINS, waterMs: WATER_MS, plots_n: PLOTS, trees_n: TREES, now: Date.now() },
     name: p.name, color: p.color, gear: p.gear, hunger: p.hunger, joy: p.joy, energy: p.energy, clean: p.clean,
     xp: p.xp, level: lvl, next: xpFor(lvl + 1), prev: xpFor(lvl), asleep: p.asleep, mood: moodOf(p),
     stats_at: p.stats_at, born_at: p.born_at, near_on: !!p.near_on && !!p.near_at && Date.now() - new Date(p.near_at).getTime() < NEAR_MINUTES * 60_000,
@@ -219,7 +223,23 @@ async function buy(p: any, me: any) {
 }
 
 // Bahay: i-save ang ayos ng kwarto. Gamit na pag-aari lang (o libre sa level), hanggang 40, nasa loob ng kwarto.
-const ROOM_W = 3, ROOM_D = 2.5, ROOM_MAX = 40, ROOM_COPIES = 4;
+const ROOM_COPIES = 4;
+// Bahay: [presyo para makarating sa antas na ito]; kalahating lapad/lalim ng kwarto bawat antas (kapareho ng tigo/room.js ROOM_SIZES)
+const HOUSE_PRICE = [0, 0, 800, 2500, 7000], ROOM_HALF: [number, number][] = [[3, 2.5], [3, 2.5], [3.5, 2.8], [4, 3.1], [4.6, 3.5]];
+const roomMax = (lvl: number) => 30 + 10 * Math.max(1, Math.min(4, lvl));
+// deno-lint-ignore no-explicit-any
+async function house(_p: any, me: any) {
+  const pet = decay(await load(me.id)), cur = Math.max(1, Math.min(4, pet.house ?? 1));
+  if (cur >= 4) return fail("Your house is already a Mansion! 🏰", 409);
+  const price = HOUSE_PRICE[cur + 1];
+  if ((pet.coins ?? 0) < price) return fail(`You need 🪙 ${price} to upgrade.`, 402);
+  // isang update lang; kung may nagbago sa pagitan (coins o antas), ulitin
+  const { data, error } = await db.from("pets").update({ coins: pet.coins - price, house: cur + 1, updated_at: nowIso() })
+    .eq("user_id", me.id).eq("house", pet.house ?? 1).eq("coins", pet.coins).select("*").maybeSingle();
+  if (error) throw error;
+  if (!data) return fail("Something changed. Please try again.", 409);
+  return reply({ ok: true, pet: shape(decay(data)), house: cur + 1 });
+}
 // deno-lint-ignore no-explicit-any
 async function room(p: any, me: any) {
   const r = p.room && typeof p.room === "object" ? p.room : null;
@@ -234,7 +254,8 @@ async function room(p: any, me: any) {
   const w = pick(r.wall, "wall", "wall-cream"), f = pick(r.floor, "floor", "floor-planks");
   if (w.bad) return fail(w.bad, 403); if (f.bad) return fail(f.bad, 403);
   const list = Array.isArray(r.items) ? r.items : [];
-  if (list.length > ROOM_MAX) return fail(`Up to ${ROOM_MAX} things in the house.`);
+  const hl = Math.max(1, Math.min(4, (await load(me.id)).house ?? 1)), [ROOM_W, ROOM_D] = ROOM_HALF[hl], ROOM_MAX = roomMax(hl);
+  if (list.length > ROOM_MAX) return fail(`Up to ${ROOM_MAX} things in this house. Upgrade the house for more room!`);
   const per: Record<string, number> = {};
   const items = [];
   const n = (v: unknown, lim: number) => { const x = Number(v); return Number.isFinite(x) ? Math.round(Math.max(-lim, Math.min(lim, x)) * 100) / 100 : 0; };
@@ -292,11 +313,13 @@ async function style(p: any, me: any) {
 // farm = { plots: { "0": { s: seed, t: ISO ng pagtanim } }, trees: { "0": ISO ng huling pitas }, fish: { d: "YYYY-MM-DD", n, t: ms ng huling huli } }
 // Buto: [presyo, minuto bago anihin, coins kapag inani]. Ang oras ay sa server lang binibilang.
 const SEEDS: Record<string, [number, number, number]> = { carrot: [5, 20, 8], tomato: [10, 60, 18], corn: [20, 180, 42], strawberry: [35, 480, 85], pumpkin: [60, 960, 150] };
-const PLOTS = 10, TREES = 7, TREE_MS = 4 * 3600_000, TREE_COINS = 8, FISH_GAP = 12_000, FISH_DAY = 40;
+const PLOTS = 10, TREES = 7, TREE_MS = 4 * 3600_000, TREE_COINS = 8, FISH_GAP = 12_000, FISH_DAY = 40, WATER_MS = 2 * 3600_000;
 const CATCH: [string, string, string, number, number][] = [["boot", "🥾", "Old boot", 0, 4], ["small", "🐟", "Small fish", 3, 52], ["tilapia", "🐠", "Tilapia", 6, 26], ["bangus", "🐡", "Bangus", 10, 12], ["gold", "✨🐟", "Golden fish", 20, 6]];
 // deno-lint-ignore no-explicit-any
 const farmOf = (pet: any) => { const f = pet.farm && typeof pet.farm === "object" ? pet.farm : {}; return { plots: f.plots ?? {}, trees: f.trees ?? {}, fish: f.fish ?? {} }; };
-const grown = (pl: { s: string; t: string }) => !!SEEDS[pl.s] && Date.now() - new Date(pl.t).getTime() >= SEEDS[pl.s][1] * 60_000;
+// tubo = oras mula sa pagtanim + dagdag mula sa dilig (habang nadiligan, doble ang bilis: hanggang 2 oras na dagdag bawat dilig)
+const wetBonus = (pl: { t: string; w?: number }) => pl.w && pl.w >= new Date(pl.t).getTime() ? Math.min(WATER_MS, Date.now() - pl.w) : 0;
+const grown = (pl: { s: string; t: string; w?: number }) => !!SEEDS[pl.s] && Date.now() - new Date(pl.t).getTime() + wetBonus(pl) >= SEEDS[pl.s][1] * 60_000;
 // deno-lint-ignore no-explicit-any
 async function farm(p: any, me: any) {
   const pet = decay(await load(me.id)), f = farmOf(pet), before = levelOf(pet.xp);
@@ -316,6 +339,17 @@ async function farm(p: any, me: any) {
     for (const k of list) { const pl = f.plots[k]; if (pl && grown(pl)) { got += SEEDS[pl.s][2]; n++; delete f.plots[k]; } }
     if (!n) return fail("Nothing is ready to harvest yet.", 409);
     coins += got; xp += n * 2; out.got = got; out.n = n;
+  } else if (p.do === "water") {
+    const list = p.all ? Object.keys(f.plots) : [String(idx(p.plot, PLOTS))];
+    let n = 0;
+    for (const k of list) {
+      const pl = f.plots[k]; if (!pl || grown(pl)) continue;
+      if (pl.w && Date.now() - pl.w < WATER_MS) continue;   // basa pa
+      if (pl.w && pl.w >= new Date(pl.t).getTime()) pl.t = new Date(new Date(pl.t).getTime() - WATER_MS).toISOString();   // naipon na ang buong dagdag ng dating dilig
+      pl.w = Date.now(); n++;
+    }
+    if (!n) return fail("Nothing needs water right now. 💧", 409);
+    xp += 1; out.n = n;
   } else if (p.do === "pick") {
     const list = p.all ? Array.from({ length: TREES }, (_, i) => i) : [idx(p.tree, TREES)];
     let n = 0;
@@ -485,6 +519,7 @@ Deno.serve(async (req) => {
       case "room":   return await room(p, me);
       case "avatar": return await avatar(p, me);
       case "farm":   return await farm(p, me);
+      case "house":  return await house(p, me);
       default:       return fail("Unknown action.");
     }
   } catch (e) {

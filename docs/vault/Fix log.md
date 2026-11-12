@@ -83,6 +83,8 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-11 · Bahay: hindi makaupo sa sofa kapag nasa likod nito (naiipit sa lakad) → kung walang usad nang 0.9 s, itinutuloy na ang pag-upo (`tigo/pet-scene.js`)
 - 2026-11-11 · Bahay: naiipit ang alaga sa gamit → walang banggaan ang galaw nito → dumadaan na sa `collide()` at may lunas kapag walang usad nang 1.2 s (`tigo/pet-scene.js`)
 - 2026-11-11 · Salamin: itim lang (metal na walang repleksyon) → tunay na reflector na nagre-render ng kwarto (`tigo/furniture.js`)
+- 2026-11-12 · Sasakyan: magkapatong ang scooter at kotse, at nasa taniman ang bike → ang paradahan ay hindi umiiwas sa ibang sasakyan at sa mga lugar (taniman, lawa) → `parkSpot` na umiiwas sa lahat (`tigo/pet-scene.js`)
+- 2026-11-12 · Kumot: lumalabas ang paa ni Kid at ang kumot ay nasa may ulo → mas mataas na umbok sa paanan at nagsisimula sa ilalim ng unan (`tigo/pet-scene.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

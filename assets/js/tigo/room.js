@@ -11,8 +11,10 @@
 import * as THREE from "../../vendor/three/three.module.min.js";
 import { FURN, buildFurniture } from "./furniture.js";
 
-export const ROOM = { w: 6, d: 5, h: 2.4, door: { x: 0, z: 2.1 } };
-const HW = ROOM.w / 2, HD = ROOM.d / 2;
+export const ROOM = { w: 6, d: 5, h: 2.4, door: { x: 0, z: 2.1 }, level: 1 };
+// Laki ng kwarto bawat antas ng bahay (1 kubo · 2 Cottage · 3 Villa · 4 Mansion) — kapareho ng ROOM_HALF sa backend/pet-fast.ts
+export const ROOM_SIZES = [null, [6, 5], [7, 5.6], [8, 6.2], [9.2, 7]];
+let HW = ROOM.w / 2, HD = ROOM.d / 2;
 // Dingding at sahig (id → kulay + disenyo). Kapareho ng catalog.js (wall-*, floor-*)
 export const WALLS = {
   "wall-cream": ["#f6ecd9"], "wall-sky": ["#cfe8ff"], "wall-mint": ["#cdf3e9"], "wall-blush": ["#ffd9e4"], "wall-lilac": ["#e5dcff"],
@@ -40,7 +42,9 @@ function pattern(kind, base, alt) {
   const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; tx.wrapS = tx.wrapT = THREE.RepeatWrapping; return tx;
 }
 
-export function buildRoom() {
+export function buildRoom(level = 1) {
+  const L = Math.max(1, Math.min(4, Math.floor(level) || 1)), [rw, rd] = ROOM_SIZES[L];
+  ROOM.w = rw; ROOM.d = rd; ROOM.level = L; ROOM.door.z = rd / 2 - 0.4; HW = rw / 2; HD = rd / 2;
   const group = new THREE.Group(), disp = [];
   const K = (o) => { disp.push(o); return o; };
   const wallMat = K(new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95 }));
@@ -95,7 +99,8 @@ export function buildRoom() {
     const [wc, wp, wa] = WALLS[W], [fc, fp, fa] = FLOORS[F];
     if (wallMat.map) wallMat.map.dispose(); if (floorMat.map) floorMat.map.dispose();
     wallMat.map = wp ? pattern(wp, wc, wa) : null; wallMat.color.set(wp ? "#ffffff" : wc); if (wallMat.map) wallMat.map.repeat.set(2, 1.2);
-    floorMat.map = fp ? pattern(fp, fc, fa) : null; floorMat.color.set(fp ? "#ffffff" : fc); if (floorMat.map) floorMat.map.repeat.set(3, 2.5);
+    floorMat.map = fp ? pattern(fp, fc, fa) : null; floorMat.color.set(fp ? "#ffffff" : fc); if (floorMat.map) floorMat.map.repeat.set(ROOM.w / 2, ROOM.d / 2);
+    if (wallMat.map) wallMat.map.repeat.set(ROOM.w / 3, 1.2);
     wallMat.needsUpdate = floorMat.needsUpdate = true;
   }
 
@@ -198,7 +203,7 @@ export function buildRoom() {
   function bedSpot() {
     const b = entries.find((e) => FURN[e.id] && FURN[e.id].bed); if (!b) return null;
     // x/z = paanan ng kama (doon ang "paa" ni Tigo; ang ulo ay papunta sa unan)
-    return { x: b.x + Math.sin(b.r) * 0.72, z: b.z + Math.cos(b.r) * 0.72, y: 0.52, face: b.r, beside: { x: b.x + Math.cos(b.r) * 0.95, z: b.z - Math.sin(b.r) * 0.95 } };
+    return { x: b.x + Math.sin(b.r) * 0.72, z: b.z + Math.cos(b.r) * 0.72, y: 0.52, face: b.r, c: { x: b.x, z: b.z }, beside: { x: b.x + Math.cos(b.r) * 0.95, z: b.z - Math.sin(b.r) * 0.95 } };
   }
 
   // ---------- pindot / hila ----------

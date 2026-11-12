@@ -1,6 +1,6 @@
 /* TigoMeNote · tigo/backdrops.js — mga lugar ni Tigo (3D) at ang bahay na tinutulugan niya
    import { buildBackdrop, RADIUS, HOUSE } from "./backdrops.js"
-   buildBackdrop(id) → { group, house, obstacles, night(on), update(t), dispose() }   id = island | beach | coral | snow | clouds | desert | moon
+   buildBackdrop(id) → { group, house, obstacles, night(on), update(t), setHouse(level 1–4), dispose() }   id = island | beach | coral | snow | clouds | desert | moon
    RADIUS = hanggang saan puwedeng maglakad si Tigo. PLAT = laki ng lupa. HOUSE = kung nasaan ang bahay (r = hindi matatagos) at ang pinto (para matulog).
    obstacles = [{ x, z, r }] na iniikutan ni Tigo (lawa, taniman, poste ng ilaw).
    spots = [{ kind: "bench"|"pond"|"garden"|"tree", x, z, r, seat?, id?, ready? }] → mga puwedeng gawin sa labas (isla lang); setFarm({ plots:[{seed,stage}], trees:[bool] })
@@ -106,6 +106,49 @@ function kubo(g, lit, lamps) {
   g.add(h);
   return { group: h, glow };
 }
+// ---- Upgrade ng bahay (0.11.51): 2 Cottage · 3 Villa · 4 Mansion — dagdag na bahagi sa likod at gilid; ang buong bahay ay lumalaki
+// mula sa pinto (hindi gumagalaw ang pinto, ang daan at mga parol). Ibinabalik ang update(t) para sa usok ng tsimenea at bandila.
+const HOUSE0 = { x: HOUSE.x, z: HOUSE.z, r: HOUSE.r }, HK = [1, 1, 1.08, 1.16, 1.24];
+function houseExtras(h, level, glow) {
+  const G = new THREE.Group(); h.add(G);
+  const wall = M(0xffd9c2, { roughness: 0.9 }), wall2 = M(0xfff1e3, { roughness: 0.9 }), trim = M(0xffffff, { roughness: 0.6 }), stone = M(0xd9d4cc, { roughness: 1 }),
+    roof = M(level >= 4 ? 0x3a5bd9 : 0xf2685a, { roughness: 0.7 }), gold = M(0xf2c14e, { metalness: 0.6, roughness: 0.35 }), leaf = M(0x4caf6a), wood = M(0xb98a55);
+  const box = (w, hh, d, m, x, y, z, sh = true) => put(G, new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), m), x, y, z, sh);
+  const pane = (x, y, z, ry, w = 0.22, hh = 0.24) => { const P = new THREE.Group(); P.position.set(x, y, z); P.rotation.y = ry; G.add(P); put(P, new THREE.Mesh(new THREE.BoxGeometry(w + 0.06, hh + 0.06, 0.02), trim), 0, 0, 0, false); put(P, new THREE.Mesh(new THREE.BoxGeometry(w, hh, 0.03), glow), 0, 0, 0.006, false); put(P, new THREE.Mesh(new THREE.BoxGeometry(0.02, hh, 0.04), trim), 0, 0, 0.01, false); };
+  const ticks = [];
+  if (level >= 2) {   // Cottage: kwarto sa likod, mga halaman, mailbox, usok sa tsimenea
+    box(1.42, 0.08, 0.6, stone, 0, 0.04, -0.86); box(1.32, 0.62, 0.52, wall, 0, 0.39, -0.86);
+    put(G, new THREE.Mesh(gable(1.4, 0.3, 0.6), roof), 0, 0.7, -0.86);
+    pane(-0.4, 0.42, -1.125, Math.PI); pane(0.4, 0.42, -1.125, Math.PI);
+    [[-0.78, 0.7], [0.78, 0.7], [-0.86, 0.3], [0.86, 0.3]].forEach(([x, z], i) => { const b = put(G, new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), leaf), x, 0.11, z); b.scale.y = 0.8;
+      put(G, new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), M([0xff6f91, 0xffd166, 0xffffff, 0xff9ad5][i])), x + 0.05, 0.2, z + 0.06, false); });
+    box(0.04, 0.34, 0.04, wood, 0.74, 0.17, 1.28); const mb = box(0.12, 0.09, 0.18, M(0xe5533c), 0.74, 0.38, 1.28); mb.rotation.y = 0.2; box(0.02, 0.06, 0.02, M(0xffd166), 0.81, 0.44, 1.25, false);
+    const puffM = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, roughness: 1 });
+    const puffs = [0, 1, 2].map(() => put(G, new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), puffM), -0.52, 2.1, -0.3, false));
+    ticks.push((t) => puffs.forEach((p, i) => { const k = (t * 0.35 + i / 3) % 1; p.position.set(-0.52 + k * 0.12, 2.1 + k * 0.5, -0.3 - k * 0.05); p.scale.setScalar(0.7 + k * 1.3); }));
+    puffM.opacity = 0.5;
+  }
+  if (level >= 3) {   // Villa: matangkad na pakpak sa kanan na may balkonahe at sariling bubong
+    box(0.66, 0.1, 0.84, stone, 1.1, 0.05, -0.12); box(0.62, 1.52, 0.78, wall2, 1.1, 0.86, -0.12);
+    const pr = put(G, new THREE.Mesh(new THREE.ConeGeometry(0.58, 0.48, 4), roof), 1.1, 1.86, -0.12); pr.rotation.y = Math.PI / 4;
+    pane(1.1, 0.5, 0.275, 0); pane(1.1, 1.2, 0.275, 0, 0.26, 0.3); pane(1.415, 0.9, -0.12, Math.PI / 2);
+    box(0.62, 0.04, 0.26, wood, 1.1, 0.96, 0.42); box(0.62, 0.03, 0.03, trim, 1.1, 1.14, 0.54, false);
+    for (let i = 0; i < 6; i++) box(0.02, 0.18, 0.02, trim, 0.82 + i * 0.11, 1.05, 0.54, false);
+    box(0.06, 0.06, 0.06, gold, 1.1, 2.12, -0.12);
+  }
+  if (level >= 4) {   // Mansion: bilog na tore sa kaliwa na may bandila, haligi, halamang bakod, gintong palamuti
+    put(G, new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.42, 2.4, 18), wall2), -1.08, 1.2, -0.32);
+    put(G, new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.78, 18), roof), -1.08, 2.79, -0.32);
+    put(G, new THREE.Mesh(new THREE.TorusGeometry(0.41, 0.03, 6, 24), gold), -1.08, 2.4, -0.32).rotation.x = Math.PI / 2;
+    [0.6, 1.3, 1.9].forEach((y, i) => pane(-1.08 + Math.sin(0.5) * 0.41, y, -0.32 + Math.cos(0.5) * 0.41, 0.5, 0.18, 0.26));
+    box(0.02, 0.5, 0.02, trim, -1.08, 3.4, -0.32, false); const flag = box(0.24, 0.14, 0.01, M(0xff3b5c), -0.96, 3.56, -0.32, false);
+    ticks.push((t) => { flag.rotation.y = Math.sin(t * 3) * 0.25; flag.scale.x = 0.9 + Math.sin(t * 5) * 0.1; });
+    [-0.34, 0.34].forEach((x) => { put(G, new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.78, 12), trim), x, 0.53, 0.95); put(G, new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), gold), x, 0.96, 0.95, false); });
+    [[-0.95, 0.95], [0.95, 0.95]].forEach(([x, z]) => box(0.42, 0.22, 0.16, leaf, x, 0.11, z));
+    put(G, new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), gold), -0.24, 2.0, -0.04, false);
+  }
+  return { group: G, update(t) { ticks.forEach((f) => f(t)); } };
+}
 // Poste ng ilaw (parol na kawayan): bukas kapag gabi
 function lantern(g, x, z, lit, lamps) {
   const m = M(0xfff1c4, { emissive: 0xffb347, emissiveIntensity: 0.12 }); lit.push([m, 2.6]);
@@ -194,16 +237,32 @@ function garden(g, x, z, ry = 0) {
       if (st === 3) { for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; part(P, "ball", i % 2 ? 0xf57c00 : 0xff9526, 0.03 + Math.cos(a) * 0.022, 0.04, 0.035 + Math.sin(a) * 0.022, 0.03, 0.036, 0.03); } part(P, "cyl", 0x6b8e3a, 0.03, 0.085, 0.035, 0.006, 0.022, 0.006, 0.2); }
     },
   };
+  // basang lupa (madilim na bilog) kapag nadiligan
+  const wetM = new THREE.MeshStandardMaterial({ color: 0x4a2f1f, roughness: 0.35, transparent: true, opacity: 0.85 }), wetG = new THREE.CircleGeometry(0.085, 18);
+  const prev = [];
   function setPlots(list) {
     crops.clear(); plants.length = 0;
     (list || []).forEach((p, i) => {
-      if (!p || !p.stage || !at[i]) return;
-      const P = new THREE.Group(); P.position.set(at[i][0], 0.095, at[i][1]); P.rotation.y = i * 1.3; P.scale.setScalar(1.3); crops.add(P); plants.push(P);
-      (BUILD[p.seed] || BUILD.tomato)(P, Math.max(1, Math.min(3, p.stage)));
+      if (!p || !p.stage || !at[i]) { prev[i] = 0; return; }
+      if (p.wet) { const w = new THREE.Mesh(wetG, wetM); w.rotation.x = -Math.PI / 2; w.position.set(at[i][0], 0.096, at[i][1]); crops.add(w); }
+      const st = Math.max(1, Math.min(3, p.stage)), k = typeof p.k === "number" ? p.k : st / 3;
+      const P = new THREE.Group(); P.position.set(at[i][0], 0.095, at[i][1]); P.rotation.y = i * 1.3; crops.add(P);
+      // lumalaki habang tumutubo (hindi lang 3 hakbang); bagong yugto = "pop" na animation
+      P.userData.size = 1.45 * (st === 3 ? 1 : 0.6 + 0.4 * Math.min(1, k / (st === 1 ? 0.4 : 1)));
+      P.userData.pop = prev[i] && st > prev[i] ? 0 : 1; prev[i] = st;
+      P.scale.setScalar(P.userData.size * (P.userData.pop < 1 ? 0.3 : 1)); plants.push(P);
+      (BUILD[p.seed] || BUILD.tomato)(P, st);
     });
   }
-  return { ob: { x, z, r: 1.2 }, setPlots, update(t) { plants.forEach((P, i) => { P.rotation.z = Math.sin(t * 1.4 + i * 1.7) * 0.035; P.rotation.x = Math.cos(t * 1.1 + i) * 0.025; }); },
-    dispose() { Object.values(mats).forEach((m) => m.dispose()); Object.values(GEO).forEach((g) => g.dispose()); } };
+  let lastT = 0;
+  return { ob: { x, z, r: 1.2 }, setPlots, update(t) {
+    const dt = Math.min(0.05, t - lastT || 0); lastT = t;
+    plants.forEach((P, i) => {
+      P.rotation.z = Math.sin(t * 1.4 + i * 1.7) * 0.035; P.rotation.x = Math.cos(t * 1.1 + i) * 0.025;
+      if (P.userData.pop < 1) { P.userData.pop = Math.min(1, P.userData.pop + dt * 1.6); const q = P.userData.pop, b = 1 + Math.sin(q * Math.PI) * 0.25; P.scale.setScalar(P.userData.size * (0.3 + 0.7 * q) * b); }
+    });
+  },
+    dispose() { Object.values(mats).forEach((m) => m.dispose()); Object.values(GEO).forEach((g) => g.dispose()); wetM.dispose(); wetG.dispose(); } };
 }
 // Lawa: tubig, mga bato sa gilid, lily at tambo
 function pond(g, x, z, r = 0.9) {
@@ -367,10 +426,21 @@ export const SKY = {
   moon: "radial-gradient(120% 90% at 50% 0%, #3b3f73 0%, #1d2046 55%, #0c0d22 100%)",
 };
 export function buildBackdrop(id) {
+  HOUSE.x = HOUSE0.x; HOUSE.z = HOUSE0.z; HOUSE.r = HOUSE0.r;   // bagong lugar: magsimula sa kubo (setHouse ang magpapalaki)
   const group = new THREE.Group();
   const x = { obstacles: [], ticks: [], spots: [], disposers: [], setFarm: null }, lit = [], lamps = [];
   (BUILD[id] || BUILD.island)(group, x);
   const house = kubo(group, lit, lamps);
+  let extras = null, hLevel = 1;
+  function setHouse(level) {   // antas ng bahay: lumalaki mula sa pinto; ina-update ang HOUSE (banggaan at gitna)
+    const L = Math.max(1, Math.min(4, Math.floor(level) || 1)); if (L === hLevel && (extras || L === 1)) return;
+    if (extras) { house.group.remove(extras.group); extras.group.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material !== house.glow) o.material.dispose(); }); extras = null; }
+    hLevel = L; if (L > 1) extras = houseExtras(house.group, L, house.glow);
+    const k = HK[L], D = HOUSE.door;
+    house.group.scale.setScalar(HS * k);
+    HOUSE.x = D.x + (HOUSE0.x - D.x) * k; HOUSE.z = D.z + (HOUSE0.z - D.z) * k; HOUSE.r = HOUSE0.r * k * (L >= 3 ? 1.12 : 1);
+    house.group.position.set(HOUSE.x, 0, HOUSE.z);
+  }
   // dalawang poste ng ilaw sa magkabilang gilid ng daan papunta sa pinto
   const dx = 0.2 - HOUSE.door.x, dz = 0.5 - HOUSE.door.z, dl = Math.hypot(dx, dz), ux = dx / dl, uz = dz / dl;
   [1, -1].forEach((k, i) => x.obstacles.push(lantern(group, HOUSE.door.x + ux * 0.75 + -uz * k * 0.62, HOUSE.door.z + uz * 0.75 + ux * k * 0.62, lit, lamps)));
@@ -378,9 +448,9 @@ export function buildBackdrop(id) {
   const day = lit.map(([m]) => m.emissiveIntensity);
   const floats = []; group.traverse((o) => { if (o.userData && o.userData.float !== undefined) floats.push(o); });
   return {
-    group, house, obstacles: x.obstacles, spots: x.spots, setFarm(f) { if (x.setFarm) x.setFarm(f); },
+    group, house, obstacles: x.obstacles, spots: x.spots, setFarm(f) { if (x.setFarm) x.setFarm(f); }, setHouse, houseLevel: () => hLevel,
     night(on) { lit.forEach(([m, n], i) => { m.emissiveIntensity = on ? n : day[i]; }); lamps.forEach((l) => { l.visible = on; l.material.opacity = on ? l.userData.n : 0; }); },
-    update(t) { floats.forEach((o, i) => { o.position.y += Math.sin(t * 0.8 + i) * 0.002; o.rotation.y += 0.002; }); x.ticks.forEach((f) => f(t)); },
+    update(t) { floats.forEach((o, i) => { o.position.y += Math.sin(t * 0.8 + i) * 0.002; o.rotation.y += 0.002; }); x.ticks.forEach((f) => f(t)); if (extras) extras.update(t); },
     dispose() { x.disposers.forEach((d) => d()); group.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); if (o.isInstancedMesh) o.dispose(); }); },
   };
 }
