@@ -49,10 +49,21 @@ function gable(w, h, d) {   // tatsulok na bubong: lapad w, taas h, lalim d (nak
   const sh = new THREE.Shape(); sh.moveTo(-w / 2, 0); sh.lineTo(w / 2, 0); sh.lineTo(0, h); sh.closePath();
   const g = new THREE.ExtrudeGeometry(sh, { depth: d, bevelEnabled: false }); g.translate(0, 0, -d / 2); return g;
 }
+// ---- 🎨 disenyo ng labas ng bahay (0.11.52): kulay ng dingding, bubong, gilid at pinto. Kapareho ng catalog.js (slot exterior) ----
+export const EXTERIORS = {
+  "ext-classic": { wall: 0xffd9c2, wall2: 0xfff1e3, roof: 0xf2685a, roofD: 0xd9503f, trim: 0xffffff, door: 0x2bb3a3 },
+  "ext-mint": { wall: 0xcdf3e4, wall2: 0xf2fffa, roof: 0x2fae8f, roofD: 0x23866d, trim: 0xffffff, door: 0xff8a65 },
+  "ext-sunset": { wall: 0xffc48c, wall2: 0xffe3c2, roof: 0x7b4fd6, roofD: 0x5e3bab, trim: 0xfff6e8, door: 0xe5533c },
+  "ext-nipa": { wall: 0xd9b878, wall2: 0xe8cc8f, roof: 0x9c7a3c, roofD: 0x7d5f2b, trim: 0x8a6238, door: 0x6b4a2b },
+  "ext-modern": { wall: 0xeef0f3, wall2: 0xffffff, roof: 0x3a3f4a, roofD: 0x2a2e36, trim: 0x9aa3b2, door: 0x1d1d22 },
+  "ext-candy": { wall: 0xffc4dd, wall2: 0xfff0f7, roof: 0x5ec8f2, roofD: 0x3fa9d8, trim: 0xffffff, door: 0xffd23f },
+  "ext-royal": { wall: 0xf4ead7, wall2: 0xfffaf0, roof: 0x1f3a68, roofD: 0x162a4d, trim: 0xf2c14e, door: 0x7a1f2b },
+};
 function kubo(g, lit, lamps) {
   const h = new THREE.Group(); h.position.set(HOUSE.x, 0, HOUSE.z); h.rotation.y = HROT; h.scale.setScalar(HS);
   const wall = M(0xffd9c2, { roughness: 0.9 }), wall2 = M(0xfff1e3, { roughness: 0.9 }), trim = M(0xffffff, { roughness: 0.6 }), roofM = M(0xf2685a, { roughness: 0.75 }), roofD = M(0xd9503f, { roughness: 0.8 });
   const stone = M(0xd9d4cc, { roughness: 1 }), doorM = M(0x2bb3a3, { roughness: 0.5 }), wood = M(0xb98a55, { roughness: 0.8 });
+  const mats = { wall, wall2, trim, roof: roofM, roofD, door: doorM, stone, wood };   // pinagsasaluhan ng mga upgrade (houseExtras) at ng disenyo
   const box = (w, hh, d, m, x, y, z, sh = true) => put(h, new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), m), x, y, z, sh);
   const glow = M(0xffe2a6, { emissive: 0xffa000, emissiveIntensity: 0 }); lit.push([glow, 1.7]);
   const petal = [M(0xff6f91), M(0xffd166), M(0xffffff)];
@@ -106,15 +117,14 @@ function kubo(g, lit, lamps) {
     put(h, new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 6), m), -0.3 + i * 0.15, 0.93 + (0.2 - Math.abs(i - 2) * 0.1) * 0.62, 1.05, false);
   });
   g.add(h);
-  return { group: h, glow };
+  return { group: h, glow, mats };
 }
 // ---- Upgrade ng bahay (0.11.51): 2 Cottage · 3 Villa · 4 Mansion — dagdag na bahagi sa likod at gilid; ang buong bahay ay lumalaki
 // mula sa pinto (hindi gumagalaw ang pinto, ang daan at mga parol). Ibinabalik ang update(t) para sa usok ng tsimenea at bandila.
 const HOUSE0 = { x: HOUSE.x, z: HOUSE.z, r: HOUSE.r }, HK = [1, 1, 1.08, 1.16, 1.24];
-function houseExtras(h, level, glow) {
+function houseExtras(h, level, glow, mats) {
   const G = new THREE.Group(); h.add(G);
-  const wall = M(0xffd9c2, { roughness: 0.9 }), wall2 = M(0xfff1e3, { roughness: 0.9 }), trim = M(0xffffff, { roughness: 0.6 }), stone = M(0xd9d4cc, { roughness: 1 }),
-    roof = M(level >= 4 ? 0x3a5bd9 : 0xf2685a, { roughness: 0.7 }), gold = M(0xf2c14e, { metalness: 0.6, roughness: 0.35 }), leaf = M(0x4caf6a), wood = M(0xb98a55);
+  const { wall, wall2, trim, stone, roof, wood } = mats, gold = M(0xf2c14e, { metalness: 0.6, roughness: 0.35 }), leaf = M(0x4caf6a);
   const box = (w, hh, d, m, x, y, z, sh = true) => put(G, new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), m), x, y, z, sh);
   const pane = (x, y, z, ry, w = 0.22, hh = 0.24) => { const P = new THREE.Group(); P.position.set(x, y, z); P.rotation.y = ry; G.add(P); put(P, new THREE.Mesh(new THREE.BoxGeometry(w + 0.06, hh + 0.06, 0.02), trim), 0, 0, 0, false); put(P, new THREE.Mesh(new THREE.BoxGeometry(w, hh, 0.03), glow), 0, 0, 0.006, false); put(P, new THREE.Mesh(new THREE.BoxGeometry(0.02, hh, 0.04), trim), 0, 0, 0.01, false); };
   const ticks = [];
@@ -456,8 +466,9 @@ export function buildBackdrop(id) {
   let extras = null, hLevel = 1;
   function setHouse(level) {   // antas ng bahay: lumalaki mula sa pinto; ina-update ang HOUSE (banggaan at gitna)
     const L = Math.max(1, Math.min(4, Math.floor(level) || 1)); if (L === hLevel && (extras || L === 1)) return;
-    if (extras) { house.group.remove(extras.group); extras.group.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material !== house.glow) o.material.dispose(); }); extras = null; }
-    hLevel = L; if (L > 1) extras = houseExtras(house.group, L, house.glow);
+    const shared = new Set([house.glow, ...Object.values(house.mats)]);
+    if (extras) { house.group.remove(extras.group); extras.group.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material && !shared.has(o.material)) o.material.dispose(); }); extras = null; }
+    hLevel = L; if (L > 1) extras = houseExtras(house.group, L, house.glow, house.mats);
     const k = HK[L], D = HOUSE.door;
     house.group.scale.setScalar(HS * k);
     HOUSE.x = D.x + (HOUSE0.x - D.x) * k; HOUSE.z = D.z + (HOUSE0.z - D.z) * k; HOUSE.r = HOUSE0.r * k * (L >= 3 ? 1.12 : 1);
@@ -470,6 +481,8 @@ export function buildBackdrop(id) {
   const day = lit.map(([m]) => m.emissiveIntensity);
   const floats = []; group.traverse((o) => { if (o.userData && o.userData.float !== undefined) floats.push(o); });
   return {
+    // 🎨 palit ng disenyo ng labas ng bahay (kulay lang; pareho ang hugis)
+    setLook(id) { const e = EXTERIORS[id] || EXTERIORS["ext-classic"], m = house.mats; ["wall", "wall2", "trim", "roof", "roofD", "door"].forEach((k) => m[k].color.setHex(e[k])); },
     group, house, obstacles: x.obstacles, spots: x.spots, setFarm(f) { if (x.setFarm) x.setFarm(f); }, setHouse, houseLevel: () => hLevel,
     night(on) { lit.forEach(([m, n], i) => { m.emissiveIntensity = on ? n : day[i]; }); lamps.forEach((l) => { l.visible = on; l.material.opacity = on ? l.userData.n : 0; }); },
     update(t) { floats.forEach((o, i) => { o.position.y += Math.sin(t * 0.8 + i) * 0.002; o.rotation.y += 0.002; }); x.ticks.forEach((f) => f(t)); if (extras) extras.update(t); },

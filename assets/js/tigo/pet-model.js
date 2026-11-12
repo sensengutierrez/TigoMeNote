@@ -93,7 +93,8 @@ export function createTigo(opts = {}) {
     setColor(id) { mem.color = id; impl.setColor(id); }, setGear(id) { mem.gear = id || "none"; impl.setGear(mem.gear); },
     wear(slot, id) { mem.wear[slot] = id || null; impl.wear(slot, id); }, setGlow(on) { mem.glow = !!on; impl.setGlow(on); },
     walk: (sp, h) => impl.walk(sp, h), face: (h) => impl.face(h), move: (k, sec) => impl.move(k, sec), moving: () => impl.moving(),
-    sitPose(on) { mem.sit = !!on; if (impl.sitPose) impl.sitPose(mem.sit); },   // Kid: pasulong ang binti (upuan, kart). Note: walang pagbabago
+    sitPose(on) { mem.sit = !!on; if (impl.sitPose) impl.sitPose(mem.sit); },
+    ridePose(kind, v, steer) { if (impl.ridePose) impl.ridePose(kind, v, steer); },   // Kid: nagmamaneho (manibela, pedal, hilig)   // Kid: pasulong ang binti (upuan, kart). Note: walang pagbabago
     dispose() { impl.dispose(); },
   };
 }

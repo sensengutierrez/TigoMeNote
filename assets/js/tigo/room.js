@@ -115,8 +115,11 @@ export function buildRoom(level = 1, o = {}) {
   if (ST && up) {
     const hole = mesh(new THREE.BoxGeometry(ST.x1 - ST.x0 - 0.05, 0.03, ST.z1 - ST.z0 - 0.05), K(new THREE.MeshBasicMaterial({ color: 0x3a2a1c })), (ST.x0 + ST.x1) / 2 + 0.03, 0.005, (ST.z0 + ST.z1) / 2); hole.castShadow = false;
     const rl = K(new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 }));
-    mesh(new THREE.BoxGeometry(0.05, 0.05, ST.z1 - ST.z0), rl, ST.x1, 0.9, (ST.z0 + ST.z1) / 2); mesh(new THREE.BoxGeometry(ST.x1 - ST.x0, 0.05, 0.05), rl, (ST.x0 + ST.x1) / 2, 0.9, ST.z1);
-    for (let i = 0; i <= 5; i++) mesh(new THREE.BoxGeometry(0.03, 0.9, 0.03), rl, ST.x1, 0.45, ST.z0 + ((ST.z1 - ST.z0) * i) / 5);
+    // rehas sa gilid at harap; bukas sa may likod (doon lumalabas ang akyat — tuktok ng hagdan)
+    const g0 = ST.z0 + 1.0;
+    mesh(new THREE.BoxGeometry(0.05, 0.05, ST.z1 - g0), rl, ST.x1, 0.9, (g0 + ST.z1) / 2); mesh(new THREE.BoxGeometry(ST.x1 - ST.x0, 0.05, 0.05), rl, (ST.x0 + ST.x1) / 2, 0.9, ST.z1);
+    for (let i = 0; i <= 3; i++) mesh(new THREE.BoxGeometry(0.03, 0.9, 0.03), rl, ST.x1, 0.45, g0 + ((ST.z1 - g0) * i) / 3);
+    const lip = mesh(new THREE.BoxGeometry(0.12, 0.03, 1.0), K(new THREE.MeshStandardMaterial({ color: 0x8a6440 })), ST.x1 + 0.03, 0.015, ST.z0 + 0.5); lip.castShadow = false;   // gilid ng labasan
     for (let i = 0; i < 3; i++) mesh(new THREE.BoxGeometry(0.03, 0.9, 0.03), rl, ST.x0 + ((ST.x1 - ST.x0) * i) / 3, 0.45, ST.z1);
   }
   // ilaw sa kisame
@@ -301,6 +304,8 @@ export function buildRoom(level = 1, o = {}) {
       const e = beds.find((q) => FURN[q.id].pet === kind) || beds.find((q) => FURN[q.id].pet === "any") || beds[0];
       return { x: e.x, z: e.z, y: FURN[e.id].sleep || 0, face: e.r, id: e.id };
     },
+    // nakaupo sa harap ng piano? (upuang malapit, nakaharap sa piano) → { x, z }
+    pianoNear(x, z) { const e = entries.find((q) => q.id === "piano" && Math.hypot(q.x - x, q.z - z) < 1.4); return e ? { x: e.x, z: e.z } : null; },
     tvNear(x, z, max = 4.5) { const e = entries.find((q) => q.id === "tv" && Math.hypot(q.x - x, q.z - z) < max); return e ? { x: e.x, z: e.z } : null; },   // para "manood" si Tigo
     style() { return { ...style }; },
     list() { return entries.map((e) => ({ id: e.id, x: e.x, z: e.z, r: e.r })); },

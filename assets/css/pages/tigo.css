@@ -801,3 +801,9 @@ button.ts-row, label.ts-row { cursor: pointer; }
 .dl-spin { font-size: 38px; animation: dl-spin 1.2s linear infinite; }
 @keyframes dl-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .dl-spin { animation: none; } }
+/* Decorate: ✥ manual na galaw ng napiling gamit (0.11.52) */
+.tg-rb-pad { display: grid; grid-template-columns: repeat(3, 30px); grid-template-rows: repeat(3, 22px); gap: 1px; margin-right: 4px; }
+.tg-room-bar .tg-rb-mv { min-width: 0; width: 30px; height: 22px; padding: 0; border-radius: 7px; background: #fff1ea; font-size: 12px; line-height: 22px; touch-action: none; }
+.tg-room-bar .tg-rb-mv:active { background: #ff5a36; color: #fff; }
+.tg-rb-mv.u { grid-column: 2; grid-row: 1; } .tg-rb-mv.l { grid-column: 1; grid-row: 2; } .tg-rb-mv.r { grid-column: 3; grid-row: 2; } .tg-rb-mv.d { grid-column: 2; grid-row: 3; }
+@media (max-width: 430px) { .tg-room-bar { padding-left: 8px; } .tg-room-bar b { display: none; } }

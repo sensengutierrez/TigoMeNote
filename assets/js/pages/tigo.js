@@ -71,6 +71,7 @@
           st.classList.toggle("pose-sit", p === "sit"); st.classList.toggle("pose-bed", p === "bed");
           j.textContent = p === "stand" ? "⤒" : "⬆ Tayo"; j.setAttribute("aria-label", p === "stand" ? "Jump" : "Stand up");
           if (p === "bed" && !playing) setTimeout(function () { say("cozy", { still: true }); }, 1200);
+          if (p === "sit" && sc && sc.atPiano && sc.atPiano()) pianoOn(); else pianoOff();
           if (p === "sit" && sc && sc.watching && sc.watching()) say(["📺 Ooh, my favorite show!", "📺 Movie time!", "📺 Shh… it's starting!"][Math.floor(Math.random() * 3)], { still: true });
         } });
       paintSize(loadSize());
@@ -112,8 +113,21 @@
   var CTX = { upstairs: "🪜 Upstairs", downstairs: "🪜 Downstairs", bench: "🪑 Sit", pond: "🎣 Fish", garden: "🌱 Garden", tree: "🍎 Pick fruit", aquarium: "🐟 Feed fish", mirror: "🪞 Look", ball: "⚽ Done playing", ride: "Ride", dismount: "⬇ Get off" };
   var RIDE_ICON = { bike: "🚲", scooter: "🛵", car: "🚗" };
   // bahay at sasakyan: sa sariling isla = akin; kapag bumibisita = sa kaibigan
-  function myRides(p) { return ((p && p.owned) || []).filter(function (x) { return RIDE_ICON[x]; }); }
-  function syncWorld() { if (!sc || flying) return; if (visit) { sc.setHouse(visit.pet.house || 1); sc.setRides(visit.pet.rides || []); } else { sc.setHouse(pet.house || 1); sc.setRides(myRides(pet)); } }
+  // isang sasakyan lang ang nasa labas: ang pinili sa Decorate → Rides (room.ride), o ang una kung wala pang pinili
+  function oneRide(list, room) { list = (list || []).filter(function (x) { return RIDE_ICON[x]; }); var r = room && room.ride; return list.length ? [list.indexOf(r) >= 0 ? r : list[list.length - 1]] : []; }
+  function myRides(p) { return oneRide((p && p.owned) || [], p && p.room); }
+  function syncWorld() {
+    if (!sc || flying) return;
+    var P = visit ? visit.pet : pet; sc.setHouse(P.house || 1); sc.setRides(visit ? oneRide(visit.pet.rides, visit.pet.room) : myRides(pet));
+    if (sc.setExterior) sc.setExterior((P.room && P.room.ext) || "ext-classic");
+  }
+  // 🎹 tumutugtog ng piano kapag nakaupo sa harap nito (sariling himig)
+  var TUNE = [0, 2, 4, 2, 3, 4, 5, 4, 2, 0, 1, 2, 1, 0], pianoT = 0;
+  function pianoOn() {
+    if (pianoT) return; var i = 0; say("🎹 La la la~", { still: true });
+    pianoT = setInterval(function () { if (!sc || sc.pose() !== "sit" || !sc.atPiano()) { pianoOff(); return; } sc.main.move("piano", 1); if (voice) voice.sfx("note", TUNE[i++ % TUNE.length]); }, 380);
+  }
+  function pianoOff() { if (pianoT) { clearInterval(pianoT); pianoT = 0; if (sc) sc.main.move(null); } }
   function ctxPaint(txt, kind, hot) { var b = $("tgCtx"); b.textContent = txt || ""; b.classList.toggle("hidden", !txt); b.classList.toggle("hot", !!hot); b.dataset.k = kind || ""; }
   setInterval(function () {
     if (!sc || !farmMod || fisher) return;

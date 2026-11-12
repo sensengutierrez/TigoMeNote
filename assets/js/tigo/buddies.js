@@ -137,15 +137,17 @@ export function createBuddy(id) {
       // tulog: may paa = nakahiga nang patagilid sa sahig; ibon/sisiw/kuneho = nakadapa (nakalapat); dahan-dahan ang paglipat
       const lie = sleeping && !moving ? 1 : 0; st.lie = (st.lie || 0) + (lie - (st.lie || 0)) * Math.min(1, dt * 4);
       if (u.fly) y = y * (1 - st.lie);
-      if (u.legs && !u.hopper) { inner.rotation.z = st.lie * 1.32; y += st.lie * 0.07; inner.rotation.x = 0; }
+      // 0.11.52: may paa (aso, pusa) = tunay na higa: bumababa ang katawan, nakaunat ang paa sa harap, nakatupi ang sa likod, nakapatong ang ulo
+      if (u.legs && !u.hopper) { inner.rotation.z = st.lie * 0.14; y -= st.lie * 0.16; inner.rotation.x = st.lie * 0.04; }
       else inner.scale.y = (u.fly ? 1 : inner.scale.y || 1) * (1 - st.lie * 0.28);
       inner.position.y = y;
       { const gy = baseY && dist < 0.4 ? baseY : 0, dy = gy - group.position.y; group.position.y += Math.sign(dy) * Math.min(Math.abs(dy), dt * 3); }   // aakyat sa tulugan (hal. pugad)
       if (u.wings) u.wings.forEach((w, i) => { w.rotation.z = (i ? -1 : 1) * (0.3 + Math.sin(t * 22) * 0.6); });
       if (u.tail) u.tail.rotation.z = Math.sin(t * (moving ? 14 : 5)) * 0.5;
-      if (u.legs) u.legs.forEach((l, i) => { l.rotation.x = sleeping && !moving ? (i < 2 ? 0.5 : -0.5) * (st.lie || 0) : moving ? Math.sin(st.t + (i === 0 || i === 3 ? 0 : Math.PI)) * 0.55 : 0; });
+      if (u.legs) u.legs.forEach((l, i) => { l.rotation.x = sleeping && !moving ? (i < 2 ? -1.45 : 1.35) * (st.lie || 0) : moving ? Math.sin(st.t + (i === 0 || i === 3 ? 0 : Math.PI)) * 0.55 : 0; });
       if (u.head && u.head.userData.ears) u.head.userData.ears.forEach((e, i) => { e.rotation.x = moving ? Math.sin(st.t * 1.0 + i) * 0.25 : 0; });
-      if (u.head) u.head.rotation.x = sleeping ? 0.35 : Math.sin(t * 1.3) * 0.08;
+      if (u.head) { u.head.rotation.x = sleeping ? 0.35 + (st.lie || 0) * 0.15 : Math.sin(t * 1.3) * 0.08; u.head.rotation.z = sleeping ? (st.lie || 0) * 0.25 : 0; }
+      if (u.tail && sleeping && !moving) u.tail.rotation.z = Math.sin(t * 1.2) * 0.15 + (st.lie || 0) * 0.8;   // nakakulot na buntot
     },
     dispose() { group.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); },
   };

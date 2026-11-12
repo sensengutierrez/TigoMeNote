@@ -39,7 +39,8 @@ import { createSky, skyColors } from "./sky-dome.js";
 import { buildRoom, ROOM, hasStairs } from "./room.js";
 import { sleepBlanket, DEF_BED } from "./bedding.js";
 import { buildRide } from "./vehicles.js";
-const RIDE_SPEED = { bike: 1.7, scooter: 2.2, car: 2.8 };
+const RIDE_SPEED = { bike: 2.3, scooter: 3.0, car: 3.7 };   // 0.11.52: mas mabilis (dati 1.7/2.2/2.8)
+const RIDE_K = 1.3;   // laki ng sasakyan kumpara sa dati (para kasya si Tigo at hawak ang manibela)
 
 export function createScene(canvas, opts = {}) {
   // Magaan na 3D (walang anino at antialias, 1x) kapag nag-crash ang app sa nakaraang 7 araw (app-mode.js → tmnLite3d)
@@ -67,11 +68,11 @@ export function createScene(canvas, opts = {}) {
   const rim = new THREE.DirectionalLight(0xff9a6b, 1.2); rim.position.set(-4, 3, -4); scene.add(rim);
 
   // ---------- lugar (backdrop) ----------
-  let place = null, placeId = "", farm = null, fishing = false, biteT = 0, houseLv = 1;
+  let place = null, placeId = "", farm = null, fishing = false, biteT = 0, houseLv = 1, extId = "ext-classic";
   function setBackdrop(id) {
     if (id === placeId && place) return SKY[placeId];
     if (place) { scene.remove(place.group); place.dispose(); }
-    placeId = SKY[id] ? id : "island"; place = buildBackdrop(placeId); scene.add(place.group); place.setHouse(houseLv);
+    placeId = SKY[id] ? id : "island"; place = buildBackdrop(placeId); scene.add(place.group); place.setHouse(houseLv); place.setLook(extId);
     place.night(isNight); place.group.visible = !inRoom && !game; place.setFarm(farm);
     sky.set(skyColors(SKY[placeId]), isNight);
     return SKY[placeId];
@@ -359,7 +360,8 @@ export function createScene(canvas, opts = {}) {
       ix = i.x * c + i.z * s_; iz = -i.x * s_ + i.z * c;
     }
     const speed = 2.1 * (riding ? RIDE_SPEED[riding.id] || 1.6 : !sg && !auto && running() ? 1.75 : 1);
-    me.vx += (ix * speed - me.vx) * Math.min(1, dt * 10); me.vz += (iz * speed - me.vz) * Math.min(1, dt * 10);
+    const acc = riding ? 3.2 : 10;   // sasakyan: may bigat (dahan-dahang bumibilis at humihinto)
+    me.vx += (ix * speed - me.vx) * Math.min(1, dt * acc); me.vz += (iz * speed - me.vz) * Math.min(1, dt * acc);
     const v = Math.hypot(me.vx, me.vz);
     if (riding) { rideStep(dt, v); doorCheck(ix, iz); return; }
     if (v > 0.05) {
@@ -596,7 +598,7 @@ export function createScene(canvas, opts = {}) {
     const want = (ids || []).filter((x) => RIDE_SPEED[x]), key = want.join(",");
     if (key === ridesKey) return; ridesKey = key;
     [...rides.keys()].forEach((id) => { if (!want.includes(id)) { const q = rides.get(id); if (riding === q) dismount(); scene.remove(q.v.group); q.v.dispose(); rides.delete(id); } });
-    want.forEach((id) => { if (rides.has(id)) return; const v = buildRide(id), sp = parkSpot(v.r, [...rides.values()].map((q) => ({ x: q.x, z: q.z, r: q.v.r }))); v.group.position.set(sp.x, 0, sp.z); v.group.rotation.y = sp.h; scene.add(v.group); rides.set(id, { id, v, x: sp.x, z: sp.z, h: sp.h }); });
+    want.forEach((id) => { if (rides.has(id)) return; const v = buildRide(id); v.group.scale.setScalar(RIDE_K); v.r *= RIDE_K; const sp = parkSpot(v.r, [...rides.values()].map((q) => ({ x: q.x, z: q.z, r: q.v.r }))); v.group.position.set(sp.x, 0, sp.z); v.group.rotation.y = sp.h; scene.add(v.group); rides.set(id, { id, v, x: sp.x, z: sp.z, h: sp.h }); });
   }
   function nearRide() {
     if (riding || inRoom || inside || game) return null;
@@ -604,23 +606,26 @@ export function createScene(canvas, opts = {}) {
   }
   function mount(id) {
     const q = rides.get(id); if (!q || riding || inRoom || game || pose !== "stand") return false;
-    auto = null; riding = q; me.x = q.x; me.z = q.z; me.vx = me.vz = 0; main.walk(0); main.sitPose(true); main.group.rotation.x = 0;
+    auto = null; riding = q; me.x = q.x; me.z = q.z; me.vx = me.vz = 0; main.walk(0); main.sitPose(true); main.group.rotation.x = 0; if (main.ridePose) main.ridePose(q.id, 0, 0);
     if (opts.onRide) opts.onRide(q.id); return true;
   }
   function dismount() {
     const q = riding; if (!q) return false; riding = null;
-    main.sitPose(false); main.group.position.y = 0; main.group.rotation.x = 0;
+    main.sitPose(false); if (main.ridePose) main.ridePose(null); main.group.position.y = 0; main.group.rotation.x = 0;
     const sx = Math.cos(q.h), sz = -Math.sin(q.h); [me.x, me.z] = collide(q.x - sx * (q.v.r + 0.25), q.z - sz * (q.v.r + 0.25));
     main.group.position.set(me.x, 0, me.z); main.jump(); q.v.lights(false);
     if (opts.onRide) opts.onRide(null); return true;
   }
   function rideStep(dt, v) {
     const q = riding;
-    if (v > 0.05) { [me.x, me.z] = collide(me.x + me.vx * dt, me.z + me.vz * dt); q.h = lerpA(q.h, Math.atan2(me.vx, me.vz), Math.min(1, dt * 6)); }
-    q.x = me.x; q.z = me.z; q.v.group.position.set(q.x, 0, q.z); q.v.group.rotation.y = q.h; q.v.update(dt, v); q.v.lights(isNight);
-    const kid = main.kind() === "kid", c = Math.cos(q.h), s_ = Math.sin(q.h), lx = q.v.seat.x || 0, lz = q.v.seat.z;
-    main.walk(0); main.face(q.h); main.group.rotation.y = q.h;
-    main.group.position.set(q.x + c * lx + s_ * lz, q.v.seat.y - (kid ? 0.47 : 0.12) * sizeK, q.z - s_ * lx + c * lz);
+    const h0 = q.h;
+    if (v > 0.05) { [me.x, me.z] = collide(me.x + me.vx * dt, me.z + me.vz * dt); q.h = lerpA(q.h, Math.atan2(me.vx, me.vz), Math.min(1, dt * 4)); }
+    let turn = Math.atan2(Math.sin(q.h - h0), Math.cos(q.h - h0)) / Math.max(dt, 1e-3); turn = Math.max(-1, Math.min(1, turn / 2.5));
+    q.x = me.x; q.z = me.z; q.v.group.position.set(q.x, 0, q.z); q.v.group.rotation.y = q.h; q.v.group.rotation.z = -turn * (q.id === "car" ? 0.02 : 0.12) * Math.min(1, v / 2); q.v.update(dt, v / RIDE_K); q.v.lights(isNight);
+    // nakaupo mismo sa upuan (balakang sa upuan), hawak ang manibela; pumapadyak sa bike; humihilig kapag lumiliko
+    const kid = main.kind() === "kid", c = Math.cos(q.h), s_ = Math.sin(q.h), K = RIDE_K, lx = (q.v.seat.x || 0) * K, lz = q.v.seat.z * K;
+    main.walk(0); main.face(q.h); main.group.rotation.y = q.h; if (main.ridePose) main.ridePose(q.id, v, turn);
+    main.group.position.set(q.x + c * lx + s_ * lz, q.v.seat.y * K - (kid ? 0.45 : 0.1) * sizeK, q.z - s_ * lx + c * lz);
   }
   // ---------- 💧 pagdidilig: pandilig sa kamay + tilamsik ng tubig sa taniman ----------
   const can = new THREE.Group(); can.visible = false; scene.add(can);
@@ -841,14 +846,16 @@ export function createScene(canvas, opts = {}) {
     beginGame, endGame, sun, camera, rig, inGame() { return !!game; },
     enterRoom() { if (!isNight) enterRoom(); }, leaveRoom() { if (!inside) leaveRoom(); }, inRoom() { return inRoom; },
     room() { return inRoom ? room : null; },
+    atPiano() { if (!inRoom || pose !== "sit" || !room.pianoNear) return false; const p = room.pianoNear(me.x, me.z); if (!p) return false; const a = Math.atan2(p.x - me.x, p.z - me.z) - main.group.rotation.y; return Math.cos(a) > 0.3; },   // tumutugtog
     watching() { if (!inRoom || pose !== "sit" || !room.tvNear) return false; const tv = room.tvNear(me.x, me.z); if (!tv) return false; const a = Math.atan2(tv.x - me.x, tv.z - me.z) - main.group.rotation.y; return Math.cos(a) > 0.2; },   // nakaupo at nakaharap sa TV
+    setExterior(id) { extId = id || "ext-classic"; if (place && place.setLook) place.setLook(extId); return extId; },
     setRoom(d) { roomData = d || null; [1, 2].forEach((f) => { if (rooms[f]) ensureRoom(f, true); }); },
-    floor() { return inRoom ? floorN : 0; }, climb, climbing() { return !!stair; },
+    floor() { return inRoom ? floorN : 0; }, setRoomExtra(o) { roomData = Object.assign({}, roomData || {}, o || {}); return roomData; }, climb, climbing() { return !!stair; },
     setBedding(b) { roomData = Object.assign({}, roomData || {}, { bed: b ? { blanket: b.blanket, pillow: b.pillow } : null }); rooms.forEach((R) => { if (R) R.setBedding(roomData.bed); }); if (blanket && pose === "bed") { blanketKey = ""; blanketOn(room.bedSpot()); } },
     // buong ayos ng bahay (1F + 2F + kumot/unan) para i-save; ina-update din ang roomData (para hindi bumalik sa luma kapag lumipat ng palapag)
     roomFull() {
       const d = roomData || {}, snap = (f) => { const R = rooms[f], r = f === 2 ? d.up || {} : d; if (!R) return { wall: r.wall || "wall-cream", floor: r.floor || "floor-planks", items: Array.isArray(r.items) ? r.items : f === 2 ? DEF2 : DEF1 }; const st = R.style(); return { wall: st.wall, floor: st.floor, items: R.list() }; };
-      const out = Object.assign(snap(1), { bed: d.bed || null }); if (hasStairs(houseLv)) out.up = snap(2);
+      const out = Object.assign(snap(1), { bed: d.bed || null, ride: d.ride || null, ext: d.ext || null }); if (hasStairs(houseLv)) out.up = snap(2);
       roomData = out; return out;
     },
     aim(range = 3.6) {   // water gun: ano ang nasa harap (±35°) ni Tigo

@@ -7,6 +7,7 @@
 //                          house {} → i-upgrade ang bahay sa susunod na antas (Cottage 800 · Villa 2,500 · Mansion 7,000 coins); mas malaki ang kwarto
 //                          farm { do: water, plot? | all } → 💧 2x bilis ng tubo nang 2 oras (hindi namamatay kahit hindi diligan)
 //                          0.11.52: room { room: { …, bed: { blanket, pillow }, up: { wall, floor, items } } } (up = 2nd floor, Villa/Mansion lang; may balkonahe)
+//                          room.ride (isang sasakyan sa labas) · room.ext (disenyo ng labas ng bahay)
 //                          grant { username?, coins } → Admin lang: magbigay ng coins (sa sarili kapag walang username), 1–1,000,000 bawat bigay
 // Kaligtasan: ang "nearby" ay para lang sa magkaibigan (mutual follow o Family/Friends circle), kapag NAKA-ON sa dalawa,
 //             distansya lang ang ibinabalik (hindi ang lokasyon), at nawawala pagkalipas ng 20 minuto.
@@ -34,10 +35,11 @@ const ITEMS: Record<string, [string, number, number]> = {
   cactus: ["furn", 30, 1], toybox: ["furn", 40, 1], beanbag: ["furn", 50, 2], fan: ["furn", 60, 2], bookshelf: ["furn", 70, 2], sofa: ["furn", 90, 2],
   "pet-cushion": ["furn", 30, 1], "dog-bed": ["furn", 60, 1], "cat-bed": ["furn", 60, 1], "bird-nest": ["furn", 60, 1],
   "gaming-chair": ["furn", 120, 2], bike: ["ride", 150, 1], scooter: ["ride", 450, 2], car: ["ride", 1500, 3],
-  desk: ["furn", 80, 3], majlis: ["furn", 100, 3], fridge: ["furn", 110, 3], tv: ["furn", 120, 3], aquarium: ["furn", 150, 4], piano: ["furn", 200, 5],
+  desk: ["furn", 80, 3], majlis: ["furn", 100, 3], fridge: ["furn", 110, 3], tv: ["furn", 120, 3], aquarium: ["furn", 150, 4], piano: ["furn", 200, 5], "piano-bench": ["furn", 40, 1],
   painting: ["furn", 40, 1], clock: ["furn", 35, 1], shelf: ["furn", 30, 1], "banner-ph": ["furn", 20, 1], "banner-bh": ["furn", 20, 1], mirror: ["furn", 60, 2], garland: ["furn", 80, 2],
   "blanket-check": ["blanket", 0, 1], "blanket-stars": ["blanket", 60, 1], "blanket-hearts": ["blanket", 60, 1], "blanket-clouds": ["blanket", 60, 1], "blanket-rainbow": ["blanket", 80, 2], "blanket-inabel": ["blanket", 90, 2], "blanket-quilt": ["blanket", 100, 3],
   "pillow-white": ["pillow", 0, 1], "pillow-heart": ["pillow", 40, 1], "pillow-star": ["pillow", 40, 1], "pillow-cloud": ["pillow", 50, 2], "pillow-hotdog": ["pillow", 50, 2], "pillow-cat": ["pillow", 60, 3],
+  "ext-classic": ["exterior", 0, 1], "ext-mint": ["exterior", 150, 1], "ext-nipa": ["exterior", 200, 1], "ext-sunset": ["exterior", 200, 1], "ext-candy": ["exterior", 250, 1], "ext-modern": ["exterior", 300, 2], "ext-royal": ["exterior", 400, 3],
   "wall-cream": ["wall", 0, 1], "wall-sky": ["wall", 30, 1], "wall-mint": ["wall", 30, 1], "wall-blush": ["wall", 30, 1], "wall-lilac": ["wall", 40, 2],
   "wall-sawali": ["wall", 60, 2], "wall-stripes": ["wall", 60, 2], "wall-wood": ["wall", 70, 3], "wall-stars": ["wall", 80, 3],
   "floor-planks": ["floor", 0, 1], "floor-tiles": ["floor", 40, 1], "floor-carpet": ["floor", 50, 2], "floor-bamboo": ["floor", 60, 2], "floor-grass": ["floor", 70, 3], "floor-marble": ["floor", 90, 4],
@@ -284,6 +286,9 @@ async function room(p: any, me: any) {
     if (b.bad) return fail(b.bad, 403); if (pl.bad) return fail(pl.bad, 403);
     out.bed = { blanket: b.id, pillow: pl.id };
   } else if (pet.room && pet.room.bed) out.bed = pet.room.bed;
+  // isang sasakyan sa labas (pag-aari) at disenyo ng labas ng bahay
+  if (r.ride !== undefined && r.ride !== null) { const k = pick(r.ride, "ride", ""); if (k.bad) return fail(k.bad, 403); out.ride = k.id; } else if (pet.room && pet.room.ride) out.ride = pet.room.ride;
+  if (r.ext) { const k = pick(r.ext, "exterior", "ext-classic"); if (k.bad) return fail(k.bad, 403); out.ext = k.id; } else if (pet.room && pet.room.ext) out.ext = pet.room.ext;
   const { data, error } = await db.from("pets").update({ room: out, updated_at: nowIso() }).eq("user_id", me.id).select("*").single();
   if (error) throw error;
   return reply({ ok: true, pet: shape(decay(data)) });

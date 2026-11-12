@@ -148,6 +148,8 @@ updated: 2026-10-24
 | 2026-11-13 | Trophies: magkasundo ang dalawang report = ilalapat; "talo ako" = agad; "panalo ako" lang = pagkalipas ng 60 s; bot = +20/−12, 20 ranked bawat araw | Mahirap dayain; may ranking kahit kaunti pa ang naglalaro |
 | 2026-11-13 | 2nd floor = hiwalay na kwarto (room.up) na may balkonahe; hagdan para sa Villa at Mansion lang | Simple ang banggaan at Decorate; sakto sa itsura ng bahay |
 | 2026-11-13 | Habang may 2D na laro (Gem Duel, Sudoku): hindi nagre-render ang 3D | Mas mabilis at mas tipid sa baterya |
+| 2026-11-13 | Isang sasakyan lang sa labas (room.ride); ang iba ay "nakatago" | Hindi magulo ang isla; ikaw ang pumipili |
+| 2026-11-13 | Disenyo ng labas = kulay lang (pareho ang hugis ng bahay) | Magaan; gumagana sa lahat ng antas ng bahay |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

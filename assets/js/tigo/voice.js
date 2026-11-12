@@ -97,12 +97,13 @@ export function createVoice(initial) {
     squeak() { tone("sine", 1200, 1800, 0.06, 0.35); tone("sine", 1500, 1100, 0.05, 0.3, 0.07); },
     blip() { tone("sine", 260, 330, 0.16, 0.4); tone("sine", 330, 280, 0.14, 0.35, 0.18); },
     splash() { for (let i = 0; i < 6; i++) tone("triangle", 900 + Math.random() * 900, 300 + Math.random() * 200, 0.06, 0.18, i * 0.05); },
+    note(i) { const f = [523, 587, 659, 784, 880, 1047][((i ?? Math.random() * 6) | 0) % 6]; tone("triangle", f, f, 0.32, 0.4); tone("sine", f * 2, f * 2, 0.2, 0.12); },
     climb() { [392, 440, 494, 523].forEach((f, i) => tone("triangle", f, f, 0.08, 0.3, i * 0.12)); },
   };
 
   return {
     say(text, o = {}) { if (!S.voice || !text) return 0; return S.style === "words" ? words(text, o.mood) : babble(text, o.mood); },
-    sfx(k) { if (SFX[k]) SFX[k](); },
+    sfx(k, a) { if (SFX[k]) SFX[k](a); },
     set(s) { S = Object.assign({}, S, s); },
     get() { return Object.assign({}, S); },
     unlock() { const a = ctx(); if (a && a.state === "suspended") a.resume().catch(() => {}); },

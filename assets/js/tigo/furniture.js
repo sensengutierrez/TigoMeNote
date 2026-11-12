@@ -14,7 +14,7 @@ export const FURN = {
   banig: { w: 1.4, d: 2.0, flat: true }, table: { w: 1.2, d: 0.8 }, chair: { w: 0.5, d: 0.5, seat: 0.45 }, "gaming-chair": { w: 0.7, d: 0.7, seat: 0.5 }, sofa: { w: 1.8, d: 0.8, seat: 0.5 },
   beanbag: { w: 0.8, d: 0.8, seat: 0.4 }, bookshelf: { w: 1.0, d: 0.4 }, tv: { w: 1.2, d: 0.45 }, fan: { w: 0.5, d: 0.5 },
   desk: { w: 1.2, d: 0.6 }, toybox: { w: 0.7, d: 0.5 }, aquarium: { w: 1.0, d: 0.45 }, majlis: { w: 2.0, d: 0.8, seat: 0.18 },
-  cactus: { w: 0.4, d: 0.4 }, piano: { w: 1.4, d: 0.6 }, fridge: { w: 0.7, d: 0.6 },
+  cactus: { w: 0.4, d: 0.4 }, piano: { w: 1.4, d: 0.6 }, "piano-bench": { w: 0.9, d: 0.4, seat: 0.48 }, fridge: { w: 0.7, d: 0.6 },
   painting: { w: 0.9, d: 0.1, wall: true }, clock: { w: 0.5, d: 0.1, wall: true }, shelf: { w: 0.9, d: 0.25, wall: true },
   // 0.11.52: tulugan ng alaga (pet = aso, pusa, ibon, o kahit sino); sleep = taas ng hihigaan
   "dog-bed": { w: 0.95, d: 0.8, flat: true, pet: "dog", sleep: 0.1 }, "cat-bed": { w: 0.75, d: 0.75, flat: true, pet: "cat", sleep: 0.12 },
@@ -244,6 +244,8 @@ export function buildFurniture(id, opt = {}) {
       [-0.95, 0.95].forEach((x) => { const a = cyl(0.12, 0.12, 0.76, gold, x, 0.3, 0); a.rotation.x = Math.PI / 2; }); break; }
     case "piano": { const b = M(0x1b1b1f, { roughness: 0.3 }); box(1.4, 1.0, 0.45, b, 0, 0.6, -0.08); box(1.4, 0.06, 0.3, b, 0, 0.75, 0.25);
       box(1.3, 0.03, 0.18, M(0xffffff), 0, 0.79, 0.27); for (let i = 0; i < 9; i++) box(0.05, 0.02, 0.1, b, -0.56 + i * 0.14, 0.81, 0.22); legs(1.4, 0.45, 0.1, b); break; }
+    case "piano-bench": {   // upuan ng piano: makintab na itim, malambot na pulang upuan (0.11.52)
+      const b = M(0x1b1b1f, { roughness: 0.3 }); box(0.9, 0.06, 0.38, b, 0, 0.42, 0); box(0.84, 0.05, 0.32, M(0xb3263b, { roughness: 0.9 }), 0, 0.47, 0); legs(0.9, 0.38, 0.4, b, 0.03); break; }
     case "fridge": { const w = M(0xe8f1f6, { roughness: 0.35 }); box(0.7, 1.7, 0.6, w, 0, 0.85, 0); box(0.68, 0.01, 0.01, M(0x9aa4ad), 0, 1.15, 0.305);
       [1.4, 0.7].forEach((y) => box(0.04, 0.3, 0.04, M(0x9aa4ad), 0.27, y, 0.33)); ball(0.04, M(0xff5a36), -0.15, 1.4, 0.31); ball(0.04, M(0x3dd6c0), -0.05, 1.32, 0.31); break; }
     // ---------- sa dingding (nakaharap sa +z, nakadikit sa z = 0) ----------

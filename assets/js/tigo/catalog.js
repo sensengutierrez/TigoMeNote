@@ -82,6 +82,7 @@ export const HOME_TABS = [
   { id: "house", name: "House", icon: "🏡" },
   { id: "ride", name: "Rides", icon: "🚲" },
   { id: "bedding", name: "Bedding", icon: "🛏️" },
+  { id: "exterior", name: "Outside", icon: "🎨" },
   { id: "wall", name: "Walls", icon: "🧱" },
   { id: "floor", name: "Floors", icon: "🟫" },
 ];
@@ -112,6 +113,7 @@ export const HOME_ITEMS = [
   { id: "fridge", slot: "furn", name: "Fridge", icon: "🧊", price: 110, level: 3 },
   { id: "tv", slot: "furn", name: "TV", icon: "📺", price: 120, level: 3 },
   { id: "aquarium", slot: "furn", name: "Aquarium", icon: "🐠", price: 150, level: 4 },
+  { id: "piano-bench", slot: "furn", name: "Piano bench", icon: "🪑", price: 40, level: 1 },
   { id: "piano", slot: "furn", name: "Piano", icon: "🎹", price: 200, level: 5 },
   { id: "painting", slot: "furn", name: "Painting", icon: "🖼️", price: 40, level: 1, wall: true },
   { id: "clock", slot: "furn", name: "Wall clock", icon: "🕰️", price: 35, level: 1, wall: true },
@@ -120,6 +122,14 @@ export const HOME_ITEMS = [
   { id: "banner-bh", slot: "furn", name: "BH banner", icon: "🇧🇭", price: 20, level: 1, wall: true },
   { id: "mirror", slot: "furn", name: "Mirror", icon: "🪞", price: 60, level: 2, wall: true },
   { id: "garland", slot: "furn", name: "Star lights", icon: "✨", price: 80, level: 2, wall: true },
+  // 0.11.52: disenyo ng labas ng bahay (backdrops.js EXTERIORS) — tab na "Outside"
+  { id: "ext-classic", slot: "exterior", name: "Classic", icon: "🏠", price: 0, level: 1, color: "#f2685a" },
+  { id: "ext-mint", slot: "exterior", name: "Mint", icon: "🌿", price: 150, level: 1, color: "#2fae8f" },
+  { id: "ext-nipa", slot: "exterior", name: "Bahay kubo", icon: "🎋", price: 200, level: 1, color: "#9c7a3c" },
+  { id: "ext-sunset", slot: "exterior", name: "Sunset", icon: "🌇", price: 200, level: 1, color: "#7b4fd6" },
+  { id: "ext-candy", slot: "exterior", name: "Candy", icon: "🍬", price: 250, level: 1, color: "#ffc4dd" },
+  { id: "ext-modern", slot: "exterior", name: "Modern", icon: "🏙️", price: 300, level: 2, color: "#3a3f4a" },
+  { id: "ext-royal", slot: "exterior", name: "Royal", icon: "👑", price: 400, level: 3, color: "#1f3a68" },
   // 0.11.52: kumot at unan (bedding.js) — tab na "Bedding"
   { id: "blanket-check", slot: "blanket", name: "Green check", icon: "🟩", price: 0, level: 1, color: "#6fbf73" },
   { id: "blanket-stars", slot: "blanket", name: "Starry night", icon: "🌙", price: 60, level: 1, color: "#26306b" },

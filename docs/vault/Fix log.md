@@ -88,6 +88,8 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-13 · Kumot: hindi lumilitaw habang tulog → ang linyang nagpapakita at umiikot ng kumot ay napasama sa komento (`// … paanan blanket.rotation…`) → inilabas sa komento at inilipat sa `bedding.js` (`tigo/pet-scene.js`)
 - 2026-11-13 · Gem Duel: 4 fps sa test → nagre-render pa rin ang 3D na isla sa ilalim → hindi muna nagre-render kapag "dueling" o Sudoku (`tigo/pet-scene.js`)
 - 2026-11-13 · Gem Duel online: nagsu-suko ang dalawa (walang balita nang 35 s) sa mabagal na phone → mabigat ang pag-drawing bawat frame → naka-cache na larawan ng hiyas + drawing lang kapag may gumagalaw; 45 s na hintay (`tigo/duel-game.js`)
+- 2026-11-13 · Sasakyan: parang nakapatong lang si Tigo (lumulutang, walang hawak) → mababa ang upuan kumpara sa laki ni Tigo → mas malaking sasakyan, balakang sa upuan, ridePose (`tigo/pet-scene.js`, `tigo/human-model.js`)
+- 2026-11-13 · Hagdan sa 2F: sarado ng rehas ang tuktok → bukas na ang gilid sa may likod (`tigo/room.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.
