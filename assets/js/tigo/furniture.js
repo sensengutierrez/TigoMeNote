@@ -1,9 +1,13 @@
 /* TigoMeNote · tigo/furniture.js — mga gamit sa loob ng bahay ni Tigo (3D, gawa sa code; sariling disenyo)
    import { FURN, buildFurniture } from "./furniture.js"
    FURN[id] = { w, d, wall?, flat?, seat? (taas ng upuan), bed? }  → sukat sa sahig (para hindi tumagos si Tigo), wall = nakasabit sa dingding
-   buildFurniture(id) → { group, update(t, night), dispose() }  — nakaharap sa +z (papunta sa gitna ng kwarto)
+   buildFurniture(id, opt) → { group, update(t, night), dispose() }  — nakaharap sa +z (papunta sa gitna ng kwarto)
+     opt.bed = { blanket, pillow } (bedding.js) para sa kama; group.userData.cover = takip ng kama (itinatago habang may kumot si Tigo)
+   0.11.52: kama na may sariling kumot at unan · gumagalaw na screen ng PC (pc-screen.js) · "stairs" (hagdan, para sa room.js lang)
    May galaw: umiikot ang electric fan, lumalangoy ang isda, totoong oras sa wall clock, ilaw sa gabi (lamp, star lights, TV). */
 import * as THREE from "../../vendor/three/three.module.min.js";
+import { blanketTexture, buildPillow, DEF_BED } from "./bedding.js";
+import { pcScreen } from "./pc-screen.js";
 
 export const FURN = {
   bed: { w: 1.2, d: 1.9, bed: true }, rug: { w: 1.6, d: 1.6, flat: true }, plant: { w: 0.5, d: 0.5 }, lamp: { w: 0.45, d: 0.45 },
@@ -12,6 +16,9 @@ export const FURN = {
   desk: { w: 1.2, d: 0.6 }, toybox: { w: 0.7, d: 0.5 }, aquarium: { w: 1.0, d: 0.45 }, majlis: { w: 2.0, d: 0.8, seat: 0.18 },
   cactus: { w: 0.4, d: 0.4 }, piano: { w: 1.4, d: 0.6 }, fridge: { w: 0.7, d: 0.6 },
   painting: { w: 0.9, d: 0.1, wall: true }, clock: { w: 0.5, d: 0.1, wall: true }, shelf: { w: 0.9, d: 0.25, wall: true },
+  // 0.11.52: tulugan ng alaga (pet = aso, pusa, ibon, o kahit sino); sleep = taas ng hihigaan
+  "dog-bed": { w: 0.95, d: 0.8, flat: true, pet: "dog", sleep: 0.1 }, "cat-bed": { w: 0.75, d: 0.75, flat: true, pet: "cat", sleep: 0.12 },
+  "bird-nest": { w: 0.45, d: 0.45, pet: "bird", sleep: 1.02 }, "pet-cushion": { w: 0.7, d: 0.7, flat: true, pet: "any", sleep: 0.07 },
   mirror: { w: 0.6, d: 0.08, wall: true }, garland: { w: 1.6, d: 0.1, wall: true }, "banner-ph": { w: 0.9, d: 0.05, wall: true }, "banner-bh": { w: 0.9, d: 0.05, wall: true },
 };
 
@@ -57,7 +64,7 @@ function reflector(geo, w, h) {
   return { mesh, dispose() { rt.dispose(); mat.dispose(); } };
 }
 
-export function buildFurniture(id) {
+export function buildFurniture(id, opt = {}) {
   const group = new THREE.Group(), disp = [], anim = [];
   const M = (color, o = {}) => { const m = new THREE.MeshStandardMaterial({ color, roughness: 0.75, ...o }); disp.push(m); return m; };
   const G = (g) => { disp.push(g); return g; };
@@ -72,8 +79,10 @@ export function buildFurniture(id) {
   switch (id) {
     case "bed": {
       const fr = wood(); box(1.2, 0.3, 1.9, fr, 0, 0.2, 0); box(1.2, 0.7, 0.1, fr, 0, 0.45, -0.92);
-      box(1.1, 0.16, 1.8, M(0xffffff), 0, 0.42, 0.02); box(1.12, 0.06, 1.1, M(0x7cc4ff), 0, 0.51, 0.35);
-      const pil = box(0.6, 0.12, 0.32, M(0xfff3e0), 0, 0.56, -0.62); pil.scale.y = 1.1; break;
+      box(1.1, 0.16, 1.8, M(0xffffff), 0, 0.42, 0.02);
+      const bd = Object.assign({}, DEF_BED, opt.bed || {}), tx = blanketTexture(bd.blanket); tx.repeat.set(1.2, 1.2); disp.push(tx);
+      group.userData.cover = box(1.12, 0.06, 1.1, M(0xffffff, { map: tx, roughness: 0.95 }), 0, 0.51, 0.35);
+      group.add(buildPillow(bd.pillow, M)); break;
     }
     case "rug": { const r = add(new THREE.CylinderGeometry(0.8, 0.8, 0.02, 40), M(0xff9ec7, { roughness: 1 }), 0, 0.011, 0); r.castShadow = false;
       const r2 = add(new THREE.CylinderGeometry(0.55, 0.55, 0.022, 40), M(0xffd166, { roughness: 1 }), 0, 0.012, 0); r2.castShadow = false; break; }
@@ -127,6 +136,29 @@ export function buildFurniture(id) {
         guy.position.x = Math.sin(t * 1.1) * 0.36; guy.position.y = 0.78 + Math.abs(Math.sin(t * 4.4)) * 0.06; hill2.position.x = -0.2 + Math.sin(t * 0.3) * 0.05;
         glow.intensity = 0.45 + Math.sin(t * 7) * 0.08 + Math.sin(t * 2.3) * 0.1;
       }); break; }
+    // ---------- tulugan ng alaga (sariling disenyo) ----------
+    case "dog-bed": {   // hugis-itlog na kama na may makapal na gilid at buto sa unan
+      const rim = M(0x8a5a3c, { roughness: 0.9 }), pad = M(0xffd9a8, { roughness: 1 });
+      const r1 = add(new THREE.TorusGeometry(0.34, 0.1, 10, 28), rim, 0, 0.1, 0); r1.rotation.x = Math.PI / 2; r1.scale.set(1.25, 1, 1);
+      const b = cyl(0.36, 0.38, 0.06, rim, 0, 0.03, 0); b.scale.set(1.25, 1, 1);
+      const pd = cyl(0.33, 0.33, 0.07, pad, 0, 0.08, 0, group, 24); pd.scale.set(1.2, 1, 1);
+      const bone = M(0xffffff); box(0.16, 0.02, 0.04, bone, 0.12, 0.125, 0.12); [-1, 1].forEach((k) => [-1, 1].forEach((j) => ball(0.022, bone, 0.12 + k * 0.08, 0.13, 0.12 + j * 0.02))); break; }
+    case "cat-bed": {   // basket na yari sa yantok, may malambot na unan at maliit na bola ng sinulid
+      const wv = M(0xc89b5e, { roughness: 1 }), pad = M(0xb9a2ff, { roughness: 1 });
+      const bk = add(new THREE.CylinderGeometry(0.36, 0.3, 0.22, 24, 1, true), wv, 0, 0.11, 0); bk.material.side = THREE.DoubleSide;
+      for (let i = 0; i < 4; i++) { const r = add(new THREE.TorusGeometry(0.33 + i * 0.01, 0.012, 6, 28), M(0xa7793f), 0, 0.03 + i * 0.06, 0); r.rotation.x = Math.PI / 2; }
+      cyl(0.3, 0.3, 0.02, wv, 0, 0.01, 0); const cu = cyl(0.29, 0.29, 0.08, pad, 0, 0.06, 0, group, 24); cu.scale.y = 1.2;
+      ball(0.06, M(0xff6f91), 0.42, 0.06, 0.22); break; }
+    case "bird-nest": {   // poste na may pugad sa itaas (dayami) at maliit na dapuan
+      const wd = M(0x8d6e4a, { roughness: 0.9 }), straw = M(0xd9b46a, { roughness: 1 });
+      cyl(0.18, 0.2, 0.04, wd, 0, 0.02, 0); cyl(0.025, 0.03, 0.95, wd, 0, 0.5, 0);
+      const n1 = add(new THREE.TorusGeometry(0.15, 0.06, 8, 20), straw, 0, 0.98, 0); n1.rotation.x = Math.PI / 2; cyl(0.15, 0.1, 0.06, straw, 0, 0.95, 0);
+      const pr = cyl(0.012, 0.012, 0.36, wd, 0, 0.72, 0); pr.rotation.z = Math.PI / 2;
+      for (let i = 0; i < 5; i++) { const l = ball(0.04, M(0x58b368), Math.cos(i * 1.3) * 0.17, 0.98, Math.sin(i * 1.3) * 0.17); l.scale.set(1.4, 0.5, 0.8); } break; }
+    case "pet-cushion": {   // parisukat na unan na may bakas ng paa
+      const c = M(0x7cc4ff, { roughness: 1 }), pw = M(0xffffff);
+      const cu = add(new THREE.BoxGeometry(0.66, 0.08, 0.66), c, 0, 0.04, 0); cu.scale.y = 1;
+      ball(0.06, pw, 0, 0.085, 0.04).scale.y = 0.2; [-0.07, -0.025, 0.025, 0.07].forEach((x, i) => ball(0.025, pw, x, 0.085, -0.05 - (i === 0 || i === 3 ? 0 : 0.03)).scale.y = 0.2); break; }
     case "fan": { const g = M(0x7cc4ff); cyl(0.18, 0.2, 0.05, g, 0, 0.03, 0); cyl(0.025, 0.025, 0.9, M(0xdddddd), 0, 0.48, 0);
       const head = new THREE.Group(); head.position.set(0, 0.98, 0.05); group.add(head); cyl(0.07, 0.07, 0.12, g, 0, 0, -0.05, head).rotation.x = Math.PI / 2;
       const blades = new THREE.Group(); blades.position.z = 0.04; head.add(blades);
@@ -134,8 +166,21 @@ export function buildFurniture(id) {
       const cage = add(new THREE.TorusGeometry(0.25, 0.008, 6, 32), M(0xdddddd), 0, 0, 0.05, head);
       anim.push((t) => { blades.rotation.z = t * 14; head.rotation.y = Math.sin(t * 0.6) * 0.6; }); cage.castShadow = false; break; }
     case "desk": { const w = M(0xf4e3c8); box(1.2, 0.05, 0.6, w, 0, 0.72, 0); legs(1.2, 0.6, 0.7, M(0x888888), 0.025);
-      box(0.5, 0.32, 0.03, M(0x1b1b1f), 0, 0.95, -0.15); box(0.46, 0.27, 0.005, M(0x2a3a6a, { emissive: 0x3dd6c0, emissiveIntensity: 0.4 }), 0, 0.95, -0.13);
-      box(0.4, 0.015, 0.14, M(0x444444), 0, 0.755, 0.1); break; }
+      // monitor na may gumagalaw na screen (laro, code, music), patungan, keyboard at mouse; may liwanag sa gabi
+      box(0.62, 0.38, 0.03, M(0x1b1b1f, { roughness: 0.35 }), 0, 1.0, -0.15); cyl(0.02, 0.02, 0.2, M(0x2a2a30), 0, 0.84, -0.17); box(0.2, 0.015, 0.12, M(0x2a2a30), 0, 0.752, -0.17);
+      const scr = pcScreen(); disp.push(scr); const sm = M(0xffffff, { map: scr.texture, emissive: 0xffffff, emissiveMap: scr.texture, emissiveIntensity: 0.55, roughness: 0.3 });
+      box(0.57, 0.33, 0.005, sm, 0, 1.0, -0.133).castShadow = false;
+      const kb = box(0.42, 0.015, 0.14, M(0x2a2a30), -0.04, 0.755, 0.1); kb.rotation.y = 0.04; box(0.39, 0.004, 0.11, M(0x6fd3ff, { emissive: 0x3dd6c0, emissiveIntensity: 0.3 }), -0.04, 0.764, 0.1);
+      const ms = ball(0.035, M(0x2a2a30), 0.26, 0.76, 0.12); ms.scale.set(0.8, 0.5, 1.2);
+      const pl = glowLight(0x7fd4ff, 1.0, 2.4); pl.position.z = 0.25;
+      anim.push((t, n) => { scr.update(t); sm.emissiveIntensity = n ? 1.0 : 0.55; pl.intensity = (n ? 0.9 : 0.25) + Math.sin(t * 5) * 0.05; }); break; }
+    case "stairs": {   // hagdan papunta sa 2nd floor: paakyat papunta sa -z (likod); may hawakan sa kanan
+      const w = M(0xc58f5e, { roughness: 0.7 }), side = M(0x8a6440), rail = M(0xffffff, { roughness: 0.5 });
+      const n = 9, len = 2.1, hh = 2.4;
+      for (let i = 0; i < n; i++) { const z = len / 2 - (i + 0.5) * (len / n), y = (i + 1) * (hh / n); box(0.9, 0.06, len / n + 0.02, w, 0, y - 0.03, z); box(0.9, y - 0.06, 0.03, side, 0, (y - 0.06) / 2, z + len / n / 2 - 0.015); }
+      const L = Math.hypot(len, hh), sb = box(0.06, 0.4, L, side, 0.46, hh / 2 - 0.1, 0); sb.rotation.x = Math.atan2(hh, len);
+      for (let i = 0; i <= 4; i++) { const z = len / 2 - i * (len / 4), y = ((i * (len / 4)) / len) * hh; cyl(0.02, 0.02, 0.8, rail, 0.46, y + 0.5, z); }
+      const hr = cyl(0.03, 0.03, L, rail, 0.46, hh / 2 + 0.9, 0); hr.rotation.x = -Math.atan2(len, hh); break; }
     case "toybox": { box(0.7, 0.4, 0.5, M(0xffc04d), 0, 0.2, 0); box(0.72, 0.05, 0.52, M(0xff5a36), 0, 0.43, 0);
       ball(0.1, M(0x3dd6c0), 0.2, 0.5, 0.05); const bear = ball(0.09, M(0xb07a4a), -0.15, 0.52, 0); bear.scale.y = 1.1; break; }
     case "aquarium": {   // makatotohanang aquarium: kabinet, salamin, tubig, graba, halamang umiindayog, bula, ilaw, at isdang may buntot na kumakampay

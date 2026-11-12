@@ -6,11 +6,13 @@
    spots = [{ kind: "bench"|"pond"|"garden"|"tree", x, z, r, seat?, id?, ready? }] → mga puwedeng gawin sa labas (isla lang); setFarm({ plots:[{seed,stage}], trees:[bool] })
    0.11.42–43: mas malaking isla (2.9 → 4.0 → 5.4), may upuan at karatula, bagong bahay na dalawang palapag (0.11.43; dati bahay kubo): bubong na tatsulok, balkonahe, veranda, bintana, paso ng bulaklak, ilaw, bakod sa gilid,
    taniman, lawa na may lily, daanang bato, at mga ilaw na bumubukas kapag gabi (parol, poste, ilaw sa bubong).
+   0.11.52: 9.0 na ang isla, may paikot na kalsada (ROAD) na may guhit sa gitna, at maraming puno at halaman sa labas ng kalsada.
    Sariling disenyo lahat. */
 import * as THREE from "../../vendor/three/three.module.min.js";
 
-export const RADIUS = 5.4;
-export const PLAT = 6.1;
+export const RADIUS = 9.0;   // 0.11.52: mas malaking isla (5.4 → 9.0) para may lugar sa bike, scooter at kotse
+export const PLAT = 9.8;
+export const ROAD = { r0: 6.9, r1: 8.2 };   // paikot na kalsada (isla lang)
 const HS = 1.4, HROT = -0.6;   // laki at ikot ng bahay
 export const HOUSE = { x: 3.4, z: -3.1, r: 1.36, door: { x: 3.4 + Math.sin(HROT) * 1.5, z: -3.1 + Math.cos(HROT) * 1.5 } };
 
@@ -169,7 +171,7 @@ function path(g, col = 0xcfc8ba) {
 }
 // Bakod na kahoy sa gilid ng isla (bukas sa harap para kita si Tigo)
 function fence(g, col = 0xf3ead7) {
-  const m = M(col, { roughness: 0.9 }), r = PLAT - 0.22, n = 40, a0 = Math.PI * 0.86, a1 = Math.PI * 2.14;
+  const m = M(col, { roughness: 0.9 }), r = PLAT - 0.22, n = 72, a0 = Math.PI * 0.86, a1 = Math.PI * 2.14;
   const posts = [], caps = [], rails = [];
   let prev = null;
   for (let i = 0; i <= n; i++) {
@@ -335,11 +337,31 @@ function palm(g, x, z, s = 1) {
   for (let i = 0; i < 6; i++) put(trunk, new THREE.Mesh(new THREE.CylinderGeometry(0.07 * s, 0.09 * s, 0.25 * s, 8), M(0x9c7a4c)), Math.sin(i * 0.3) * 0.1 * s, (0.12 + i * 0.23) * s, 0);
   for (let i = 0; i < 6; i++) { const l = put(trunk, new THREE.Mesh(new THREE.ConeGeometry(0.12 * s, 0.9 * s, 4), M(0x3fa34d)), Math.sin(1.5) * 0.1 * s, 1.45 * s, 0); l.rotation.set(Math.PI / 2.6, (i / 6) * Math.PI * 2, 0); l.translateY(0.4 * s); }
 }
+// Paikot na kalsada: aspalto, puting gilid at putol-putol na dilaw na guhit sa gitna (isang draw call bawat bahagi)
+function road(g) {
+  const { r0, r1 } = ROAD, asph = put(g, new THREE.Mesh(new THREE.RingGeometry(r0, r1, 120, 1), M(0x4a4f5a, { roughness: 0.95 })), 0, 0.012, 0, false); asph.rotation.x = -Math.PI / 2;
+  [r0 + 0.06, r1 - 0.06].forEach((r) => { const e = put(g, new THREE.Mesh(new THREE.RingGeometry(r - 0.035, r + 0.035, 120, 1), M(0xf3f3f3, { roughness: 0.8 })), 0, 0.016, 0, false); e.rotation.x = -Math.PI / 2; });
+  const mid = (r0 + r1) / 2, dashes = []; for (let i = 0; i < 60; i++) { const a = (i / 60) * Math.PI * 2; dashes.push([Math.cos(a) * mid, 0.017, Math.sin(a) * mid, -a, [1, 1, 1]]); }
+  inst(g, new THREE.BoxGeometry(0.06, 0.004, 0.32), M(0xffd23f, { roughness: 0.7 }), dashes);
+}
+// Mga puno at halaman sa labas ng kalsada (InstancedMesh: magaan kahit marami)
+function outerWoods(g) {
+  const R = rand(91), trunks = [], leaves = [], bushes = [];
+  for (let i = 0; i < 34; i++) {
+    const a = (i / 34) * Math.PI * 2 + R() * 0.12, d = ROAD.r1 + 0.55 + R() * 0.75, x = Math.cos(a) * d, z = Math.sin(a) * d, s = 0.75 + R() * 0.5;
+    if (i % 3 === 2) { bushes.push([x, 0.18 * s, z, 0, [s, s * 0.75, s]]); continue; }
+    trunks.push([x, 0.3 * s, z, 0, [s, s, s]]);
+    [0.75, 1.0, 1.2].forEach((y, k) => { const q = (0.42 - k * 0.08) / 0.42 * s; leaves.push([x, y * s, z, 0, [q, q, q]]); });
+  }
+  inst(g, new THREE.CylinderGeometry(0.07, 0.1, 0.6, 7), M(0x8d6e4a), trunks, true);
+  inst(g, new THREE.SphereGeometry(0.42, 12, 9), M(0x5cb85c), leaves, true);
+  inst(g, new THREE.SphereGeometry(0.3, 10, 7), M(0x58b368), bushes, true);
+}
 function flowers(g, n, r, col = 0xffffff) {
   const R = rand(col === 0xffffff ? 7 : 13), petals = [], ctrs = [];
   for (let i = 0; i < n; i++) {
     const a = R() * Math.PI * 2, d = 1.2 + R() * r, x = Math.cos(a) * d, z = Math.sin(a) * d;
-    if (Math.hypot(x - HOUSE.x, z - HOUSE.z) < HOUSE.r) continue;
+    if (Math.hypot(x - HOUSE.x, z - HOUSE.z) < HOUSE.r * 1.3 || (d > ROAD.r0 - 0.1 && d < ROAD.r1 + 0.1)) continue;
     for (let k = 0; k < 5; k++) { const b = (k / 5) * Math.PI * 2; petals.push([x + Math.cos(b) * 0.06, 0.04, z + Math.sin(b) * 0.06, 0, [1, 0.4, 0.6]]); }
     ctrs.push([x, 0.06, z]);
   }
@@ -349,7 +371,7 @@ function flowers(g, n, r, col = 0xffffff) {
 
 const BUILD = {
   island(g, x) {
-    platform(g, 0x8fd18a, 0xc89a6b); flowers(g, 30, 3.9); flowers(g, 12, 3.6, 0xffc4dd);
+    platform(g, 0x8fd18a, 0xc89a6b); flowers(g, 60, 7.9); flowers(g, 24, 7.6, 0xffc4dd); road(g); outerWoods(g);
     const trees = [[-4.2, -2.3, 1.3], [-2.8, -4.1, 1.05], [-0.7, -5.0, 1.2], [0.9, -4.8, 0.85], [-5.1, 0.2, 0.95], [-4.6, 3.0, 1.1], [5.0, 2.6, 1.0]].map(([tx, tz, ts], i) => tree(g, tx, tz, ts, i));
     bush(g, -4.7, -1.2); bush(g, 5.3, -0.9, 0.9); bush(g, -1.8, -4.6, 0.8, 0x6cc47a); bush(g, 4.6, 3.0, 0.85, 0x6cc47a);
     put(g, new THREE.Mesh(new THREE.DodecahedronGeometry(0.22), M(0xb8b2a8)), -4.9, 0.05, 1.4).scale.y = 0.6;

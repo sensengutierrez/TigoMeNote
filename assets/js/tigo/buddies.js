@@ -1,6 +1,6 @@
 /* TigoMeNote · tigo/buddies.js — maliliit na alagang hayop ni Tigo (3D) na sumusunod sa kanya
    import { createBuddy } from "./buddies.js"
-   const b = createBuddy("puppy")  → { group, update(dt, t, target{x,z}, sleeping), hop(), dispose() }
+   const b = createBuddy("puppy")  → { group, update(dt, t, target{x,z}, sleeping, baseY), hop(), dispose() }   baseY = taas ng tulugan (0.11.52)
    id = puppy | kitty | birdie | bunbun | turtle | chick. Ang birdie ay lumilipad sa tabi ni Tigo.
    Kapag tulog si Tigo, natutulog din ang buddy sa tabi ng bahay. Sariling disenyo: may nguso, paang gumagalaw, kwelyo, balbas (pusa). */
 import * as THREE from "../../vendor/three/three.module.min.js";
@@ -120,7 +120,7 @@ export function createBuddy(id) {
   return {
     id, group, flies: !!u.fly,
     hop() { st.hop = 0.5; },
-    update(dt, t, target, sleeping) {
+    update(dt, t, target, sleeping, baseY = 0) {   // baseY = taas ng tulugan (hal. pugad ng ibon)
       // sundan si Tigo (sa likod-gilid), at tumigil kapag malapit na
       const goal = new THREE.Vector3(target.x - 0.75, 0, target.z + 0.35);
       const d = goal.clone().sub(group.position); d.y = 0;
@@ -140,6 +140,7 @@ export function createBuddy(id) {
       if (u.legs && !u.hopper) { inner.rotation.z = st.lie * 1.32; y += st.lie * 0.07; inner.rotation.x = 0; }
       else inner.scale.y = (u.fly ? 1 : inner.scale.y || 1) * (1 - st.lie * 0.28);
       inner.position.y = y;
+      { const gy = baseY && dist < 0.4 ? baseY : 0, dy = gy - group.position.y; group.position.y += Math.sign(dy) * Math.min(Math.abs(dy), dt * 3); }   // aakyat sa tulugan (hal. pugad)
       if (u.wings) u.wings.forEach((w, i) => { w.rotation.z = (i ? -1 : 1) * (0.3 + Math.sin(t * 22) * 0.6); });
       if (u.tail) u.tail.rotation.z = Math.sin(t * (moving ? 14 : 5)) * 0.5;
       if (u.legs) u.legs.forEach((l, i) => { l.rotation.x = sleeping && !moving ? (i < 2 ? 0.5 : -0.5) * (st.lie || 0) : moving ? Math.sin(st.t + (i === 0 || i === 3 ? 0 : Math.PI)) * 0.55 : 0; });

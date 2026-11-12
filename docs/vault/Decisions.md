@@ -144,6 +144,10 @@ updated: 2026-10-24
 | 2026-11-12 | Bahay: lumalaki mula sa pinto (hindi gumagalaw ang pinto, daan at parol); kwarto 6×5 → 7×5.6 → 8×6.2 → 9.2×7; 40/50/60/70 na gamit | Walang nasisirang ayos ng isla; mas maraming lugar sa loob |
 | 2026-11-12 | Dilig: 2x bilis nang 2 oras, walang namamatay; ang server ang nagbibilang (`plot.w`) | Gantimpala sa pagbalik nang hindi nagpaparusa |
 | 2026-11-12 | Sasakyan: nasa `owned` (walang bagong table); ang pagsakay ay sa phone lang | Simple; walang dayaan sa coins dahil sa server ang bili |
+| 2026-11-13 | 💎 Gem Duel: turn-based sa iisang board; parehong seed sa dalawang phone, galaw lang ang ipinapadala (mv/bo/pass na may bilang) | Walang server na kailangan habang naglalaro; pareho ang resulta |
+| 2026-11-13 | Trophies: magkasundo ang dalawang report = ilalapat; "talo ako" = agad; "panalo ako" lang = pagkalipas ng 60 s; bot = +20/−12, 20 ranked bawat araw | Mahirap dayain; may ranking kahit kaunti pa ang naglalaro |
+| 2026-11-13 | 2nd floor = hiwalay na kwarto (room.up) na may balkonahe; hagdan para sa Villa at Mansion lang | Simple ang banggaan at Decorate; sakto sa itsura ng bahay |
+| 2026-11-13 | Habang may 2D na laro (Gem Duel, Sudoku): hindi nagre-render ang 3D | Mas mabilis at mas tipid sa baterya |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

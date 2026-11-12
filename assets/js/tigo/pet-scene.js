@@ -8,7 +8,9 @@
      sc.setBuddy(id|null)        → alagang hayop na sumusunod (buddies.js)
      sc.night(on, animate)       → gabi: papasok si Tigo sa bahay at matutulog sa kama
      sc.enterRoom() / sc.leaveRoom() / sc.inRoom() → loob ng bahay (room.js); sc.room() = ang kwarto (para sa room-ui.js)
-     sc.setRoom({ wall, floor, items }) → ayos ng kwarto (galing sa server)
+     sc.setRoom({ wall, floor, items, bed:{blanket,pillow}, up:{ wall, floor, items } }) → ayos ng kwarto (galing sa server; up = 2nd floor)
+     0.11.52: sc.floor() → 1|2 · sc.climb() → akyat/baba sa hagdan (Villa/Mansion) · sc.roomFull() → buong ayos (para i-save) · sc.setBedding({ blanket, pillow })
+              sc.aim(range) → mga tinamaan sa harap ni Tigo (water gun): [{ kind: "buddy"|"garden"|"friend", x, z }] · sc.splashBuddy() · opts.onFloor(f)
      sc.rig                      → camera (camera-rig.js): next() view, zoomStep(), yaw()
      sc.setLook(fn)              → fn() = { x, y } (opsyonal na joystick ng camera; ang swipe ay nasa camera-rig.js)
      sc.setRun(fn)               → fn() = true kapag tumatakbo (🏃 Run) · sc.stop() = hinto agad, haharap sa camera
@@ -34,7 +36,8 @@ import { buildBackdrop, RADIUS, HOUSE, SKY } from "./backdrops.js";
 import { createBuddy } from "./buddies.js";
 import { createCameraRig } from "./camera-rig.js";
 import { createSky, skyColors } from "./sky-dome.js";
-import { buildRoom, ROOM } from "./room.js";
+import { buildRoom, ROOM, hasStairs } from "./room.js";
+import { sleepBlanket, DEF_BED } from "./bedding.js";
 import { buildRide } from "./vehicles.js";
 const RIDE_SPEED = { bike: 1.7, scooter: 2.2, car: 2.8 };
 
@@ -232,19 +235,25 @@ export function createScene(canvas, opts = {}) {
   // Ang alaga: 🐾 Come (sumusunod) · ✋ Stay (naghihintay; humihiga pagkalipas ng ilang saglit) · 🌿 Free (naglalakad-lakad nang mag-isa)
   // Hindi na naiipit sa gamit: bawat galaw ay dumadaan sa collide(); kapag walang usad, ibang direksyon ang pipiliin.
   const bud = { mode: "follow", stay: null, goal: null, gT: 0, last: null, stuckT: 0, idleT: 0 };
+  const PET_KIND = { puppy: "dog", kitty: "cat", birdie: "bird", chick: "bird", bunbun: "any", turtle: "any" };
+  function petBed() { return inRoom && room && room.petBed && buddy ? room.petBed(PET_KIND[buddy.id] || "any") : null; }
   function budTarget(dt, bedB) {
     const off = (x, z) => ({ x: x + 0.75, z: z - 0.35 });   // buddy.update ay naglalagay ng (-0.75, +0.35) sa target
+    // 0.11.52: may sariling tulugan sa bahay → doon matutulog (kapag tulog si Tigo, o naka-Stay nang matagal)
+    const pb = petBed();
+    if (pb && (bedB || (bud.mode === "stay" && bud.idleT > 12))) { if (bud.mode === "stay") bud.idleT += dt; return { t: off(pb.x, pb.z), sleep: true, y: pb.y, bed: true }; }
     if (bedB) {   // sa sahig sa tabi ng kama, palayo sa puwestong babangunan ni Tigo
       const sx = Math.cos(bedB.face), sz = -Math.sin(bedB.face), fx = Math.sin(bedB.face), fz = Math.cos(bedB.face);
       return { t: { x: bedB.beside.x + sx * 0.2 + fx * 1.25 + 0.75, z: bedB.beside.z + sz * 0.2 + fz * 1.25 - 0.35 }, sleep: true };
     }
     if (inside && !inRoom) return { t: { x: HOUSE.door.x + 0.3, z: HOUSE.door.z + 0.6 }, sleep: false };
+    if (bud.flee && bud.flee.t > 0) { bud.flee.t -= dt; return { t: off(bud.flee.x, bud.flee.z), sleep: false }; }   // nabasa ng water gun: tumatakbo palayo
     if (toy && bud.mode !== "stay") return { t: off(toy.x, toy.z), sleep: false };   // hinahabol ang bola
     if (bud.mode === "stay" && bud.stay) { bud.idleT += dt; return { t: off(bud.stay.x, bud.stay.z), sleep: bud.idleT > 12 }; }
     if (bud.mode === "free") {
       bud.gT -= dt;
       if (!bud.goal || bud.gT <= 0) {
-        const lim = inRoom ? 2.2 : 4.6;
+        const lim = inRoom ? 2.2 : 6.2;
         for (let i = 0; i < 8; i++) {
           const x = (Math.random() * 2 - 1) * lim, z = (Math.random() * 2 - 1) * lim * (inRoom ? 0.8 : 1), c = collide(x, z);
           if (Math.hypot(c[0] - x, c[1] - z) < 0.01) { bud.goal = { x, z }; break; }
@@ -260,8 +269,8 @@ export function createScene(canvas, opts = {}) {
   function budStep(dt, t, bedB) {
     if (!buddy) return;
     const q = budTarget(dt, bedB), b = buddy.group.position, bx = b.x, bz = b.z;
-    buddy.update(dt, t, q.t, q.sleep);
-    if (!buddy.flies) { const c = collide(b.x, b.z); b.x = c[0]; b.z = c[1]; }   // hindi tumatagos sa gamit, dingding, bahay o lawa
+    buddy.update(dt, t, q.t, q.sleep, q.y || 0);
+    if (!buddy.flies && !q.bed) { const c = collide(b.x, b.z); b.x = c[0]; b.z = c[1]; }   // hindi tumatagos sa gamit, dingding, bahay o lawa
     // naiipit: kung halos walang usad pero malayo pa ang pupuntahan → ibang daan (o ibang puntahan kung malaya)
     const moved = Math.hypot(b.x - bx, b.z - bz), want = Math.hypot(q.t.x - 0.75 - b.x, q.t.z + 0.35 - b.z);
     if (want > 0.6 && moved < dt * 0.25) { bud.stuckT += dt; if (bud.stuckT > 1.2) { bud.stuckT = 0; if (bud.mode === "free") bud.gT = 0; else { const a = Math.random() * 6.28; b.x += Math.cos(a) * 0.25; b.z += Math.sin(a) * 0.25; const c = collide(b.x, b.z); b.x = c[0]; b.z = c[1]; } } }
@@ -308,7 +317,10 @@ export function createScene(canvas, opts = {}) {
   let input = () => ({ x: 0, z: 0 }), running = () => false;
   let auto = null; // { x, z, done } — kusang lakad (papunta sa bahay)
   let isNight = false, inside = false; // inside = tulog sa kama (hindi gumagalaw)
-  let inRoom = false, room = null, roomData = null, doorState = null;
+  let inRoom = false, room = null, roomData = null, doorState = null, floorN = 1, stair = null;
+  const rooms = [null, null, null];   // [_, 1st floor, 2nd floor]
+  const DEF1 = [{ id: "bed", x: -1.9, z: -1.4, r: 0 }, { id: "rug", x: 0.3, z: 0.2, r: 0 }, { id: "plant", x: 2.4, z: -1.9, r: 0 }, { id: "lamp", x: -0.7, z: -1.9, r: 0 }];
+  const DEF2 = [{ id: "rug", x: 0.6, z: 0.3, r: 0 }, { id: "plant", x: 1.2, z: 3.9, r: 0 }, { id: "chair", x: -1.0, z: 3.8, r: 0 }];
   function collide(x, z) {
     if (inRoom) return room.collide(x, z);
     // bawal lumabas sa isla at bawal tumagos sa bahay
@@ -321,6 +333,7 @@ export function createScene(canvas, opts = {}) {
   }
   function moveMain(dt, sg) {
     if (rise) { riseStep(dt); return; }
+    if (stair) { stairStep(dt); return; }
     if (inside) return;
     if (pose === "sit") { // nakaupo: tatayo kapag ginalaw ang joystick
       const i = input(); if (Math.hypot(i.x, i.z) > 0.35 && !isNight) standUp(); else { main.walk(0); return; }
@@ -368,7 +381,11 @@ export function createScene(canvas, opts = {}) {
     if (inRoom) {
       setDoor("room");
       // lumakad palabas sa pinto (harap ng kwarto)
-      if (!isNight && Math.abs(me.x - ROOM.door.x) < 0.5 && me.z > ROOM.d / 2 - 0.6 && iz > 0.5) leaveRoom();
+      if (floorN === 1 && !isNight && Math.abs(me.x - ROOM.door.x) < 0.5 && me.z > ROOM.d / 2 - 0.6 && iz > 0.5) leaveRoom();
+      // lakad papunta sa hagdan = akyat (1F: papunta sa likod) / baba (2F: papunta sa butas)
+      const sn = !isNight && room.stairsNear ? room.stairsNear(me.x, me.z) : null;
+      if (sn === "up" && iz < -0.6 && Math.abs(me.x - room.stairs.base.x) < 0.45) climb();
+      if (sn === "down" && ix < -0.6) climb();
       return;
     }
     const d = Math.hypot(me.x - HOUSE.door.x, me.z - HOUSE.door.z);
@@ -376,18 +393,52 @@ export function createScene(canvas, opts = {}) {
     // lumakad papunta sa pinto = pasok
     if (d < 0.32 && !isNight) { const hx = HOUSE.x - me.x, hz = HOUSE.z - me.z, hl = Math.hypot(hx, hz) || 1; if ((ix * hx + iz * hz) / hl > 0.5) enterRoom(); }
   }
-  function ensureRoom() {
-    if (!room) { room = buildRoom(houseLv); room.group.visible = false; scene.add(room.group); }
-    const r = roomData || {};
-    room.setStyle(r.wall, r.floor);
-    room.setItems(r.items && r.items.length ? r.items : [{ id: "bed", x: -1.9, z: -1.4, r: 0 }, { id: "rug", x: 0.3, z: 0.2, r: 0 }, { id: "plant", x: 2.4, z: -1.9, r: 0 }, { id: "lamp", x: -0.7, z: -1.9, r: 0 }]);
-    return room;
+  // gawin ang kwarto ng isang palapag (kung wala pa) at punuin galing sa roomData; fill = palitan ang laman (bagong data galing sa server)
+  function ensureRoom(f = floorN, fill = false) {
+    if (f === 2 && !hasStairs(houseLv)) f = 1;
+    let R = rooms[f];
+    if (!R) { R = rooms[f] = buildRoom(houseLv, { floor: f }); R.group.visible = false; scene.add(R.group); fill = true; }
+    if (fill) {
+      const d = roomData || {}, r = f === 2 ? d.up || {} : d;
+      R.setBedding(d.bed || null); R.setStyle(r.wall, r.floor);
+      R.setItems(f === 2 ? (Array.isArray(r.items) ? r.items : DEF2) : r.items && r.items.length ? r.items : DEF1);
+    }
+    if (f === floorN) room = R;
+    return R;
+  }
+  // ---------- 🪜 hagdan: akyat / baba (Villa at Mansion) ----------
+  function goFloor(f, at) {
+    if (!inRoom || f === floorN) return;
+    const R = ensureRoom(f); if (room) { room.group.visible = false; room.select(null); }
+    floorN = f; room = R; R.group.visible = true; blanketOff();
+    const q = at || (f === 2 ? R.stairs.top : R.stairs.base); me.x = q.x; me.z = q.z; me.vx = me.vz = 0; main.group.position.set(me.x, q.y || 0, me.z);
+    if (buddy) buddy.group.position.set(me.x + 0.5, 0, me.z + 0.4);
+    if (opts.onFloor) opts.onFloor(f);
+  }
+  function climb() {
+    if (!inRoom || stair || rise || pose !== "stand" || !room.stairs) return false;
+    const R = room, up = floorN === 1, q = up ? R.stairs.base : R.stairs.top, topZ = -ROOM.d / 2 + 0.45, H = ROOM.h - 0.1;
+    const go = () => {
+      if (up) stair = { t: 0, T: 1.2, a: { x: q.x, y: 0, z: q.z }, b: { x: q.x, y: H, z: topZ }, face: Math.PI, then: () => goFloor(2) };
+      else { goFloor(1, { x: R.stairs.base.x, y: H, z: topZ }); stair = { t: 0, T: 1.2, a: { x: R.stairs.base.x, y: H, z: topZ }, b: { x: R.stairs.base.x, y: 0, z: R.stairs.base.z }, face: 0, then: null }; }
+      auto = null; main.face(stair.face); main.group.rotation.y = stair.face;
+    };
+    if (Math.hypot(me.x - q.x, me.z - q.z) > 0.3) walkTo(q.x, q.z, go); else go();
+    return true;
+  }
+  function stairStep(dt) {
+    const S = stair; S.t += dt; const k = Math.min(1, S.t / S.T);
+    me.x = S.a.x + (S.b.x - S.a.x) * k; me.z = S.a.z + (S.b.z - S.a.z) * k;
+    main.group.position.set(me.x, S.a.y + (S.b.y - S.a.y) * k, me.z); main.walk(0.7, S.face);
+    if (buddy) { const bp = buddy.group.position; bp.x += (me.x - 0.5 - bp.x) * 0.1; bp.z += (me.z + 0.4 - bp.z) * 0.1; }
+    if (k >= 1) { stair = null; main.group.position.y = 0; main.walk(0); const fn = S.then; if (fn) fn(); main.face(floorN === 2 ? Math.PI / 2 : 0); }
   }
   function enterRoom(instant) {
     ballOff(); if (riding) dismount();
     if (inRoom || game) return;
     if (!instant && !auto && Math.hypot(me.x - HOUSE.door.x, me.z - HOUSE.door.z) > 0.4) { walkTo(HOUSE.door.x, HOUSE.door.z, () => enterRoom(true)); return; }
-    if (!room) ensureRoom();
+    if (rooms[2]) rooms[2].group.visible = false;
+    floorN = 1; ensureRoom(1);
     inRoom = true; auto = null; show = null;
     if (place) place.group.visible = false;
     friends.forEach((f) => { f.t.group.visible = false; });
@@ -399,10 +450,11 @@ export function createScene(canvas, opts = {}) {
     if (opts.onRoom) opts.onRoom(true);
   }
   function leaveRoom(instant) {
-    ballOff(); blanketOff(); rise = null;
+    ballOff(); blanketOff(); rise = null; stair = null;
     if (!inRoom) return;
     inRoom = false; inside = false; auto = null;
     room.group.visible = false; room.select(null);
+    if (floorN !== 1) { floorN = 1; room = rooms[1]; if (opts.onFloor) opts.onFloor(1); }
     if (place) place.group.visible = true;
     friends.forEach((f) => { f.t.group.visible = true; });
     standUp();
@@ -453,33 +505,18 @@ export function createScene(canvas, opts = {}) {
     blanketOn(b);
   }
   // ---------- kumot: tinatakpan si Tigo hanggang dibdib habang tulog; tinitiklop papunta sa paanan kapag bumangon ----------
-  let blanket = null;
-  function blanketMake() {
-    const cv = document.createElement("canvas"); cv.width = 128; cv.height = 128; const c = cv.getContext("2d");
-    c.fillStyle = "#6fbf73"; c.fillRect(0, 0, 128, 128);
-    c.fillStyle = "rgba(255,255,255,.18)"; for (let i = 0; i < 128; i += 32) { c.fillRect(i, 0, 12, 128); c.fillRect(0, i, 128, 12); }
-    c.fillStyle = "rgba(0,0,0,.08)"; for (let i = 16; i < 128; i += 32) { c.fillRect(i, 0, 3, 128); c.fillRect(0, i, 128, 3); }
-    c.fillStyle = "#fff6e6"; c.fillRect(0, 0, 128, 14);   // puting tupi sa may dibdib
-    const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
-    const geo = new THREE.PlaneGeometry(1.22, 1.5, 24, 24); geo.rotateX(-Math.PI / 2);
-    const p = geo.attributes.position;
-    for (let i = 0; i < p.count; i++) {   // umbok sa gitna (katawan), nakalaylay sa gilid hanggang kutson
-      const x = p.getX(i), z = p.getZ(i), zf = (z + 0.75) / 1.5, bump = Math.exp(-((x / 0.38) ** 2)) * (0.36 * sizeK + 0.04 * Math.cos(z * 4) + 0.34 * sizeK * Math.exp(-(((zf - 0.86) / 0.1) ** 2))) * Math.min(1, zf * 6 + 0.3) * Math.min(1, (1 - zf) * 7 + 0.35), edge = Math.max(0, Math.abs(x) - 0.5) * 1.2;   // mas mataas sa paanan (paa)
-      p.setY(i, 0.03 + bump - edge);
-    }
-    geo.computeVertexNormals();
-    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: tx, roughness: 0.95, side: THREE.DoubleSide }));
-    m.castShadow = true; m.receiveShadow = true;
-    const g = new THREE.Group(); g.add(m); m.position.z = 0.75; g.userData.mesh = m; return g;   // ang pinanggalingan ay nasa may dibdib (para matiklop papunta sa paanan)
-  }
+  let blanket = null, blanketKey = "";
   function blanketOn(b) {
     if (!b || !b.c || !inRoom) return;
-    if (blanket && blanket.userData.k !== sizeK) { scene.remove(blanket); blanket.userData.mesh.geometry.dispose(); blanket.userData.mesh.material.map.dispose(); blanket.userData.mesh.material.dispose(); blanket = null; }
-    if (!blanket) { blanket = blanketMake(); blanket.userData.k = sizeK; scene.add(blanket); }
+    const id = ((roomData || {}).bed || {}).blanket || DEF_BED.blanket, key = id + "|" + sizeK;
+    if (blanket && blanketKey !== key) { scene.remove(blanket.group); blanket.dispose(); blanket = null; }
+    if (!blanket) { blanket = sleepBlanket(id, sizeK); blanketKey = key; scene.add(blanket.group); }
     const dx = Math.sin(b.face), dz = Math.cos(b.face);
-    blanket.position.set(b.c.x - dx * 0.5, 0.5, b.c.z - dz * 0.5);   // mula sa ilalim ng unan (dibdib) hanggang paanan blanket.rotation.set(0, b.face, 0); blanket.scale.set(1, 1, 1); blanket.visible = true;
+    blanket.group.position.set(b.c.x - dx * 0.5, 0.5, b.c.z - dz * 0.5);   // mula sa ilalim ng unan (dibdib) hanggang paanan
+    blanket.group.rotation.set(0, b.face, 0); blanket.group.scale.set(1, 1, 1); blanket.group.visible = true;   // 0.11.52: dati nasa loob ng komento ang linyang ito (kaya hindi lumilitaw ang kumot)
+    if (room) room.cover(false);
   }
-  function blanketOff() { if (blanket) blanket.visible = false; }
+  function blanketOff() { if (blanket) blanket.group.visible = false; rooms.forEach((R) => { if (R) R.cover(true); }); }
   // ---------- bangon na parang tao: tiklop ng kumot → upo sa gilid ng kama → tayo sa tabi ----------
   let rise = null;
   const ease = (x) => x * x * (3 - 2 * x), lerpA = (a, b, k) => { let d = b - a; d = Math.atan2(Math.sin(d), Math.cos(d)); return a + d * k; };
@@ -493,7 +530,7 @@ export function createScene(canvas, opts = {}) {
   }
   function riseStep(dt) {
     const R = rise, T = 1.25; R.t += dt; const k = Math.min(1, R.t / T);
-    if (blanket && blanket.visible) { const f = Math.min(1, R.t / 0.45); blanket.scale.z = 1 - 0.55 * ease(f); }
+    if (blanket && blanket.group.visible) { const f = Math.min(1, R.t / 0.45); blanket.group.scale.z = 1 - 0.55 * ease(f); }
     let P, Q, q;
     if (k < 0.55) { P = R.A; Q = R.B; q = ease(Math.max(0, (k - 0.12) / 0.43)); if (!R.sat && k > 0.3) { R.sat = true; main.sitPose(true); } }
     else { P = R.B; Q = R.C; q = ease((k - 0.55) / 0.45); if (!R.stood && k > 0.62) { R.stood = true; main.sitPose(false); } }
@@ -618,9 +655,11 @@ export function createScene(canvas, opts = {}) {
   function setHouse(level) {
     const L = Math.max(1, Math.min(4, Math.floor(level) || 1)); if (L === houseLv) return houseLv;
     houseLv = L; if (place) place.setHouse(L);
-    if (room) {
-      const was = inRoom, vis = room.group.visible; scene.remove(room.group); room.dispose(); room = null; blanketOff();
-      ensureRoom(); room.group.visible = vis;
+    if (rooms[1] || rooms[2]) {
+      const was = inRoom; blanketOff(); stair = null;
+      [1, 2].forEach((f) => { if (rooms[f]) { scene.remove(rooms[f].group); rooms[f].dispose(); rooms[f] = null; } });
+      if (floorN === 2 && !hasStairs(L)) { floorN = 1; if (opts.onFloor) opts.onFloor(1); }
+      room = null; ensureRoom(floorN, true); room.group.visible = was;
       if (was) { [me.x, me.z] = room.collide(me.x, me.z); main.group.position.set(me.x, main.group.position.y, me.z); }
     }
     // mga nakaparadang sasakyan: ilipat sa bagong puwesto (lumaki ang bahay)
@@ -645,6 +684,7 @@ export function createScene(canvas, opts = {}) {
     if (on && !inside) {
       // papasok sa bahay → lalakad sa kama → hihiga
       const toBed = () => {
+        if (!room.bedSpot() && hasStairs(houseLv)) { const o = floorN === 2 ? 1 : 2, R = ensureRoom(o); if (R.bedSpot()) goFloor(o, o === 2 ? R.stairs.top : R.stairs.base); }
         const b = room.bedSpot();
         if (!animate || !b) { lieDown(); return; }
         walkTo(b.beside.x, b.beside.z, lieDown);
@@ -747,6 +787,8 @@ export function createScene(canvas, opts = {}) {
   const headV = new THREE.Vector3();
   function loop() {
     if (!alive) return;
+    // 2D na laro sa ibabaw (💎 Gem Duel, 🧩 Sudoku): huwag mag-render ng 3D (mas mabilis at mas tipid sa phone)
+    if (opts.el && (opts.el.classList.contains("dueling") || opts.el.classList.contains("game-sudoku"))) { clock.getDelta(); raf = requestAnimationFrame(loop); return; }
     const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
     if (game) {
       game.tick(dt, t); main.update(dt, t); ticks.forEach((fn) => fn(dt, t)); updateFx(dt);
@@ -757,7 +799,8 @@ export function createScene(canvas, opts = {}) {
     moveFriends(dt);
     movePuppets(dt);
     pets.forEach((p) => p.update(opts.reduced ? dt * 0.4 : dt, t));
-    const bedB = inRoom && pose === "bed" && room ? room.bedSpot() : null;   // tulog si Tigo sa kama → ang alaga ay humihiga sa sahig sa tabi ng kama
+    const bedB = inRoom && pose === "bed" && room ? room.bedSpot() : null;
+    rooms.forEach((R) => { if (R && R !== room) R.group.visible = false; });   // tulog si Tigo sa kama → ang alaga ay humihiga sa sahig sa tabi ng kama
     budStep(dt, t, bedB); tickToy(dt);
     rides.forEach((q) => { q.v.group.visible = !inRoom && !game && placeId !== ""; });
     waterTick(dt);
@@ -768,6 +811,8 @@ export function createScene(canvas, opts = {}) {
     ticks.forEach((fn) => fn(dt, t));
     zzz.children.forEach((z, i) => { const k = (t * 0.4 + i * 0.33) % 1; z.position.set(k * 0.3, k * 0.8, 0); z.material.opacity = 1 - k; });
     updateFx(dt);
+    // araw (at anino) ay sumusunod kay Tigo: mas malaki na ang isla (0.11.52)
+    sun.position.set(me.x + 3.5, 6, me.z + 4); sun.target.position.set(me.x, 0, me.z);
     // camera (camera-rig.js): sumusunod kay Tigo; ikot/zoom gamit ang joystick, mouse o pinch
     // layo ayon sa hugis ng screen: patayo (phone) = mas malayo para kasya ang isla (o ang kwarto)
     const half = inRoom ? Math.max(3.6, ROOM.w / 2 + 0.6) : 4.6, cz = Math.min(15, Math.max(camBase.z, half / (Math.tan((camera.fov * Math.PI) / 360) * camera.aspect)));
@@ -786,8 +831,8 @@ export function createScene(canvas, opts = {}) {
 
   return {
     main, add, remove, puppet, effect, buddyMode, setHouse, houseLevel() { return houseLv; }, setRides, ride(id) { return id ? mount(id) : dismount(); }, riding() { return riding ? riding.id : null; },
-    water, watering() { return waterT > 0; }, rising() { return !!rise; }, blanketShown() { return !!(blanket && blanket.visible); },
-    _blanket() { if (!blanket) return null; const b = new THREE.Box3().setFromObject(blanket), m = new THREE.Box3().setFromObject(main.group); return { b: [b.min.toArray(), b.max.toArray()], m: [m.min.toArray(), m.max.toArray()], bed: room && room.bedSpot() }; },
+    water, watering() { return waterT > 0; }, rising() { return !!rise; }, blanketShown() { return !!(blanket && blanket.group.visible); },
+    _blanket() { if (!blanket) return null; const b = new THREE.Box3().setFromObject(blanket.group), m = new THREE.Box3().setFromObject(main.group); return { b: [b.min.toArray(), b.max.toArray()], m: [m.min.toArray(), m.max.toArray()], bed: room && room.bedSpot() }; },
     rideSpot(id) { const q = rides.get(id); return q ? { x: q.x, z: q.z } : null; }, hasBuddy() { return !!buddy; },
     ball(on) { if (on) ballOn(); else ballOff(); return !!toy; }, ballActive() { return !!toy; },
     pickBuddy(x, y) { if (!buddy) return false; const r = new THREE.Raycaster(); r.setFromCamera(new THREE.Vector2(x, y), camera); return r.intersectObject(buddy.group, true).length > 0; },
@@ -797,13 +842,33 @@ export function createScene(canvas, opts = {}) {
     enterRoom() { if (!isNight) enterRoom(); }, leaveRoom() { if (!inside) leaveRoom(); }, inRoom() { return inRoom; },
     room() { return inRoom ? room : null; },
     watching() { if (!inRoom || pose !== "sit" || !room.tvNear) return false; const tv = room.tvNear(me.x, me.z); if (!tv) return false; const a = Math.atan2(tv.x - me.x, tv.z - me.z) - main.group.rotation.y; return Math.cos(a) > 0.2; },   // nakaupo at nakaharap sa TV
-    setRoom(d) { roomData = d || null; if (room) ensureRoom(); },
+    setRoom(d) { roomData = d || null; [1, 2].forEach((f) => { if (rooms[f]) ensureRoom(f, true); }); },
+    floor() { return inRoom ? floorN : 0; }, climb, climbing() { return !!stair; },
+    setBedding(b) { roomData = Object.assign({}, roomData || {}, { bed: b ? { blanket: b.blanket, pillow: b.pillow } : null }); rooms.forEach((R) => { if (R) R.setBedding(roomData.bed); }); if (blanket && pose === "bed") { blanketKey = ""; blanketOn(room.bedSpot()); } },
+    // buong ayos ng bahay (1F + 2F + kumot/unan) para i-save; ina-update din ang roomData (para hindi bumalik sa luma kapag lumipat ng palapag)
+    roomFull() {
+      const d = roomData || {}, snap = (f) => { const R = rooms[f], r = f === 2 ? d.up || {} : d; if (!R) return { wall: r.wall || "wall-cream", floor: r.floor || "floor-planks", items: Array.isArray(r.items) ? r.items : f === 2 ? DEF2 : DEF1 }; const st = R.style(); return { wall: st.wall, floor: st.floor, items: R.list() }; };
+      const out = Object.assign(snap(1), { bed: d.bed || null }); if (hasStairs(houseLv)) out.up = snap(2);
+      roomData = out; return out;
+    },
+    aim(range = 3.6) {   // water gun: ano ang nasa harap (±35°) ni Tigo
+      const h = main.group.rotation.y, fx = Math.sin(h), fz = Math.cos(h), out = [];
+      const test = (kind, x, z, extra) => { const dx = x - me.x, dz = z - me.z, d = Math.hypot(dx, dz); if (d > 0.2 && d < range && (dx * fx + dz * fz) / d > 0.8) out.push(Object.assign({ kind, x, z, d }, extra || {})); };
+      if (buddy) test("buddy", buddy.group.position.x, buddy.group.position.z);
+      if (!inRoom && place && place.spots) place.spots.forEach((q) => { if (q.kind === "garden") test("garden", q.x, q.z); });
+      puppets.forEach((q) => { if (q.t.group.visible) test("friend", q.x, q.z, { t: q.t }); });
+      friends.forEach((f) => test("friend", f.x, f.z, { t: f.t }));
+      return out.sort((a, b) => a.d - b.d);
+    },
+    splashBuddy() { if (!buddy) return false; const b = buddy.group.position, dx = b.x - me.x, dz = b.z - me.z, d = Math.hypot(dx, dz) || 1; const [x, z] = collide(b.x + (dx / d) * 2.2, b.z + (dz / d) * 2.2); bud.flee = { x, z, t: 1.6 }; buddy.hop(); return true; },
+    buddyId() { return buddy ? buddy.id : null; }, buddyPos() { return buddy ? { x: buddy.group.position.x, y: buddy.group.position.y, z: buddy.group.position.z } : null; }, petBed, buddyNear(r = 4) { return !!buddy && Math.hypot(buddy.group.position.x - me.x, buddy.group.position.z - me.z) < r; },
     setLook(fn) { look2 = fn || (() => null); },
     setRun(fn) { running = fn || (() => false); },
     sit() { return sit(); }, pose() { return pose; },
     // sa labas: sc.spot() → { kind, id } ng pinakamalapit na puwedeng gawin · sc.sitBench() · sc.fish(true) (uupo sa upuan at maghahagis) · sc.bite(on) · sc.setFarm(f)
     spot() {
       if (riding) return { kind: "dismount", id: riding.id };
+      if (inRoom && room && pose === "stand" && !show && !stair) { const sn = room.stairsNear && room.stairsNear(me.x, me.z); if (sn) return { kind: sn === "up" ? "upstairs" : "downstairs" }; }
       if (inRoom && room && room.near && pose === "stand" && !show) { const r = room.near(me.x, me.z); return r ? { kind: r.kind } : null; }
       const q = spotNear(); if (q) return { kind: q.kind, id: q.id };   // taniman, lawa, upuan, puno muna; saka ang nakaparadang sasakyan
       const rd = pose === "stand" && !show ? nearRide() : null; return rd ? { kind: "ride", id: rd.id } : null;
@@ -874,7 +939,7 @@ export function createScene(canvas, opts = {}) {
     dispose() {
       alive = false; cancelAnimationFrame(raf); ro.disconnect(); document.removeEventListener("visibilitychange", vis); document.removeEventListener("tmn:upd", vis);
       pets.forEach((p) => p.dispose()); if (buddy) buddy.dispose(); if (place) place.dispose();
-      rig.dispose(); sky.dispose(); if (room) room.dispose();
+      rig.dispose(); sky.dispose(); rooms.forEach((R) => { if (R) R.dispose(); }); if (blanket) blanket.dispose();
       disp.forEach((d) => d.dispose()); zGeo.dispose(); zMat.dispose(); renderer.dispose();
     },
   };

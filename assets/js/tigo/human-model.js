@@ -3,7 +3,9 @@
    const k = createKid({ avatar: { skin, hair, hairColor, top, topColor, bottom, bottomColor, shoes } }, group)
    Pareho ang API ng Tigo (pet-model.js): update, setMood, sleep, jump, eat, spin, wiggle, lookAt, wear, setGlow, walk, face, move, sitPose(on), dispose
      + setLook(avatar) → palitan ang buhok / damit / kulay nang hindi ginagawa ulit ang buong katawan
-   KID = mga pagpipilian (para sa avatar-ui.js): SKIN, HAIR, HAIRC, TOP, BOTTOM, CLOTH, PRESETS
+   KID = mga pagpipilian (para sa avatar-ui.js): SKIN, HAIR, HAIRC, TOP, BOTTOM, CLOTH, EYES, EYEC, PRESETS
+   0.11.52: anime na estilo — buhok (anime, twintails, hime, wolf, ahoge), damit (sailor, gakuran, yukata, hero), palda na pleated,
+            malalaking makinang na mata (eyes: "anime") na may kulay (eyeColor). talk(sec) = gumagalaw ang bibig habang nagsasalita.
    Kasinlaki ni Tigo (~1.75 ang taas) para tugma sa camera, bahay, at mga laro. Sariling disenyo (gawa sa code), walang kinopyang character. */
 import * as THREE from "../../vendor/three/three.module.min.js";
 import { RoundedBoxGeometry } from "../../vendor/three/RoundedBoxGeometry.js";
@@ -11,10 +13,12 @@ import { buildWear } from "./outfit.js";
 
 export const KID = {
   SKIN: { s1: "#ffe0c4", s2: "#f6c9a0", s3: "#e0a878", s4: "#c68656", s5: "#8f5a36", s6: "#5c3a24" },
-  HAIR: ["short", "bob", "long", "pony", "spiky", "buns", "curly", "none"],
+  HAIR: ["short", "bob", "long", "pony", "spiky", "buns", "curly", "anime", "twintails", "hime", "wolf", "ahoge", "none"],
   HAIRC: { black: "#26211f", brown: "#5b3a22", chestnut: "#8a4b2a", blonde: "#f0c75e", red: "#c8452c", pink: "#ff8fc0", blue: "#4a8fe8", purple: "#8f6ff0", white: "#f1efe9" },
-  TOP: ["tee", "stripe", "hoodie", "jacket", "overall", "dress"],
-  BOTTOM: ["pants", "shorts", "skirt"],
+  TOP: ["tee", "stripe", "hoodie", "jacket", "overall", "dress", "sailor", "gakuran", "yukata", "hero"],
+  BOTTOM: ["pants", "shorts", "skirt", "pleated"],
+  EYES: ["round", "anime"],
+  EYEC: { brown: "#6b3e1f", blue: "#2f7de1", green: "#2fae6a", purple: "#8a4fe0", red: "#d43a3a", gold: "#e0a420", pink: "#ff6fae" },
   CLOTH: { red: "#ef4b4b", orange: "#ff8a3d", yellow: "#ffd23f", green: "#4fb86a", mint: "#3dd6c0", sky: "#7cc4ff", blue: "#3f6fe0", purple: "#8f74f0", pink: "#ff8fc0", white: "#f7f5f0", gray: "#8b90a0", black: "#2a2a30", brown: "#8a5a3a" },
   PRESETS: [
     { id: "explorer", name: "Explorer", icon: "🧭", skin: "s2", hair: "short", hairColor: "brown", top: "jacket", topColor: "green", bottom: "pants", bottomColor: "brown", shoes: "black" },
@@ -25,6 +29,10 @@ export const KID = {
     { id: "night", name: "Night", icon: "🌙", skin: "s5", hair: "curly", hairColor: "black", top: "hoodie", topColor: "black", bottom: "pants", bottomColor: "blue", shoes: "red" },
     { id: "garden", name: "Garden", icon: "🌱", skin: "s3", hair: "long", hairColor: "brown", top: "overall", topColor: "blue", bottom: "pants", bottomColor: "blue", shoes: "brown" },
     { id: "ocean", name: "Ocean", icon: "🌊", skin: "s6", hair: "short", hairColor: "blue", top: "tee", topColor: "sky", bottom: "skirt", bottomColor: "white", shoes: "blue" },
+    { id: "academy", name: "Academy", icon: "🎒", skin: "s1", hair: "twintails", hairColor: "pink", top: "sailor", topColor: "white", bottom: "pleated", bottomColor: "blue", shoes: "black", eyes: "anime", eyeColor: "purple" },
+    { id: "rival", name: "Rival", icon: "⚡", skin: "s2", hair: "anime", hairColor: "blonde", top: "gakuran", topColor: "black", bottom: "pants", bottomColor: "black", shoes: "black", eyes: "anime", eyeColor: "blue" },
+    { id: "festival", name: "Festival", icon: "🏮", skin: "s3", hair: "hime", hairColor: "black", top: "yukata", topColor: "red", bottom: "pants", bottomColor: "red", shoes: "brown", eyes: "anime", eyeColor: "brown" },
+    { id: "hero", name: "Hero", icon: "🦸", skin: "s4", hair: "wolf", hairColor: "red", top: "hero", topColor: "blue", bottom: "pants", bottomColor: "blue", shoes: "red", eyes: "anime", eyeColor: "gold" },
   ],
 };
 const DEF = KID.PRESETS[0], INK = 0x2b1d1a;
@@ -69,12 +77,20 @@ export function createKid(opts = {}, group = new THREE.Group()) {
   // mukha: pareho ang sukat ng kay Tigo (para tugma ang salamin atbp.), pinaliit sa 0.62
   const face = new THREE.Group(); face.position.set(0, -0.03, 0.385); face.scale.setScalar(0.62); head.add(face);
   const eyeMat = mat({ color: INK, roughness: 0.25, metalness: 0.1 }), shine = mat({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.6 });
+  const irisM = mat({ color: 0x6b3e1f, roughness: 0.3, emissive: 0x000000 });
   const eyes = [-0.27, 0.27].map((x) => {
     const e = new THREE.Group(); e.position.set(x, 0.08, 0);
     const ball = new THREE.Mesh(geo(new THREE.SphereGeometry(0.105, 20, 14)), eyeMat); ball.scale.z = 0.55;
     const s1 = new THREE.Mesh(geo(new THREE.SphereGeometry(0.035, 10, 8)), shine); s1.position.set(0.035, 0.045, 0.05);
-    e.add(ball, s1); face.add(e); return e;
+    // anime: mas malaki at matangkad na mata, may kulay na iris sa ibaba, dalawang kislap
+    const iris = new THREE.Mesh(geo(new THREE.SphereGeometry(0.085, 18, 12)), irisM); iris.scale.set(1, 1.15, 0.4); iris.position.set(0, -0.035, 0.035); iris.visible = false;
+    const s2 = new THREE.Mesh(geo(new THREE.SphereGeometry(0.018, 8, 6)), shine); s2.position.set(-0.035, -0.06, 0.07); s2.visible = false;
+    e.add(ball, s1, iris, s2); e.userData = { ball, s1, iris, s2 }; face.add(e); return e;
   });
+  function setEyes(kind, col) {
+    const an = kind === "anime"; irisM.color.set(col); irisM.emissive.set(col); irisM.emissiveIntensity = an ? 0.25 : 0;
+    eyes.forEach((e) => { const u = e.userData; u.ball.scale.set(an ? 1.12 : 1, an ? 1.55 : 1, 0.55); u.iris.visible = u.s2.visible = an; u.s1.position.set(an ? 0.04 : 0.035, an ? 0.08 : 0.045, an ? 0.07 : 0.05); u.s1.scale.setScalar(an ? 1.25 : 1); e.position.y = an ? 0.1 : 0.08; });
+  }
   const lidCurve = (x) => new THREE.QuadraticBezierCurve3(new THREE.Vector3(x - 0.1, 0.08, 0.02), new THREE.Vector3(x, 0.0, 0.05), new THREE.Vector3(x + 0.1, 0.08, 0.02));
   const lids = [-0.27, 0.27].map((x) => { const m = new THREE.Mesh(geo(new THREE.TubeGeometry(lidCurve(x), 12, 0.022, 8)), eyeMat); m.visible = false; face.add(m); return m; });
   const cheekMat = mat({ color: 0xff6b8a, transparent: true, opacity: 0.5, roughness: 0.9 });
@@ -101,13 +117,23 @@ export function createKid(opts = {}, group = new THREE.Group()) {
     if (id === "pony") { h(new THREE.SphereGeometry(0.13, 12, 9), 0, 0.18, -0.42); h(new THREE.CapsuleGeometry(0.1, 0.34, 6, 10), 0, -0.08, -0.5).rotation.x = 0.35; }
     if (id === "spiky") for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2, s = h(new THREE.ConeGeometry(0.11, 0.3, 7), Math.sin(a) * 0.2, 0.4, Math.cos(a) * 0.2 - 0.03); s.rotation.set(Math.cos(a) * 0.5, 0, -Math.sin(a) * 0.5); }
     if (id === "buns") [-1, 1].forEach((s) => h(new THREE.SphereGeometry(0.15, 12, 9), s * 0.3, 0.4, -0.05));
+    // ---- anime na estilo (sariling disenyo) ----
+    if (id === "anime") {   // malalaking tulis na nakasuklay paitaas at paatras, may bangs na tusok sa noo
+      [[0, 0.5, -0.05, -0.6, 0], [-0.24, 0.42, -0.1, -0.5, 0.6], [0.24, 0.42, -0.1, -0.5, -0.6], [-0.14, 0.36, -0.36, -1.2, 0.3], [0.14, 0.36, -0.36, -1.2, -0.3], [0, 0.22, -0.46, -1.7, 0], [-0.38, 0.12, -0.2, -0.9, 1.1], [0.38, 0.12, -0.2, -0.9, -1.1]]
+        .forEach(([x, y, z, rx, rz]) => { const c = h(new THREE.ConeGeometry(0.13, 0.42, 7), x, y, z); c.rotation.set(rx, 0, rz); });
+      [[-0.16, 0.2, 0.33, 0.5], [0.02, 0.18, 0.37, 0], [0.18, 0.22, 0.33, -0.5]].forEach(([x, y, z, rz]) => { const c = h(new THREE.ConeGeometry(0.07, 0.24, 6), x, y, z); c.rotation.set(Math.PI - 0.3, 0, rz); });
+    }
+    if (id === "twintails") { [-1, 1].forEach((s) => { h(new THREE.SphereGeometry(0.08, 10, 8), s * 0.36, 0.26, -0.12); const t = h(new THREE.CapsuleGeometry(0.11, 0.62, 6, 10), s * 0.5, -0.12, -0.18); t.rotation.z = s * 0.25; const tip = h(new THREE.ConeGeometry(0.1, 0.2, 8), s * 0.58, -0.56, -0.18); tip.rotation.set(Math.PI, 0, -s * 0.25); }); }
+    if (id === "hime") { h(new RoundedBoxGeometry(0.8, 1.0, 0.22, 3, 0.09), 0, -0.36, -0.28); [-1, 1].forEach((s) => h(new RoundedBoxGeometry(0.13, 0.62, 0.16, 2, 0.05), s * 0.37, -0.26, 0.08)); h(new RoundedBoxGeometry(0.66, 0.12, 0.2, 2, 0.05), 0, 0.27, 0.3); }   // tuwid na bangs at hiwa sa gilid
+    if (id === "wolf") { for (let i = 0; i < 9; i++) { const a = -1.3 + (i / 8) * 2.6, c = h(new THREE.ConeGeometry(0.12, 0.36, 6), Math.sin(a) * 0.36, -0.08 - Math.abs(Math.sin(a)) * 0.04, Math.cos(a) * -0.3 - 0.06); c.rotation.set(Math.PI - 0.5 * Math.cos(a), 0, -Math.sin(a) * 0.6); } }
+    if (id === "ahoge") { const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0.42, 0), new THREE.Vector3(0.05, 0.6, 0.02), new THREE.Vector3(0.14, 0.66, 0.06), new THREE.Vector3(0.17, 0.58, 0.08)]); h(new THREE.TubeGeometry(curve, 12, 0.025, 6), 0, 0, 0); }
   }
   // ---------- damit ----------
   function buildClothes(a) {
     extra.clear();
-    const top = KID.TOP.includes(a.top) ? a.top : "tee", bottom = top === "dress" ? "skirt" : KID.BOTTOM.includes(a.bottom) ? a.bottom : "pants";
+    const top = KID.TOP.includes(a.top) ? a.top : "tee", bottom0 = top === "dress" ? "skirt" : KID.BOTTOM.includes(a.bottom) ? a.bottom : "pants", bottom = bottom0 === "pleated" ? "skirt" : bottom0;
     const x = (g, m, px, py, pz, sh = false) => { const o = new THREE.Mesh(tg(g), m); o.position.set(px, py, pz); o.castShadow = sh; extra.add(o); return o; };
-    const long = top === "hoodie" || top === "jacket";
+    const long = top === "hoodie" || top === "jacket" || top === "gakuran" || top === "yukata" || top === "hero";
     sleeves.forEach((s) => { s.arm.material = long ? topM : skin; });
     legs.forEach((l) => { l.up.material = bottom === "skirt" ? skin : botM; l.low.material = bottom === "pants" ? botM : skin; });
     if (bottom === "skirt") x(new THREE.CylinderGeometry(0.3, top === "dress" ? 0.52 : 0.45, top === "dress" ? 0.42 : 0.3, 20, 1, true), top === "dress" ? topM : botM, 0, top === "dress" ? 0.5 : 0.53, 0, true).material.side = THREE.DoubleSide;
@@ -118,12 +144,20 @@ export function createKid(opts = {}, group = new THREE.Group()) {
     if (top === "overall") { torso.material = trim; x(new RoundedBoxGeometry(0.42, 0.34, 0.04, 2, 0.03), topM, 0, 0.88, 0.2); [-0.15, 0.15].forEach((sx) => x(new THREE.BoxGeometry(0.07, 0.36, 0.44), topM, sx, 1.08, 0)); x(new RoundedBoxGeometry(0.67, 0.2, 0.43, 3, 0.08), topM, 0, 0.68, 0); }
     else torso.material = topM;
     if (top === "dress") x(new RoundedBoxGeometry(0.26, 0.05, 0.03, 2, 0.02), trim, 0, 1.2, 0.2);   // kuwelyo
+    if (bottom0 === "pleated") for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, f = x(new THREE.BoxGeometry(0.02, 0.28, 0.012), trim, Math.sin(a) * 0.4, 0.53, Math.cos(a) * 0.4); f.rotation.y = a; f.rotation.x = -0.25 * Math.cos(a); f.material = botM; f.scale.x = 1.4; }   // tupi ng palda
+    const navy = trim.clone(); navy.color.set(0x24305e); temp.push(navy); const red = trim.clone(); red.color.set(0xe23b4b); temp.push(red); const gold = trim.clone(); gold.color.set(0xf2c14e); gold.metalness = 0.6; gold.roughness = 0.3; temp.push(gold);
+    if (top === "sailor") {   // kuwelyong pang-marino sa likod at harap, may laso
+      x(new RoundedBoxGeometry(0.62, 0.34, 0.03, 2, 0.02), navy, 0, 1.08, -0.22); [-1, 1].forEach((s) => { const c = x(new THREE.BoxGeometry(0.2, 0.3, 0.03), navy, s * 0.13, 1.08, 0.205); c.rotation.z = s * 0.45; });
+      [-1, 1].forEach((s) => { const b = x(new THREE.ConeGeometry(0.06, 0.12, 4), red, s * 0.06, 0.96, 0.23); b.rotation.z = s * Math.PI / 2; }); x(new THREE.SphereGeometry(0.03, 8, 6), red, 0, 0.96, 0.235); }
+    if (top === "gakuran") { x(new THREE.CylinderGeometry(0.2, 0.22, 0.12, 16), topM, 0, 1.24, 0); [1.12, 1.0, 0.88, 0.76].forEach((y) => x(new THREE.SphereGeometry(0.025, 8, 6), gold, 0, y, 0.215)); }   // mataas na kuwelyo at gintong butones
+    if (top === "yukata") { [-1, 1].forEach((s) => { const l = x(new THREE.BoxGeometry(0.08, 0.5, 0.02), trim, s * 0.07, 1.02, 0.215); l.rotation.z = s * 0.45; }); x(new RoundedBoxGeometry(0.69, 0.14, 0.45, 3, 0.06), navy, 0, 0.78, 0); x(new RoundedBoxGeometry(0.18, 0.12, 0.06, 2, 0.03), navy, 0.12, 0.78, -0.24); }   // tawid sa dibdib at malapad na obi
+    if (top === "hero") { x(new RoundedBoxGeometry(0.69, 0.1, 0.45, 3, 0.05), gold, 0, 0.72, 0); const st = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a2 = (i / 10) * Math.PI * 2 + Math.PI / 2, r2 = i % 2 ? 0.04 : 0.1; i ? st.lineTo(Math.cos(a2) * r2, Math.sin(a2) * r2) : st.moveTo(Math.cos(a2) * r2, Math.sin(a2) * r2); } x(new THREE.ExtrudeGeometry(st, { depth: 0.02, bevelEnabled: false }), gold, 0, 1.0, 0.21); }   // sinturon at sariling simbolo
   }
   let look = {};
   function setLook(a) {
     a = Object.assign({}, DEF, a || {});
     const changed = (k) => a[k] !== look[k];
-    skin.color.set(pick(KID.SKIN, a.skin, "s2")); hairM.color.set(pick(KID.HAIRC, a.hairColor, "brown"));
+    skin.color.set(pick(KID.SKIN, a.skin, "s2")); hairM.color.set(pick(KID.HAIRC, a.hairColor, "brown")); setEyes(a.eyes === "anime" ? "anime" : "round", pick(KID.EYEC, a.eyeColor, "brown"));
     topM.color.set(pick(KID.CLOTH, a.topColor, "green")); botM.color.set(pick(KID.CLOTH, a.bottomColor, "blue")); shoeM.color.set(pick(KID.CLOTH, a.shoes, "white"));
     trim.color.set(a.topColor === "white" ? 0xdfe3ee : 0xffffff);
     if (changed("hair") || changed("top") || changed("bottom")) {
@@ -174,13 +208,13 @@ export function createKid(opts = {}, group = new THREE.Group()) {
   [0, 1, 2].forEach((i) => { const z = new THREE.Mesh(geo(new THREE.TorusGeometry(0.06 + i * 0.02, 0.012, 6, 4)), zMat); z.position.set(i * 0.12, i * 0.22, 0); zzz.add(z); });
 
   // ---------- estado at galaw ----------
-  const st = { sit: false, move: null, moveT: 0, walk: 0, walkT: 0, heading: null, mood: "happy", asleep: false, blinkT: 2 + Math.random() * 3, blink: 0, jump: 0, eat: 0, spin: 0, wiggle: 0, look: new THREE.Vector2(), lookNow: new THREE.Vector2(), phase: Math.random() * 10 };
+  const st = { talk: 0, sit: false, move: null, moveT: 0, walk: 0, walkT: 0, heading: null, mood: "happy", asleep: false, blinkT: 2 + Math.random() * 3, blink: 0, jump: 0, eat: 0, spin: 0, wiggle: 0, look: new THREE.Vector2(), lookNow: new THREE.Vector2(), phase: Math.random() * 10 };
   function paintFace() {
     const sleepy = st.asleep || st.mood === "sleepy", closed = st.asleep || st.blink > 0 || (st.mood === "happy" && st.eat > 0);
     eyes.forEach((e) => { e.visible = !closed; e.scale.y = sleepy && !st.asleep ? 0.55 : 1; });
     lids.forEach((l) => { l.visible = closed; });
     Object.values(mouths).forEach((m) => { m.visible = false; });
-    open.visible = st.eat > 0 && Math.sin(st.eat * 30) > 0;
+    open.visible = (st.eat > 0 && Math.sin(st.eat * 30) > 0) || (st.talk > 0 && !st.asleep && Math.sin(st.talk * 24) > -0.2);
     if (!open.visible) (mouths[st.asleep ? "flat" : st.mood === "sad" || st.mood === "sick" ? "sad" : st.mood === "ok" ? "ok" : st.mood === "sleepy" ? "flat" : "happy"]).visible = true;
     zzz.visible = st.asleep;
   }
@@ -195,6 +229,7 @@ export function createKid(opts = {}, group = new THREE.Group()) {
     if (st.jump > 0) { st.jump = Math.max(0, st.jump - dt); const k = 1 - st.jump / 0.7; y = Math.sin(k * Math.PI) * 0.75; }
     if (st.wiggle > 0) { st.wiggle = Math.max(0, st.wiggle - dt); body.rotation.z = Math.sin(st.wiggle * 28) * 0.12 * (st.wiggle / 0.8); } else body.rotation.z *= 0.85;
     if (st.eat > 0) st.eat = Math.max(0, st.eat - dt);
+    if (st.talk > 0) { st.talk = Math.max(0, st.talk - dt); open.scale.set(1, 0.5 + Math.abs(Math.sin(st.talk * 18)) * 0.5, 0.4); }
     let mv = null;
     if (st.move) { st.moveT -= dt; if (st.moveT <= 0) st.move = null; else mv = st.move; }
     const beat = t * 7.5;
@@ -237,6 +272,7 @@ export function createKid(opts = {}, group = new THREE.Group()) {
   return {
     group, update, setLook, kind: "kid",
     setMood(m) { st.mood = m; }, sleep(on) { st.asleep = !!on; },
+    talk(sec) { st.talk = Math.max(0, Math.min(8, Number(sec) || 1.5)); }, talking() { return st.talk > 0; },
     jump() { if (st.jump < 0.15) st.jump = 0.7; }, height() { return rig.position.y; }, jumping() { return st.jump > 0; }, eat() { st.eat = 1.2; st.wiggle = 0.6; }, spin() { st.spin = 0.9; }, wiggle() { st.wiggle = 0.8; },
     lookAt(x, y) { st.look.set(Math.max(-1, Math.min(1, x)), Math.max(-1, Math.min(1, y))); },
     setColor() {}, setGear(id) { wear("hat", id === "none" ? null : id); }, wear, setGlow, worn,

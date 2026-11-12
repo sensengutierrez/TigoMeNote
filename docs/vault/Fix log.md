@@ -85,6 +85,9 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-11 · Salamin: itim lang (metal na walang repleksyon) → tunay na reflector na nagre-render ng kwarto (`tigo/furniture.js`)
 - 2026-11-12 · Sasakyan: magkapatong ang scooter at kotse, at nasa taniman ang bike → ang paradahan ay hindi umiiwas sa ibang sasakyan at sa mga lugar (taniman, lawa) → `parkSpot` na umiiwas sa lahat (`tigo/pet-scene.js`)
 - 2026-11-12 · Kumot: lumalabas ang paa ni Kid at ang kumot ay nasa may ulo → mas mataas na umbok sa paanan at nagsisimula sa ilalim ng unan (`tigo/pet-scene.js`)
+- 2026-11-13 · Kumot: hindi lumilitaw habang tulog → ang linyang nagpapakita at umiikot ng kumot ay napasama sa komento (`// … paanan blanket.rotation…`) → inilabas sa komento at inilipat sa `bedding.js` (`tigo/pet-scene.js`)
+- 2026-11-13 · Gem Duel: 4 fps sa test → nagre-render pa rin ang 3D na isla sa ilalim → hindi muna nagre-render kapag "dueling" o Sudoku (`tigo/pet-scene.js`)
+- 2026-11-13 · Gem Duel online: nagsu-suko ang dalawa (walang balita nang 35 s) sa mabagal na phone → mabigat ang pag-drawing bawat frame → naka-cache na larawan ng hiyas + drawing lang kapag may gumagalaw; 45 s na hintay (`tigo/duel-game.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

@@ -7,7 +7,9 @@
    Bahay: lumakad sa pinto o 🏠 House → loob ng bahay; 🛠 Decorate = tigo/room-ui.js.
    UI: tigo/closet-ui.js, tigo/games-ui.js (Coin Rush, Pac-Tigo, Racing), tigo/journey-ui.js. Walang WebGL → 2D na sticker.
    Boses: tigo/voice.js + tigo/talk.js (nagsasalita parang baby; ⚙️ = Sound settings, naka-save sa device).
-   Server: pet-fast (get, act, style, wear, buy, game, nearby, gather, visits). Stats: kinukuwenta rin dito para gumalaw ang bars. */
+   Server: pet-fast (get, act, style, wear, buy, game, nearby, gather, visits). Stats: kinukuwenta rin dito para gumalaw ang bars.
+   0.11.52: 🪜 hagdan (Villa/Mansion), 💦 water gun (tigo/water-gun.js, kapag hawak), tunog ng alaga (tigo/pet-sounds.js), 🪙 Give coins (Admin; tigo/admin-coins.js),
+            💎 Gem Duel (tigo/duel-*.js; 2D, hindi kailangan ng 3D). */
 (function () {
   var UI = window.TMN_UI, $ = function (id) { return document.getElementById(id); };
   var pet = null, sc = null, ctl = null, decor = null, busy = false, nearTimer = null, visitors = {}, firstNight = true, closet = null, playing = false, mods = {}, voice = null, talk = null, gameJump = null;
@@ -52,6 +54,7 @@
     sc.main.setColor(color || pet.color);
     ["hat", "face", "body", "hand"].forEach(function (s) { if ((sc.main.worn[s] || null) !== (o[s] || null)) sc.main.wear(s, o[s] || null); });
     sc.setBuddy(o.buddy || null);
+    $("tgSplash").classList.toggle("hidden", o.hand !== "water-gun");
     sky = sc.setBackdrop(o.backdrop || "island"); paintSky(live() || {});
     sc.main.setGlow(!!pet.glow);
   }
@@ -62,10 +65,12 @@
       var m = await mod("pet-scene"), c = await mod("controls");
       sc = m.createScene($("tgCanvas"), { reduced: reduced, pet: { color: pet.color, avatar: pet.avatar }, backdrop: (pet.outfit || {}).backdrop, el: $("stage"), onDoor: doorBar, size: loadSize(),
         onRoom: function (on) { $("stage").classList.toggle("in-room", on); if (!on && decor) decor.close(); if (on) say("home", { still: true }); },
+        onFloor: function (f) { $("stage").classList.toggle("floor2", f === 2); if (decor) decor.close(); if (f === 2) setTimeout(function () { say("balcony", { still: true }); }, 900); },
         onPose: function (p) {
           var st = $("stage"), j = $("tgJump");
           st.classList.toggle("pose-sit", p === "sit"); st.classList.toggle("pose-bed", p === "bed");
           j.textContent = p === "stand" ? "⤒" : "⬆ Tayo"; j.setAttribute("aria-label", p === "stand" ? "Jump" : "Stand up");
+          if (p === "bed" && !playing) setTimeout(function () { say("cozy", { still: true }); }, 1200);
           if (p === "sit" && sc && sc.watching && sc.watching()) say(["📺 Ooh, my favorite show!", "📺 Movie time!", "📺 Shh… it's starting!"][Math.floor(Math.random() * 3)], { still: true });
         } });
       paintSize(loadSize());
@@ -104,7 +109,7 @@
   mod("farm-ui").then(function (m) { farmMod = m; syncFarm(); setInterval(syncFarm, 30000); }).catch(function () {});
   function farmCall(b) { return TMN_API.call("pet", "farm", b); }
   function setPet(p) { pet = p; paint(); syncFarm(); syncWorld(); }
-  var CTX = { bench: "🪑 Sit", pond: "🎣 Fish", garden: "🌱 Garden", tree: "🍎 Pick fruit", aquarium: "🐟 Feed fish", mirror: "🪞 Look", ball: "⚽ Done playing", ride: "Ride", dismount: "⬇ Get off" };
+  var CTX = { upstairs: "🪜 Upstairs", downstairs: "🪜 Downstairs", bench: "🪑 Sit", pond: "🎣 Fish", garden: "🌱 Garden", tree: "🍎 Pick fruit", aquarium: "🐟 Feed fish", mirror: "🪞 Look", ball: "⚽ Done playing", ride: "Ride", dismount: "⬇ Get off" };
   var RIDE_ICON = { bike: "🚲", scooter: "🛵", car: "🚗" };
   // bahay at sasakyan: sa sariling isla = akin; kapag bumibisita = sa kaibigan
   function myRides(p) { return ((p && p.owned) || []).filter(function (x) { return RIDE_ICON[x]; }); }
@@ -113,7 +118,7 @@
   setInterval(function () {
     if (!sc || !farmMod || fisher) return;
     var q = !sc.inGame() && sc.pose() === "stand" && !uiSheetOpen() ? (sc.ballActive() ? { kind: "ball" } : sc.spot()) : null;
-    if (q && visit && ["bench", "ball", "mirror", "ride", "dismount"].indexOf(q.kind) < 0) q = null;   // sa isla ng iba: upo lang (kanila ang taniman, puno at lawa)
+    if (q && visit && ["bench", "ball", "mirror", "ride", "dismount", "upstairs", "downstairs"].indexOf(q.kind) < 0) q = null;   // sa isla ng iba: upo lang (kanila ang taniman, puno at lawa)
     ctxKind = q ? q.kind : ""; ctxId = q ? q.id : null;
     ctxPaint(q ? (q.kind === "ride" ? (RIDE_ICON[q.id] || "🚲") + " Ride" : CTX[q.kind]) : "", ctxKind);
   }, 300);
@@ -122,6 +127,7 @@
     if (!sc || !farmMod) return;
     if (fisher) { fisher.pull(); return; }
     if (ctxKind === "ball") { sc.ball(false); ctxPaint(""); toast("Good game! ⚽"); return; }
+    if (ctxKind === "upstairs" || ctxKind === "downstairs") { if (sc.climb()) { ctxPaint(""); say(ctxKind, { still: true }); if (voice) voice.sfx("climb"); } return; }
     if (ctxKind === "aquarium") { if (sc.feedFish()) { say("Here, fishies! 🐟", { still: true }); if (voice) voice.sfx("pop"); } return; }
     if (ctxKind === "mirror") { if (sc.lookMirror()) say(["Looking good! ✨", "Is that me? 😄", "Hello, me! 👋"][Math.floor(Math.random() * 3)], { still: true }); ctxPaint(""); return; }
     if (ctxKind === "bench") { if (sc.sitBench()) say("Sit down!", { still: true }); ctxPaint(""); }
@@ -325,7 +331,7 @@
   }
   function budSet(k) {
     if (!sc || !sc.hasBuddy()) return;
-    sc.buddyMode(k); $("tgBud").classList.add("hidden");
+    sc.buddyMode(k); $("tgBud").classList.add("hidden"); if (petSnd) petSnd.now();
     toast(k === "follow" ? "🐾 Here, buddy! Come!" : k === "stay" ? "✋ Stay… good buddy." : "🌿 Go play around!");
   }
   $("tgBud").addEventListener("click", function (e) { var b = e.target.closest("[data-bm]"); if (b) budSet(b.dataset.bm); });
@@ -335,7 +341,7 @@
     cv.addEventListener("click", function (e) {
       if (!sc || !sc.hasBuddy() || sc.inGame() || decor || Math.hypot(e.clientX - x0, e.clientY - y0) > 8) return;
       var r = cv.getBoundingClientRect(), sr = $("stage").getBoundingClientRect();
-      if (sc.pickBuddy(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1))) budChips(e.clientX - sr.left, e.clientY - sr.top);
+      if (sc.pickBuddy(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1))) { budChips(e.clientX - sr.left, e.clientY - sr.top); if (petSnd) petSnd.now(); }
       else $("tgBud").classList.add("hidden");
     });
   })();
@@ -351,9 +357,28 @@
       var p = live(), h = new Date().getHours();
       setTimeout(function () { if (!p.asleep) say(h < 11 ? "morning" : "hello"); }, 1400);
       talk.idle(true);
+      if (sc) { var psm = await mod("pet-sounds"); petSnd = psm.createPetSounds({ sc: sc, voice: voice, busy: function () { return playing; } }); }
     } catch (e) { console.warn("voice off", e); }
   }
   function say(k, o) { if (talk && !playing) talk.say(k, o); }
+  // ---------- 💦 water gun (kapag hawak sa Closet → Hand) ----------
+  var petSnd = null, wgun = null;
+  $("tgSplash").addEventListener("click", async function () {
+    if (!sc || playing) return;
+    if (sc.pose() !== "stand") { toast("Stand up first 🙂"); return; }
+    if (!wgun) { var w = await mod("water-gun"); wgun = w.createWaterGun({ sc: sc, onHit: splashHit }); }
+    if (!wgun.fire()) return;
+    if (voice) voice.sfx("splash"); say("splash", { still: true });
+  });
+  function splashHit(list) {
+    var did = {};
+    list.forEach(function (h) {
+      if (did[h.kind]) return; did[h.kind] = 1;
+      if (h.kind === "buddy") { sc.splashBuddy(); if (petSnd) petSnd.now(); setTimeout(function () { say("wet", { still: true }); }, 700); }
+      if (h.kind === "friend" && h.t) sc.effect("bubbles", h.t.group);
+      if (h.kind === "garden" && !visit) farmCall({ do: "water", all: true }).then(function (r) { setPet(r.pet); toast("💦 Watered " + r.n + " — 2× faster for 2 hours!"); }).catch(function () {});
+    });
+  }
   async function soundSheet() {
     var v = await mod("voice"), S = voice ? voice.get() : v.loadSound();
     var body = document.createElement("div"); body.className = "tg-sound";
@@ -403,7 +428,7 @@
     try {
       var r = await TMN_API.call("pet", "act", { do: what });
       pet = r.pet; paint();
-      say(r.msg === "full" ? "full" : r.msg === "clean" ? "clean" : what === "wake" ? "morning" : what === "sleep" ? "night" : what);
+      say(r.msg === "full" ? "full" : r.msg === "clean" ? "clean" : what === "wake" ? "morning" : what === "sleep" ? "night" : what === "pet" && Math.random() < 0.5 ? "tap" : what);
       if (voice) voice.sfx(what === "feed" ? "eat" : what === "pet" ? "pop" : what === "play" ? "jump" : "pop");
       if (r.msg === "full") toast("Tigo is full! 😋");
       else if (r.msg === "clean") toast("Tigo is already clean ✨");
@@ -509,7 +534,7 @@
     var m = TMN_MODAL.open({ title: "Games", size: "sm", cls: "modal-sheet", body: node, onClose: function () { if (node._cleanup) node._cleanup(); } });
   }
   async function playGame(kind, opt) {
-    if (!sc && kind !== "sudoku") { toast("Games need 3D (WebGL) on this device."); if (opt && opt.net) opt.net.leave(); return; }
+    if (!sc && kind !== "sudoku" && kind !== "duel") { toast("Games need 3D (WebGL) on this device."); if (opt && opt.net) opt.net.leave(); return; }
     if (playing) { if (opt && opt.net) opt.net.leave(); return; }
     var p = live();
     var bail = function (t) { toast(t); if (opt && opt.net) opt.net.leave(); };
@@ -600,7 +625,7 @@
     var p = live() || {}, zz = !!p.asleep, exit = $("tgExit");
     var it = [["feed", "🍽️", "Feed", zz], ["play", "⚽", "Play", zz], ["clean", "🛁", "Clean"], [zz ? "wake" : "sleep", zz ? "☀️" : "🌙", zz ? "Wake up" : "Sleep"], ["closet", "👗", "Closet"], ["avatar", "🧒", "Avatar"],
       ["games", "🎮", "Games", zz], ["friends", "👥", "Friends"], ["world", "🌍", "World chat"], ["house", "🏠", "House"], ["journey", "🗺️", "Journey"], ["photo", "📸", "Photo"],
-      ["sound", "🔊", "Sound"], ["full", exit ? "✕" : "⛶", exit ? "Exit" : "Full screen"], ["guide", "📖", "Guide"]];
+      ["sound", "🔊", "Sound"], ["full", exit ? "✕" : "⛶", exit ? "Exit" : "Full screen"], ["guide", "📖", "Guide"]].concat(window.TMN_USER && TMN_USER.role === "Admin" ? [["give", "🪙", "Give coins"]] : []);
     var bar = function (k, ic, nm) { var v = Math.round(p[k] || 0); return '<div class="tgm-row"><span>' + ic + " " + nm + '</span><i class="tgm-bar"><b style="width:' + v + '%"></b></i><b>' + v + "%</b></div>"; };
     var box = document.createElement("div"); box.className = "tgm";
     box.innerHTML = '<div class="tgm-stats"><div class="tgm-row"><span>🪙 Coins</span><b>' + (p.coins || 0) + '</b></div><div class="tgm-row"><span>⭐ Level</span><b>' + (p.level || 1) + " · " + Math.max(0, (p.next || 0) - (p.xp || 0)) + ' XP to next</b></div>' +
@@ -726,6 +751,7 @@
   window.addEventListener("pagehide", isleLeave);
 
   function doAction(a) {
+    if (a === "give") { mod("admin-coins").then(function (m) { m.openGiveCoins({ onPet: function (p) { pet = p; paint(); } }); }); return; }
     if (a === "feed") return feedMenu();
     if (a === "closet") return openCloset();
     if (a === "avatar") return openAvatar();

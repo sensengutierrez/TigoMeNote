@@ -9,10 +9,12 @@
 import { startCoinGame } from "./coin-game.js";
 import { gameMenu, rankingView } from "./room-lobby.js";
 import { touchLook } from "./touch-look.js";
+import { duelMenu, tierOf } from "./duel-menu.js";
 // Mga mapa ng karera (bawat isa ay may sariling itsura: parang, gubat, disyerto, niyebe)
 const TRACK_LIST = [["easy", "🌼", "Sunny meadow", "Wide, round track. Slower rivals."], ["classic", "🌲", "Pine forest", "Curves and a hairpin."], ["twisty", "🌵", "Desert canyon", "Zig-zags and tight turns. Fast rivals."], ["grand", "❄️", "Snow tour", "A long road: big straights and sweeping bends. 2 laps."]];
 
 export const GAMES = [
+  { id: "duel", icon: "💎", name: "Gem Duel", text: "1 vs 1 match-3 with ranking! Swap gems, make specials, fill 💥 Blast. Ranked, practice or duel a friend.", tag: "NEW" },
   { id: "dash", icon: "🏃", name: "Sky Dash", text: "Race on a sky track! Switch lanes, jump, grab coins, ride the slipstream. Up to 4 friends.", tag: "NEW" },
   { id: "moba", icon: "🌻", name: "Bloom Clash", text: "3 vs 3 garden battle! Pick Archer, Fighter, Assassin or Mage and take down the enemy's Great Flower. Solo with bots or online.", tag: "NEW" },
   { id: "siege", icon: "💦", name: "Gloom Siege", text: "Wave after wave of Gloomies! Bubble them away together. Co-op up to 4.", tag: "NEW" },
@@ -164,6 +166,7 @@ export function gamesNode(onPick, info, join) {   // join = { game, code } → d
   const openGame = (id, joinCode) => {
     if (MULTI[id]) { const m = MULTI[id], g = GAMES.find((x) => x.id === id); gameMenu(box, Object.assign({ id, icon: g.icon, info, joinCode, onStart: (opt) => onPick(id, opt), back: home }, m)); return true; }
     if (id === "ghost") { ghostMenu(box, onPick, info, home, joinCode); return true; }
+    if (id === "duel") { duelMenu(box, { info, onStart: (opt) => onPick("duel", opt), back: home }); return true; }
     return false;
   };
   box.innerHTML = '<div class="tg-fr-slot"></div>' + GAMES.map((g) => '<button type="button" class="tg-game" data-g="' + g.id + '"><span class="tg-ic">' + g.icon + "</span><span><b>" + g.name + (g.tag ? ' <i class="tg-new">' + g.tag + "</i>" : "") + "</b><small>" + g.text + '</small></span><span class="tg-go">Play</span></button>').join("") +
@@ -220,6 +223,22 @@ export async function runGame(kind, { sc, stage, voice, seconds, track, onJump, 
         game = x.startPac(sc, { voice, onHud: (h) => show(["❤️".repeat(Math.max(0, h.lives)) || "💔", "• " + h.dots, "🪙 " + h.coins, (h.power ? "🥭 " : "⏱ ") + h.time]),
           onEnd: (r) => end(Object.assign(r, { label: r.win ? "🎉 Cleared! 🪙 " + r.score : "🪙 " + r.score })) });
         countdown();
+      });
+    } else if (kind === "duel") {
+      // 💎 Gem Duel (2D): ranked → duel-fast "result" (trophies); coins ay ang page (pet-fast "game") ang nagbibigay
+      const o = mopt || { mode: "practice" };
+      hud.remove(); quit.classList.add("dl-quit");
+      import("./duel-game.js").then((x) => {
+        const ranked = o.mode === "ranked" && o.match && window.TMN_API;
+        game = x.startDuel(stage, { voice, seed: o.seed, net: o.net || null, me: o.me, opp: o.opp || {}, ranked: !!ranked && !o.unranked,
+          // ranked: ipadala ang resulta pagkalabas ng end screen; ipakita ang pagbabago ng trophies
+          onResult: (r) => { if (!ranked) return; TMN_API.call("duel", "result", { match: o.match, score: r.score, opp: r.opp, win: r.win, draw: r.draw, forfeit: r.forfeit, noshow: r.noshow })
+            .then((q) => { const t = tierOf(q.trophies), msg = q.unranked ? "No trophies (ranked bot limit for today)" : (q.delta > 0 ? "🏆 +" : "🏆 ") + q.delta + " · " + t.icon + " " + t.name + " · " + q.trophies; if (game && game.setTrophies) game.setTrophies(msg); }).catch(() => { if (game && game.setTrophies) game.setTrophies("Couldn't save the result."); }); },
+          onEnd: (r) => {
+            if (o.net) setTimeout(() => o.net.leave(), 1500);
+            end(Object.assign(r, { score: r.forfeit === "me" ? 0 : r.win ? 30 : r.draw ? 18 : 10, points: r.score, label: r.label }));
+          } });
+        stage._game = game; t0 = performance.now();
       });
     } else if (kind === "dash" || kind === "siege" || kind === "sudoku" || kind === "moba") {
       const o = mopt || { mode: "solo" }, net = o.mode === "multi" ? o.net : null;

@@ -207,6 +207,15 @@ const BUILD = {
     add(g, new THREE.Mesh(new THREE.CircleGeometry(0.05, 16), M(0x222222)), 0, 0.02, 0.145);
     g.rotation.z = 0.6;
   },
+  // Water gun (laruan): malinaw na tangke ng tubig sa ibabaw, nguso sa harap (+z), hawakan pababa
+  "water-gun"(g) {
+    const body = M(0x2fb38a, { roughness: 0.35 }), acc = M(0xff8a3d, { roughness: 0.4 }), tank = new THREE.MeshPhysicalMaterial({ color: 0x7fd4ff, transparent: true, opacity: 0.6, roughness: 0.05, clearcoat: 1 });
+    add(g, new THREE.Mesh(new RoundedBoxGeometry(0.12, 0.13, 0.36, 3, 0.04), body), 0, 0.12, 0.08);
+    const gr = add(g, new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.18, 0.09), acc), 0, 0.0, -0.02); gr.rotation.x = 0.25;
+    const br = add(g, new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 0.22, 12), acc), 0, 0.14, 0.34); br.rotation.x = Math.PI / 2;
+    add(g, new THREE.Mesh(sphere(0.085, 16), tank), 0, 0.26, 0.04).scale.set(1, 0.85, 1.3);
+    add(g, new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.05, 8), acc), 0, 0.36, 0.04);
+  },
   wand(g) {
     add(g, new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.6, 8), M(0x6b46c1)), 0, 0.3, 0);
     const s = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2 + Math.PI / 2, r = i % 2 ? 0.06 : 0.14; i ? s.lineTo(Math.cos(a) * r, Math.sin(a) * r) : s.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
@@ -242,7 +251,7 @@ const SLOT_OF = {
   beanie: "hat", party: "hat", bunny: "hat", sampaguita: "hat", salakot: "hat", chef: "hat", halo: "hat",
   shades: "face", round: "face", hearts: "face", stars: "face", goggles: "face", mustache: "face", mask: "face",
   scarf: "body", bowtie: "body", hoodie: "body", cape: "body", backpack: "body", lei: "body", medal: "body",
-  icecream: "hand", balloon: "hand", "flag-ph": "hand", "flag-bh": "hand", umbrella: "hand", guitar: "hand", wand: "hand",
+  icecream: "hand", balloon: "hand", "flag-ph": "hand", "flag-bh": "hand", umbrella: "hand", guitar: "hand", wand: "hand", "water-gun": "hand",
 };
 export function buildWear(id) {
   if (!BUILD[id]) return null;

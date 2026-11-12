@@ -87,6 +87,7 @@ export function createTigo(opts = {}) {
     setAvatar(av) { const k = av && av.kind === "kid" ? "kid" : "tigo"; if (k !== kind) build(av); else if (k === "kid") impl.setLook(av); },
     update: (dt, t) => impl.update(dt, t),
     setMood(m) { mem.mood = m; impl.setMood(m); }, sleep(on) { mem.asleep = !!on; impl.sleep(on); },
+    talk: (sec) => impl.talk && impl.talk(sec), talking: () => !!(impl.talking && impl.talking()),
     jump: () => impl.jump(), height: () => impl.height(), jumping: () => impl.jumping(), eat: () => impl.eat(), spin: () => impl.spin(), wiggle: () => impl.wiggle(),
     lookAt: (x, y) => impl.lookAt(x, y),
     setColor(id) { mem.color = id; impl.setColor(id); }, setGear(id) { mem.gear = id || "none"; impl.setGear(mem.gear); },
@@ -200,7 +201,7 @@ function createNote(opts = {}, group = new THREE.Group()) {
   [0, 1, 2].forEach((i) => { const z = new THREE.Mesh(geo(new THREE.TorusGeometry(0.06 + i * 0.02, 0.012, 6, 4)), zMat); z.position.set(i * 0.12, i * 0.22, 0); zzz.add(z); });
 
   // ---------- estado at galaw ----------
-  const st = { move: null, moveT: 0, walk: 0, walkT: 0, heading: null, mood: "happy", asleep: false, blinkT: 2 + Math.random() * 3, blink: 0, jump: 0, eat: 0, spin: 0, wiggle: 0, look: new THREE.Vector2(), lookNow: new THREE.Vector2(), phase: Math.random() * 10 };
+  const st = { talk: 0, move: null, moveT: 0, walk: 0, walkT: 0, heading: null, mood: "happy", asleep: false, blinkT: 2 + Math.random() * 3, blink: 0, jump: 0, eat: 0, spin: 0, wiggle: 0, look: new THREE.Vector2(), lookNow: new THREE.Vector2(), phase: Math.random() * 10 };
   function setColor(id) {
     const c = COLORS[id] || COLORS.coral;
     skin.color.set(c[0]); skin.sheenColor = new THREE.Color(c[0]).offsetHSL(0, 0, 0.15); fold.color.set(c[1]);
@@ -211,7 +212,7 @@ function createNote(opts = {}, group = new THREE.Group()) {
     eyes.forEach((e) => { e.visible = !closed; e.scale.y = sleepy && !st.asleep ? 0.55 : 1; });
     lids.forEach((l) => { l.visible = closed; });
     Object.values(mouths).forEach((m) => { m.visible = false; });
-    open.visible = st.eat > 0 && Math.sin(st.eat * 30) > 0;
+    open.visible = (st.eat > 0 && Math.sin(st.eat * 30) > 0) || (st.talk > 0 && !st.asleep && Math.sin(st.talk * 24) > -0.2);
     if (!open.visible) (mouths[st.asleep ? "flat" : st.mood === "sad" || st.mood === "sick" ? "sad" : st.mood === "ok" ? "ok" : st.mood === "sleepy" ? "flat" : "happy"]).visible = true;
     zzz.visible = st.asleep;
   }
@@ -230,6 +231,7 @@ function createNote(opts = {}, group = new THREE.Group()) {
     if (st.jump > 0) { st.jump = Math.max(0, st.jump - dt); const k = 1 - st.jump / 0.7; y = Math.sin(k * Math.PI) * 0.75; body.scale.y *= 1 + Math.sin(k * Math.PI) * 0.06; }
     if (st.wiggle > 0) { st.wiggle = Math.max(0, st.wiggle - dt); body.rotation.z = Math.sin(st.wiggle * 28) * 0.12 * (st.wiggle / 0.8); } else body.rotation.z *= 0.85;
     if (st.eat > 0) st.eat = Math.max(0, st.eat - dt);
+    if (st.talk > 0) { st.talk = Math.max(0, st.talk - dt); open.scale.set(1, 0.5 + Math.abs(Math.sin(st.talk * 18)) * 0.5, 0.4); }
     // sayaw at iba pang galaw (kasama ang kaibigan)
     let mv = null;
     if (st.move) { st.moveT -= dt; if (st.moveT <= 0) st.move = null; else mv = st.move; }
@@ -298,6 +300,7 @@ function createNote(opts = {}, group = new THREE.Group()) {
   return {
     group, update,
     setMood(m) { st.mood = m; }, sleep(on) { st.asleep = !!on; },
+    talk(sec) { st.talk = Math.max(0, Math.min(8, Number(sec) || 1.5)); }, talking() { return st.talk > 0; },
     jump() { if (st.jump < 0.15) st.jump = 0.7; }, height() { return rig.position.y; }, jumping() { return st.jump > 0; }, eat() { st.eat = 1.2; st.wiggle = 0.6; }, spin() { st.spin = 0.9; }, wiggle() { st.wiggle = 0.8; },
     lookAt(x, y) { st.look.set(Math.max(-1, Math.min(1, x)), Math.max(-1, Math.min(1, y))); },
     setColor, setGear, wear, setGlow, worn,

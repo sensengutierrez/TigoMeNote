@@ -3,6 +3,7 @@
    const tk = createTalk({ stage, sc, voice, getPet })
      tk.say("feed")        → random na linya para sa event (o diretsong text)
      tk.idle(on)           → paminsan-minsang nagsasalita ayon sa pangangailangan (kung "chatty")
+   0.11.52: gumagalaw ang bibig ni Tigo/Kid habang nagsasalita (main.talk) · bagong linya: tap, ride, splash, upstairs, balcony, computer, cozy
    Ang mga linya ay English sa code; isinasalin ng i18n (lang/fil.js = baby Taglish). */
 const LINES = {
   hello: ["Hi hi!", "Yay, you're back!", "I missed you!"],
@@ -25,6 +26,16 @@ const LINES = {
   happy: ["La la la~", "I love you!", "Today is fun!", "Hehe!"],
   home: ["Home sweet home!", "My bahay!", "Welcome to my house!"],
   jump: ["Hop!", "Boing!"],
+  // 0.11.52
+  tap: ["Hi! 👋", "What's up?", "Hehe, that's me!", "Let's go somewhere!", "I like you!", "Wanna play?", "Boop!"],
+  ride: ["Vroom vroom!", "Let's ride!", "Hold on tight!", "Wheee, so fast!"],
+  splash: ["Splash attack! 💦", "Pew pew! 💦", "Got you! 💦", "Water fight!"],
+  wet: ["Haha, it's wet!", "Run, buddy, run!"],
+  upstairs: ["Upstairs we go!", "Hop hop, up the stairs!"],
+  downstairs: ["Going down!", "Careful on the stairs…"],
+  balcony: ["What a view!", "Hello, island!"],
+  computer: ["My computer!", "Time to play games!", "Typing typing…"],
+  cozy: ["So cozy…", "My blanket is soft!"],
 };
 const pick = (a) => a[(Math.random() * a.length) | 0];
 
@@ -45,6 +56,7 @@ export function createTalk({ stage, sc, voice, getPet }) {
     el.textContent = txt; el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
     const shown = window.TMN_I18N && TMN_I18N.t ? TMN_I18N.t(txt) : txt;
     const ms = voice ? voice.say(shown, { mood: o.mood || pet.mood }) : 0;
+    if (sc && sc.main && sc.main.talk) sc.main.talk(Math.max(1.1, Math.min(5, (ms || shown.length * 75) / 1000)));   // gumagalaw ang bibig habang nagsasalita
     clearTimeout(hideT); hideT = setTimeout(() => el.classList.remove("show"), Math.max(1800, ms + 900));
     if (sc && !sc.isInside() && !o.still) sc.main.wiggle();
   }

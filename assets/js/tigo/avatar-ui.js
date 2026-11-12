@@ -7,9 +7,10 @@
    Ang sumbrero, salamin at hawak sa Closet ay naisusuot din ng Kid. */
 import { KID } from "./human-model.js";
 
-const HAIR_N = { short: "Short", bob: "Bob", long: "Long", pony: "Ponytail", spiky: "Spiky", buns: "Buns", curly: "Curly", none: "None" };
-const TOP_N = { tee: "T-shirt", stripe: "Stripes", hoodie: "Hoodie", jacket: "Jacket", overall: "Overalls", dress: "Dress" };
-const BOT_N = { pants: "Pants", shorts: "Shorts", skirt: "Skirt" };
+const HAIR_N = { short: "Short", bob: "Bob", long: "Long", pony: "Ponytail", spiky: "Spiky", buns: "Buns", curly: "Curly", anime: "✨ Anime spikes", twintails: "✨ Twin tails", hime: "✨ Hime cut", wolf: "✨ Wolf cut", ahoge: "✨ Ahoge", none: "None" };
+const TOP_N = { tee: "T-shirt", stripe: "Stripes", hoodie: "Hoodie", jacket: "Jacket", overall: "Overalls", dress: "Dress", sailor: "✨ Sailor", gakuran: "✨ Gakuran", yukata: "✨ Yukata", hero: "✨ Hero suit" };
+const EYE_N = { round: "Round", anime: "✨ Anime" };
+const BOT_N = { pants: "Pants", shorts: "Shorts", skirt: "Skirt", pleated: "✨ Pleated skirt" };
 
 export function openAvatar({ host, pet, call, onPreview, onPet, onClose }) {
   const keep = [...host.children].filter((el) => !el.hidden);
@@ -21,7 +22,7 @@ export function openAvatar({ host, pet, call, onPreview, onPet, onClose }) {
   delete av.id; delete av.name; delete av.icon;
   av.kind = saved.kind;
   const dirty = () => JSON.stringify(clean(av)) !== JSON.stringify(clean(saved.kind === "kid" ? saved : { kind: "tigo" }));
-  function clean(a) { if (a.kind !== "kid") return { kind: "tigo" }; const o = { kind: "kid" }; ["skin", "hair", "hairColor", "top", "topColor", "bottom", "bottomColor", "shoes"].forEach((k) => { if (a[k]) o[k] = a[k]; }); return o; }
+  function clean(a) { if (a.kind !== "kid") return { kind: "tigo" }; const o = { kind: "kid" }; ["skin", "hair", "hairColor", "top", "topColor", "bottom", "bottomColor", "shoes", "eyes", "eyeColor"].forEach((k) => { if (a[k]) o[k] = a[k]; }); return o; }
 
   const sw = (key, map) => '<div class="tg-av-sw" role="group">' + Object.keys(map).map((k) => '<button type="button" class="tg-av-c' + (av[key] === k ? " on" : "") + '" data-k="' + key + '" data-v="' + k + '" style="background:' + map[k] + '" aria-label="' + k + '" aria-pressed="' + (av[key] === k) + '"></button>').join("") + "</div>";
   const chips = (key, list, names) => '<div class="chips tg-av-chips" role="group">' + list.map((k) => '<button type="button" class="chip' + (av[key] === k ? " active" : "") + '" data-k="' + key + '" data-v="' + k + '" aria-pressed="' + (av[key] === k) + '">' + names[k] + "</button>").join("") + "</div>";
@@ -37,6 +38,7 @@ export function openAvatar({ host, pet, call, onPreview, onPet, onClose }) {
           '<p class="tg-av-l">Top</p>' + chips("top", KID.TOP, TOP_N) + sw("topColor", KID.CLOTH) +
           (av.top === "dress" ? "" : '<p class="tg-av-l">Bottom</p>' + chips("bottom", KID.BOTTOM, BOT_N) + sw("bottomColor", KID.CLOTH)) +
           '<p class="tg-av-l">Shoes</p>' + sw("shoes", KID.CLOTH) +
+          '<p class="tg-av-l">Eyes</p>' + chips("eyes", KID.EYES, EYE_N) + (av.eyes === "anime" ? sw("eyeColor", KID.EYEC) : "") +
           '<p class="faint small">Hats, glasses and hand items from the Closet fit the Kid too.</p>'
         : '<p class="faint small">Tigo is the little note you know. Pick <b>Kid</b> to play as a person and choose hair, clothes and colors. You can switch any time.</p>') +
       '<div class="tg-av-foot"><button type="button" class="btn btn-primary" data-x="save"' + (dirty() ? "" : " disabled") + ">Save</button></div>";

@@ -5,8 +5,11 @@
    Sa 3D: pindutin at hilahin ang gamit para ilipat; may bar sa ibaba: ⟳ Ikot · 🗑 Alisin · ✓ Tapos.
    Gamit sa dingding (painting, clock…) = kusang dumidikit sa pinakamalapit na dingding.
    Long-press sa gamit habang nasa bahay (pages/tigo.js) = bubukas ito na napili na ang gamit (ed.select).
-   Kusang nase-save (pet-fast "room") ilang saglit pagkatapos ng bawat pagbabago. */
+   Kusang nase-save (pet-fast "room") ilang saglit pagkatapos ng bawat pagbabago.
+   0.11.52: tab na 🛏️ Bedding (kumot at unan; subukan muna bago bilhin) · ang Decorate ay para sa palapag kung nasaan si Tigo (1F o 2F);
+            sine-save ang buong bahay (sc.roomFull: 1F + 2F + kumot/unan). */
 import { HOME_TABS, HOME_ITEMS, homeItem, HOUSES } from "./catalog.js";
+import { DEF_BED } from "./bedding.js";
 
 const MAX_COPIES = 4;
 const maxItems = (pet) => 30 + 10 * Math.max(1, Math.min(4, pet.house || 1));   // kapareho ng pet-fast roomMax
@@ -26,6 +29,8 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
   stage.appendChild(bar);
 
   let tab = "furn", buying = null, saving = "", timer = null, busy = false;
+  const bed0 = () => Object.assign({}, DEF_BED, (pet.room && pet.room.bed) || {});
+  let bed = bed0();
   const owns = (id) => { const it = homeItem(id); return !!it && pet.level >= it.level && (it.price === 0 || pet.owned.indexOf(id) >= 0); };
   const placed = (id) => room.list().filter((x) => x.id === id).length;
   const view0 = sc.rig.view(); sc.rig.setView("top");
@@ -40,18 +45,18 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
   };
   function render() {
     const st = room.style();
-    const grid = tab === "house" ? houseGrid() : HOME_ITEMS.filter((i) => i.slot === tab).map((i) => {
+    const grid = tab === "house" ? houseGrid() : HOME_ITEMS.filter((i) => (tab === "bedding" ? i.slot === "blanket" || i.slot === "pillow" : i.slot === tab)).map((i) => {
       const lock = pet.level < i.level, have = owns(i.id), n = tab === "furn" ? placed(i.id) : 0;
-      const on = tab === "wall" ? st.wall === i.id : tab === "floor" ? st.floor === i.id : n > 0;
+      const on = tab === "wall" ? st.wall === i.id : tab === "floor" ? st.floor === i.id : tab === "bedding" ? bed[i.slot] === i.id : n > 0;
       const tag = lock ? "🔒 Lv " + i.level : !have ? "🪙 " + i.price : tab === "ride" ? "Parked outside" : tab === "furn" ? (n ? "In room ×" + n : "Add") : on ? "Using" : i.price ? "Owned" : "Free";
       const sw = i.color ? ' style="--sw:' + i.color + '"' : "";
       return '<button type="button" class="tg-item' + (on ? " on" : "") + (lock ? " lock" : "") + (have ? " have" : "") + (i.color ? " tg-swatch" : "") + (buying && buying.id === i.id ? " pick" : "") + '" data-id="' + i.id + '"' + sw + (lock ? ' aria-disabled="true"' : "") +
         '><span class="tg-ic">' + i.icon + "</span><b>" + esc(i.name) + "</b><small>" + tag + "</small></button>";
     }).join("");
     box.innerHTML =
-      '<div class="tg-cl-head"><h3>🏠 Decorate</h3><span class="tg-save faint small">' + saving + '</span><span class="tg-coins">🪙 <b>' + pet.coins + '</b></span><button type="button" class="btn btn-ghost btn-sm" data-close>Done</button></div>' +
+      '<div class="tg-cl-head"><h3>🏠 Decorate' + (sc.floor && sc.floor() === 2 ? ' <small class="tg-floor">2F</small>' : "") + "</h3>" + '<span class="tg-save faint small">' + saving + '</span><span class="tg-coins">🪙 <b>' + pet.coins + '</b></span><button type="button" class="btn btn-ghost btn-sm" data-close>Done</button></div>' +
       '<div class="tg-tabs" role="tablist">' + HOME_TABS.map((t) => '<button type="button" role="tab" aria-selected="' + (t.id === tab) + '" data-tab="' + t.id + '"><span>' + t.icon + "</span><small>" + t.name + "</small></button>").join("") + "</div>" +
-      '<p class="faint small tg-decor-tip">' + (({ furn: "Tap to add. In the house, press and hold a thing, then drag it.", house: "A bigger house outside and more room inside. Each upgrade costs more.", ride: "Rides park outside the house. Walk up and tap Ride." })[tab] || "Tap to try it on the house.") + "</p>" +
+      '<p class="faint small tg-decor-tip">' + (({ furn: "Tap to add. In the house, press and hold a thing, then drag it.", house: "A bigger house outside and more room inside. Each upgrade costs more.", ride: "Rides park outside the house. Walk up and tap Ride.", bedding: "Tap a blanket or pillow to try it on the bed." })[tab] || "Tap to try it on the house.") + "</p>" +
       // Buy / try-on bar: nasa ITAAS ng listahan (dati nasa pinakababa, kailangang mag-scroll)
       (buying ? '<div class="tg-cl-buy"><span>' + buying.icon + " " + esc(buying.name) + '</span><button type="button" class="btn btn-ghost btn-sm" data-cancel>Cancel</button>' +
         '<button type="button" class="btn btn-primary btn-sm" data-buy' + (buying.price > pet.coins ? " disabled" : "") + ">" + (buying.slot === "house" ? "Upgrade 🪙 " : "Buy 🪙 ") + buying.price.toLocaleString() + "</button>" +
@@ -66,8 +71,8 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
   async function save() {
     clearTimeout(timer); timer = null;
     const st = room.style();
-    if (!owns(st.wall) || !owns(st.floor)) { setSaving(""); return; } // sinusubukan pa lang (hindi pa nabibili)
-    try { const r = await call("room", { room: { wall: st.wall, floor: st.floor, items: room.list() } }); pet = r.pet; onPet(pet); setSaving("Saved ✓"); }
+    if (!owns(st.wall) || !owns(st.floor) || !owns(bed.blanket) || !owns(bed.pillow)) { setSaving(""); return; } // sinusubukan pa lang (hindi pa nabibili)
+    try { const r = await call("room", { room: sc.roomFull() }); pet = r.pet; onPet(pet); setSaving("Saved ✓"); }
     catch (e) { setSaving(""); toast(e.message); }
   }
   // ---------- pag-select at bar ----------
@@ -83,6 +88,12 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
     select(e); queueSave(); render();
     if (sc.main) sc.main.jump();
   }
+  function useBedding(id) {
+    const it = homeItem(id); bed = Object.assign({}, bed, { [it.slot]: id }); sc.setBedding(bed);
+    if (owns(id)) { buying = null; queueSave(); } else buying = it;
+    render();
+  }
+  function revertBedding() { const b = bed0(); bed = { blanket: owns(bed.blanket) ? bed.blanket : b.blanket, pillow: owns(bed.pillow) ? bed.pillow : b.pillow }; sc.setBedding(bed); }
   function useStyle(id) {
     const it = homeItem(id), st = room.style();
     room.setStyle(it.slot === "wall" ? id : st.wall, it.slot === "floor" ? id : st.floor);
@@ -95,7 +106,7 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
     const t = e.target.closest("[data-tab]"), b = e.target.closest("[data-id]");
     if (e.target.closest("[data-close]")) return close();
     if (t) { tab = t.dataset.tab; render(); return; }
-    if (e.target.closest("[data-cancel]")) { if (buying && buying.slot !== "furn") { const s = pet.room || {}; room.setStyle(owns(room.style().wall) ? room.style().wall : s.wall, owns(room.style().floor) ? room.style().floor : s.floor); } buying = null; render(); return; }
+    if (e.target.closest("[data-cancel]")) { if (buying && (buying.slot === "blanket" || buying.slot === "pillow")) revertBedding(); else if (buying && buying.slot !== "furn") { const s = (sc.floor && sc.floor() === 2 ? (pet.room || {}).up : pet.room) || {}; room.setStyle(owns(room.style().wall) ? room.style().wall : s.wall, owns(room.style().floor) ? room.style().floor : s.floor); } buying = null; render(); return; }
     if (e.target.closest("[data-buy]")) {
       busy = true;
       const it0 = buying;
@@ -105,7 +116,7 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
       if (it.slot === "house") { toast("🎉 Your house is now a " + it.name + "! More room inside."); close(); onPet(pet); return; }   // ang kwarto ay muling ginagawa (mas malaki)
       onPet(pet);
       if (it.slot === "ride") { toast(it.icon + " Your " + it.name.toLowerCase() + " is parked outside! Walk up and tap Ride."); render(); return; }
-      if (it.slot === "furn") addItem(it.id); else { queueSave(); render(); }
+      if (it.slot === "furn") addItem(it.id); else { queueSave(); render(); }   // dingding, sahig, kumot, unan
       return;
     }
     const hb = e.target.closest("[data-house]");
@@ -119,6 +130,7 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
       const it = homeItem(b.dataset.id); if (!it) return;
       if (pet.level < it.level) { toast(it.name + " unlocks at level " + it.level + "."); return; }
       if (it.slot === "ride") { if (!owns(it.id)) { buying = it; render(); } else toast(it.icon + " It's parked outside. Walk up and tap Ride!"); return; }
+      if (it.slot === "blanket" || it.slot === "pillow") return useBedding(it.id);
       if (it.slot !== "furn") return useStyle(it.id);
       if (!owns(it.id)) { buying = it; render(); return; }
       buying = null; addItem(it.id);
@@ -169,8 +181,9 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
     if (timer) save();
     lpEnd(); sc.setClaim(null); select(null); bar.remove(); box.remove(); keep.forEach((el) => { el.hidden = false; });
     // ibalik ang hindi nabiling dingding/sahig
-    const s = pet.room || {}, st = room.style();
+    const s = (sc.floor && sc.floor() === 2 ? (pet.room || {}).up : pet.room) || {}, st = room.style();
     if (!owns(st.wall) || !owns(st.floor)) room.setStyle(owns(st.wall) ? st.wall : s.wall, owns(st.floor) ? st.floor : s.floor);
+    if (!owns(bed.blanket) || !owns(bed.pillow)) revertBedding();
     sc.rig.setView(view0 === "top" ? "follow" : view0);
     onClose && onClose(pet);
   }

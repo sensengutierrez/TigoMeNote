@@ -2,7 +2,7 @@
    import { createVoice, loadSound, saveSound, SOUND_DEFAULT } from "./voice.js"
    const v = createVoice()
      v.say("Yummy!", { mood })   → "babble" na boses (parang baby na nagdadaldal) o "words" (totoong salita, speech ng device)
-     v.sfx("coin"|"jump"|"eat"|"pop"|"level"|"hit"|"win"|"go")
+     v.sfx("coin"|"jump"|"eat"|"pop"|"level"|"hit"|"win"|"go"|"bark"|"meow"|"tweet"|"peep"|"squeak"|"blip"|"splash"|"climb")
      v.set(settings) · v.unlock()  (tawagin sa unang tap/key para payagan ng browser ang tunog)
    Settings (naka-save sa device): { voice: true, style: "babble"|"words", voiceVol 0..1, pitch 0..1, sfxVol 0..1, chatty: true }
    Sariling tunog (synth), hindi kinopya sa ibang laro. */
@@ -89,6 +89,15 @@ export function createVoice(initial) {
     level() { [523, 659, 784, 1047].forEach((f, i) => tone("triangle", f, f, 0.16, 0.5, i * 0.1)); },
     win() { [659, 784, 988, 1319, 988, 1319].forEach((f, i) => tone("square", f, f, 0.12, 0.3, i * 0.1)); },
     power() { tone("sawtooth", 200, 900, 0.4, 0.3); },
+    // 0.11.52: tunog ng mga alaga (sariling synth) at water gun
+    bark() { tone("sawtooth", 420, 230, 0.11, 0.55); tone("square", 300, 180, 0.09, 0.25, 0.01); tone("sawtooth", 440, 240, 0.1, 0.5, 0.2); },
+    meow() { tone("triangle", 520, 820, 0.14, 0.5); tone("triangle", 820, 470, 0.26, 0.5, 0.14); },
+    tweet() { [0, 0.11, 0.22].forEach((d, i) => tone("sine", 2100 + i * 250, 3000 + i * 200, 0.07, 0.35, d)); },
+    peep() { tone("sine", 1700, 2300, 0.08, 0.4); tone("sine", 1800, 2400, 0.08, 0.4, 0.13); },
+    squeak() { tone("sine", 1200, 1800, 0.06, 0.35); tone("sine", 1500, 1100, 0.05, 0.3, 0.07); },
+    blip() { tone("sine", 260, 330, 0.16, 0.4); tone("sine", 330, 280, 0.14, 0.35, 0.18); },
+    splash() { for (let i = 0; i < 6; i++) tone("triangle", 900 + Math.random() * 900, 300 + Math.random() * 200, 0.06, 0.18, i * 0.05); },
+    climb() { [392, 440, 494, 523].forEach((f, i) => tone("triangle", f, f, 0.08, 0.3, i * 0.12)); },
   };
 
   return {

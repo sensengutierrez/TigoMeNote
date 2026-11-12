@@ -6,6 +6,8 @@
 //                          room { room: { wall, floor, items: [{ id, x, z, r }] } } → ayos ng loob ng bahay (gamit na pag-aari lang)
 //                          house {} → i-upgrade ang bahay sa susunod na antas (Cottage 800 · Villa 2,500 · Mansion 7,000 coins); mas malaki ang kwarto
 //                          farm { do: water, plot? | all } → 💧 2x bilis ng tubo nang 2 oras (hindi namamatay kahit hindi diligan)
+//                          0.11.52: room { room: { …, bed: { blanket, pillow }, up: { wall, floor, items } } } (up = 2nd floor, Villa/Mansion lang; may balkonahe)
+//                          grant { username?, coins } → Admin lang: magbigay ng coins (sa sarili kapag walang username), 1–1,000,000 bawat bigay
 // Kaligtasan: ang "nearby" ay para lang sa magkaibigan (mutual follow o Family/Friends circle), kapag NAKA-ON sa dalawa,
 //             distansya lang ang ibinabalik (hindi ang lokasyon), at nawawala pagkalipas ng 20 minuto.
 // Files: index.ts + webpush.ts + push.ts (para sa push ng "bumisita ang Tigo ni …").
@@ -25,14 +27,17 @@ const ITEMS: Record<string, [string, number, number]> = {
   beanie: ["hat", 40, 1], party: ["hat", 30, 1], bunny: ["hat", 60, 2], sampaguita: ["hat", 80, 3], salakot: ["hat", 90, 4], chef: ["hat", 70, 3], halo: ["hat", 150, 6],
   shades: ["face", 40, 1], round: ["face", 30, 1], hearts: ["face", 60, 2], stars: ["face", 60, 2], goggles: ["face", 80, 3], mustache: ["face", 50, 2], mask: ["face", 90, 4],
   scarf: ["body", 40, 1], bowtie: ["body", 30, 1], hoodie: ["body", 90, 2], cape: ["body", 120, 4], backpack: ["body", 70, 3], lei: ["body", 60, 2], medal: ["body", 200, 6],
-  icecream: ["hand", 25, 1], balloon: ["hand", 25, 1], "flag-ph": ["hand", 20, 1], "flag-bh": ["hand", 20, 1], umbrella: ["hand", 60, 2], guitar: ["hand", 120, 4], wand: ["hand", 150, 5],
+  "water-gun": ["hand", 80, 1], icecream: ["hand", 25, 1], balloon: ["hand", 25, 1], "flag-ph": ["hand", 20, 1], "flag-bh": ["hand", 20, 1], umbrella: ["hand", 60, 2], guitar: ["hand", 120, 4], wand: ["hand", 150, 5],
   puppy: ["buddy", 100, 2], kitty: ["buddy", 100, 2], birdie: ["buddy", 80, 1], bunbun: ["buddy", 120, 3], turtle: ["buddy", 150, 4], chick: ["buddy", 60, 1],
   // Bahay (room): gamit, dingding, sahig
   bed: ["furn", 0, 1], rug: ["furn", 0, 1], plant: ["furn", 0, 1], lamp: ["furn", 0, 1], chair: ["furn", 25, 1], table: ["furn", 40, 1], banig: ["furn", 30, 1],
   cactus: ["furn", 30, 1], toybox: ["furn", 40, 1], beanbag: ["furn", 50, 2], fan: ["furn", 60, 2], bookshelf: ["furn", 70, 2], sofa: ["furn", 90, 2],
+  "pet-cushion": ["furn", 30, 1], "dog-bed": ["furn", 60, 1], "cat-bed": ["furn", 60, 1], "bird-nest": ["furn", 60, 1],
   "gaming-chair": ["furn", 120, 2], bike: ["ride", 150, 1], scooter: ["ride", 450, 2], car: ["ride", 1500, 3],
   desk: ["furn", 80, 3], majlis: ["furn", 100, 3], fridge: ["furn", 110, 3], tv: ["furn", 120, 3], aquarium: ["furn", 150, 4], piano: ["furn", 200, 5],
   painting: ["furn", 40, 1], clock: ["furn", 35, 1], shelf: ["furn", 30, 1], "banner-ph": ["furn", 20, 1], "banner-bh": ["furn", 20, 1], mirror: ["furn", 60, 2], garland: ["furn", 80, 2],
+  "blanket-check": ["blanket", 0, 1], "blanket-stars": ["blanket", 60, 1], "blanket-hearts": ["blanket", 60, 1], "blanket-clouds": ["blanket", 60, 1], "blanket-rainbow": ["blanket", 80, 2], "blanket-inabel": ["blanket", 90, 2], "blanket-quilt": ["blanket", 100, 3],
+  "pillow-white": ["pillow", 0, 1], "pillow-heart": ["pillow", 40, 1], "pillow-star": ["pillow", 40, 1], "pillow-cloud": ["pillow", 50, 2], "pillow-hotdog": ["pillow", 50, 2], "pillow-cat": ["pillow", 60, 3],
   "wall-cream": ["wall", 0, 1], "wall-sky": ["wall", 30, 1], "wall-mint": ["wall", 30, 1], "wall-blush": ["wall", 30, 1], "wall-lilac": ["wall", 40, 2],
   "wall-sawali": ["wall", 60, 2], "wall-stripes": ["wall", 60, 2], "wall-wood": ["wall", 70, 3], "wall-stars": ["wall", 80, 3],
   "floor-planks": ["floor", 0, 1], "floor-tiles": ["floor", 40, 1], "floor-carpet": ["floor", 50, 2], "floor-bamboo": ["floor", 60, 2], "floor-grass": ["floor", 70, 3], "floor-marble": ["floor", 90, 4],
@@ -41,7 +46,7 @@ const ITEMS: Record<string, [string, number, number]> = {
 const SLOTS = ["hat", "face", "body", "hand", "buddy", "backdrop"];
 // Coins bawat bagong level (+ dagdag sa Lv8 at Lv9). Lv10 = golden glow.
 const levelCoins = (l: number) => 20 + (l === 8 ? 100 : l === 9 ? 150 : 0);
-const GAME = { perDay: 10, maxCoins: 30, minGapMs: 20_000, kinds: ["coins", "pac", "race", "ghost", "dash", "siege", "sudoku"] }; // bawat laro: 10 beses bawat araw
+const GAME = { perDay: 10, maxCoins: 30, minGapMs: 20_000, kinds: ["coins", "pac", "race", "ghost", "dash", "siege", "sudoku", "duel"] }; // bawat laro: 10 beses bawat araw
 // Bawat oras: gaano bumababa (gising / tulog). 0.11.45 (ayon kay Bench): bumababa ULIT nang dahan-dahan ang gutom, saya (laro) at linis (ligo);
 // ang energy ay hindi na bumababa nang kusa (tulog = bumabalik). Mga 33 oras bago maubos ang gutom mula sa puno. Walang bawas kapag naglaro.
 const RATE = { hunger: [3, 1.5], joy: [2, 1], energy: [0, -14], clean: [2, 1] };
@@ -251,24 +256,59 @@ async function room(p: any, me: any) {
     if (!has(pet, k)) return { bad: levelOf(pet.xp) < ITEMS[k][2] ? `Unlocks at level ${ITEMS[k][2]}.` : "Buy this item first." };
     return { id: k };
   };
-  const w = pick(r.wall, "wall", "wall-cream"), f = pick(r.floor, "floor", "floor-planks");
-  if (w.bad) return fail(w.bad, 403); if (f.bad) return fail(f.bad, 403);
-  const list = Array.isArray(r.items) ? r.items : [];
-  const hl = Math.max(1, Math.min(4, (await load(me.id)).house ?? 1)), [ROOM_W, ROOM_D] = ROOM_HALF[hl], ROOM_MAX = roomMax(hl);
-  if (list.length > ROOM_MAX) return fail(`Up to ${ROOM_MAX} things in this house. Upgrade the house for more room!`);
-  const per: Record<string, number> = {};
-  const items = [];
+  const hl = Math.max(1, Math.min(4, pet.house ?? 1)), [ROOM_W, ROOM_D] = ROOM_HALF[hl], ROOM_MAX = roomMax(hl);
   const n = (v: unknown, lim: number) => { const x = Number(v); return Number.isFinite(x) ? Math.round(Math.max(-lim, Math.min(lim, x)) * 100) / 100 : 0; };
-  for (const it of list) {
-    const k = pick(it && it.id, "furn", "");
-    if (k.bad) return fail(k.bad, 403);
-    per[k.id!] = (per[k.id!] || 0) + 1;
-    if (per[k.id!] > ROOM_COPIES) return fail(`Up to ${ROOM_COPIES} of each item.`);
-    items.push({ id: k.id, x: n(it.x, ROOM_W), z: n(it.z, ROOM_D), r: n(it.r, 7) });
-  }
-  const { data, error } = await db.from("pets").update({ room: { wall: w.id, floor: f.id, items }, updated_at: nowIso() }).eq("user_id", me.id).select("*").single();
+  // isang palapag: dingding, sahig at gamit (pag-aari lang, hanggang ROOM_MAX, 4 bawat isa). balc = may balkonahe (2F): hanggang +1.7 sa harap
+  // deno-lint-ignore no-explicit-any
+  const floorOf = (q: any, balc: boolean): { bad?: string; v?: Record<string, unknown> } => {
+    const w = pick(q && q.wall, "wall", "wall-cream"), f = pick(q && q.floor, "floor", "floor-planks");
+    if (w.bad) return { bad: w.bad }; if (f.bad) return { bad: f.bad };
+    const list = Array.isArray(q && q.items) ? q.items : [];
+    if (list.length > ROOM_MAX) return { bad: `Up to ${ROOM_MAX} things on each floor. Upgrade the house for more room!` };
+    const per: Record<string, number> = {}, items: Record<string, unknown>[] = [];
+    for (const it of list) {
+      const k = pick(it && it.id, "furn", "");
+      if (k.bad) return { bad: k.bad };
+      per[k.id!] = (per[k.id!] || 0) + 1;
+      if (per[k.id!] > ROOM_COPIES) return { bad: `Up to ${ROOM_COPIES} of each item.` };
+      items.push({ id: k.id, x: n(it.x, ROOM_W), z: Math.max(-ROOM_D, n(it.z, ROOM_D + (balc ? 1.7 : 0))), r: n(it.r, 7) });
+    }
+    return { v: { wall: w.id, floor: f.id, items } };
+  };
+  const one = floorOf(r, false); if (one.bad) return fail(one.bad, 403);
+  const out: Record<string, unknown> = { ...one.v };
+  if (hl >= 3 && r.up && typeof r.up === "object") { const two = floorOf(r.up, true); if (two.bad) return fail(two.bad, 403); out.up = two.v; }
+  else if (hl >= 3 && pet.room && pet.room.up) out.up = pet.room.up;
+  if (r.bed && typeof r.bed === "object") {
+    const b = pick(r.bed.blanket, "blanket", "blanket-check"), pl = pick(r.bed.pillow, "pillow", "pillow-white");
+    if (b.bad) return fail(b.bad, 403); if (pl.bad) return fail(pl.bad, 403);
+    out.bed = { blanket: b.id, pillow: pl.id };
+  } else if (pet.room && pet.room.bed) out.bed = pet.room.bed;
+  const { data, error } = await db.from("pets").update({ room: out, updated_at: nowIso() }).eq("user_id", me.id).select("*").single();
   if (error) throw error;
   return reply({ ok: true, pet: shape(decay(data)) });
+}
+
+// Admin: magbigay ng coins (sa sarili o sa ibang user). Isang update na may check sa dating coins (walang nawawala kapag sabay).
+// deno-lint-ignore no-explicit-any
+async function grant(p: any, me: any) {
+  if (me.role !== "Admin") return fail("Admins only.", 403);
+  const coins = Math.floor(Number(p.coins) || 0);
+  if (coins < 1 || coins > 1_000_000) return fail("Give 1 to 1,000,000 coins.");
+  let uid = me.id, uname = me.username;
+  const un = String(p.username ?? "").replace(/^@/, "").trim();
+  if (un) {
+    const { data: u } = await db.from("users").select("id, username").ilike("username", un.replace(/[%_\\]/g, "").slice(0, 40)).maybeSingle();
+    if (!u) return fail("No user with that username.", 404);
+    uid = u.id; uname = u.username;
+  }
+  for (let i = 0; i < 3; i++) {
+    const pet = decay(await load(uid)), now = pet.coins ?? 0;
+    const { data, error } = await db.from("pets").update({ coins: now + coins, updated_at: nowIso() }).eq("user_id", uid).eq("coins", now).select("*").maybeSingle();
+    if (error) throw error;
+    if (data) { console.log("pet-fast grant", me.id, "→", uid, coins); return reply({ ok: true, username: uname, coins: data.coins, pet: uid === me.id ? shape(decay(data)) : null }); }
+  }
+  return fail("Something changed. Please try again.", 409);
 }
 
 // Mga laro (Coin Rush, Pac-Tigo, Racing): may limit bawat araw at bawat laro (hindi puwedeng dayain ang dami)
@@ -371,7 +411,7 @@ async function farm(p: any, me: any) {
 }
 
 // Avatar: "tigo" (ang note) o "kid" (parang tao). Mga pagpipilian: maiikling salita lang (ang itsura ay nasa tigo/human-model.js).
-const AV_KEYS = ["kind", "skin", "hair", "hairColor", "top", "topColor", "bottom", "bottomColor", "shoes", "preset"];
+const AV_KEYS = ["kind", "skin", "hair", "hairColor", "top", "topColor", "bottom", "bottomColor", "shoes", "preset", "eyes", "eyeColor"];
 // deno-lint-ignore no-explicit-any
 async function avatar(p: any, me: any) {
   const a = p.avatar && typeof p.avatar === "object" ? p.avatar : null;
@@ -520,6 +560,7 @@ Deno.serve(async (req) => {
       case "avatar": return await avatar(p, me);
       case "farm":   return await farm(p, me);
       case "house":  return await house(p, me);
+      case "grant":  return await grant(p, me);
       default:       return fail("Unknown action.");
     }
   } catch (e) {

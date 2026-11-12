@@ -7,7 +7,11 @@
      room.collide(x, z) → [x, z]  (para hindi tumagos si Tigo sa dingding at gamit) · room.bedSpot() → { x, z, y, face }|null
      room.seatNear(x, z) → pinakamalapit na upuan (chair, sofa, bean bag, majlis) para sa 🪑 Sit
      room.update(t, night, camera) → bumababa ang dingding na nakaharang sa camera (parang dollhouse)
-   Pinto: nasa harap (z = +ROOM.d/2), gitna. Gamit sa dingding (wall) = kusang dumidikit sa pinakamalapit na dingding. */
+   Pinto: nasa harap (z = +ROOM.d/2), gitna. Gamit sa dingding (wall) = kusang dumidikit sa pinakamalapit na dingding.
+   0.11.52: buildRoom(level, { floor: 1|2 }) — Villa at Mansion (level ≥ 3) ay may hagdan sa kaliwang likod. Floor 2 = sariling kwarto na may
+     malaking salaming pinto sa harap papunta sa balkonahe (BALC) na puwede ring lagyan ng gamit. room.stairsNear(x, z) → "up" | "down" | null,
+     room.stairs → { base, top } (saan tatayo bago umakyat/bumaba). room.setBedding({ blanket, pillow }) → palit ng kumot at unan ng kama.
+     room.cover(on) → takip ng kama (itinatago habang may kumot si Tigo). */
 import * as THREE from "../../vendor/three/three.module.min.js";
 import { FURN, buildFurniture } from "./furniture.js";
 
@@ -15,6 +19,8 @@ export const ROOM = { w: 6, d: 5, h: 2.4, door: { x: 0, z: 2.1 }, level: 1 };
 // Laki ng kwarto bawat antas ng bahay (1 kubo · 2 Cottage · 3 Villa · 4 Mansion) — kapareho ng ROOM_HALF sa backend/pet-fast.ts
 export const ROOM_SIZES = [null, [6, 5], [7, 5.6], [8, 6.2], [9.2, 7]];
 let HW = ROOM.w / 2, HD = ROOM.d / 2;
+export const BALC = { w: 3.4, d: 1.7, door: 1.6 };   // balkonahe ng 2nd floor: lapad, lalim (lampas sa harap na dingding), lapad ng salaming pinto
+export const hasStairs = (level) => level >= 3;
 // Dingding at sahig (id → kulay + disenyo). Kapareho ng catalog.js (wall-*, floor-*)
 export const WALLS = {
   "wall-cream": ["#f6ecd9"], "wall-sky": ["#cfe8ff"], "wall-mint": ["#cdf3e9"], "wall-blush": ["#ffd9e4"], "wall-lilac": ["#e5dcff"],
@@ -42,9 +48,11 @@ function pattern(kind, base, alt) {
   const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; tx.wrapS = tx.wrapT = THREE.RepeatWrapping; return tx;
 }
 
-export function buildRoom(level = 1) {
-  const L = Math.max(1, Math.min(4, Math.floor(level) || 1)), [rw, rd] = ROOM_SIZES[L];
+export function buildRoom(level = 1, o = {}) {
+  const L = Math.max(1, Math.min(4, Math.floor(level) || 1)), [rw, rd] = ROOM_SIZES[L], up = o.floor === 2 && hasStairs(L);
   ROOM.w = rw; ROOM.d = rd; ROOM.level = L; ROOM.door.z = rd / 2 - 0.4; HW = rw / 2; HD = rd / 2;
+  // hagdan: kaliwang likod (paakyat papunta sa likod). base = harap ng unang baitang (1F) · top = tabi ng butas sa 2F
+  const ST = hasStairs(L) ? { x0: -HW, x1: -HW + 1.05, z0: -HD, z1: -HD + 2.25, base: { x: -HW + 0.55, z: -HD + 2.6 }, top: { x: -HW + 1.62, z: -HD + 0.6 } } : null;
   const group = new THREE.Group(), disp = [];
   const K = (o) => { disp.push(o); return o; };
   const wallMat = K(new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95 }));
@@ -54,7 +62,8 @@ export function buildRoom(level = 1) {
 
   // sahig + base
   const floor = mesh(new THREE.BoxGeometry(ROOM.w + 0.3, 0.2, ROOM.d + 0.3), floorMat, 0, -0.1, 0); floor.castShadow = false;
-  mesh(new THREE.BoxGeometry(ROOM.w + 0.5, 0.5, ROOM.d + 0.5), K(new THREE.MeshStandardMaterial({ color: 0x8d6e4a, roughness: 1 })), 0, -0.45, 0).castShadow = false;
+  if (up) mesh(new THREE.BoxGeometry(ROOM.w + 0.5, 3, ROOM.d + 0.5), K(new THREE.MeshStandardMaterial({ color: 0xf1dcc8, roughness: 1 })), 0, -1.7, 0).castShadow = false;   // ang 1st floor sa ilalim (kita mula sa balkonahe)
+  else mesh(new THREE.BoxGeometry(ROOM.w + 0.5, 0.5, ROOM.d + 0.5), K(new THREE.MeshStandardMaterial({ color: 0x8d6e4a, roughness: 1 })), 0, -0.45, 0).castShadow = false;
 
   // dingding: bawat isa ay grupo (para mababa kapag nakaharang sa camera)
   const T = 0.14, H = ROOM.h;
@@ -81,14 +90,35 @@ export function buildRoom(level = 1) {
     wall("back", 0, 1, ROOM.w + T, [[1.1, 1.2, 0.9, 1.9]]),
     wall("left", 1, 0, ROOM.d + T),
     wall("right", -1, 0, ROOM.d + T, [[-0.6, 1.0, 0.95, 1.85]]),
-    wall("front", 0, -1, ROOM.w + T, [[0, 1.0, 0, 1.75]]),
+    wall("front", 0, -1, ROOM.w + T, [[0, up ? BALC.door : 1.0, 0, up ? 2.0 : 1.75]]),
   ];
   // salamin ng bintana (langit sa labas)
   const glassMat = K(new THREE.MeshBasicMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.55 }));
   const glass1 = mesh(new THREE.PlaneGeometry(1.2, 1.0), glassMat, 1.1, 1.4, -0.03, walls[0]); glass1.castShadow = false;
   const glass2 = mesh(new THREE.PlaneGeometry(1.0, 0.9), glassMat, -0.6, 1.4, -0.03, walls[2]); glass2.castShadow = false;
-  // doormat sa may pinto
-  const mat = mesh(new THREE.BoxGeometry(0.9, 0.02, 0.5), K(new THREE.MeshStandardMaterial({ color: 0x2f7d6d, roughness: 1 })), 0, 0.01, HD - 0.4); mat.castShadow = false;
+  // doormat sa may pinto (1F) · balkonahe (2F)
+  if (!up) { const mat = mesh(new THREE.BoxGeometry(0.9, 0.02, 0.5), K(new THREE.MeshStandardMaterial({ color: 0x2f7d6d, roughness: 1 })), 0, 0.01, HD - 0.4); mat.castShadow = false; }
+  else {
+    const bm = K(new THREE.MeshStandardMaterial({ color: 0xd9c3a0, roughness: 0.9 })), rail = K(new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 }));
+    mesh(new THREE.BoxGeometry(BALC.w, 0.2, BALC.d), bm, 0, -0.1, HD + BALC.d / 2).castShadow = false;
+    mesh(new THREE.BoxGeometry(BALC.w + 0.1, 0.06, 0.06), rail, 0, 0.95, HD + BALC.d);
+    [-1, 1].forEach((k) => mesh(new THREE.BoxGeometry(0.06, 0.06, BALC.d), rail, k * BALC.w / 2, 0.95, HD + BALC.d / 2));
+    for (let i = 0; i <= 12; i++) mesh(new THREE.BoxGeometry(0.035, 0.95, 0.035), rail, -BALC.w / 2 + (i * BALC.w) / 12, 0.475, HD + BALC.d);
+    [-1, 1].forEach((k) => { for (let i = 1; i <= 4; i++) mesh(new THREE.BoxGeometry(0.035, 0.95, 0.035), rail, k * BALC.w / 2, 0.475, HD + (i * BALC.d) / 4); });
+    // salaming sliding door (isang pane ay nakabukas sa gilid)
+    const gm = K(new THREE.MeshBasicMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.28, depthWrite: false }));
+    const pane = mesh(new THREE.PlaneGeometry(BALC.door / 2, 1.95), gm, BALC.door / 2 + 0.25, 1.0, HD + 0.09); pane.castShadow = false;
+  }
+  // hagdan (1F) o butas ng hagdan na may rehas (2F)
+  let stairObj = null;
+  if (ST && !up) { stairObj = buildFurniture("stairs"); stairObj.group.position.set((ST.x0 + ST.x1) / 2, 0, (ST.z0 + ST.z1) / 2 - 0.02); group.add(stairObj.group); }
+  if (ST && up) {
+    const hole = mesh(new THREE.BoxGeometry(ST.x1 - ST.x0 - 0.05, 0.03, ST.z1 - ST.z0 - 0.05), K(new THREE.MeshBasicMaterial({ color: 0x3a2a1c })), (ST.x0 + ST.x1) / 2 + 0.03, 0.005, (ST.z0 + ST.z1) / 2); hole.castShadow = false;
+    const rl = K(new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 }));
+    mesh(new THREE.BoxGeometry(0.05, 0.05, ST.z1 - ST.z0), rl, ST.x1, 0.9, (ST.z0 + ST.z1) / 2); mesh(new THREE.BoxGeometry(ST.x1 - ST.x0, 0.05, 0.05), rl, (ST.x0 + ST.x1) / 2, 0.9, ST.z1);
+    for (let i = 0; i <= 5; i++) mesh(new THREE.BoxGeometry(0.03, 0.9, 0.03), rl, ST.x1, 0.45, ST.z0 + ((ST.z1 - ST.z0) * i) / 5);
+    for (let i = 0; i < 3; i++) mesh(new THREE.BoxGeometry(0.03, 0.9, 0.03), rl, ST.x0 + ((ST.x1 - ST.x0) * i) / 3, 0.45, ST.z1);
+  }
   // ilaw sa kisame
   const bulb = new THREE.PointLight(0xffd8a0, 0.6, 12, 1.4); bulb.position.set(0, H + 0.2, 0); group.add(bulb);
 
@@ -106,6 +136,7 @@ export function buildRoom(level = 1) {
 
   // ---------- gamit ----------
   const entries = [];
+  let bedding = null;
   const ring = new THREE.Mesh(K(new THREE.RingGeometry(0.55, 0.64, 40)), K(new THREE.MeshBasicMaterial({ color: 0xff5a36, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthTest: false })));
   ring.rotation.x = -Math.PI / 2; ring.renderOrder = 5; ring.visible = false; group.add(ring);
   // palaso sa itaas ng napiling gamit (kita kahit natatakpan ng ibang gamit) para madaling makita ang dekorasyon
@@ -128,7 +159,11 @@ export function buildRoom(level = 1) {
       e.wallName = m === dz[0] ? "back" : m === dx[0] ? "left" : "right";
     } else {
       const c = Math.abs(Math.cos(e.r)), s = Math.abs(Math.sin(e.r)), ex = (f.w * c + f.d * s) / 2, ez = (f.w * s + f.d * c) / 2;
-      e.x = round(clamp(e.x, HW - T / 2 - ex)); e.z = round(clamp(e.z, HD - T / 2 - ez));
+      if (up && e.z > HD - 0.1) { e.x = round(clamp(e.x, BALC.w / 2 - ex - 0.05)); e.z = round(Math.max(HD + T / 2 + ez, Math.min(HD + BALC.d - ez - 0.05, e.z))); }   // sa balkonahe
+      else {
+        e.x = round(clamp(e.x, HW - T / 2 - ex)); e.z = round(clamp(e.z, HD - T / 2 - ez));
+        if (ST && e.x - ex < ST.x1 && e.z - ez < ST.z1) { if (ST.x1 - (e.x - ex) < ST.z1 - (e.z - ez)) e.x = round(ST.x1 + ex + 0.02); else e.z = round(ST.z1 + ez + 0.02); }   // hindi sa hagdan
+      }
       e.holder.position.set(e.x, 0, e.z); e.holder.rotation.y = e.r;
     }
     if (selected === e) moveRing();
@@ -136,7 +171,7 @@ export function buildRoom(level = 1) {
   const round = (v) => Math.round(v * 100) / 100;
   function make(it) {
     if (!FURN[it.id]) return null;
-    const holder = new THREE.Group(), obj = buildFurniture(it.id); holder.add(obj.group); group.add(holder);
+    const holder = new THREE.Group(), obj = buildFurniture(it.id, it.id === "bed" ? { bed: bedding } : undefined); holder.add(obj.group); group.add(holder);
     const e = { id: it.id, x: Number(it.x) || 0, z: Number(it.z) || 0, r: Number(it.r) || 0, holder, obj };
     holder.traverse((o) => { o.userData.entry = e; });
     entries.push(e); place(e); return e;
@@ -146,13 +181,17 @@ export function buildRoom(level = 1) {
     entries.splice(i, 1); group.remove(e.holder); e.obj.dispose(); if (selected === e) select(null);
   }
   function setItems(list) { entries.slice().forEach(removeEntry); (list || []).forEach(make); }
+  function setBedding(b) {
+    const k = JSON.stringify(b || null); if (k === JSON.stringify(bedding)) return; bedding = b ? { blanket: b.blanket, pillow: b.pillow } : null;
+    entries.filter((e) => e.id === "bed").forEach((e) => { const sel = selected === e, it = { id: e.id, x: e.x, z: e.z, r: e.r }; removeEntry(e); const n = make(it); if (sel && n) select(n); });
+  }
   function add(id) {
     const f = FURN[id]; if (!f) return null;
     // hanap ng bakanteng puwesto malapit sa gitna
     let best = { x: 0, z: 0 }, bestD = -1;
     for (let i = 0; i < 40; i++) {
       const x = (Math.random() - 0.5) * (ROOM.w - 1.5), z = (Math.random() - 0.5) * (ROOM.d - 1.8);
-      const d = entries.reduce((m, o) => Math.min(m, Math.hypot(o.x - x, o.z - z)), 9);
+      const d = Math.min(entries.reduce((m, o) => Math.min(m, Math.hypot(o.x - x, o.z - z)), 9), ST ? Math.hypot(x - ST.base.x, z - ST.base.z) : 9);
       if (d > bestD) { bestD = d; best = { x, z }; }
     }
     if (f.wall) best = { x: best.x, z: -HD };
@@ -168,7 +207,15 @@ export function buildRoom(level = 1) {
 
   // ---------- banggaan ni Tigo ----------
   function collide(x, z, r = 0.32) {
-    x = clamp(x, HW - T / 2 - r); z = clamp(z, HD - T / 2 - r);
+    if (up && z > HD - T / 2) {   // nasa balkonahe (o dumadaan sa salaming pinto)
+      x = clamp(x, BALC.w / 2 - r); z = Math.min(z, HD + BALC.d - r);
+      if (z < HD + T / 2 + r && Math.abs(x) > BALC.door / 2 - r) z = HD + T / 2 + r;
+    } else {
+      x = clamp(x, HW - T / 2 - r);
+      z = up && Math.abs(x) < BALC.door / 2 - r ? Math.max(z, -(HD - T / 2 - r)) : clamp(z, HD - T / 2 - r);
+    }
+    if (ST) { const px = clamp(x - (ST.x0 + ST.x1) / 2, (ST.x1 - ST.x0) / 2), pz = clamp(z - (ST.z0 + ST.z1) / 2, (ST.z1 - ST.z0) / 2), cx = (ST.x0 + ST.x1) / 2 + px, cz = (ST.z0 + ST.z1) / 2 + pz, d = Math.hypot(x - cx, z - cz);
+      if (d < r) { if (d < 1e-4) { x = ST.x1 + r; } else { x = cx + ((x - cx) / d) * r; z = cz + ((z - cz) / d) * r; } } }
     for (const e of entries) {
       const f = FURN[e.id]; if (!f || f.flat || f.wall) continue;
       // ilipat sa local na sukat ng gamit, i-clamp, itulak palabas
@@ -234,7 +281,10 @@ export function buildRoom(level = 1) {
   }
 
   return {
-    group, setStyle, setItems, add, remove: removeEntry, select, pick, floorPoint, collide, bedSpot, seatNear, update,
+    group, setStyle, setItems, setBedding, add, remove: removeEntry, select, pick, floorPoint, collide, bedSpot, seatNear, update, floor: up ? 2 : 1,
+    stairs: ST ? { base: ST.base, top: ST.top } : null,
+    stairsNear(x, z) { if (!ST) return null; const q = up ? ST.top : ST.base; return Math.hypot(x - q.x, z - q.z) < 0.75 ? (up ? "down" : "up") : null; },
+    cover(on) { entries.forEach((e) => { if (e.id === "bed" && e.obj.group.userData.cover) e.obj.group.userData.cover.visible = on; }); },
     // gamit na may magagawa si Tigo kapag malapit: 🐟 aquarium (pakain) · 🪞 salamin (silip)
     near(x, z) {
       let best = null, bd = 1e9;
@@ -245,6 +295,12 @@ export function buildRoom(level = 1) {
       }
       return best;
     },
+    // tulugan ng alaga: ang para sa uri niya (dog/cat/bird), o "any", o kahit alin → { x, z, y, face }
+    petBed(kind) {
+      const beds = entries.filter((e) => FURN[e.id] && FURN[e.id].pet); if (!beds.length) return null;
+      const e = beds.find((q) => FURN[q.id].pet === kind) || beds.find((q) => FURN[q.id].pet === "any") || beds[0];
+      return { x: e.x, z: e.z, y: FURN[e.id].sleep || 0, face: e.r, id: e.id };
+    },
     tvNear(x, z, max = 4.5) { const e = entries.find((q) => q.id === "tv" && Math.hypot(q.x - x, q.z - z) < max); return e ? { x: e.x, z: e.z } : null; },   // para "manood" si Tigo
     style() { return { ...style }; },
     list() { return entries.map((e) => ({ id: e.id, x: e.x, z: e.z, r: e.r })); },
@@ -252,6 +308,6 @@ export function buildRoom(level = 1) {
     move(e, x, z) { e.x = x; e.z = z; place(e); },
     rotate(e) { e.r = round((((Math.round((e.r || 0) / (Math.PI / 4)) + 1) % 8) * Math.PI) / 4); place(e); },   // laging eksaktong hakbang na 45° (walang naiipong mali)
     selected() { return selected; },
-    dispose() { entries.slice().forEach(removeEntry); disp.forEach((d) => { if (d.map) d.map.dispose(); d.dispose(); }); },
+    dispose() { entries.slice().forEach(removeEntry); if (stairObj) stairObj.dispose(); disp.forEach((d) => { if (d.map) d.map.dispose(); d.dispose(); }); },
   };
 }
