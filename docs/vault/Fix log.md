@@ -90,6 +90,9 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-13 · Gem Duel online: nagsu-suko ang dalawa (walang balita nang 35 s) sa mabagal na phone → mabigat ang pag-drawing bawat frame → naka-cache na larawan ng hiyas + drawing lang kapag may gumagalaw; 45 s na hintay (`tigo/duel-game.js`)
 - 2026-11-13 · Sasakyan: parang nakapatong lang si Tigo (lumulutang, walang hawak) → mababa ang upuan kumpara sa laki ni Tigo → mas malaking sasakyan, balakang sa upuan, ridePose (`tigo/pet-scene.js`, `tigo/human-model.js`)
 - 2026-11-13 · Hagdan sa 2F: sarado ng rehas ang tuktok → bukas na ang gilid sa may likod (`tigo/room.js`)
+- 2026-11-13 · Sasakyan: hindi abot ng kamay ang manibela (malaki ang sasakyan, malayo ang manibela) → mas maliit na sasakyan, grips + `reach()` na tumututok sa manibela (`tigo/vehicles.js`, `tigo/human-model.js`)
+- 2026-11-13 · `reach()`: iisang punto ang naabot ng dalawang kamay → binago ng `sub()` ang punto habang pinipili pa → `clone()` muna (`tigo/human-model.js`, `tigo/block-model.js`)
+- 2026-11-13 · Decorate: natatakpan ng bar ang napiling gamit → bar na sumusunod sa itaas/ibaba ng gamit (`tigo/room-ui.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

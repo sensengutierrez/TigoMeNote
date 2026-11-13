@@ -150,6 +150,9 @@ updated: 2026-10-24
 | 2026-11-13 | Habang may 2D na laro (Gem Duel, Sudoku): hindi nagre-render ang 3D | Mas mabilis at mas tipid sa baterya |
 | 2026-11-13 | Isang sasakyan lang sa labas (room.ride); ang iba ay "nakatago" | Hindi magulo ang isla; ikaw ang pumipili |
 | 2026-11-13 | Disenyo ng labas = kulay lang (pareho ang hugis ng bahay) | Magaan; gumagana sa lahat ng antas ng bahay |
+| 2026-11-13 | Banyo at kusina = gamit sa loob ng bahay (hindi hiwalay na kwarto) | Puwedeng ilagay kahit saan sa 1F/2F; walang bagong table |
+| 2026-11-13 | Upgrade (stove-1→2→3, shower→bathtub→jacuzzi): kailangan muna ang nauna; ang Bath/Cook ay ayon sa pinakamataas na pag-aari (server) | Walang dayaan sa epekto; simple sa phone |
+| 2026-11-13 | 🧱 Block avatar = sariling disenyo (kahon), pareho ang API at sukat ng Kid | Tugma agad sa upuan, kama, sasakyan at mga laro |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

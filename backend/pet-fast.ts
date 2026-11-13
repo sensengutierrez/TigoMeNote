@@ -1,6 +1,6 @@
 // TigoMeNote · pet-fast (Supabase Edge Function, verify_jwt = off) — si "Tigo", ang virtual pet ng bawat user
 // Isang trabaho lang: alagaan si Tigo (stats na bumababa habang lumilipas ang oras) at ang "Gather" ng magkakalapit na kaibigan.
-// Actions (session token): get, act { do: feed|play|clean|pet|sleep|wake|daily }, style { name, color },
+// Actions (session token): get, act { do: feed|play|clean|pet|sleep|wake|daily|cook|bath } (cook/bath: ayon sa pinakamataas na stove / shower-bathtub-jacuzzi na pag-aari), style { name, color },
 //                          wear { outfit }, buy { id }, game { kind: coins|pac|race|ghost, score, ms },
 //                          nearby { on, lat, lng }, gather { user_id }, visits,
 //                          room { room: { wall, floor, items: [{ id, x, z, r }] } } → ayos ng loob ng bahay (gamit na pag-aari lang)
@@ -36,6 +36,9 @@ const ITEMS: Record<string, [string, number, number]> = {
   "pet-cushion": ["furn", 30, 1], "dog-bed": ["furn", 60, 1], "cat-bed": ["furn", 60, 1], "bird-nest": ["furn", 60, 1],
   "gaming-chair": ["furn", 120, 2], bike: ["ride", 150, 1], scooter: ["ride", 450, 2], car: ["ride", 1500, 3],
   desk: ["furn", 80, 3], majlis: ["furn", 100, 3], fridge: ["furn", 110, 3], tv: ["furn", 120, 3], aquarium: ["furn", 150, 4], piano: ["furn", 200, 5], "piano-bench": ["furn", 40, 1],
+  // 0.11.54: banyo at kusina (gamit sa loob ng bahay). Upgrade: stove-1 → stove-2 → stove-3 (kailangan ang nauna); shower → bathtub → jacuzzi
+  toilet: ["furn", 40, 1], sink: ["furn", 35, 1], shower: ["furn", 60, 1], bathtub: ["furn", 180, 2], jacuzzi: ["furn", 600, 4],
+  counter: ["furn", 50, 1], "stove-1": ["furn", 80, 1], "stove-2": ["furn", 300, 3], "stove-3": ["furn", 900, 5],
   painting: ["furn", 40, 1], clock: ["furn", 35, 1], shelf: ["furn", 30, 1], "banner-ph": ["furn", 20, 1], "banner-bh": ["furn", 20, 1], mirror: ["furn", 60, 2], garland: ["furn", 80, 2],
   "blanket-check": ["blanket", 0, 1], "blanket-stars": ["blanket", 60, 1], "blanket-hearts": ["blanket", 60, 1], "blanket-clouds": ["blanket", 60, 1], "blanket-rainbow": ["blanket", 80, 2], "blanket-inabel": ["blanket", 90, 2], "blanket-quilt": ["blanket", 100, 3],
   "pillow-white": ["pillow", 0, 1], "pillow-heart": ["pillow", 40, 1], "pillow-star": ["pillow", 40, 1], "pillow-cloud": ["pillow", 50, 2], "pillow-hotdog": ["pillow", 50, 2], "pillow-cat": ["pillow", 60, 3],
@@ -181,6 +184,20 @@ async function act(p: any, me: any) {
       pet.clean = 100; pet.joy = clamp(pet.joy + 4);
       if (count(pet, "clean", 6)) pet.xp += 3;
       break;
+    case "cook": {   // 🍳 sa kalan (stove-1/2/3): mas masarap = mas busog at masaya
+      if (pet.asleep) return fail("Shh… Tigo is sleeping.", 409);
+      const t = tierOf(pet, ["stove-1", "stove-2", "stove-3"]); if (!t) return fail("Buy a stove first.", 403);
+      if (pet.hunger >= 98) { msg = "full"; break; }
+      const c = COOK[t]!; pet.hunger = clamp(pet.hunger + (c.hunger ?? 0)); pet.joy = clamp(pet.joy + c.joy); if (c.energy) pet.energy = clamp(pet.energy + c.energy);
+      if (count(pet, "cook", 10)) pet.xp += c.xp;
+      msg = "tier" + t; break;
+    }
+    case "bath": {   // 🛁 shower / bathtub / jacuzzi: malinis + saya (at pahinga sa mas mataas)
+      const t = tierOf(pet, ["shower", "bathtub", "jacuzzi"]); if (!t) return fail("Get a shower or bathtub first.", 403);
+      const b = BATH[t]!; pet.clean = 100; pet.joy = clamp(pet.joy + b.joy); if (b.energy) pet.energy = clamp(pet.energy + b.energy);
+      if (count(pet, "bath", 6)) pet.xp += b.xp;
+      msg = "tier" + t; break;
+    }
     case "pet":
       pet.joy = clamp(pet.joy + 3);
       if (count(pet, "pet", 20)) pet.xp += 1;
@@ -217,6 +234,15 @@ async function wear(p: any, me: any) {
 }
 
 // Shop: bumili gamit ang coins
+// Upgrade: kailangang pag-aari muna ang nauna
+const NEEDS: Record<string, string> = { "stove-2": "stove-1", "stove-3": "stove-2", bathtub: "shower", jacuzzi: "bathtub" };
+const NAMES: Record<string, string> = { "stove-1": "Stove", "stove-2": "Gas range", shower: "Shower", bathtub: "Bathtub" };
+// Lutuin at paligo: ang pinakamataas na pag-aaring tier ang ginagamit (hindi ang sinabi ng phone)
+type Boost = { joy: number; xp: number; hunger?: number; energy?: number };
+const COOK: (Boost | null)[] = [null, { hunger: 22, joy: 4, xp: 4 }, { hunger: 32, joy: 8, xp: 6 }, { hunger: 45, joy: 12, energy: 8, xp: 8 }];
+const BATH: (Boost | null)[] = [null, { joy: 4, xp: 3 }, { joy: 8, energy: 5, xp: 4 }, { joy: 14, energy: 12, xp: 6 }];
+// deno-lint-ignore no-explicit-any
+const tierOf = (pet: any, ids: string[]) => { let t = 0; ids.forEach((id, i) => { if (has(pet, id)) t = i + 1; }); return t; };
 // deno-lint-ignore no-explicit-any
 async function buy(p: any, me: any) {
   const id = String(p.id || ""), it = ITEMS[id];
@@ -224,6 +250,7 @@ async function buy(p: any, me: any) {
   const pet = decay(await load(me.id));
   if (levelOf(pet.xp) < it[2]) return fail(`Unlocks at level ${it[2]}.`, 403);
   if (has(pet, id)) return reply({ ok: true, pet: shape(await store(pet)), already: true });
+  const need = NEEDS[id]; if (need && !has(pet, need)) return fail(`Get the ${NAMES[need] || need} first — this is its upgrade.`, 409);
   if ((pet.coins ?? 0) < it[1]) return fail("Not enough coins. Play Coin Rush to earn more!", 402);
   pet.coins -= it[1]; pet.owned = [...(pet.owned ?? []), id];
   return reply({ ok: true, pet: shape(await store(pet)) });
@@ -416,7 +443,7 @@ async function farm(p: any, me: any) {
 }
 
 // Avatar: "tigo" (ang note) o "kid" (parang tao). Mga pagpipilian: maiikling salita lang (ang itsura ay nasa tigo/human-model.js).
-const AV_KEYS = ["kind", "skin", "hair", "hairColor", "top", "topColor", "bottom", "bottomColor", "shoes", "preset", "eyes", "eyeColor"];
+const AV_KEYS = ["kind", "skin", "hair", "hairColor", "top", "topColor", "bottom", "bottomColor", "shoes", "preset", "eyes", "eyeColor", "body", "face"];   // body/face: Block (0.11.54)
 // deno-lint-ignore no-explicit-any
 async function avatar(p: any, me: any) {
   const a = p.avatar && typeof p.avatar === "object" ? p.avatar : null;
@@ -428,7 +455,7 @@ async function avatar(p: any, me: any) {
     if (!/^[a-z0-9-]{1,16}$/.test(v)) return fail("Unknown avatar option.");
     out[k] = v;
   }
-  if (out.kind !== "kid") out.kind = "tigo";
+  if (out.kind !== "kid" && out.kind !== "block") out.kind = "tigo";
   await load(me.id);
   const { data, error } = await db.from("pets").update({ avatar: out, updated_at: nowIso() }).eq("user_id", me.id).select("*").single();
   if (error) throw error;

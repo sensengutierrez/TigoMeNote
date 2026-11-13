@@ -218,6 +218,17 @@ export function createKid(opts = {}, group = new THREE.Group()) {
     if (!open.visible) (mouths[st.asleep ? "flat" : st.mood === "sad" || st.mood === "sick" ? "sad" : st.mood === "ok" ? "ok" : st.mood === "sleepy" ? "flat" : "happy"]).visible = true;
     zzz.visible = st.asleep;
   }
+  // itinututok ang braso sa dalawang punto sa mundo (Vector3): kaliwa at kanan. Ang braso ay nakaturo pababa (−y) sa sariling pivot.
+  const _w = new THREE.Vector3();
+  function reach(pts) {
+    body.updateWorldMatrix(true, false);
+    const loc = pts.map((p) => body.worldToLocal(_w.copy(p)).clone());
+    limbs.forEach((L) => {
+      const side = Math.sign(L.position.x), p = loc.slice().sort((a, b) => (side * b.x) - (side * a.x))[0];
+      const d = p.clone().sub(L.position).normalize();
+      L.rotation.x = Math.atan2(-d.z, -d.y); L.rotation.z = Math.asin(Math.max(-1, Math.min(1, d.x)));
+    });
+  }
   function update(dt, t) {
     dt = Math.min(dt, 0.05);
     const slow = st.asleep ? 0.45 : st.mood === "sad" || st.mood === "sick" ? 0.7 : 1;
@@ -260,7 +271,7 @@ export function createKid(opts = {}, group = new THREE.Group()) {
     if (mv === "dance") { limbs[0].rotation.z = -1.5 + Math.sin(beat) * 0.9; limbs[1].rotation.z = 1.5 + Math.sin(beat) * 0.9; limbs[0].rotation.x = limbs[1].rotation.x = 0; legs.forEach((l, i) => { l.pv.rotation.z = Math.max(0, Math.sin(beat + i * Math.PI)) * (i ? 0.35 : -0.35); }); }
     else if (mv === "budots") { const b = t * 9; limbs[0].rotation.z = -1 + Math.sin(b) * 1.1; limbs[1].rotation.z = 1 + Math.sin(b + Math.PI) * 1.1; limbs[0].rotation.x = Math.sin(b * 0.5) * 0.9; limbs[1].rotation.x = -Math.sin(b * 0.5) * 0.9; body.rotation.y = Math.sin(t * 4.5) * 0.35; legs.forEach((l, i) => { l.pv.rotation.x = Math.max(0, Math.sin(b + i * Math.PI)) * -0.5; }); }
     else if (mv === "robot") { const q = Math.floor(t * 4) % 8; limbs[0].rotation.z = [-1.57, -1.57, -0.3, -2.7, -1.57, -0.3, -1.57, -2.7][q]; limbs[1].rotation.z = [1.57, 0.3, 1.57, 2.7, 0.3, 1.57, 2.7, 1.57][q]; limbs[0].rotation.x = [0, -1.2, 0, 0, -1.2, 0, 0, 0][q]; limbs[1].rotation.x = [0, 0, -1.2, 0, 0, -1.2, 0, 0][q]; body.rotation.y = [0, 0.45, 0, -0.45, 0, 0.45, 0, -0.45][q]; legs.forEach((l, i) => { l.pv.rotation.x = q % 2 === i ? -0.4 : 0; }); }
-    else if (mv === "piano") { const q = t * 9; limbs[0].rotation.x = -1.25 + Math.max(0, Math.sin(q)) * 0.25; limbs[1].rotation.x = -1.25 + Math.max(0, Math.sin(q + 2)) * 0.25; limbs[0].rotation.z = -0.1 + Math.sin(t * 1.3) * 0.12; limbs[1].rotation.z = 0.1 + Math.sin(t * 1.1) * 0.12; head.rotation.z = Math.sin(t * 2) * 0.12; }
+    else if (mv === "piano" || mv === "type") { const q = t * (mv === "type" ? 14 : 9); limbs[0].rotation.x = -1.25 + Math.max(0, Math.sin(q)) * 0.25; limbs[1].rotation.x = -1.25 + Math.max(0, Math.sin(q + 2)) * 0.25; limbs[0].rotation.z = -0.1 + Math.sin(t * 1.3) * 0.12; limbs[1].rotation.z = 0.1 + Math.sin(t * 1.1) * 0.12; head.rotation.z = Math.sin(t * 2) * 0.12; }
     else if (mv === "highfive") { limbs[1].rotation.z = 2.7; limbs[1].rotation.x = -0.3; }
     else if (mv === "cheer") { limbs[0].rotation.z = -2.6 + Math.sin(t * 9) * 0.2; limbs[1].rotation.z = 2.6 - Math.sin(t * 9) * 0.2; }
     if (worn.hand) { anchors.hand.rotation.set(-limbs[1].rotation.x, 0, -limbs[1].rotation.z); anchors.hand.children.forEach((c) => { if (c.userData.tick) c.userData.tick(t, st.walk); }); }
@@ -271,9 +282,11 @@ export function createKid(opts = {}, group = new THREE.Group()) {
       if (R.kind === "bike") legs.forEach((l, i) => { l.pv.rotation.x = -1.05 + Math.sin(R.ph + i * Math.PI) * (R.v > 0.2 ? 0.5 : 0.1); l.pv.rotation.z = 0; });
       else legs.forEach((l, i) => { l.pv.rotation.x = R.kind === "car" ? -1.42 : -1.2; l.pv.rotation.z = (i ? 1 : -1) * (R.kind === "scooter" ? 0.12 : 0); });
       limbs.forEach((L, i) => { L.rotation.x = R.kind === "car" ? -1.1 : R.kind === "bike" ? -1.15 : -1.3; L.rotation.z = (i ? 1 : -1) * 0.06; });
-      body.rotation.x = R.kind === "bike" ? 0.28 : R.kind === "scooter" ? 0.1 : 0.04; body.rotation.z = -R.steer * 0.22;
+      body.rotation.x = R.kind === "bike" ? 0.22 : R.kind === "scooter" ? 0.12 : 0.04; body.rotation.z = -R.steer * 0.22;
       head.rotation.z = R.steer * 0.1;
+      if (R.grips && R.grips.length === 2) reach(R.grips);   // 0.11.54: kamay mismo sa manibela
     }
+    if (st.hold && !st.ride && !mv) reach(st.hold);   // hawak: plato/keyboard (kain, laro sa PC)
     body.rotation.x += ((mv === "bow" ? 0.55 : st.mood === "sad" || st.mood === "sick" || st.asleep ? 0.1 : 0) - body.rotation.x) * (mv === "bow" ? 0.15 : 0.05);
     if (zzz.visible) zzz.children.forEach((z, i) => { z.position.y = ((t * 0.4 + i * 0.33) % 1) * 0.7; z.material.opacity = 1 - ((t * 0.4 + i * 0.33) % 1); });
     paintFace();
@@ -290,7 +303,8 @@ export function createKid(opts = {}, group = new THREE.Group()) {
     face(heading) { st.heading = heading; },
     move(kind, sec) { st.move = kind || null; st.moveT = sec || 2; },
     moving() { return st.move; }, sitPose(on) { st.sit = !!on; },
-    ridePose(kind, v = 0, steer = 0) { if (!kind) { st.ride = null; body.rotation.z = 0; head.rotation.z = 0; return; } st.ride = Object.assign(st.ride && st.ride.kind === kind ? st.ride : { ph: 0 }, { kind, v, steer }); },
+    ridePose(kind, v = 0, steer = 0, grips = null) { if (!kind) { st.ride = null; body.rotation.z = 0; head.rotation.z = 0; return; } st.ride = Object.assign(st.ride && st.ride.kind === kind ? st.ride : { ph: 0 }, { kind, v, steer, grips }); },
+    hold(pts) { st.hold = pts && pts.length === 2 ? pts : null; },   // [Vector3, Vector3] sa mundo, o null
     dispose() { disposables.forEach((d) => d.dispose && d.dispose()); temp.forEach((g) => g.dispose()); },
   };
 }

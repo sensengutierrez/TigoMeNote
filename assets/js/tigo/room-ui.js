@@ -51,18 +51,19 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
   };
   function render() {
     const st = room.style();
-    const grid = tab === "house" ? houseGrid() : HOME_ITEMS.filter((i) => (tab === "bedding" ? i.slot === "blanket" || i.slot === "pillow" : i.slot === tab)).map((i) => {
-      const lock = pet.level < i.level, have = owns(i.id), n = tab === "furn" ? placed(i.id) : 0;
+    const grid = tab === "house" ? houseGrid() : HOME_ITEMS.filter((i) => (tab === "bedding" ? i.slot === "blanket" || i.slot === "pillow" : (i.tab || i.slot) === tab)).map((i) => {
+      const lock = pet.level < i.level, have = owns(i.id), n = i.slot === "furn" ? placed(i.id) : 0, needUp = i.up && !have && !owns(i.up);
       const on = tab === "wall" ? st.wall === i.id : tab === "floor" ? st.floor === i.id : tab === "bedding" ? bed[i.slot] === i.id : tab === "exterior" ? ext === i.id : tab === "ride" ? rideNow() === i.id : n > 0;
-      const tag = lock ? "🔒 Lv " + i.level : !have ? "🪙 " + i.price : tab === "ride" ? (on ? "Outside now" : "Tap to use") : tab === "exterior" ? (on ? "Using" : "Tap to use") : tab === "furn" ? (n ? "In room ×" + n : "Add") : on ? "Using" : i.price ? "Owned" : "Free";
+      const tag = lock ? "🔒 Lv " + i.level : needUp ? "⬆ After " + homeItem(i.up).name : !have ? (i.up ? "⬆ Upgrade 🪙 " : "🪙 ") + i.price : tab === "ride" ? (on ? "Outside now" : "Tap to use") : tab === "exterior" ? (on ? "Using" : "Tap to use") : i.slot === "furn" ? (n ? "In room ×" + n : "Add") : on ? "Using" : i.price ? "Owned" : "Free";
       const sw = i.color ? ' style="--sw:' + i.color + '"' : "";
       return '<button type="button" class="tg-item' + (on ? " on" : "") + (lock ? " lock" : "") + (have ? " have" : "") + (i.color ? " tg-swatch" : "") + (buying && buying.id === i.id ? " pick" : "") + '" data-id="' + i.id + '"' + sw + (lock ? ' aria-disabled="true"' : "") +
-        '><span class="tg-ic">' + i.icon + "</span><b>" + esc(i.name) + "</b><small>" + tag + "</small></button>";
+        '><span class="tg-ic">' + i.icon + "</span><b>" + esc(i.name) + "</b><small>" + tag + "</small>" +
+        (i.slot === "furn" && n ? '<span class="tg-away" role="button" tabindex="0" data-away="' + i.id + '" aria-label="Put away one ' + esc(i.name) + '" title="Put away">×</span>' : "") + "</button>";
     }).join("");
     box.innerHTML =
       '<div class="tg-cl-head"><h3>🏠 Decorate' + (sc.floor && sc.floor() === 2 ? ' <small class="tg-floor">2F</small>' : "") + "</h3>" + '<span class="tg-save faint small">' + saving + '</span><span class="tg-coins">🪙 <b>' + pet.coins + '</b></span><button type="button" class="btn btn-ghost btn-sm" data-close>Done</button></div>' +
       '<div class="tg-tabs" role="tablist">' + HOME_TABS.map((t) => '<button type="button" role="tab" aria-selected="' + (t.id === tab) + '" data-tab="' + t.id + '"><span>' + t.icon + "</span><small>" + t.name + "</small></button>").join("") + "</div>" +
-      '<p class="faint small tg-decor-tip">' + (({ furn: "Tap to add. In the house, press and hold a thing, then drag it.", house: "A bigger house outside and more room inside. Each upgrade costs more.", ride: "Only one ride is parked outside. Tap the one you want to use.", exterior: "Change how your house looks outside. Tap to try it.", bedding: "Tap a blanket or pillow to try it on the bed." })[tab] || "Tap to try it on the house.") + "</p>" +
+      '<p class="faint small tg-decor-tip">' + (({ furn: "Tap to add. In the house, press and hold a thing, then drag it. × = put away.", bath: "Walk up to a shower or tub and tap 🛁 Bath. Upgrade for a better bath!", kitchen: "Walk up to the stove and tap 🍳 Cook. Upgrade for tastier food! Sit at a table to 🍽️ Eat.", house: "A bigger house outside and more room inside. Each upgrade costs more.", ride: "Only one ride is parked outside. Tap the one you want to use.", exterior: "Change how your house looks outside. Tap to try it.", bedding: "Tap a blanket or pillow to try it on the bed." })[tab] || "Tap to try it on the house.") + "</p>" +
       // Buy / try-on bar: nasa ITAAS ng listahan (dati nasa pinakababa, kailangang mag-scroll)
       (buying ? '<div class="tg-cl-buy"><span>' + buying.icon + " " + esc(buying.name) + '</span><button type="button" class="btn btn-ghost btn-sm" data-cancel>Cancel</button>' +
         '<button type="button" class="btn btn-primary btn-sm" data-buy' + (buying.price > pet.coins ? " disabled" : "") + ">" + (buying.slot === "house" ? "Upgrade 🪙 " : "Buy 🪙 ") + buying.price.toLocaleString() + "</button>" +
@@ -85,7 +86,25 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
   function select(e) {
     room.select(e);
     bar.classList.toggle("hidden", !e);
-    if (e) { const it = homeItem(e.id); bar.querySelector(".tg-rb-name").textContent = it ? it.icon + " " + it.name : e.id; }
+    if (e) { const it = homeItem(e.id); bar.querySelector(".tg-rb-name").textContent = it ? it.icon + " " + it.name : e.id; follow(); }
+  }
+  // 0.11.54: hindi natatakpan ng bar ang napiling gamit — nasa itaas o ibaba ito ng gamit (sinusundan habang gumagalaw ang gamit o camera)
+  let barRaf = 0, barY = -1;
+  function follow() { if (!barRaf) barRaf = requestAnimationFrame(placeBar); }
+  function placeBar() {
+    barRaf = 0;
+    const sel = room.selected(); if (!sel || bar.classList.contains("hidden") || !sc.camera) { bar.style.top = bar.style.bottom = ""; barY = -1; return; }
+    const sr = stage.getBoundingClientRect(), h = bar.offsetHeight || 60, w = sel.holder.localToWorld(sel.holder.position.clone().set(0, 0.5, 0));
+    const v = w.project(sc.camera), cr = canvas.getBoundingClientRect(), iy = cr.top - sr.top + ((1 - v.y) / 2) * cr.height;
+    let lo = 56, hi = sr.height - h - 8;
+    const br = box.getBoundingClientRect();   // sheet sa ibaba (portrait): huwag pumailalim dito
+    if (!box.hidden && br.height && br.top > sr.top + 40 && br.top < sr.bottom && br.left < sr.left + sr.width / 2) hi = Math.min(hi, br.top - sr.top - h - 8);
+    const below = iy + 74, above = iy - 74 - h;
+    let y = iy > (lo + hi + h) / 2 ? above : below;
+    if (y < lo || y > hi) y = (y === above ? below : above);
+    y = Math.max(lo, Math.min(hi, y));
+    if (Math.abs(y - barY) > 3) { barY = y; bar.style.top = Math.round(y) + "px"; bar.style.bottom = "auto"; }
+    barRaf = requestAnimationFrame(placeBar);
   }
   function addItem(id) {
     if (room.list().length >= maxItems(pet)) { toast("The house is full (" + maxItems(pet) + " things)."); return; }
@@ -93,6 +112,12 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
     const e = room.add(id); if (!e) return;
     select(e); queueSave(); render();
     if (sc.main) sc.main.jump();
+  }
+  // × sa listahan (0.11.54): itabi ang isa (ang huling inilagay); nananatiling nabili (Add ulit kahit kailan)
+  function putAway(id) {
+    const ent = room.last(id); if (!ent) return;
+    if (room.selected() === ent) select(null);
+    room.remove(ent); queueSave(); render(); toast("Put away ✓ (still yours)");
   }
   function useBedding(id) {
     const it = homeItem(id); bed = Object.assign({}, bed, { [it.slot]: id }); sc.setBedding(bed);
@@ -114,6 +139,8 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
     if (busy) return;
     const t = e.target.closest("[data-tab]"), b = e.target.closest("[data-id]");
     if (e.target.closest("[data-close]")) return close();
+    const aw = e.target.closest("[data-away]");
+    if (aw) { putAway(aw.dataset.away); return; }
     if (t) { tab = t.dataset.tab; render(); return; }
     if (e.target.closest("[data-cancel]")) { if (buying && buying.slot === "exterior") revertExterior(); else if (buying && (buying.slot === "blanket" || buying.slot === "pillow")) revertBedding(); else if (buying && buying.slot !== "furn") { const s = (sc.floor && sc.floor() === 2 ? (pet.room || {}).up : pet.room) || {}; room.setStyle(owns(room.style().wall) ? room.style().wall : s.wall, owns(room.style().floor) ? room.style().floor : s.floor); } buying = null; render(); return; }
     if (e.target.closest("[data-buy]")) {
@@ -125,6 +152,11 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
       if (it.slot === "house") { toast("🎉 Your house is now a " + it.name + "! More room inside."); close(); onPet(pet); return; }   // ang kwarto ay muling ginagawa (mas malaki)
       onPet(pet);
       if (it.slot === "ride") { useRide(it.id); toast(it.icon + " Your " + it.name.toLowerCase() + " is parked outside! Walk up and tap Ride."); return; }
+      if (it.slot === "furn" && it.up && room.last(it.up)) {   // ⬆ upgrade: papalitan ang luma sa mismong puwesto (nananatiling pag-aari ang luma)
+        const old = room.last(it.up), at = { x: old.x, z: old.z, r: old.r }; room.remove(old);
+        const e = room.add(it.id); if (e) { e.r = at.r; room.move(e, at.x, at.z); select(e); }
+        queueSave(); render(); toast("⬆ Upgraded to " + it.name + "!"); if (sc.main) sc.main.jump(); return;
+      }
       if (it.slot === "furn") addItem(it.id); else { queueSave(); render(); }   // dingding, sahig, kumot, unan
       return;
     }
@@ -142,7 +174,7 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
       if (it.slot === "exterior") return useExterior(it.id);
       if (it.slot === "blanket" || it.slot === "pillow") return useBedding(it.id);
       if (it.slot !== "furn") return useStyle(it.id);
-      if (!owns(it.id)) { buying = it; render(); return; }
+      if (!owns(it.id)) { if (it.up && !owns(it.up)) { toast("Get the " + homeItem(it.up).name + " first — this is its upgrade ⬆"); return; } buying = it; render(); return; }
       buying = null; addItem(it.id);
     }
   });
@@ -203,7 +235,7 @@ export function openRoomEditor({ host, stage, canvas, sc, pet, call, esc, onPet,
 
   function close() {
     if (timer) save();
-    lpEnd(); sc.setClaim(null); select(null); bar.remove(); box.remove(); keep.forEach((el) => { el.hidden = false; });
+    lpEnd(); sc.setClaim(null); select(null); cancelAnimationFrame(barRaf); barRaf = 0; bar.remove(); box.remove(); keep.forEach((el) => { el.hidden = false; });
     // ibalik ang hindi nabiling dingding/sahig
     const s = (sc.floor && sc.floor() === 2 ? (pet.room || {}).up : pet.room) || {}, st = room.style();
     if (!owns(st.wall) || !owns(st.floor)) room.setStyle(owns(st.wall) ? st.wall : s.wall, owns(st.floor) ? st.floor : s.floor);

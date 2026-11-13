@@ -144,7 +144,7 @@ export function startRace(sc, { track = "easy", voice, onHud, onEnd, seconds = 1
     return { g, body, wheels };
   }
   // Nakaupo ang sakay (Kid: pasulong ang binti; note: nasa upuan)
-  function seatIn(t, k) { k.body.add(t.group); const kid = t.kind() === "kid"; t.sitPose(true); t.group.position.set(0, kid ? 0.28 : 0.4, kid ? -0.2 : -0.12); t.group.scale.setScalar(0.36); t.group.rotation.set(0, 0, 0); t.face(0); }
+  function seatIn(t, k) { k.body.add(t.group); const kid = t.kind() !== "tigo"; t.sitPose(true); t.group.position.set(0, kid ? 0.28 : 0.4, kid ? -0.2 : -0.12); t.group.scale.setScalar(0.36); t.group.rotation.set(0, 0, 0); t.face(0); }
   const me = kart(0xff5a36);
   sc.beginGame({ tick, cam });
   const T = sc.main; seatIn(T, me);

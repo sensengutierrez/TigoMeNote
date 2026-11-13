@@ -8,7 +8,7 @@
    UI: tigo/closet-ui.js, tigo/games-ui.js (Coin Rush, Pac-Tigo, Racing), tigo/journey-ui.js. Walang WebGL → 2D na sticker.
    Boses: tigo/voice.js + tigo/talk.js (nagsasalita parang baby; ⚙️ = Sound settings, naka-save sa device).
    Server: pet-fast (get, act, style, wear, buy, game, nearby, gather, visits). Stats: kinukuwenta rin dito para gumalaw ang bars.
-   0.11.52: 🪜 hagdan (Villa/Mansion), 💦 water gun (tigo/water-gun.js, kapag hawak), tunog ng alaga (tigo/pet-sounds.js), 🪙 Give coins (Admin; tigo/admin-coins.js),
+   0.11.52: 🪜 hagdan (Villa/Mansion), 💦 water gun (tigo/water-gun.js, kapag hawak), 🪙 Give coins (Admin; tigo/admin-coins.js),
             💎 Gem Duel (tigo/duel-*.js; 2D, hindi kailangan ng 3D). */
 (function () {
   var UI = window.TMN_UI, $ = function (id) { return document.getElementById(id); };
@@ -110,7 +110,7 @@
   mod("farm-ui").then(function (m) { farmMod = m; syncFarm(); setInterval(syncFarm, 30000); }).catch(function () {});
   function farmCall(b) { return TMN_API.call("pet", "farm", b); }
   function setPet(p) { pet = p; paint(); syncFarm(); syncWorld(); }
-  var CTX = { upstairs: "🪜 Upstairs", downstairs: "🪜 Downstairs", bench: "🪑 Sit", pond: "🎣 Fish", garden: "🌱 Garden", tree: "🍎 Pick fruit", aquarium: "🐟 Feed fish", mirror: "🪞 Look", ball: "⚽ Done playing", ride: "Ride", dismount: "⬇ Get off" };
+  var CTX = { bath: "🛁 Bath", cook: "🍳 Cook", eat: "🍽️ Eat", upstairs: "🪜 Upstairs", downstairs: "🪜 Downstairs", bench: "🪑 Sit", pond: "🎣 Fish", garden: "🌱 Garden", tree: "🍎 Pick fruit", aquarium: "🐟 Feed fish", mirror: "🪞 Look", ball: "⚽ Done playing", ride: "Ride", dismount: "⬇ Get off" };
   var RIDE_ICON = { bike: "🚲", scooter: "🛵", car: "🚗" };
   // bahay at sasakyan: sa sariling isla = akin; kapag bumibisita = sa kaibigan
   // isang sasakyan lang ang nasa labas: ang pinili sa Decorate → Rides (room.ride), o ang una kung wala pang pinili
@@ -127,12 +127,20 @@
     if (pianoT) return; var i = 0; say("🎹 La la la~", { still: true });
     pianoT = setInterval(function () { if (!sc || sc.pose() !== "sit" || !sc.atPiano()) { pianoOff(); return; } sc.main.move("piano", 1); if (voice) voice.sfx("note", TUNE[i++ % TUNE.length]); }, 380);
   }
+  // 🎮 nakaupo sa harap ng computer: naglalaro (mabilis na type, nakatingin sa screen)
+  var deskOn = false;
+  function deskPlay() {
+    var on = !!(sc && sc.pose() === "sit" && sc.atDesk && sc.atDesk());
+    if (on) { sc.main.move("type", 0.6); if (!deskOn) say(["🎮 Game time!", "Let's play! 🕹️", "One more level~"][Math.floor(Math.random() * 3)], { still: true }); }
+    deskOn = on;
+  }
   function pianoOff() { if (pianoT) { clearInterval(pianoT); pianoT = 0; if (sc) sc.main.move(null); } }
   function ctxPaint(txt, kind, hot) { var b = $("tgCtx"); b.textContent = txt || ""; b.classList.toggle("hidden", !txt); b.classList.toggle("hot", !!hot); b.dataset.k = kind || ""; }
   setInterval(function () {
     if (!sc || !farmMod || fisher) return;
-    var q = !sc.inGame() && sc.pose() === "stand" && !uiSheetOpen() ? (sc.ballActive() ? { kind: "ball" } : sc.spot()) : null;
-    if (q && visit && ["bench", "ball", "mirror", "ride", "dismount", "upstairs", "downstairs"].indexOf(q.kind) < 0) q = null;   // sa isla ng iba: upo lang (kanila ang taniman, puno at lawa)
+    var q = !sc.inGame() && !sc.busy() && !uiSheetOpen() ? (sc.pose() === "stand" ? (sc.ballActive() ? { kind: "ball" } : sc.spot()) : sc.pose() === "sit" && sc.atTable() ? { kind: "eat" } : null) : null;
+    if (q && visit && ["bench", "ball", "mirror", "ride", "dismount", "upstairs", "downstairs"].indexOf(q.kind) < 0) q = null;
+    deskPlay();   // sa isla ng iba: upo lang (kanila ang taniman, puno at lawa)
     ctxKind = q ? q.kind : ""; ctxId = q ? q.id : null;
     ctxPaint(q ? (q.kind === "ride" ? (RIDE_ICON[q.id] || "🚲") + " Ride" : CTX[q.kind]) : "", ctxKind);
   }, 300);
@@ -142,6 +150,7 @@
     if (fisher) { fisher.pull(); return; }
     if (ctxKind === "ball") { sc.ball(false); ctxPaint(""); toast("Good game! ⚽"); return; }
     if (ctxKind === "upstairs" || ctxKind === "downstairs") { if (sc.climb()) { ctxPaint(""); say(ctxKind, { still: true }); if (voice) voice.sfx("climb"); } return; }
+    if (ctxKind === "bath" || ctxKind === "cook" || ctxKind === "eat") { homeAct(ctxKind); return; }
     if (ctxKind === "aquarium") { if (sc.feedFish()) { say("Here, fishies! 🐟", { still: true }); if (voice) voice.sfx("pop"); } return; }
     if (ctxKind === "mirror") { if (sc.lookMirror()) say(["Looking good! ✨", "Is that me? 😄", "Hello, me! 👋"][Math.floor(Math.random() * 3)], { still: true }); ctxPaint(""); return; }
     if (ctxKind === "bench") { if (sc.sitBench()) say("Sit down!", { still: true }); ctxPaint(""); }
@@ -345,7 +354,7 @@
   }
   function budSet(k) {
     if (!sc || !sc.hasBuddy()) return;
-    sc.buddyMode(k); $("tgBud").classList.add("hidden"); if (petSnd) petSnd.now();
+    sc.buddyMode(k); $("tgBud").classList.add("hidden");
     toast(k === "follow" ? "🐾 Here, buddy! Come!" : k === "stay" ? "✋ Stay… good buddy." : "🌿 Go play around!");
   }
   $("tgBud").addEventListener("click", function (e) { var b = e.target.closest("[data-bm]"); if (b) budSet(b.dataset.bm); });
@@ -355,7 +364,7 @@
     cv.addEventListener("click", function (e) {
       if (!sc || !sc.hasBuddy() || sc.inGame() || decor || Math.hypot(e.clientX - x0, e.clientY - y0) > 8) return;
       var r = cv.getBoundingClientRect(), sr = $("stage").getBoundingClientRect();
-      if (sc.pickBuddy(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1))) { budChips(e.clientX - sr.left, e.clientY - sr.top); if (petSnd) petSnd.now(); }
+      if (sc.pickBuddy(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1))) budChips(e.clientX - sr.left, e.clientY - sr.top);
       else $("tgBud").classList.add("hidden");
     });
   })();
@@ -371,12 +380,12 @@
       var p = live(), h = new Date().getHours();
       setTimeout(function () { if (!p.asleep) say(h < 11 ? "morning" : "hello"); }, 1400);
       talk.idle(true);
-      if (sc) { var psm = await mod("pet-sounds"); petSnd = psm.createPetSounds({ sc: sc, voice: voice, busy: function () { return playing; } }); }
+      // 0.11.54: tinanggal ang tunog ng alaga (hiling ng user)
     } catch (e) { console.warn("voice off", e); }
   }
   function say(k, o) { if (talk && !playing) talk.say(k, o); }
   // ---------- 💦 water gun (kapag hawak sa Closet → Hand) ----------
-  var petSnd = null, wgun = null;
+  var wgun = null;
   $("tgSplash").addEventListener("click", async function () {
     if (!sc || playing) return;
     if (sc.pose() !== "stand") { toast("Stand up first 🙂"); return; }
@@ -388,7 +397,7 @@
     var did = {};
     list.forEach(function (h) {
       if (did[h.kind]) return; did[h.kind] = 1;
-      if (h.kind === "buddy") { sc.splashBuddy(); if (petSnd) petSnd.now(); setTimeout(function () { say("wet", { still: true }); }, 700); }
+      if (h.kind === "buddy") { sc.splashBuddy(); setTimeout(function () { say("wet", { still: true }); }, 700); }
       if (h.kind === "friend" && h.t) sc.effect("bubbles", h.t.group);
       if (h.kind === "garden" && !visit) farmCall({ do: "water", all: true }).then(function (r) { setPet(r.pet); toast("💦 Watered " + r.n + " — 2× faster for 2 hours!"); }).catch(function () {});
     });
@@ -428,12 +437,26 @@
     if (!talk) startVoice();
   }
 
+  // ---------- 🛁 paligo · 🍳 luto · 🍽️ kain sa mesa (0.11.54): animation muna, saka ang server (pet-fast act bath/cook/feed) ----------
+  var HOME_SAY = { bath: ["Splish splash! 🛁", "Bubble time! 🫧"], cook: ["Cooking something yummy! 🍳", "Chef Tigo at work! 👩‍🍳"], eat: ["Itadakimasu! 🍽️", "Kain tayo! 🍚"] };
+  function homeAct(k) {
+    if (busy || !sc) return;
+    if (!navigator.onLine) { toast("Tigo needs internet right now."); return; }
+    var p = live() || pet || {};
+    if (p.asleep) { toast("Shh… Tigo is sleeping."); return; }
+    if ((k === "cook" || k === "eat") && (p.hunger || 0) >= 98) { say("full"); toast("Tigo is full! 😋"); return; }
+    var go = k === "bath" ? sc.bathe : k === "cook" ? sc.cookAt : sc.eatAtTable;
+    var started = go(function () { act(k === "eat" ? "feed" : k, null, true); });
+    if (!started) return;
+    ctxPaint(""); var lines = HOME_SAY[k]; say(lines[Math.floor(Math.random() * lines.length)], { still: true });
+    if (voice) voice.sfx(k === "bath" ? "splash" : "pop");
+  }
   // ---------- pag-aalaga ----------
-  async function act(what, label) {
+  async function act(what, label, quiet) {
     if (busy) return;
     if (!navigator.onLine) { toast("Tigo needs internet right now."); return; }
     busy = true;
-    if (sc) {
+    if (sc && !quiet) {
       if (what === "feed") { sc.effect("food"); setTimeout(function () { sc.main.eat(); }, 450); }
       if (what === "play") { sc.ball(true); sc.jump(); }   // ⚽ nananatili ang bola: sipain habang naglalakad; "⚽ Done playing" para tapusin
       if (what === "clean") { sc.effect("bubbles"); sc.main.wiggle(); }
@@ -442,13 +465,15 @@
     try {
       var r = await TMN_API.call("pet", "act", { do: what });
       pet = r.pet; paint();
-      say(r.msg === "full" ? "full" : r.msg === "clean" ? "clean" : what === "wake" ? "morning" : what === "sleep" ? "night" : what === "pet" && Math.random() < 0.5 ? "tap" : what);
+      if (!quiet) say(r.msg === "full" ? "full" : r.msg === "clean" ? "clean" : what === "wake" ? "morning" : what === "sleep" ? "night" : what === "pet" && Math.random() < 0.5 ? "tap" : what);
       if (voice) voice.sfx(what === "feed" ? "eat" : what === "pet" ? "pop" : what === "play" ? "jump" : "pop");
       if (r.msg === "full") toast("Tigo is full! 😋");
       else if (r.msg === "clean") toast("Tigo is already clean ✨");
       else if (what === "feed") toast("Yum! " + (label || "") + " 😋");
       else if (what === "play") toast("Kick the ball around! Tap ⚽ Done playing when you're finished.");
       else if (what === "clean") toast("Squeaky clean! 🫧");
+      else if (what === "bath") toast(["", "🚿 Fresh and clean!", "🛁 Clean and relaxed!", "♨️ Jacuzzi time! So relaxed!"][+String(r.msg || "").slice(4) || 1]);
+      else if (what === "cook") toast(["", "🍳 Yummy home cooking!", "🍲 Delicious!", "👨‍🍳 Chef's special! Full and happy!"][+String(r.msg || "").slice(4) || 1]);
       else if (what === "sleep") toast("Good night, " + pet.name + " 🌙 Going home to the bahay kubo…");
       else if (what === "wake") toast("Good morning! ☀️");
       if (r.levelUp) levelUp(r.levelUp);
@@ -542,7 +567,7 @@
   })();
   async function openGames(join) {
     var g = await mod("games-ui");
-    var p = live() || {}, info = { name: (window.TMN_USER && TMN_USER.username) || p.name || "friend", color: p.color || "coral", av: p.avatar && p.avatar.kind === "kid" ? p.avatar : null,
+    var p = live() || {}, info = { name: (window.TMN_USER && TMN_USER.username) || p.name || "friend", color: p.color || "coral", av: p.avatar && (p.avatar.kind === "kid" || p.avatar.kind === "block") ? p.avatar : null,
       tired: function () { var q = live() || {}; return q.asleep ? "Shh… Tigo is sleeping." : ""; } };
     var node = g.gamesNode(function (id, opt) { m.close(); playGame(id, opt); }, info, join && join.game ? join : null);
     var m = TMN_MODAL.open({ title: "Games", size: "sm", cls: "modal-sheet", body: node, onClose: function () { if (node._cleanup) node._cleanup(); } });
@@ -659,7 +684,7 @@
     });
   }
   $("tgMenu").addEventListener("click", openMenu);
-  function myLook() { var p = pet || {}, o = p.outfit || {}; return { n: (window.TMN_USER && TMN_USER.username) || p.name || "friend", c: p.color, av: p.avatar && p.avatar.kind === "kid" ? p.avatar : null, o: { hat: o.hat || null, face: o.face || null, body: o.body || null, hand: o.hand || null } }; }
+  function myLook() { var p = pet || {}, o = p.outfit || {}; return { n: (window.TMN_USER && TMN_USER.username) || p.name || "friend", c: p.color, av: p.avatar && (p.avatar.kind === "kid" || p.avatar.kind === "block") ? p.avatar : null, o: { hat: o.hat || null, face: o.face || null, body: o.body || null, hand: o.hand || null } }; }
   function makePup(look) {
     var pp = sc.puppet({ color: look.c || "sky", avatar: look.av || null }), o = look.o || {};
     ["hat", "face", "body", "hand"].forEach(function (k) { if (o[k]) { try { pp.t.wear(k, o[k]); } catch (e) {} } });

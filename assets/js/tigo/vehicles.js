@@ -1,6 +1,6 @@
 /* TigoMeNote · tigo/vehicles.js — mga sasakyan ni Tigo sa isla (sariling disenyo): 🚲 bike · 🛵 scooter · 🚗 kotse
    import { buildRide, RIDE_INFO } from "./vehicles.js"
-   const v = buildRide("bike"|"scooter"|"car") → { id, group, seat:{ y, z }, r, update(dt, speed), lights(on), dispose() }
+   const v = buildRide("bike"|"scooter"|"car") → { id, group, seat:{ y, z }, r, grips, update(dt, speed), lights(on), dispose() }
      Nakaharap sa +z (gaya ni Tigo). seat = kung saan uupo si Tigo (taas at layo mula sa gitna). r = laki para sa banggaan.
      update(dt, speed) → umiikot ang gulong ayon sa bilis (m/s). */
 import * as THREE from "../../vendor/three/three.module.min.js";
@@ -20,18 +20,19 @@ export function buildRide(id) {
     else add(new THREE.CylinderGeometry(r * 0.72, r * 0.72, w * 1.6, 16), metal, 0, 0, 0, W).rotation.z = Math.PI / 2;
     return W;
   }
-  let seat = { y: 0.5, z: 0 }, r = 0.45, headM = null;
+  let seat = { y: 0.5, z: 0 }, r = 0.45, headM = null, grips = null;
   if (id === "bike") {
     const fr = M(0x2fb38a, { metalness: 0.2, roughness: 0.4 });
     wheel(0.3, 0.03, 0, 0.3, 0.52, true); wheel(0.3, 0.03, 0, 0.3, -0.52, true);
     const tube = (len, x, y, z, rx) => { const t = add(new THREE.CylinderGeometry(0.025, 0.025, len, 8), fr, x, y, z); t.rotation.x = rx; return t; };
     tube(0.62, 0, 0.55, 0.1, Math.PI / 2 - 0.25); tube(0.5, 0, 0.45, -0.2, 0.55); tube(0.5, 0, 0.44, 0.3, -0.75); tube(0.44, 0, 0.32, -0.33, Math.PI / 2 - 0.1);
     tube(0.42, 0, 0.58, 0.48, 0.25);
-    add(new THREE.BoxGeometry(0.5, 0.025, 0.025), dark, 0, 0.8, 0.44);   // manibela
-    [-0.25, 0.25].forEach((x) => add(new THREE.CylinderGeometry(0.022, 0.022, 0.09, 8), M(0xff5a36), x, 0.8, 0.44).rotation.z = Math.PI / 2);
+    tube(0.44, 0, 0.84, 0.4, -0.5);   // mataas na stem papunta sa manibela (abot ng kamay ni Tigo)
+    add(new THREE.BoxGeometry(0.5, 0.025, 0.025), dark, 0, 1.02, 0.3);   // manibela
+    [-0.22, 0.22].forEach((x) => add(new THREE.CylinderGeometry(0.024, 0.024, 0.1, 8), M(0xff5a36), x, 1.02, 0.3).rotation.z = Math.PI / 2);
     const s = add(new THREE.BoxGeometry(0.13, 0.04, 0.24), dark, 0, 0.72, -0.24); s.scale.x = 1.1;
     add(new THREE.BoxGeometry(0.2, 0.12, 0.14), M(0xc58f5e), 0, 0.68, 0.62);   // basket
-    seat = { y: 0.74, z: -0.2 }; r = 0.5;
+    seat = { y: 0.74, z: -0.2 }; r = 0.5; grips = [[-0.22, 1.02, 0.3], [0.22, 1.02, 0.3]];
   } else if (id === "scooter") {
     const body = M(0xff8a3d, { metalness: 0.15, roughness: 0.35 }), cream = M(0xfff3e0, { roughness: 0.5 });
     wheel(0.19, 0.06, 0, 0.19, 0.5); wheel(0.19, 0.06, 0, 0.19, -0.5);
@@ -39,11 +40,12 @@ export function buildRide(id) {
     const back = add(new THREE.SphereGeometry(0.28, 16, 12), body, 0, 0.42, -0.4); back.scale.set(0.85, 0.6, 1.2);
     add(new THREE.BoxGeometry(0.3, 0.07, 0.44), dark, 0, 0.6, -0.36);                      // upuan
     const front = add(new THREE.BoxGeometry(0.32, 0.62, 0.12), body, 0, 0.55, 0.4); front.rotation.x = -0.25;
-    add(new THREE.CylinderGeometry(0.03, 0.03, 0.42, 8), metal, 0, 0.82, 0.5).rotation.x = -0.25;
-    add(new THREE.BoxGeometry(0.52, 0.04, 0.04), dark, 0, 1.0, 0.56);
+    add(new THREE.CylinderGeometry(0.03, 0.03, 0.5, 8), metal, 0, 0.8, 0.38).rotation.x = -0.6;
+    add(new THREE.BoxGeometry(0.5, 0.04, 0.04), dark, 0, 1.0, 0.28);
+    [-0.21, 0.21].forEach((x) => add(new THREE.CylinderGeometry(0.026, 0.026, 0.1, 8), dark, x, 1.0, 0.28).rotation.z = Math.PI / 2);
     headM = M(0xfff7c2, { emissive: 0xffe08a, emissiveIntensity: 0.2 }); add(new THREE.SphereGeometry(0.065, 12, 10), headM, 0, 0.92, 0.62);
     const fender = add(new THREE.SphereGeometry(0.22, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), body, 0, 0.22, 0.5); fender.scale.set(0.5, 0.7, 1);
-    seat = { y: 0.64, z: -0.3 }; r = 0.55;
+    seat = { y: 0.64, z: -0.28 }; r = 0.55; grips = [[-0.21, 1.0, 0.28], [0.21, 1.0, 0.28]];
   } else {   // kotse: bilog na katawan, kabina na may salamin, 4 na gulong, ilaw
     const paint = M(0x3f8fd8, { metalness: 0.35, roughness: 0.3 }), glass = M(0xbfe6ff, { metalness: 0.2, roughness: 0.05, transparent: true, opacity: 0.55 });
     [[-0.48, 0.62], [0.48, 0.62], [-0.48, -0.62], [0.48, -0.62]].forEach(([x, z]) => wheel(0.22, 0.08, x, 0.22, z));
@@ -58,11 +60,12 @@ export function buildRide(id) {
     headM = M(0xfff7c2, { emissive: 0xffe08a, emissiveIntensity: 0.25 });
     [-0.32, 0.32].forEach((x) => { add(new THREE.SphereGeometry(0.08, 12, 10), headM, x, 0.47, 1.1); add(new THREE.BoxGeometry(0.14, 0.06, 0.03), M(0xff3b30, { emissive: 0xff3b30, emissiveIntensity: 0.4 }), x, 0.48, -1.1); });
     add(new THREE.BoxGeometry(0.5, 0.06, 0.03), metal, 0, 0.3, 1.12); add(new THREE.BoxGeometry(0.5, 0.06, 0.03), metal, 0, 0.3, -1.12);
-    const st = add(new THREE.TorusGeometry(0.1, 0.015, 6, 16), dark, -0.2, 0.74, 0.18); st.rotation.x = -0.9;
-    seat = { y: 0.66, z: -0.2, x: -0.2 }; r = 0.95;
+    const st = add(new THREE.TorusGeometry(0.11, 0.018, 6, 18), dark, -0.2, 0.86, 0.1); st.rotation.x = -0.9;
+    add(new THREE.CylinderGeometry(0.02, 0.02, 0.3, 6), dark, -0.2, 0.74, 0.2).rotation.x = -0.9;
+    seat = { y: 0.66, z: -0.2, x: -0.2 }; r = 0.95; grips = [[-0.3, 0.87, 0.09], [-0.1, 0.87, 0.09]];
   }
   return {
-    id, group, seat, r,
+    id, group, seat, r, grips,   // grips = [x,y,z] ng hawakan (kaliwa, kanan) — dito itinututok ang kamay ni Tigo
     update(dt, speed) { wheels.forEach((w) => { w.g.rotation.x += (speed * dt) / w.r; }); },
     lights(on) { if (headM) headM.emissiveIntensity = on ? 1.4 : 0.25; },
     dispose() { geos.forEach((g) => g.dispose()); mats.forEach((m) => m.dispose()); },

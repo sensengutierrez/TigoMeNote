@@ -15,6 +15,7 @@ import * as THREE from "../../vendor/three/three.module.min.js";
 import { RoundedBoxGeometry } from "../../vendor/three/RoundedBoxGeometry.js";
 import { buildWear } from "./outfit.js";
 import { createKid } from "./human-model.js";
+import { createBlock } from "./block-model.js";
 
 export const COLORS = {
   coral: ["#ff7a59", "#e85d3c"], amber: ["#ffc04d", "#e9a21f"], mint: ["#3dd6c0", "#14b8a6"], sky: ["#7cc4ff", "#4a9fe8"],
@@ -68,23 +69,24 @@ function gearGroup(id) {
 
 /* createTigo: ang ginagamit ng lahat. Ibinabalik ang iisang "balat" na puwedeng maging note (Tigo) o Kid (parang tao):
      t.setAvatar({ kind: "kid", skin, hair, … }) / t.setAvatar(null) → palit nang hindi nagbabago ang t.group (posisyon, laki, at mga nakakabit ay nananatili)
-     t.kind() → "tigo" | "kid" */
+     t.kind() → "tigo" | "kid" | "block" (0.11.54: Block = parang laruang kahon, block-model.js) */
+const kindOf = (av) => (av && (av.kind === "kid" || av.kind === "block") ? av.kind : "tigo");
 export function createTigo(opts = {}) {
   const group = new THREE.Group();
   const mem = { color: opts.color || "coral", gear: opts.gear || "none", glow: false, mood: "happy", asleep: false, wear: {}, sit: false };
   let impl = null, kind = "";
   function build(av) {
     if (impl) { impl.dispose(); group.clear(); }
-    kind = av && av.kind === "kid" ? "kid" : "tigo";
-    impl = kind === "kid" ? createKid({ avatar: av, gearGroup }, group) : createNote({ color: mem.color, gear: mem.gear }, group);
-    if (kind === "kid" && mem.gear !== "none" && !mem.wear.hat) impl.wear("hat", mem.gear);
+    kind = kindOf(av);
+    impl = kind === "kid" ? createKid({ avatar: av, gearGroup }, group) : kind === "block" ? createBlock({ avatar: av, gearGroup }, group) : createNote({ color: mem.color, gear: mem.gear }, group);
+    if (kind !== "tigo" && mem.gear !== "none" && !mem.wear.hat) impl.wear("hat", mem.gear);
     Object.keys(mem.wear).forEach((s) => { if (mem.wear[s]) impl.wear(s, mem.wear[s]); });
     impl.setGlow(mem.glow); impl.setMood(mem.mood); impl.sleep(mem.asleep); if (impl.sitPose) impl.sitPose(mem.sit);
   }
   build(opts.avatar);
   return {
     group, get worn() { return impl.worn; }, kind: () => kind,
-    setAvatar(av) { const k = av && av.kind === "kid" ? "kid" : "tigo"; if (k !== kind) build(av); else if (k === "kid") impl.setLook(av); },
+    setAvatar(av) { const k = kindOf(av); if (k !== kind) build(av); else if (k !== "tigo") impl.setLook(av); },
     update: (dt, t) => impl.update(dt, t),
     setMood(m) { mem.mood = m; impl.setMood(m); }, sleep(on) { mem.asleep = !!on; impl.sleep(on); },
     talk: (sec) => impl.talk && impl.talk(sec), talking: () => !!(impl.talking && impl.talking()),
@@ -94,7 +96,8 @@ export function createTigo(opts = {}) {
     wear(slot, id) { mem.wear[slot] = id || null; impl.wear(slot, id); }, setGlow(on) { mem.glow = !!on; impl.setGlow(on); },
     walk: (sp, h) => impl.walk(sp, h), face: (h) => impl.face(h), move: (k, sec) => impl.move(k, sec), moving: () => impl.moving(),
     sitPose(on) { mem.sit = !!on; if (impl.sitPose) impl.sitPose(mem.sit); },
-    ridePose(kind, v, steer) { if (impl.ridePose) impl.ridePose(kind, v, steer); },   // Kid: nagmamaneho (manibela, pedal, hilig)   // Kid: pasulong ang binti (upuan, kart). Note: walang pagbabago
+    ridePose(kind, v, steer, grips) { if (impl.ridePose) impl.ridePose(kind, v, steer, grips); },
+    hold(pts) { if (impl.hold) impl.hold(pts); },   // Kid/Block: kamay sa dalawang punto (plato, keyboard); null = bitaw   // Kid: nagmamaneho (manibela, pedal, hilig)   // Kid: pasulong ang binti (upuan, kart). Note: walang pagbabago
     dispose() { impl.dispose(); },
   };
 }

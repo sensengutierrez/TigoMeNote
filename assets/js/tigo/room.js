@@ -288,10 +288,16 @@ export function buildRoom(level = 1, o = {}) {
     stairs: ST ? { base: ST.base, top: ST.top } : null,
     stairsNear(x, z) { if (!ST) return null; const q = up ? ST.top : ST.base; return Math.hypot(x - q.x, z - q.z) < 0.75 ? (up ? "down" : "up") : null; },
     cover(on) { entries.forEach((e) => { if (e.id === "bed" && e.obj.group.userData.cover) e.obj.group.userData.cover.visible = on; }); },
-    // gamit na may magagawa si Tigo kapag malapit: 🐟 aquarium (pakain) · 🪞 salamin (silip)
+    // gamit na may magagawa si Tigo kapag malapit: 🐟 aquarium (pakain) · 🪞 salamin (silip) · 🛁 shower/bathtub/jacuzzi · 🍳 kalan
     near(x, z) {
       let best = null, bd = 1e9;
       for (const e of entries) {
+        const F = FURN[e.id] || {};
+        if (F.bath || F.cook) {   // 🛁 paligo · 🍳 luto (0.11.54): tatayo sa harap, haharap sa gamit
+          const n = { x: Math.sin(e.r), z: Math.cos(e.r) }, k = F.d / 2 + 0.42, d = Math.hypot(e.x - x, e.z - z);
+          if (d < Math.max(F.w, F.d) / 2 + 1.0 && d < bd) { bd = d; best = { kind: F.bath ? "bath" : "cook", id: e.id, tier: F.bath || F.cook, x: e.x, z: e.z, r: e.r, w: F.w, d: F.d, top: e.obj.group.userData.top || 0, stand: { x: e.x + n.x * k, z: e.z + n.z * k }, face: Math.atan2(-n.x, -n.z), group: e.obj.group }; }
+          continue;
+        }
         if (e.id !== "aquarium" && e.id !== "mirror") continue;
         const n = { x: Math.sin(e.r), z: Math.cos(e.r) }, fx = e.x + n.x * (e.id === "mirror" ? 1.0 : 0.6), fz = e.z + n.z * (e.id === "mirror" ? 1.0 : 0.6);
         const d = Math.hypot(e.x - x, e.z - z); if (d < (e.id === "mirror" ? 1.9 : 1.3) && d < bd) { bd = d; best = { kind: e.id, x: e.x, z: e.z, stand: { x: fx, z: fz }, face: Math.atan2(-n.x, -n.z), feed: e.obj.group.userData.feed }; }
@@ -305,11 +311,14 @@ export function buildRoom(level = 1, o = {}) {
       return { x: e.x, z: e.z, y: FURN[e.id].sleep || 0, face: e.r, id: e.id };
     },
     // nakaupo sa harap ng piano? (upuang malapit, nakaharap sa piano) → { x, z }
+    // mesa sa harap ng nakaupo (🍽️ kain) o desk (🎮 laro) → { id, x, z, r, top, w, d }
+    tableNear(x, z, ids = ["table", "desk"]) { let best = null, bd = 1.35; for (const e of entries) { if (!ids.includes(e.id)) continue; const d = Math.hypot(e.x - x, e.z - z); if (d < bd) { bd = d; best = { id: e.id, x: e.x, z: e.z, r: e.r, top: e.id === "desk" ? 0.75 : 0.65, w: FURN[e.id].w, d: FURN[e.id].d }; } } return best; },
     pianoNear(x, z) { const e = entries.find((q) => q.id === "piano" && Math.hypot(q.x - x, q.z - z) < 1.4); return e ? { x: e.x, z: e.z } : null; },
     tvNear(x, z, max = 4.5) { const e = entries.find((q) => q.id === "tv" && Math.hypot(q.x - x, q.z - z) < max); return e ? { x: e.x, z: e.z } : null; },   // para "manood" si Tigo
     style() { return { ...style }; },
     list() { return entries.map((e) => ({ id: e.id, x: e.x, z: e.z, r: e.r })); },
     _entry(id) { return entries.find((e) => e.id === id) || null; },   // para sa tests
+    last(id) { for (let i = entries.length - 1; i >= 0; i--) if (entries[i].id === id) return entries[i]; return null; },   // huling inilagay na ganitong gamit
     move(e, x, z) { e.x = x; e.z = z; place(e); },
     rotate(e) { e.r = round((((Math.round((e.r || 0) / (Math.PI / 4)) + 1) % 8) * Math.PI) / 4); place(e); },   // laging eksaktong hakbang na 45° (walang naiipong mali)
     selected() { return selected; },

@@ -79,6 +79,8 @@ export const SETS = [
 // Bahay ni Tigo (room-ui.js): gamit, dingding at sahig. Kapareho ng ITEMS sa backend/pet-fast.ts (slot furn / wall / floor)
 export const HOME_TABS = [
   { id: "furn", name: "Furniture", icon: "🛋️" },
+  { id: "bath", name: "Bathroom", icon: "🛁" },      // 0.11.54: slot "furn" pero sariling tab (tab: "bath" / "kitchen")
+  { id: "kitchen", name: "Kitchen", icon: "🍳" },
   { id: "house", name: "House", icon: "🏡" },
   { id: "ride", name: "Rides", icon: "🚲" },
   { id: "bedding", name: "Bedding", icon: "🛏️" },
@@ -115,6 +117,16 @@ export const HOME_ITEMS = [
   { id: "aquarium", slot: "furn", name: "Aquarium", icon: "🐠", price: 150, level: 4 },
   { id: "piano-bench", slot: "furn", name: "Piano bench", icon: "🪑", price: 40, level: 1 },
   { id: "piano", slot: "furn", name: "Piano", icon: "🎹", price: 200, level: 5 },
+  // 0.11.54: 🛁 banyo at 🍳 kusina — "up" = upgrade ng (kailangan muna ito); mas mataas = mas maganda ang Bath / Cook
+  { id: "toilet", slot: "furn", tab: "bath", name: "Toilet", icon: "🚽", price: 40, level: 1 },
+  { id: "sink", slot: "furn", tab: "bath", name: "Sink & mirror", icon: "🚰", price: 35, level: 1 },
+  { id: "shower", slot: "furn", tab: "bath", name: "Shower", icon: "🚿", price: 60, level: 1, tier: 1 },
+  { id: "bathtub", slot: "furn", tab: "bath", name: "Bathtub", icon: "🛁", price: 180, level: 2, tier: 2, up: "shower" },
+  { id: "jacuzzi", slot: "furn", tab: "bath", name: "Jacuzzi", icon: "♨️", price: 600, level: 4, tier: 3, up: "bathtub" },
+  { id: "counter", slot: "furn", tab: "kitchen", name: "Kitchen counter", icon: "🗄️", price: 50, level: 1 },
+  { id: "stove-1", slot: "furn", tab: "kitchen", name: "Stove", icon: "🍳", price: 80, level: 1, tier: 1 },
+  { id: "stove-2", slot: "furn", tab: "kitchen", name: "Gas range", icon: "🔥", price: 300, level: 3, tier: 2, up: "stove-1" },
+  { id: "stove-3", slot: "furn", tab: "kitchen", name: "Chef kitchen", icon: "👨‍🍳", price: 900, level: 5, tier: 3, up: "stove-2" },
   { id: "painting", slot: "furn", name: "Painting", icon: "🖼️", price: 40, level: 1, wall: true },
   { id: "clock", slot: "furn", name: "Wall clock", icon: "🕰️", price: 35, level: 1, wall: true },
   { id: "shelf", slot: "furn", name: "Wall shelf", icon: "🗄️", price: 30, level: 1, wall: true },

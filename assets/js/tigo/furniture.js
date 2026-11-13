@@ -3,6 +3,7 @@
    FURN[id] = { w, d, wall?, flat?, seat? (taas ng upuan), bed? }  → sukat sa sahig (para hindi tumagos si Tigo), wall = nakasabit sa dingding
    buildFurniture(id, opt) → { group, update(t, night), dispose() }  — nakaharap sa +z (papunta sa gitna ng kwarto)
      opt.bed = { blanket, pillow } (bedding.js) para sa kama; group.userData.cover = takip ng kama (itinatago habang may kumot si Tigo)
+   0.11.54: 🛁 toilet, sink, shower, bathtub, jacuzzi (group.userData.washing = may tubig/bula) · 🍳 counter, stove-1/2/3 (group.userData.cooking = apoy, kawali, usok)
    0.11.52: kama na may sariling kumot at unan · gumagalaw na screen ng PC (pc-screen.js) · "stairs" (hagdan, para sa room.js lang)
    May galaw: umiikot ang electric fan, lumalangoy ang isda, totoong oras sa wall clock, ilaw sa gabi (lamp, star lights, TV). */
 import * as THREE from "../../vendor/three/three.module.min.js";
@@ -19,6 +20,9 @@ export const FURN = {
   // 0.11.52: tulugan ng alaga (pet = aso, pusa, ibon, o kahit sino); sleep = taas ng hihigaan
   "dog-bed": { w: 0.95, d: 0.8, flat: true, pet: "dog", sleep: 0.1 }, "cat-bed": { w: 0.75, d: 0.75, flat: true, pet: "cat", sleep: 0.12 },
   "bird-nest": { w: 0.45, d: 0.45, pet: "bird", sleep: 1.02 }, "pet-cushion": { w: 0.7, d: 0.7, flat: true, pet: "any", sleep: 0.07 },
+  // 0.11.54: 🛁 banyo (bath = antas ng paligo) at 🍳 kusina (cook = antas ng lutuin); toilet = upuan
+  toilet: { w: 0.5, d: 0.7, seat: 0.44 }, sink: { w: 0.6, d: 0.45 }, shower: { w: 0.95, d: 0.95, bath: 1 }, bathtub: { w: 1.6, d: 0.8, bath: 2 }, jacuzzi: { w: 1.6, d: 1.6, bath: 3 },
+  counter: { w: 1.0, d: 0.6 }, "stove-1": { w: 0.7, d: 0.6, cook: 1 }, "stove-2": { w: 0.9, d: 0.65, cook: 2 }, "stove-3": { w: 1.3, d: 0.7, cook: 3 },
   mirror: { w: 0.6, d: 0.08, wall: true }, garland: { w: 1.6, d: 0.1, wall: true }, "banner-ph": { w: 0.9, d: 0.05, wall: true }, "banner-bh": { w: 0.9, d: 0.05, wall: true },
 };
 
@@ -74,6 +78,13 @@ export function buildFurniture(id, opt = {}) {
   const ball = (r, mat, x, y, z, p) => add(new THREE.SphereGeometry(r, 16, 12), mat, x, y, z, p);
   const legs = (w, d, h, mat, r = 0.04) => [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => cyl(r, r, h, mat, a * (w / 2 - 0.06), h / 2, b * (d / 2 - 0.06)));
   const wood = () => M(0xb07a4a), dark = () => M(0x6d4a2f);
+  // patak ng tubig (shower): nakikita lang kapag group.userData.washing
+  const water = (x, y, z, r, h) => {
+    const g = new THREE.Group(); group.add(g); const m = M(0x9ed8f5, { transparent: true, opacity: 0.7, roughness: 0.05 }), geo = G(new THREE.CylinderGeometry(0.008, 0.008, 0.12, 4)), dr = [];
+    for (let i = 0; i < 26; i++) { const d = new THREE.Mesh(geo, m); d.userData.o = [Math.cos(i * 2.4) * r * ((i % 5) / 5 + 0.2), Math.sin(i * 2.4) * r * ((i % 5) / 5 + 0.2), (i * 0.137) % 1]; g.add(d); dr.push(d); }
+    anim.push((t) => { g.visible = !!group.userData.washing; if (!g.visible) return; dr.forEach((d) => { const k = (t * 1.6 + d.userData.o[2]) % 1; d.position.set(x + d.userData.o[0], y - k * h, z + d.userData.o[1]); }); });
+    return g;
+  };
   const glowLight = (color, y, dist = 4) => { const l = new THREE.PointLight(color, 0, dist, 1.6); l.position.y = y; group.add(l); return l; };
 
   switch (id) {
@@ -248,6 +259,55 @@ export function buildFurniture(id, opt = {}) {
       const b = M(0x1b1b1f, { roughness: 0.3 }); box(0.9, 0.06, 0.38, b, 0, 0.42, 0); box(0.84, 0.05, 0.32, M(0xb3263b, { roughness: 0.9 }), 0, 0.47, 0); legs(0.9, 0.38, 0.4, b, 0.03); break; }
     case "fridge": { const w = M(0xe8f1f6, { roughness: 0.35 }); box(0.7, 1.7, 0.6, w, 0, 0.85, 0); box(0.68, 0.01, 0.01, M(0x9aa4ad), 0, 1.15, 0.305);
       [1.4, 0.7].forEach((y) => box(0.04, 0.3, 0.04, M(0x9aa4ad), 0.27, y, 0.33)); ball(0.04, M(0xff5a36), -0.15, 1.4, 0.31); ball(0.04, M(0x3dd6c0), -0.05, 1.32, 0.31); break; }
+    // ---------- 🛁 banyo (0.11.54) ----------
+    case "toilet": { const w = M(0xf7f9fb, { roughness: 0.25 }); cyl(0.17, 0.13, 0.36, w, 0, 0.18, 0.06); const bowl = cyl(0.22, 0.17, 0.08, w, 0, 0.4, 0.08); bowl.scale.z = 1.25;
+      cyl(0.2, 0.2, 0.025, M(0xdfe7ee, { roughness: 0.3 }), 0, 0.45, 0.08).scale.z = 1.25; box(0.44, 0.42, 0.18, w, 0, 0.62, -0.24); box(0.46, 0.04, 0.2, w, 0, 0.845, -0.24); box(0.08, 0.03, 0.03, M(0xc9cfd9, { metalness: 0.7, roughness: 0.2 }), 0.15, 0.78, -0.14); break; }
+    case "sink": { const w = M(0xf7f9fb, { roughness: 0.25 }), ch = M(0xc9cfd9, { metalness: 0.8, roughness: 0.2 }); cyl(0.09, 0.12, 0.72, w, 0, 0.36, -0.06);
+      const b = cyl(0.27, 0.2, 0.14, w, 0, 0.8, 0); b.scale.z = 0.75; cyl(0.22, 0.22, 0.02, M(0x9ed8f5, { roughness: 0.1, transparent: true, opacity: 0.7 }), 0, 0.86, 0).scale.z = 0.72;
+      cyl(0.02, 0.02, 0.18, ch, 0, 0.94, -0.15); box(0.04, 0.03, 0.12, ch, 0, 1.03, -0.1); box(0.42, 0.5, 0.03, M(0xbfe6ff, { metalness: 0.4, roughness: 0.05 }), 0, 1.38, -0.2);
+      ball(0.04, M(0xff8fc0), 0.2, 0.89, -0.12); break; }
+    case "shower": {   // sulok na shower: tiles, salaming pinto, ulo ng shower; may patak ng tubig habang naliligo
+      const tile = M(0xd6eefa, { roughness: 0.4 }), ch = M(0xc9cfd9, { metalness: 0.8, roughness: 0.2 }), glass = M(0xbfe6ff, { transparent: true, opacity: 0.32, roughness: 0.05 });
+      box(0.95, 0.06, 0.95, M(0xf2f6f9), 0, 0.03, 0); box(0.95, 2.0, 0.05, tile, 0, 1.0, -0.45); box(0.05, 2.0, 0.95, tile, -0.45, 1.0, 0);
+      box(0.03, 1.8, 0.9, glass, 0.46, 0.96, 0).castShadow = false; box(0.6, 1.8, 0.03, glass, 0.16, 0.96, 0.46).castShadow = false;
+      cyl(0.015, 0.015, 0.4, ch, -0.1, 1.95, -0.25).rotation.x = Math.PI / 2; const head = cyl(0.12, 0.08, 0.04, ch, -0.1, 1.9, -0.05);
+      const drops = water(head.position.x, 1.85, head.position.z, 0.16, 1.8); group.userData.wash = drops; break; }
+    case "bathtub": case "jacuzzi": {   // bathtub: puting tub na may paa · jacuzzi: malaking bilog na may ilaw at bula
+      const big = id === "jacuzzi", w = M(big ? 0x3f8fd8 : 0xf7f9fb, { roughness: 0.25 }), ch = M(0xd9b45a, { metalness: 0.8, roughness: 0.2 });
+      const wat = M(0x8fd6f5, { roughness: 0.05, transparent: true, opacity: 0.75, emissive: big ? 0x2ab0e8 : 0x000000, emissiveIntensity: big ? 0.25 : 0 });
+      if (big) { const r = cyl(0.8, 0.8, 0.5, w, 0, 0.25, 0, undefined, 28); r.material.side = THREE.DoubleSide; cyl(0.86, 0.86, 0.08, M(0xe8eef3, { roughness: 0.4 }), 0, 0.5, 0, undefined, 28); cyl(0.72, 0.72, 0.02, wat, 0, 0.44, 0, undefined, 28);
+        const l = glowLight(0x63d0ff, 0.6, 2.6); anim.push((t, n) => { l.intensity = (n ? 1.0 : 0.35) + Math.sin(t * 2) * 0.08; }); }
+      else { box(1.5, 0.48, 0.74, w, 0, 0.34, 0); box(1.36, 0.02, 0.6, wat, 0, 0.5, 0); [[-0.6, -0.26], [0.6, -0.26], [-0.6, 0.26], [0.6, 0.26]].forEach(([x, z]) => ball(0.06, ch, x, 0.06, z)); cyl(0.02, 0.02, 0.22, ch, -0.66, 0.66, 0); }
+      const bub = []; for (let i = 0; i < (big ? 14 : 8); i++) { const b = ball(big ? 0.07 : 0.06, M(0xffffff, { roughness: 0.2, transparent: true, opacity: 0.85 }), 0, 0.5, 0); b.castShadow = false; b.userData.a = i * 2.4; b.userData.r = (big ? 0.15 : 0.1) + (i % 4) * (big ? 0.14 : 0.13); bub.push(b); }
+      anim.push((t) => { const on = !!group.userData.washing; bub.forEach((b) => { const a = b.userData.a + t * (big ? 0.9 : 0.3); b.position.set(Math.cos(a) * b.userData.r * (big ? 1 : 1.3), (big ? 0.46 : 0.52) + Math.abs(Math.sin(t * 3 + a)) * (on || big ? 0.05 : 0.01), Math.sin(a) * b.userData.r * (big ? 1 : 0.5)); b.scale.setScalar(on || big ? 1 : 0.7); }); }); break; }
+    // ---------- 🍳 kusina (0.11.54): kalan na may 3 antas, counter ----------
+    case "counter": { const w = M(0xf4e3c8), top = M(0xe8e3da, { roughness: 0.3 }); box(1.0, 0.82, 0.58, w, 0, 0.41, 0); box(1.04, 0.05, 0.62, top, 0, 0.845, 0);
+      [-0.25, 0.25].forEach((x) => { box(0.46, 0.36, 0.01, M(0xe9d3b0), x, 0.5, 0.295); box(0.1, 0.02, 0.02, M(0x9aa4ad), x, 0.62, 0.305); });
+      box(0.26, 0.03, 0.18, M(0xb07a4a), -0.2, 0.885, 0); ball(0.06, M(0xff5a36), 0.25, 0.92, -0.05); ball(0.05, M(0x7bc043), 0.33, 0.91, 0.05); break; }
+    case "stove-1": case "stove-2": case "stove-3": {   // 1 = maliit na kalan (2 burner) · 2 = gas range na may oven · 3 = chef kitchen (6 burner, hood, oven na may ilaw)
+      const tier = +id.slice(-1), W = FURN[id].w, D = FURN[id].d, body = M(tier === 3 ? 0x2a2a33 : tier === 2 ? 0xe8eef3 : 0xff8a3d, { roughness: 0.35, metalness: tier > 1 ? 0.4 : 0.1 });
+      const steel = M(0xc9cfd9, { metalness: 0.8, roughness: 0.25 }), black = M(0x1b1b1f, { roughness: 0.5 });
+      const H = tier === 1 ? 0.62 : 0.86; box(W, H, D, body, 0, H / 2, 0); box(W * 0.98, 0.03, D * 0.96, black, 0, H + 0.015, 0);
+      if (tier > 1) { box(W * 0.8, H * 0.5, 0.02, M(0x1b1b1f, { roughness: 0.1, metalness: 0.5 }), 0, H * 0.42, D / 2 + 0.005); box(W * 0.6, 0.03, 0.04, steel, 0, H * 0.74, D / 2 + 0.03); }
+      const n = tier === 3 ? 6 : tier === 2 ? 4 : 2, flames = [];
+      for (let i = 0; i < n; i++) {
+        const cols = n === 6 ? 3 : 2, cx = (i % cols - (cols - 1) / 2) * (W / cols), cz = (Math.floor(i / cols) - (n / cols - 1) / 2) * (D * 0.45);
+        cyl(0.09, 0.09, 0.02, steel, cx, H + 0.035, cz); const f = cyl(0.07, 0.03, 0.04, M(0x3d8bff, { emissive: 0x3d8bff, emissiveIntensity: 1.2, transparent: true, opacity: 0.85 }), cx, H + 0.06, cz); f.visible = false; f.castShadow = false; flames.push(f);
+      }
+      for (let i = 0; i < (tier === 3 ? 5 : 3); i++) cyl(0.025, 0.025, 0.03, black, (i - (tier === 3 ? 2 : 1)) * 0.12, H - 0.06, D / 2 + 0.015).rotation.x = Math.PI / 2;
+      // kawali na may pagkain (lumalabas habang nagluluto)
+      const pan = new THREE.Group(); pan.position.set(flames[0].position.x, H + 0.08, flames[0].position.z); group.add(pan); pan.visible = false;
+      cyl(0.14, 0.12, 0.05, black, 0, 0, 0, pan); box(0.22, 0.02, 0.03, black, 0.24, 0.01, 0, pan); const food = [0xffd166, 0xff7a59, 0x7bc043, 0xfff3e0].map((c, i) => ball(0.035, M(c), Math.cos(i * 1.6) * 0.06, 0.03, Math.sin(i * 1.6) * 0.06, pan));
+      if (tier === 3) { box(W * 0.9, 0.08, D * 0.7, steel, 0, 1.75, -D * 0.1); const h2 = add(new THREE.CylinderGeometry(0.12, W * 0.42, 0.3, 4), steel, 0, 1.55, -D * 0.1); h2.rotation.y = Math.PI / 4; h2.scale.z = 0.7; box(0.18, 0.5, 0.18, steel, 0, 2.05, -D * 0.15);
+        const ol = glowLight(0xffb36b, H * 0.45, 1.6); ol.position.z = D / 2 + 0.1; anim.push((t, nt) => { ol.intensity = group.userData.cooking ? 0.9 : nt ? 0.25 : 0; }); }
+      if (tier === 2) { box(W, 0.22, 0.05, body, 0, H + 0.11, -D / 2 + 0.02); }
+      const steam = []; for (let i = 0; i < 5; i++) { const s2 = ball(0.05, M(0xffffff, { transparent: true, opacity: 0.5, roughness: 1 }), 0, 0, 0, pan); s2.castShadow = false; s2.visible = false; steam.push(s2); }
+      anim.push((t) => {
+        const on = !!group.userData.cooking; pan.visible = on; flames.forEach((f, i) => { f.visible = on && i < Math.min(n, 2 + tier); f.scale.y = 1 + Math.sin(t * 20 + i) * 0.25; });
+        steam.forEach((s2, i) => { const k = (t * 0.7 + i / 5) % 1; s2.visible = on; s2.position.set(Math.sin(i * 2 + t) * 0.05, 0.05 + k * 0.5, Math.cos(i * 3) * 0.04); s2.scale.setScalar(0.6 + k * 1.2); s2.material.opacity = 0.5 * (1 - k); });
+        food.forEach((f, i) => { f.position.y = 0.03 + Math.max(0, Math.sin(t * 9 + i * 1.7)) * (on ? 0.05 : 0); });
+      });
+      group.userData.top = H; break; }
     // ---------- sa dingding (nakaharap sa +z, nakadikit sa z = 0) ----------
     case "painting": { box(0.9, 0.65, 0.04, M(0xc8a165), 0, 0, 0.02); const cv = document.createElement("canvas"); cv.width = 96; cv.height = 64; const c = cv.getContext("2d");
       const g = c.createLinearGradient(0, 0, 0, 64); g.addColorStop(0, "#ffb26b"); g.addColorStop(1, "#ffe0f0"); c.fillStyle = g; c.fillRect(0, 0, 96, 64);
