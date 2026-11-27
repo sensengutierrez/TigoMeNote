@@ -42,14 +42,19 @@
     el.className = "call-ov" + (video ? " is-video" : "") + (who.group ? " is-group" : "");
     el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", "Call with " + (who.title || who.display_name || ""));
     el.innerHTML =
+      '<video class="call-self" playsinline autoplay muted aria-hidden="true"></video>' +   // sariling camera, buong screen habang wala pang video ang kausap (parang Messenger)
       '<div class="call-grid" aria-live="polite"></div>' +
+      '<button type="button" class="call-min" data-call="min" aria-label="Minimize call" title="Minimize">' + I("minimize") + "</button>" +
       '<div class="call-who">' + avatar(who, 116) + '<h2 translate="no">' + esc(who.title || who.display_name || "@" + (who.username || "")) + '</h2><p class="call-status" aria-live="polite"></p></div>' +
       '<video class="call-local hidden" playsinline autoplay muted></video>' +
       '<div class="call-fx hidden" role="dialog" aria-label="Effects"></div>' +
       '<div class="call-note" aria-live="polite"></div>' +
+      '<div class="call-pills" role="group" aria-label="Camera effects"></div>' +
       '<div class="call-bar"></div>';
     document.body.appendChild(el);
     document.body.classList.add("in-call");
+    miniDrag(el);
+    native("setInCall", true);   // Android app: lalabas bilang maliit na window (PiP) kapag umalis sa app habang may tawag
     return el;
   }
   function status(t) { if (cur) cur.el.querySelector(".call-status").textContent = t; }
@@ -58,15 +63,30 @@
     if (!cur) return; var n = cur.el.querySelector(".call-note"); n.textContent = t; n.classList.add("on");
     clearTimeout(n._t); n._t = setTimeout(function () { n.classList.remove("on"); }, 3000);
   }
+  // mga button sa ibaba (parang Messenger): 📷 · 🎤 · 📸 · 🔄 · (🖥️ sa computer) · ☎ End — lumalabas na rin habang nagri-ring
   function liveBar() {
-    var c = cur, r = c.rtc, on = r && r.hasCam(), sh = r && r.sharing();
-    bar(btn("mic", c.muted ? "micOff" : "mic", c.muted ? "Unmute" : "Mute", c.muted ? "off" : "") +
-      btn("cam", on ? "video" : "videoOff", on ? "Camera off" : "Camera on", on ? "" : "off") +
-      (on ? btn("fx", "", "Effects", c.fxOpen ? "sel" : "", "✨") : "") +
-      (r && r.canShare() && !/Android|iPhone|iPad/i.test(navigator.userAgent) ? btn("share", "monitor", sh ? "Stop share" : "Share screen", sh ? "sel" : "") : "") +
+    var c = cur, r = c.rtc, on = r && r.hasCam(), sh = r && r.sharing(), fx = r && r.fx();
+    bar(btn("cam", on ? "video" : "videoOff", on ? "Camera off" : "Camera on", on ? "on" : "") +
+      btn("mic", c.muted ? "micOff" : "mic", c.muted ? "Unmute" : "Mute", c.muted ? "off" : "") +
       btn("shot", "camera", "Screenshot") +
       (on && !sh ? btn("flip", "camSwitch", "Flip") : "") +
-      btn("end", "callEnd", "End", "end"));
+      (r && r.canShare() && !/Android|iPhone|iPad/i.test(navigator.userAgent) ? btn("share", "monitor", sh ? "Stop share" : "Share", sh ? "sel" : "") : "") +
+      btn("end", "callEnd", c.mode === "out" && !c.group ? "Cancel" : "End", "end"));
+    // mabilis na effects sa ibabaw ng mga button (kapag naka-on ang camera)
+    var pills = c.el.querySelector(".call-pills");
+    pills.innerHTML = on && fx && !sh ? [["touch", "✨", "Touch up", fx.touch()], ["blur", "🌫️", "Blur", fx.back() === "blur"], ["fx", "😎", "Effects", c.sheet === "fx"], ["bg", "🖼️", "Background", c.sheet === "bg" || (fx.back() !== "none" && fx.back() !== "blur")]]
+      .map(function (x) { return '<button type="button" class="call-pill' + (x[3] ? " on" : "") + '" data-call="' + x[0] + '" aria-pressed="' + !!x[3] + '"><span aria-hidden="true">' + x[1] + "</span>" + x[2] + "</button>"; }).join("") : "";
+    selfFull();
+  }
+  // sariling camera sa buong screen hanggang may video ang kausap (o kapag naka-minimize ang kausap)
+  function selfFull() {
+    var c = cur; if (!c) return;
+    var lv = c.el.querySelector(".call-local"), sv = c.el.querySelector(".call-self");
+    var peerVid = c.el.querySelector(".call-tile.has-video"), mine = lv.srcObject && !lv.classList.contains("hidden");
+    var on = !!(mine && !peerVid && (!c.group || !c.rtc || !c.rtc.peers().length));
+    c.el.classList.toggle("self-full", on);
+    if (on) { if (sv.srcObject !== lv.srcObject) sv.srcObject = lv.srcObject; sv.classList.toggle("mirror", lv.classList.contains("mirror")); }
+    else if (sv.srcObject) sv.srcObject = null;
   }
   function mmss(s) { return Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0"); }
   function guard(e) { if (cur && cur.mode !== "done") { e.preventDefault(); e.returnValue = ""; } }
@@ -96,6 +116,7 @@
     g.dataset.n = String(list.length);
     c.el.classList.toggle("has-peers", list.length > 0);
     c.el.classList.toggle("peer-cam", list.length === 1 && list[0].cam);
+    selfFull();
     if (list.length && c.mode === "out") { stopTone(); clearTimeout(c.noAns); status("Connecting…"); }
     if (c.group && c.mode === "live") status(list.length ? list.length + 1 + " in call · " + (c.startAt ? mmss((Date.now() - c.startAt) / 1000) : "") : "Waiting for others…");
     // group: lahat ay umalis → tapos na rin ako (pagkalipas ng ilang segundo)
@@ -103,19 +124,46 @@
     if (list.length) { c.hadPeers = true; clearTimeout(c.aloneT); }
   }
 
-  // ---------- ✨ effects ----------
-  function fxPanel() {
+  // ---------- 😎 Effects / 🖼️ Background: sheet sa ibaba na may bilog na pagpipilian (parang Messenger) ----------
+  function sheet(kind) {
     var c = cur, box = c.el.querySelector(".call-fx"), fx = c.rtc && c.rtc.fx();
     if (!fx) { UI.toast("Effects aren't available here."); return; }
-    c.fxOpen = !c.fxOpen; box.classList.toggle("hidden", !c.fxOpen); liveBar();
-    if (!c.fxOpen) return;
-    box.style.bottom = (c.el.querySelector(".call-bar").offsetHeight + 8) + "px";   // laging nasa ibabaw ng mga button
-    box.innerHTML = '<p class="call-fx-t">Filters</p><div class="call-fx-row">' + TMN_CALL_FX.FILTERS.map(function (f) {
-      return '<button type="button" class="call-chip' + (fx.filter() === f.id ? " on" : "") + '" data-fx-filter="' + f.id + '" aria-pressed="' + (fx.filter() === f.id) + '"><span class="call-sw" style="filter:' + f.css + '"></span>' + f.name + "</button>";
-    }).join("") + '</div><p class="call-fx-t">Fun faces</p><div class="call-fx-row">' + TMN_CALL_FX.MASKS.map(function (m) {
-      return '<button type="button" class="call-chip' + (fx.mask() === m.id ? " on" : "") + '" data-fx-mask="' + m.id + '" aria-pressed="' + (fx.mask() === m.id) + '"><span class="call-sw-e">' + m.icon + "</span>" + m.name + "</button>";
-    }).join("") + "</div>";
+    c.sheet = c.sheet === kind ? null : kind;
+    box.classList.toggle("hidden", !c.sheet); liveBar();
+    if (!c.sheet) return;
+    var circ = function (attr, id, on, inner, name) { return '<button type="button" class="call-circ' + (on ? " on" : "") + '" ' + attr + '="' + id + '" aria-pressed="' + on + '" title="' + name + '"><span class="call-circ-i">' + inner + "</span><small>" + name + "</small></button>"; };
+    if (kind === "fx") {
+      box.innerHTML = '<span class="call-grab" aria-hidden="true"></span><div class="call-fx-row">' +
+        TMN_CALL_FX.MASKS.map(function (m) { return circ("data-fx-mask", m.id, fx.mask() === m.id, '<b class="call-emo2">' + m.icon + "</b>", m.name); }).join("") + "</div>" +
+        '<div class="call-fx-row">' + TMN_CALL_FX.FILTERS.map(function (f) { return circ("data-fx-filter", f.id, fx.filter() === f.id, '<i class="call-sw" style="filter:' + f.css + '"></i>', f.name); }).join("") + "</div>";
+    } else {
+      box.innerHTML = '<span class="call-grab" aria-hidden="true"></span><div class="call-fx-row">' + TMN_CALL_FX.BACKS.map(function (b) {
+        var inner = b.id === "none" || b.id === "blur" ? '<b class="call-emo2">' + b.icon + "</b>" : '<canvas width="64" height="64" data-bgprev="' + b.id + '"></canvas>';
+        return circ("data-fx-back", b.id, fx.back() === b.id, inner, b.name);
+      }).join("") + "</div>";
+      box.querySelectorAll("[data-bgprev]").forEach(function (cv) { TMN_CALL_FX._back(cv.getContext("2d"), cv.dataset.bgprev, 64, 64); });
+    }
+    box.style.bottom = (c.el.querySelector(".call-bar").offsetHeight + c.el.querySelector(".call-pills").offsetHeight + 8) + "px";   // nasa ibabaw ng mga pill para makalipat agad
   }
+  // ---------- ↙ minimize: maliit na window sa loob ng app; sa Android app, Picture-in-Picture kapag lumabas ----------
+  function setMini(on) {
+    var c = cur; if (!c) return;
+    c.el.classList.toggle("mini", on); document.body.classList.toggle("in-call", !on);
+    c.el.setAttribute("aria-modal", on ? "false" : "true");
+    if (on) { c.sheet = null; c.el.querySelector(".call-fx").classList.add("hidden"); if (!c.miniPos) c.miniPos = { r: 12, b: 96 }; c.el.style.right = c.miniPos.r + "px"; c.el.style.bottom = c.miniPos.b + "px"; }
+    else { c.el.style.right = c.el.style.bottom = ""; }
+  }
+  function miniDrag(el) {
+    var d = null;
+    el.addEventListener("pointerdown", function (e) { if (!cur || !el.classList.contains("mini")) return; d = { x: e.clientX, y: e.clientY, r: cur.miniPos.r, b: cur.miniPos.b, moved: false }; el.setPointerCapture(e.pointerId); });
+    el.addEventListener("pointermove", function (e) {
+      if (!d) return; var dx = e.clientX - d.x, dy = e.clientY - d.y; if (Math.abs(dx) + Math.abs(dy) > 6) d.moved = true;
+      cur.miniPos = { r: Math.max(6, Math.min(innerWidth - el.offsetWidth - 6, d.r - dx)), b: Math.max(6, Math.min(innerHeight - el.offsetHeight - 6, d.b - dy)) };
+      el.style.right = cur.miniPos.r + "px"; el.style.bottom = cur.miniPos.b + "px";
+    });
+    el.addEventListener("pointerup", function () { if (d && !d.moved && cur && el.classList.contains("mini")) setMini(false); d = null; });
+  }
+  function native(fn, arg) { try { var N = window.TMNNative; if (N && N[fn]) N[fn](arg); } catch (e) {} }
 
   // ---------- 📸 screenshot (larawan ng screen ng tawag) ----------
   function cover(cx, v, x, y, w, h, fit, mirror) {
@@ -172,6 +220,8 @@
     bar(""); c.el.querySelector(".call-fx").classList.add("hidden");
     c.el.classList.add("ending"); c.el.classList.remove("has-peers", "peer-cam");
     window.removeEventListener("beforeunload", guard);
+    native("setInCall", false);
+    c.sheet = null; c.el.querySelector(".call-pills").innerHTML = ""; c.el.classList.remove("self-full");
     setTimeout(function () { c.el.remove(); if (cur === c) cur = null; if (!cur) document.body.classList.remove("in-call"); }, 1500);
   }
 
@@ -199,12 +249,12 @@
         v.classList.toggle("is-screen", !!info.screen);
         if (info.preview) { if (!v.srcObject || v.srcObject.getVideoTracks()[0] !== info.preview) v.srcObject = new MediaStream([info.preview]); }
         else v.srcObject = null;
-        if (c.mode === "live") liveBar();
+        if (c.mode === "live" || c.mode === "out" || c.mode === "answering") liveBar(); else selfFull();
       },
       onEnd: function (why) { if (!c.group || why === "ended") finish(why === "declined" ? "Declined" : why === "cancel" ? "Missed call" : null, "peer"); },
       onNote: note,
     });
-    try { await c.rtc.start(); }
+    try { await c.rtc.start(); if (c.mode === "out" || c.mode === "answering") liveBar(); }
     catch (e) {
       var denied = e && (e.name === "NotAllowedError" || e.name === "SecurityError");
       finish(denied ? "Allow the microphone to call" : "No microphone found", "media");
@@ -279,14 +329,18 @@
 
   document.addEventListener("click", function (e) {
     if (!cur) return;
-    var c = cur, f1 = e.target.closest && e.target.closest("[data-fx-filter]"), f2 = e.target.closest && e.target.closest("[data-fx-mask]");
-    if ((f1 || f2) && c.el.contains(e.target) && c.rtc) {
-      if (f1) { c.rtc.setFilter(f1.dataset.fxFilter); c.fxOpen = false; fxPanel(); return; }
-      var id = f2.dataset.fxMask; f2.classList.add("loading");
-      c.rtc.setMask(id).then(function () { c.fxOpen = false; fxPanel(); })
-        .catch(function () { f2.classList.remove("loading"); UI.toast("Fun faces need a good internet connection. Try again in a bit.", 4000); });
+    var c = cur, cl = function (q) { return e.target.closest && e.target.closest(q); };
+    var f1 = cl("[data-fx-filter]"), f2 = cl("[data-fx-mask]"), f3 = cl("[data-fx-back]");
+    if ((f1 || f2 || f3) && c.el.contains(e.target) && c.rtc) {
+      var redraw = function () { var k = c.sheet; c.sheet = null; if (k) sheet(k); };
+      if (f1) { c.rtc.setFilter(f1.dataset.fxFilter); redraw(); return; }
+      var t = f2 || f3; t.classList.add("loading");
+      (f2 ? c.rtc.setMask(f2.dataset.fxMask) : c.rtc.setBack(f3.dataset.fxBack)).then(redraw)
+        .catch(function () { t.classList.remove("loading"); UI.toast("Effects need a good internet connection the first time. Try again in a bit.", 4000); });
       return;
     }
+    // naka-minimize: pindot sa maliit na window = palakihin (hawak ng miniDrag); huwag pansinin ang ibang button
+    if (c.el.classList.contains("mini")) return;
     var b = e.target.closest && e.target.closest("[data-call]"); if (!b || !c.el.contains(b)) return;
     var a = b.dataset.call;
     if (a === "accept") accept();
@@ -296,9 +350,20 @@
     else if (a === "mic" && c.rtc) { c.muted = !c.muted; c.rtc.mute(c.muted); liveBar(); }
     else if (a === "cam" && c.rtc) {
       b.disabled = true;
-      c.rtc.camera(!c.rtc.hasCam()).catch(function () { UI.toast("Couldn't turn on the camera. Please allow the camera for TigoMeNote.", 4500); }).then(function () { if (!c.rtc.hasCam()) { c.fxOpen = false; c.el.querySelector(".call-fx").classList.add("hidden"); } liveBar(); });
+      c.rtc.camera(!c.rtc.hasCam()).catch(function () { UI.toast("Couldn't turn on the camera. Please allow the camera for TigoMeNote.", 4500); }).then(function () { if (!c.rtc.hasCam()) { c.sheet = null; c.el.querySelector(".call-fx").classList.add("hidden"); } liveBar(); });
     }
-    else if (a === "fx") fxPanel();
+    else if (a === "fx" || a === "bg") sheet(a);
+    else if (a === "touch" && c.rtc && c.rtc.fx()) { c.rtc.setTouch(!c.rtc.fx().touch()); liveBar(); }
+    else if (a === "blur" && c.rtc && c.rtc.fx()) {
+      b.classList.add("loading");
+      c.rtc.setBack(c.rtc.fx().back() === "blur" ? "none" : "blur").then(liveBar)
+        .catch(function () { b.classList.remove("loading"); UI.toast("Blur needs a good internet connection the first time. Try again in a bit.", 4000); });
+    }
+    else if (a === "min") {
+      // sa Android app: Picture-in-Picture (lumulutang sa ibabaw ng ibang apps); sa web: maliit na window sa loob ng page
+      var N = window.TMNNative; if (N && N.enterPip) { try { N.enterPip(); return; } catch (er) {} }
+      setMini(true);
+    }
     else if (a === "share" && c.rtc) {
       c.rtc.share(!c.rtc.sharing()).then(function () { liveBar(); if (c.rtc.sharing()) note("You're sharing your screen. Movies from paid apps may show black to others."); })
         .catch(function (err) { if (!err || err.name !== "NotAllowedError") UI.toast("Couldn't share your screen."); liveBar(); });

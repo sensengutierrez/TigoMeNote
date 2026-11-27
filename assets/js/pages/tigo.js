@@ -664,7 +664,7 @@
     var p = live() || {}, zz = !!p.asleep, exit = $("tgExit");
     var it = [["feed", "🍽️", "Feed", zz], ["play", "⚽", "Play", zz], ["clean", "🛁", "Clean"], [zz ? "wake" : "sleep", zz ? "☀️" : "🌙", zz ? "Wake up" : "Sleep"], ["closet", "👗", "Closet"], ["avatar", "🧒", "Avatar"],
       ["games", "🎮", "Games", zz], ["friends", "👥", "Friends"], ["world", "🌍", "World chat"], ["house", "🏠", "House"], ["journey", "🗺️", "Journey"], ["photo", "📸", "Photo"],
-      ["sound", "🔊", "Sound"], ["full", exit ? "✕" : "⛶", exit ? "Exit" : "Full screen"], ["guide", "📖", "Guide"]].concat(window.TMN_USER && TMN_USER.role === "Admin" ? [["give", "🪙", "Give coins"]] : []);
+      ["sound", "🔊", "Sound"], ["full", "⛶", $("stage").classList.contains("full") ? "Small screen" : "Full screen"], ["guide", "📖", "Guide"], ["exit", "🚪", "Exit Tigo"]].concat(window.TMN_USER && TMN_USER.role === "Admin" ? [["give", "🪙", "Give coins"]] : []);
     var bar = function (k, ic, nm) { var v = Math.round(p[k] || 0); return '<div class="tgm-row"><span>' + ic + " " + nm + '</span><i class="tgm-bar"><b style="width:' + v + '%"></b></i><b>' + v + "%</b></div>"; };
     var box = document.createElement("div"); box.className = "tgm";
     box.innerHTML = '<div class="tgm-stats"><div class="tgm-row"><span>🪙 Coins</span><b>' + (p.coins || 0) + '</b></div><div class="tgm-row"><span>⭐ Level</span><b>' + (p.level || 1) + " · " + Math.max(0, (p.next || 0) - (p.xp || 0)) + ' XP to next</b></div>' +
@@ -680,6 +680,7 @@
       if (k === "guide") { location.href = "guide.html#g-tigo"; return; }
       if (k === "sound") { $("tgSound").click(); return; }
       if (k === "full") { (exit || $("tgFull")).click(); return; }
+      if (k === "exit") { leaveTigo(); return; }
       doAction(k);
     });
   }
@@ -836,6 +837,17 @@
       else { if (document.fullscreenElement) await document.exitFullscreen(); if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }
     } catch (e) { /* ok lang kung hindi suportado */ }
   });
+  // ✕ Exit: lumabas sa Tigo (ibalik ang screen) — nasa kanang itaas at sa Game menu (0.11.60)
+  function leaveTigo() {
+    if (inTigoApp) { try { N.exitApp(); } catch (e) {} return; }
+    if (nativeFull) { try { N.setLandscape(false); N.setImmersive(false); } catch (e) {} }
+    try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+    if (history.length > 1 && document.referrer && document.referrer.indexOf(location.host) > -1) history.back();
+    else location.href = "home.html";
+  }
+  $("tgLeave").addEventListener("click", leaveTigo);
+  // buksan agad nang buong screen (sa app: pahiga at walang status bar; sa website: buong page)
+  if (!inTigoApp) setTimeout(function () { if (!$("stage").classList.contains("full")) $("tgFull").click(); }, 350);
   document.addEventListener("fullscreenchange", function () {
     if (!inTigoApp && !document.fullscreenElement && $("stage").classList.contains("full")) { $("stage").classList.remove("full"); document.body.classList.remove("tg-full"); $("tgFull").setAttribute("aria-pressed", "false"); layout(); }
   });

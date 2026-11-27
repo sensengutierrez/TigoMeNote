@@ -161,6 +161,9 @@ updated: 2026-10-24
 | 2026-11-27 | Group call = mesh (walang media server), hanggang 8; sinumang aktibong miyembro ng group ang puwedeng tumawag | Libre; sapat para sa barkada; mas mabigat sa data kapag marami |
 | 2026-11-27 | Fun faces: MediaPipe Face Landmarker (kinukuha lang kapag pinili) + sariling disenyo sa canvas | Libre at walang server; gumagana sa web at APK |
 | 2026-11-27 | Update ng APK: sa loob lang ng app; Chrome ay reserba lang kapag 2 beses pumalya | Hiling ni Bench: hindi lilipat sa ibang app |
+| 2026-11-27 | Live = Cloudflare Realtime SFU (isang upload, Cloudflare ang nagpapadala); 720p/24fps ~1.2 Mbps camera, 1080p/15fps ~1.8 Mbps screen | Magaan sa phone ng nagla-live; malinaw; walang sariling media server |
+| 2026-11-27 | Live: 18+ lang ang nagla-live; nakikita ng followers; chat dumadaan sa moderation | Kaligtasan (may teen users) |
+| 2026-11-27 | Minimize ng tawag: maliit na window sa loob ng app + Android Picture-in-Picture | Hiling ni Bench (parang Messenger bubbles) |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

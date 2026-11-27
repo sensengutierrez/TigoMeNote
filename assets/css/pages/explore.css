@@ -39,3 +39,7 @@
   .ex-find { display: inline-grid; }
 }
 @media (min-width: 1500px) { .layout:has(> .ex-aside) { grid-template-columns: minmax(0, 760px) 340px; } .ex-main { max-width: 760px; } }
+
+/* 🔴 Live button (0.11.60) */
+.ex-golive { background: #ff2d55; color: #fff; border: 0; gap: 6px; }
+.ex-golive:hover { background: #e5244a; color: #fff; }

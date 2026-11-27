@@ -155,6 +155,34 @@
     } catch (e) { UI.toast(e.message); }
   }
 
+  // ---------- 🔴 Live now (sarili + mga fina-follow) · Go live ----------
+  var L = window.TMN_LIVE;
+  async function lives() {
+    if (!L || document.hidden || L.active()) return;
+    try {
+      var r = await L.list(), row = $("liveRow");
+      var list = r.lives || [];
+      row.classList.toggle("hidden", !list.length);
+      row.innerHTML = list.map(function (l) {
+        var u = l.user || {};
+        return '<button type="button" class="ex-live-i" data-live="' + UI.esc(l.id) + '" data-mine="' + (l.mine ? 1 : 0) + '" aria-label="Watch ' + UI.esc(u.display_name || u.username) + ' live">' +
+          '<span class="avatar" style="--size:56px">' + (u.avatar_url ? '<img alt="" src="' + UI.esc(u.avatar_url) + '">' : UI.esc(UI.initials(u.display_name || u.username || "?"))) + '</span><span class="ex-live-tag">LIVE</span><small translate="no">' + UI.esc(l.mine ? "You" : u.display_name || "@" + u.username) + "</small></button>";
+      }).join("") + (list.length ? '<button type="button" class="ex-live-i ex-live-go" data-live-go="1"><span class="ex-live-plus" aria-hidden="true">🔴</span><small>Go live</small></button>' : "");
+    } catch (e) {}
+  }
+  if (L) {
+    $("liveBtn").addEventListener("click", function () { L.host(); });
+    $("liveRow").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-live],[data-live-go]"); if (!b) return;
+      if (b.dataset.liveGo || b.dataset.mine === "1") { if (b.dataset.mine === "1") UI.toast("You're live on another device or tab."); else L.host(); return; }
+      L.watch(b.dataset.live);
+    });
+    lives(); setInterval(lives, 30000);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) lives(); });
+    var lid = new URLSearchParams(location.search).get("live");   // link mula sa notification
+    if (lid) { L.watch(lid); history.replaceState(null, "", location.pathname); }
+  } else $("liveBtn").classList.add("hidden");
+
   paintTabs();
   load(false);
   suggestions();

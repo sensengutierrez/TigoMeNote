@@ -1,4 +1,11 @@
 {
+  "0.11.60": [
+    "🔴 Live in Explore: go live from your phone camera or your computer (camera or screen) — followers can watch, chat and send ❤️",
+    "📞 Calls look like Messenger: see yourself full screen while it rings, with all buttons (screenshot works while ringing too)",
+    "✨ Touch up, 🌫️ Blur and 🖼️ Backgrounds in video calls, plus Effects in a new circle picker",
+    "↙ Minimize a call into a small floating window (in the Android app it floats over other apps)",
+    "🎮 Tigo opens full screen right away, with ✕ Exit at the top right and in the Game menu"
+  ],
   "0.11.59": [
     "Updates download and install right inside the app — no more going to Chrome",
     "TigoMeNote Chat gets the latest version (group calls, effects and screenshot)",

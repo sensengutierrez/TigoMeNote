@@ -157,6 +157,8 @@
       flip: function () { facing = facing === "user" ? "environment" : "user"; return cam ? camOn() : Promise.resolve(); },
       setFilter: function (id) { if (fx) { fx.setFilter(id); pushVideo(); } },
       setMask: function (id) { return fx ? fx.setMask(id).then(pushVideo) : Promise.reject(new Error("no effects")); },
+      setTouch: function (on) { if (fx) { fx.setTouch(on); pushVideo(); } },
+      setBack: function (id) { return fx ? fx.setBack(id).then(pushVideo) : Promise.reject(new Error("no effects")); },
       fx: function () { return fx; },
       share: function (on) { return on ? shareOn() : Promise.resolve(shareOff()); },
       sharing: function () { return !!screen; },

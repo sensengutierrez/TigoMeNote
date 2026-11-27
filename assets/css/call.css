@@ -1,6 +1,6 @@
 /* TigoMeNote · call.css — screen ng tawag (components/call-view.js). Kinukuha lang kapag may tawag (call-watch.js). */
 .call-ov {
-  position: fixed; inset: 0; z-index: 400; display: grid; grid-template-rows: 1fr auto; overflow: hidden; color: #fff;
+  position: fixed; inset: 0; z-index: 400; display: grid; grid-template-rows: 1fr auto auto; overflow: hidden; color: #fff;
   background: radial-gradient(circle at 50% 30%, #3b3a52 0%, #1b1b26 60%, #0e0e14 100%);
   animation: call-in .25s ease;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -107,3 +107,77 @@ body.in-call { overflow: hidden; }
   .call-ov, .call-ov.is-incoming .call-av, .call-btn.accept .ic { animation: none; }
 }
 [dir="rtl"] .call-local { right: auto; left: 14px; }
+
+/* ---------- sariling camera sa buong screen (parang Messenger: habang tumatawag / wala pang video ang kausap) ---------- */
+.call-self { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; display: none; z-index: 0; }
+.call-self.mirror { transform: scaleX(-1); }
+.call-ov.self-full .call-self { display: block; }
+.call-ov.self-full .call-local { display: none; }
+.call-ov.self-full .call-who { align-self: start; padding-top: 22px; gap: 6px; }
+.call-ov.self-full .call-who .call-av { --size: 72px !important; font-size: 26px; }
+.call-ov.self-full .call-who h2 { font-size: 22px; }
+.call-ov.self-full .call-note { top: 150px; }
+@media (max-width: 480px) { .call-pills { gap: 6px; padding: 0 8px; } .call-pill { height: 34px; padding: 0 11px; font-size: 12.5px; gap: 5px; } }
+.call-ov.self-full::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(rgba(0,0,0,.45), transparent 26%, transparent 66%, rgba(0,0,0,.55)); }
+
+/* ---------- ↙ minimize ---------- */
+.call-min { position: absolute; left: 12px; top: calc(12px + env(safe-area-inset-top)); z-index: 6; width: 42px; height: 42px; border: 0; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(0,0,0,.35); color: #fff; cursor: pointer; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.call-min .ic { width: 20px; height: 20px; }
+.call-min:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.call-ov.is-incoming .call-min, .call-ov.ending .call-min { display: none; }
+[dir="rtl"] .call-min { left: auto; right: 12px; }
+
+/* ---------- mga pill: Touch up · Blur · Effects · Background ---------- */
+.call-pills { position: relative; z-index: 4; display: flex; justify-content: safe center; gap: 8px; padding: 0 10px; overflow-x: auto; scrollbar-width: none; }
+.call-pills::-webkit-scrollbar { display: none; }
+.call-pills:empty { display: none; }
+.call-pill { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: 0; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 650; color: #fff; cursor: pointer;
+  background: rgba(0,0,0,.42); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.call-pill.on { background: #fff; color: #1b1b26; }
+.call-pill.loading { opacity: .55; pointer-events: none; }
+.call-pill:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+/* ---------- sheet na may bilog na pagpipilian ---------- */
+.call-fx { border-radius: 22px 22px 18px 18px; padding-top: 6px; }
+.call-grab { display: block; width: 40px; height: 4px; border-radius: 4px; background: rgba(255,255,255,.35); margin: 2px auto 10px; }
+.call-fx-row + .call-fx-row { margin-top: 8px; }
+.call-circ { flex: none; display: grid; justify-items: center; gap: 5px; width: 70px; border: 0; background: none; color: #fff; font: inherit; cursor: pointer; padding: 2px 0; }
+.call-circ-i { width: 60px; height: 60px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 2px transparent; transition: box-shadow .15s, transform .12s; }
+.call-circ.on .call-circ-i { box-shadow: 0 0 0 3px #fff; }
+.call-circ:active .call-circ-i { transform: scale(.94); }
+.call-circ.loading { opacity: .5; pointer-events: none; }
+.call-circ small { font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,.88); max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.call-circ canvas { width: 100%; height: 100%; display: block; }
+.call-circ .call-sw { width: 100%; height: 100%; border-radius: 50%; }
+.call-emo2 { font-size: 28px; line-height: 1; font-weight: 400; }
+.call-circ:focus-visible .call-circ-i { outline: 3px solid #fff; outline-offset: 2px; }
+
+/* ---------- maliit na window (naka-minimize sa loob ng app) ---------- */
+.call-ov.mini { inset: auto; width: 116px; height: 168px; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.45); border: 2px solid rgba(255,255,255,.25); padding: 0; cursor: grab; touch-action: none; z-index: 450; grid-template-rows: 1fr; }
+.call-ov.mini > :not(.call-grid):not(.call-self):not(.call-who) { display: none !important; }
+.call-ov.mini .call-who { align-self: center; padding: 6px; gap: 4px; }
+.call-ov.mini .call-who .call-av { --size: 52px !important; font-size: 19px; }
+.call-ov.mini .call-who h2 { font-size: 12px; max-width: 100px; }
+.call-ov.mini .call-status { font-size: 11px; }
+.call-ov.mini.peer-cam .call-who, .call-ov.mini.self-full .call-who h2 { display: none; }
+.call-ov.mini .call-tile-name { display: none; }
+.call-ov.mini::before { display: none; }
+@media (min-width: 900px) { .call-ov.mini { width: 220px; height: 140px; } }
+
+/* ---------- Android Picture-in-Picture: video lang ---------- */
+html.pip .call-ov { padding: 0; }
+html.pip .call-ov > :not(.call-grid):not(.call-self):not(.call-who) { display: none !important; }
+html.pip .call-ov .call-who h2 { font-size: 14px; }
+html.pip .call-ov .call-who .call-av { --size: 48px !important; }
+html.pip .call-ov.peer-cam .call-who { display: none; }
+@media (orientation: landscape) and (max-height: 520px) {   /* phone na pahiga: mas maliit para kasya */
+  .call-ov.self-full .call-who { padding-top: 10px; }
+  .call-ov.self-full .call-who .call-av { --size: 48px !important; }
+  .call-bar { padding: 6px 6px 10px; }
+  .call-btn .ic { width: 42px; height: 42px; padding: 11px; }
+  .call-btn small { display: none; }
+  .call-pills { padding-bottom: 2px; }
+  .call-fx { max-height: 62vh; }
+}

@@ -81,6 +81,19 @@ public class MainActivity extends BridgeActivity {{
     }}
     @Override
     public void onPause() {{ paused = true; super.onPause(); }}
+    // 📞 Habang may tawag (0.11.60): kapag lumabas sa app (Home), lumiliit ang tawag sa maliit na window (Picture-in-Picture)
+    private volatile boolean inCall = false;
+    private void pip() {{
+        if (Build.VERSION.SDK_INT < 26) return;
+        try {{ enterPictureInPictureMode(new android.app.PictureInPictureParams.Builder().setAspectRatio(new android.util.Rational(9, 16)).build()); }} catch (Exception e) {{ }}
+    }}
+    @Override
+    public void onUserLeaveHint() {{ super.onUserLeaveHint(); if (inCall) pip(); }}
+    @Override
+    public void onPictureInPictureModeChanged(boolean on, android.content.res.Configuration cfg) {{
+        super.onPictureInPictureModeChanged(on, cfg);
+        try {{ getBridge().getWebView().evaluateJavascript("document.documentElement.classList.toggle('pip'," + on + ")", null); }} catch (Exception e) {{ }}
+    }}
     @Override
     public void onResume() {{
         super.onResume(); paused = false;
@@ -257,6 +270,11 @@ public class MainActivity extends BridgeActivity {{
         // ✕ Exit (Tigo app): isara ang app
         @JavascriptInterface
         public void exitApp() {{ runOnUiThread(() -> finishAndRemoveTask()); }}
+        // 📞 call-view.js: may tawag ba (para sa Picture-in-Picture), at "minimize" na button
+        @JavascriptInterface
+        public void setInCall(boolean on) {{ inCall = on; }}
+        @JavascriptInterface
+        public void enterPip() {{ runOnUiThread(() -> pip()); }}
         @JavascriptInterface
         public void setBars(final String color, final boolean dark) {{
             runOnUiThread(() -> {{
@@ -312,6 +330,10 @@ open(g, "w").write(s)
 # 4) manifest
 m = os.path.join(AND, "app/src/main/AndroidManifest.xml"); s = open(m).read()
 s = re.sub(r'android:configChanges="([^"]*)"', lambda k: 'android:configChanges="' + (k.group(1) if "density" in k.group(1) else k.group(1) + "|density") + '"', s, count=1)
+# Picture-in-Picture para sa tawag (0.11.60): kailangan ng screenSize|smallestScreenSize|screenLayout para hindi mag-reload
+s = re.sub(r'android:configChanges="([^"]*)"', lambda k: 'android:configChanges="' + "|".join(dict.fromkeys(k.group(1).split("|") + ["screenSize", "smallestScreenSize", "screenLayout"])) + '"', s, count=1)
+if "supportsPictureInPicture" not in s and app in ("main", "chat"):
+    s = s.replace('android:name=".MainActivity"', 'android:name=".MainActivity"\n            android:supportsPictureInPicture="true"', 1)
 # permissions: camera (litrato/video, video call), mic (voice, video), location (Safety, weather, Explore), notifications, vibrate
 # Bawat app: kung ano lang ang kailangan (Play: bawal humingi ng hindi ginagamit)
 BASE = ["POST_NOTIFICATIONS", "VIBRATE", "WAKE_LOCK"]
