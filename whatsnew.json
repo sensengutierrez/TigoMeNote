@@ -1,4 +1,9 @@
 {
+  "0.11.61": [
+    "🔴 Live now works with YouTube, TikTok, Facebook and Twitch: go live there, paste the link in Explore, and your followers watch here",
+    "💬 Chat, ❤️ and a viewer count on every live — free, no limits",
+    "Fixed: \"End your live?\" now shows on top of the live screen"
+  ],
   "0.11.60": [
     "🔴 Live in Explore: go live from your phone camera or your computer (camera or screen) — followers can watch, chat and send ❤️",
     "📞 Calls look like Messenger: see yourself full screen while it rings, with all buttons (screenshot works while ringing too)",

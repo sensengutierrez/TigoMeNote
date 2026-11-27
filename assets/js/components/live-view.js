@@ -2,7 +2,9 @@
    Video: Cloudflare Realtime (SFU) sa pamamagitan ng live-fast — isang upload lang ang nagla-live, ang Cloudflare ang nagpapadala sa mga nanonood.
    Magaan pero malinaw: 720p, 24 fps, hanggang ~1.2 Mbps (camera) · 1080p/15 fps hanggang ~1.8 Mbps (screen sa computer).
    Chat (dumadaan sa moderation sa server) at ❤️ / bilang ng nanonood sa Supabase Realtime (lihim na channel ng live).
-   TMN_LIVE.host()       → buksan ang "Go live" (preview, pamagat, Camera/Screen)
+   0.11.61: Live gamit ang link ng YouTube / Twitch / Facebook / TikTok — libre (sila ang nagpapadala ng video); dito ang player, chat at ❤️.
+     Ang sariling camera (Cloudflare) ay lumalabas lang kapag naka-setup ang keys (status.ready).
+   TMN_LIVE.host()       → "Go live": ipaste ang link (at camera kung naka-setup)
    TMN_LIVE.watch(id)    → manood ng live
    TMN_LIVE.list()       → Promise<{ ready, lives }> (para sa "Live now" sa Explore) */
 (function () {
@@ -79,9 +81,9 @@
     var c = cur; if (!c) return;
     if (ev === "chat" && p && !c.seen[p.id]) { c.seen[p.id] = 1; chatLine(p); }
     else if (ev === "heart") heart();
-    else if (ev === "hi" && c.kind === "host" && p && p.u) c.viewers[p.u] = Date.now();
-    else if (ev === "count" && c.kind === "watch") count(p && p.n);
-    else if (ev === "end" && c.kind === "watch") ended();
+    else if (ev === "hi" && (c.kind === "host" || c.link) && p && p.u) c.viewers[p.u] = Date.now();
+    else if (ev === "count" && c.kind === "watch" && !c.link) count(p && p.n);
+    else if (ev === "end" && c.kind === "watch") { if (c.link && c.live && c.live.mine) return; ended(); }
   }
   function count(n) { var c = cur; if (!c) return; var e = c.el.querySelector(".lv-count"); e.classList.remove("hidden"); e.textContent = "👁 " + fmt(n || 0); }
 
@@ -91,8 +93,61 @@
     if (!window.RTCPeerConnection || !navigator.mediaDevices) { UI.toast("Live doesn't work in this browser. Try Chrome, Edge or Safari."); return; }
     var st;
     try { st = await TMN_API.call("live", "status", {}); } catch (e) { UI.toast(e.message || "Couldn't open Live."); return; }
-    if (!st.ready) { UI.toast("Live isn't set up yet. Please try again later.", 4000); return; }
     if (!st.can_live) { UI.toast("Going live is for 18+ accounts. You can still watch lives.", 4500); return; }
+    linkSheet(st);
+  }
+  // ---------- 🔗 live sa ibang platform: ipaste ang link ----------
+  var PLAT = { youtube: "YouTube", twitch: "Twitch", facebook: "Facebook", tiktok: "TikTok" };
+  function linkSheet(st) {
+    var f = document.createElement("form");
+    f.className = "lv-link";
+    f.innerHTML =
+      '<p class="muted small">Start your live in the YouTube, TikTok, Facebook or Twitch app first. Then tap <b>Share → Copy link</b> there and paste it here. Your followers will see it in <b>Live now</b>.</p>' +
+      '<div class="lv-plats" aria-hidden="true"><span>▶️ YouTube</span><span>🎵 TikTok</span><span>📘 Facebook</span><span>🟣 Twitch</span></div>' +
+      '<label class="field"><span>Link of your live</span><input class="input" name="link" type="url" inputmode="url" required placeholder="https://youtu.be/…" autocomplete="off"></label>' +
+      '<label class="field"><span>Title (optional)</span><input class="input" name="title" maxlength="80" placeholder="What\'s your live about?"></label>' +
+      '<button type="submit" class="btn btn-primary btn-block lv-share">🔴 Share my live</button>' +
+      (st.ready && navigator.mediaDevices ? '<button type="button" class="btn btn-ghost btn-block" data-lvcam="1">📷 Go live with my camera instead</button>' : "");
+    var m = TMN_MODAL.open({ title: "Go live", size: "sm", cls: "modal-sheet", body: f });
+    var cam = f.querySelector("[data-lvcam]");
+    if (cam) cam.addEventListener("click", function () { m.close(); camHost(st); });
+    f.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var b = f.querySelector(".lv-share"); b.disabled = true;
+      try {
+        var r = await TMN_API.call("live", "start", { link: f.link.value.trim(), title: f.title.value.trim() });
+        m.close();
+        UI.toast("You're live on Explore! Your followers can watch here 🎉", 4000);
+        document.dispatchEvent(new CustomEvent("tmn:live-changed"));
+        watch(r.live.id);
+      } catch (err) { b.disabled = false; UI.toast(err.message || "Couldn't share the live.", 4500); }
+    });
+    setTimeout(function () { try { f.link.focus(); } catch (e) {} }, 60);
+  }
+  function embedSrc(l) {
+    var host = location.hostname || "localhost", mute = l.mine;
+    if (l.platform === "youtube" && /^[A-Za-z0-9_-]{11}$/.test(l.embed || "")) return "https://www.youtube-nocookie.com/embed/" + l.embed + "?autoplay=1&playsinline=1&rel=0" + (mute ? "&mute=1" : "");
+    if (l.platform === "twitch" && /^[a-z0-9_]{3,25}$/.test(l.embed || "")) return "https://player.twitch.tv/?channel=" + l.embed + "&parent=" + encodeURIComponent(host) + "&autoplay=true" + (mute ? "&muted=true" : "");
+    if (l.platform === "facebook" && /^https:\/\/(www\.facebook\.com|fb\.watch)\//.test(l.embed || "")) return "https://www.facebook.com/plugins/video.php?href=" + encodeURIComponent(l.embed) + "&show_text=false&autoplay=true" + (mute ? "&muted=true" : "");
+    return "";   // TikTok: walang player na puwedeng ilagay — bubuksan sa TikTok
+  }
+  function linkPlayer(c, l) {
+    var mid = c.el.querySelector(".lv-mid"), src = embedSrc(l), name = PLAT[l.platform] || "the app", u = l.user || {};
+    var open = /^https:\/\//.test(l.link || "") ? l.link : "";
+    c.el.classList.add("is-link");
+    c.el.querySelector(".lv-video").classList.add("hidden");
+    mid.innerHTML = src
+      ? '<iframe class="lv-frame" src="' + esc(src) + '" title="Live on ' + esc(name) + '" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>'
+      : '<div class="lv-card">' + avatar(u, 84) + '<p><b translate="no">' + esc(u.display_name || "@" + u.username) + "</b> is live on " + esc(name) + "</p>" + (l.title ? '<p class="lv-card-t">' + esc(l.title) + "</p>" : "") +
+        (open ? '<a class="btn lv-open-big" href="' + esc(open) + '" target="_blank" rel="noopener noreferrer">Watch on ' + esc(name) + "</a>" : "") + "</div>";
+    if (open && src) {
+      var a = document.createElement("a"); a.className = "lv-open"; a.href = open; a.target = "_blank"; a.rel = "noopener noreferrer"; a.textContent = "Open in " + name + " ↗";
+      c.el.querySelector(".lv-top").insertBefore(a, c.el.querySelector(".lv-x"));
+    }
+  }
+  async function camHost(st) {
+    if (cur) return;
+    if (!st.ready) { UI.toast("Live isn't set up yet. Please try again later.", 4000); return; }
     cur = { kind: "host", ice: st.ice, source: "camera", facing: "user", seen: {}, viewers: {}, tracks: [] };
     var c = cur; c.el = mount("host");
     c.el.querySelector(".lv-who").innerHTML = avatar(me(), 34) + '<b translate="no">' + esc(me().display_name || "@" + (me().username || "")) + "</b>";
@@ -187,6 +242,7 @@
       var r = await TMN_API.call("live", "watch", { id: id }, { timeout: 25000 });
       if (cur !== c) return;
       c.live = r.live;
+      if (r.live.platform && r.live.platform !== "cf") return linkWatch(c, r.live);
       var u = r.live.user || {};
       c.el.querySelector(".lv-who").innerHTML = avatar(u, 34) + '<span><b translate="no">' + esc(u.display_name || "@" + u.username) + "</b>" + (r.live.title ? "<small>" + esc(r.live.title) + "</small>" : "") + "</span>";
       c.el.querySelector(".lv-badge").classList.remove("hidden"); count(r.live.viewers);
@@ -210,6 +266,21 @@
       c.el.querySelector(".lv-mid").innerHTML = '<p class="lv-wait">' + esc(e.status === 410 ? "This live has ended." : e.message || "Couldn't open the live.") + "</p>";
     }
   }
+  // panonood ng live sa ibang platform: player nila + chat at ❤️ dito; bilang ng nanonood = mga "hi" (kasama ang sarili)
+  async function linkWatch(c, l) {
+    var u = l.user || {};
+    c.link = true; c.viewers = {};
+    c.el.querySelector(".lv-who").innerHTML = avatar(u, 34) + '<span><b translate="no">' + esc(u.display_name || "@" + u.username) + "</b>" + (l.title ? "<small>" + esc(l.title) + "</small>" : "<small>on " + esc(PLAT[l.platform] || "") + "</small>") + "</span>";
+    c.el.querySelector(".lv-badge").classList.remove("hidden"); count(1);
+    linkPlayer(c, l);
+    await rt(); if (cur !== c) return;
+    c.ch = TMN_RT.join(l.channel, onRt);
+    var hi = function () { if (c.ch) c.ch.send("hi", { u: me().id || "x" }); };
+    var tally = function () { var now = Date.now(), n = 1; Object.keys(c.viewers).forEach(function (k) { if (now - c.viewers[k] < 70000) n++; else delete c.viewers[k]; }); count(n); };
+    setTimeout(hi, 500); c.hiT = setInterval(function () { hi(); tally(); }, 30000); c.beatT = setInterval(tally, 5000);
+    c.el.querySelector(".lv-bot").innerHTML = chatBox() + '<button type="button" class="lv-round" data-lv="heart" aria-label="Send a heart">❤️</button>' +
+      (l.mine ? '<button type="button" class="btn lv-end" data-lv="endlink">End</button>' : "");
+  }
   function sound() {
     var c = cur; if (!c) return; var v = c.el.querySelector(".lv-video");
     v.muted = false;
@@ -221,6 +292,7 @@
     c.el.querySelector(".lv-mid").innerHTML = '<p class="lv-wait">The live has ended. Thanks for watching 💛</p>';
     c.el.querySelector(".lv-bot").innerHTML = "";
     if (c.pc) { try { c.pc.close(); } catch (e) {} }
+    var fr = c.el.querySelector(".lv-frame"); if (fr) fr.remove();
   }
 
   // ---------- mga pindot ----------
@@ -228,9 +300,16 @@
     var c = cur; if (!c) return;
     var b = e.target.closest && e.target.closest("[data-lv]"); if (!b || !c.el.contains(b)) return;
     var a = b.dataset.lv;
-    if (a === "close") { if (c.kind === "host" && c.live) { if (confirm("End your live?")) stop(); } else close(); }
+    if (a === "close") { if (c.kind === "host" && c.live) { TMN_MODAL.confirm("End your live?", { okText: "End live", danger: true }).then(function (ok) { if (ok && cur === c) stop(); }); } else close(); }
     else if (a === "go") go();
     else if (a === "stop") stop();
+    else if (a === "endlink") {
+      TMN_MODAL.confirm("End your live on TigoMeNote? (Stop it in " + (PLAT[c.live.platform] || "the other app") + " too.)", { okText: "End live", danger: true }).then(function (ok) {
+        if (!ok || cur !== c) return;
+        TMN_API.call("live", "end", { id: c.live.id }).catch(function () {});
+        close(); UI.toast("Live ended"); document.dispatchEvent(new CustomEvent("tmn:live-changed"));
+      });
+    }
     else if (a === "flip") { c.facing = c.facing === "user" ? "environment" : "user"; media().catch(function () { UI.toast("Couldn't switch the camera."); }); }
     else if (a === "mute") { c.aud.enabled = !c.aud.enabled; b.textContent = c.aud.enabled ? "🎤" : "🔇"; b.setAttribute("aria-label", c.aud.enabled ? "Mute" : "Unmute"); }
     else if (a === "src-camera" || a === "src-screen") {

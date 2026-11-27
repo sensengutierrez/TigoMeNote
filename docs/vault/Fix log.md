@@ -102,6 +102,7 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-27 · Messenger: hindi dumating ang 0.11.58 → pumalya ang build ng chat dahil sa "429 Too Many Requests" ng Maven Central → Gradle cache + 3 subok (`.github/workflows/apk.yml`)
 - 2026-11-27 · Tawag: tinatakpan ng Effects sheet ang mga pill (hindi makalipat sa Background) → ang ibaba ng sheet = taas ng bar + pills (`components/call-view.js`)
 - 2026-11-27 · Tawag sa phone: lumalampas ang hanay ng pill sa kaliwa → `justify-content: safe center` + mas maliit na pill (`call.css`)
+- 2026-11-27 · Live: hindi makita ang "End your live?" (confirm/modal natatakpan ng screen ng live) → TMN_MODAL + `body.in-live .modal-backdrop { z-index: 440 }` (`live.css`, `components/live-view.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

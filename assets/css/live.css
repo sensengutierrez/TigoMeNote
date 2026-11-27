@@ -61,3 +61,35 @@ body.in-live { overflow: hidden; }
   .lv-hearts { bottom: 60px; }
 }
 @media (prefers-reduced-motion: reduce) { .lv-heart { animation-duration: .01s; } }
+
+/* ---------- 0.11.61: live sa YouTube / Twitch / Facebook / TikTok ---------- */
+.lv-link { display: grid; gap: 12px; }
+.lv-link .field { display: grid; gap: 6px; }
+.lv-link .field > span { font-size: 13px; font-weight: 600; }
+.lv-plats { display: flex; flex-wrap: wrap; gap: 6px; }
+.lv-plats span { padding: 4px 10px; border-radius: 999px; background: var(--surface-2, rgba(0,0,0,.06)); font-size: 12.5px; font-weight: 600; }
+.lv-ov.is-link::before { display: none; }
+.lv-ov.is-link .lv-mid { padding: 0; min-height: 0; }
+.lv-frame { width: 100%; height: 100%; border: 0; background: #000; display: block; }
+.lv-card { display: grid; justify-items: center; gap: 10px; text-align: center; padding: 20px; max-width: 360px; }
+.lv-card p { margin: 0; font-size: 16px; }
+.lv-card-t { opacity: .85; font-size: 14px !important; }
+.lv-open-big { background: #fff; color: #111; border: 0; height: 46px; padding: 0 22px; border-radius: 999px; font-weight: 700; display: inline-flex; align-items: center; text-decoration: none; }
+.lv-open { flex: none; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.14); color: #fff; font-size: 12px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.lv-ov.is-link .lv-chat { max-height: 26vh; padding-top: 8px; }
+@media (max-width: 480px) { .lv-open { font-size: 11px; padding: 5px 8px; } .lv-ov.is-link .lv-count { display: none; } }
+@media (orientation: landscape) and (max-height: 520px) {
+  .lv-ov.is-link { grid-template-columns: 1fr min(300px, 38vw); grid-template-rows: auto 1fr auto; }
+  .lv-ov.is-link .lv-top { grid-column: 1 / -1; }
+  .lv-ov.is-link .lv-mid { grid-column: 1; grid-row: 2 / 4; }
+  .lv-ov.is-link .lv-chat { grid-column: 2; grid-row: 2; max-height: none; width: auto; align-self: end; }
+  .lv-ov.is-link .lv-bot { grid-column: 2; grid-row: 3; padding: 6px 8px 8px; }
+}
+@media (min-width: 900px) {
+  .lv-ov.is-link { grid-template-columns: 1fr 360px; grid-template-rows: auto 1fr auto; }
+  .lv-ov.is-link .lv-top { grid-column: 1 / -1; }
+  .lv-ov.is-link .lv-mid { grid-column: 1; grid-row: 2 / 4; padding: 0 0 12px 12px; }
+  .lv-ov.is-link .lv-chat { grid-column: 2; grid-row: 2; max-height: none; width: auto; align-self: end; }
+  .lv-ov.is-link .lv-bot { grid-column: 2; grid-row: 3; }
+}
+body.in-live .modal-backdrop { z-index: 440; }   /* "End live?" at ibang tanong: nasa ibabaw ng screen ng live */
