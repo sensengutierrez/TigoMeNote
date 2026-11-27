@@ -1,7 +1,9 @@
 /* TigoMeNote · app-update.js — APK lang (isinisingit ng apk/build-web.py pagkatapos ng app-mode.js)
-   Kapag may mas bagong version sa tigomenote.com/app-version.json, HINDI na magagamit ang app hangga't hindi naa-update:
-   lalabas ang "Download new version" + What's new → dina-download sa Chrome (gumagana sa lahat ng phone; hindi Play Store kaya walang auto-install).
-   Inalis ang "Install inside the app" (0.11.33): "There was a problem while parsing the package" sa phone ni Bench; Chrome lang ang maaasahan.
+   Kapag may mas bagong version sa tigomenote.com/app-version.json, HINDI na magagamit ang app hangga't hindi naa-update.
+   0.11.57: in-app update (OTA) — "Update now": dina-download ng app mismo ang APK mula sa GitHub Releases (itinutuloy kapag naputol),
+   sinusuri ang laki at SHA-256, saka binubuksan ang installer ng Android (native: apk/native/AppUpdater.java, plugin "TmnUpdate").
+   Kung kailangan: "Install unknown apps" para sa app na ito (isang beses). Reserba: "Download in Chrome instead".
+   Ang lumang Tigo app (app-version.json "tigo".moved = "main"): ida-download ang TigoMeNote (nasa loob na ang Tigo).
    Chine-check: pagbukas, pagbalik sa app (resume) at bawat 30 minuto. Walang internet = hindi hinaharang. */
 (function () {
   if (!window.TMN_IN_APP) return;
@@ -9,6 +11,7 @@
   var Cap = window.Capacitor, P = (Cap && Cap.Plugins) || {};
   var URL_V = (C.apps && C.apps.remoteVersion) || "https://tigomenote.com/app-version.json";
   var NAMES = { main: "TigoMeNote", chat: "TigoMeNote Chat", tigo: "Tigo" };
+  var U = P.TmnUpdate || null, state = "idle", file = null, waitPerm = false;
   var code = function (v) { var p = String(v || "0.0.0").split(".").map(Number); return (p[0] || 0) * 1000000 + (p[1] || 0) * 1000 + (p[2] || 0); };
   var mine = code(C.version), box = null, info = null, notes = [];
   var URL_N = URL_V.replace(/app-version\.json.*$/, "whatsnew.json");
@@ -44,21 +47,81 @@
         (notes.length ? '<div class="upd-new"><b>What’s new</b>' + notes.map(function (n) {
           return '<p class="upd-v">' + n.v + "</p><ul>" + n.items.map(function (t) { return "<li>" + String(t).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }) + "</li>"; }).join("") + "</ul>";
         }).join("") + "</div>" : "") +
+        '<div class="upd-bar hidden" role="progressbar" aria-label="Download" aria-valuemin="0" aria-valuemax="100"><i></i></div>' +
         '<p class="upd-msg small" aria-live="polite"></p>' +
-        '<button type="button" class="btn btn-primary btn-lg upd-dl">⬇ Download new version</button>' +
-        '<p class="upd-how faint small">Opens in Chrome. When it finishes, tap the downloaded file → Install. Your data stays.</p>' +
+        '<button type="button" class="btn btn-primary btn-lg upd-go">' + (U && !info.moved ? "⬇ Update now" : "⬇ Download new version") + "</button>" +
+        (U && !info.moved ? '<button type="button" class="upd-alt upd-chrome">Download in Chrome instead</button>' :
+          '<p class="upd-how faint small">Opens in Chrome. When it finishes, tap the downloaded file → Install. Your data stays.</p>') +
       "</div>";
     document.body.appendChild(box);
     document.documentElement.classList.add("upd-open");
     document.dispatchEvent(new Event("tmn:upd")); // hal. Tigo 3D: tumitigil habang nag-a-update
-    box.querySelector(".upd-dl").addEventListener("click", function () { chrome(); msg("Downloading in Chrome… then open the file to install."); });
+    if (info.moved) {   // lumang Tigo app → TigoMeNote na
+      box.querySelector("#updT").textContent = "Tigo is now inside TigoMeNote";
+      box.querySelector(".upd-sub").textContent = "TigoMeNote " + info.version + mb;
+      box.querySelector(".upd-txt").textContent = "Install TigoMeNote and open Tigo from the menu. Your Tigo stays the same. You can uninstall this app after.";
+    }
+    box.querySelector(".upd-go").addEventListener("click", function () { if (waitPerm) { U.openInstallSettings(); return; } if (U && !info.moved) inApp(); else { chrome(); msg("Downloading in Chrome… then open the file to install."); } });
+    var alt = box.querySelector(".upd-chrome"); if (alt) alt.addEventListener("click", function () { chrome(); msg("Downloading in Chrome… then open the file to install."); });
   }
   function msg(t) { box.querySelector(".upd-msg").textContent = t || ""; }
   function chrome() { if (NA && NA.openUrl) NA.openUrl(info.url); else location.href = info.url; }
+  function bar(pct) {
+    var b = box.querySelector(".upd-bar"); b.classList.toggle("hidden", pct == null);
+    if (pct != null) { b.querySelector("i").style.width = Math.max(2, Math.min(100, pct)) + "%"; b.setAttribute("aria-valuenow", String(Math.round(pct))); }
+  }
+  function btn(text, disabled) { var g = box.querySelector(".upd-go"); g.textContent = text; g.disabled = !!disabled; }
+
+  // ---------- in-app: download → suriin → install ----------
+  var listening = false;
+  async function inApp() {
+    if (state === "downloading") return;
+    if (state === "ready" && file) return install();
+    state = "downloading"; btn("Downloading…", true); bar(0); msg("Starting download…");
+    if (!listening && U.addListener) {
+      listening = true;
+      U.addListener("progress", function (p) {
+        if (state !== "downloading" || !p) return;
+        var t = p.total || info.size || 0, pct = t ? (p.done / t) * 100 : 0;
+        bar(pct); msg(t ? (p.done / 1048576).toFixed(1) + " / " + (t / 1048576).toFixed(1) + " MB" : (p.done / 1048576).toFixed(1) + " MB");
+      });
+    }
+    try {
+      var r = await U.download({ name: APP_ID + "-" + info.version, url: info.github || info.url, url2: info.url, sha256: info.sha256 || "", size: info.size || 0 });
+      file = r.path; state = "ready"; bar(100);
+      install();
+    } catch (e) {
+      state = "idle"; bar(null);
+      btn("⬇ Try again"); msg((e && e.message ? e.message : "Download failed.") + " Check your internet and try again.");
+    }
+  }
+  async function install() {
+    msg("Verified ✓ Opening the installer…"); btn("Install update");
+    try {
+      var r = await U.install({ path: file });
+      if (r && r.needPermission) {
+        waitPerm = true;
+        msg('One time only: allow "Install unknown apps" for ' + NAMES[APP_ID] + ", then come back here.");
+        btn("Open settings");
+        return;
+      }
+      msg("Tap Install on the next screen. Your data stays.");
+    } catch (e) { msg((e && e.message) || "Couldn't open the installer."); btn("Install update"); }
+  }
+  function onResume() {
+    if (waitPerm && state === "ready" && box) {
+      U.canInstall().then(function (c) {
+        if (!c || !c.allowed) return;
+        waitPerm = false; install();
+      }).catch(function () {});
+      return;
+    }
+    check();
+  }
 
   // Back button: sarado ang ibang bagay, hindi ang update
-  if (P.App && P.App.addListener) P.App.addListener("resume", check);
-  document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+  if (P.App && P.App.addListener) P.App.addListener("resume", onResume);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) onResume(); });
   setInterval(check, 30 * 60 * 1000);
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", check); else check();
   window.TMN_UPDATE = { check: check, open: function () { return !!box; } };

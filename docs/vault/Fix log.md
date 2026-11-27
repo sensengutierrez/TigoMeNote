@@ -96,6 +96,7 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-27 · Desktop: hindi nag-i-scroll ang feed kapag nasa menu ang mouse o kapag PgDn/Space → content box ang nag-i-scroll, hindi ang page → ipinapasa ang gulong at mga scroll key sa content (`components/app-shell.js`)
 - 2026-11-27 · Laptop na mababa ang screen: naiipit ang Share button at may scrollbar ang menu → `flex-shrink: 0`, siksik na menu, nakatagong scrollbar (`shell.css`)
 - 2026-11-27 · Tawag: walang tunog kahit konektado → magkahiwalay na stream ang dating ng audio at video (napalitan ng video-only) → iisang remote stream na pinagsasama ang mga track (`components/call-rtc.js`)
+- 2026-11-27 · Desktop Explore: putol ang mahabang photo (cover) at nawala ang side panel → contain + malabong likod; ibinalik ang hanap at suggestions sa gilid; tiyak na taas ng track (absolute) para hindi lumampas ang img (`social.css`, `pages/explore.css`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

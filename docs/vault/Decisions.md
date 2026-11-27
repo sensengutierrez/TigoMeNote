@@ -156,6 +156,8 @@ updated: 2026-10-24
 | 2026-11-27 | Desktop Explore: isang malapad na feed, walang side panel (hanap at suggestions sa 🔍) | Hiling ni Bench: hindi pang-phone ang itsura; mas malaki ang post |
 | 2026-11-27 | 📞 Tawag: WebRTC diretso sa dalawang phone; ang server ay para sa pahintulot, ring at lihim na signal channel lang | Walang audio/video sa server; libre at mabilis |
 | 2026-11-27 | Tawag: magkaibigan lang (mutual follow o Family/Friends), 1-on-1 muna; ring = Realtime + push (walang full-screen na tawag sa APK) | Ligtas para sa 13+; simple ang unang bersyon |
+| 2026-11-27 | In-app update: native na download + SHA-256 + installer (hindi sa Play build); reserba ang Chrome | Sagot sa "problem while parsing the package" noon: hindi na umaabot sa installer ang putol o maling file |
+| 2026-11-27 | Dalawang app na lang: TigoMeNote (kasama ang Tigo) at TigoMeNote Chat; ang lumang Tigo app ay itinuturo sa TigoMeNote | Mas madaling i-update at mas kaunti ang build |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

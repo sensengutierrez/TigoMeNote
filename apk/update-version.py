@@ -13,6 +13,10 @@ d[app] = {"name": cfg["appName"], "id": cfg["appId"], "version": ver, "code": a 
           "github": f"https://github.com/{repo}/releases/download/{app}-v{ver}/{os.path.basename(f)}",
           "size": os.path.getsize(f), "sha256": hashlib.sha256(open(f, "rb").read()).hexdigest(),
           "date": datetime.date.today().isoformat()}
+# 0.11.57: ang Tigo ay nasa loob na ng TigoMeNote. Ang lumang Tigo app ay makakakita ng "update" na TigoMeNote mismo (ibang app)
+# → ida-download ang TigoMeNote; puwede nang i-uninstall ang Tigo. (Wala nang hiwalay na build ng tigo.)
+if app == "main":
+    d["tigo"] = dict(d["main"], moved="main")
 with open(p, "w") as o:
     json.dump(d, o, indent=2); o.write("\n")
 print("app-version.json:", app, ver)

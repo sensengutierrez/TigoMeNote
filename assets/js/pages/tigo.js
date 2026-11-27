@@ -821,10 +821,14 @@
     xb.addEventListener("click", function () { try { N.exitApp(); } catch (e) {} });
   }
   // ---------- full screen / landscape (website at TigoMeNote app) ----------
+  // Sa TigoMeNote app (0.11.57, nasa loob na ang Tigo): native — nakatago ang status bar at pahiga ang screen habang full
+  var nativeFull = !inTigoApp && window.TMN_IN_APP && N && N.setLandscape && N.setImmersive;
+  if (nativeFull) window.addEventListener("pagehide", function () { try { N.setLandscape(false); N.setImmersive(false); } catch (e) {} });
   if (!inTigoApp) $("tgFull").addEventListener("click", async function () {
     var st = $("stage"), on = !st.classList.contains("full");
     st.classList.toggle("full", on); document.body.classList.toggle("tg-full", on); layout();
     this.setAttribute("aria-pressed", on);
+    if (nativeFull) { try { N.setImmersive(on); N.setLandscape(on); } catch (e) {} setTimeout(layout, 400); return; }
     try {
       // buong page ang full screen (hindi lang ang stage) para makita pa rin ang mga sheet at menu (Feed, Games, Sound)
       var de = document.documentElement;

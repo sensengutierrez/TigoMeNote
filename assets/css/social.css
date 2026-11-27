@@ -217,7 +217,16 @@
 .sx-write .mod-hint { order: 10; flex-basis: 100%; margin-top: 0; }
 /* Modal (Report, Delete) sa ibabaw ng status viewer */
 body:has(.st-view) .modal-backdrop { z-index: 95; }
-@media (min-width: 900px) { .feed .pcard-media { max-height: min(84vh, 920px); } }
+/* Desktop: buong photo ang kita (walang putol) — hanggang ~84% ng taas ng screen; ang sobrang espasyo ay malabong bersyon ng photo */
+@media (min-width: 900px) {
+  .feed .pcard-media { max-height: min(84vh, 920px); }
+  .feed .pcard-media > .pc-track { position: absolute; inset: 0; height: auto; z-index: 0; }   /* tiyak na taas (aspect-ratio + max-height) para kasya ang photo */
+  .feed .pc-slide { overflow: hidden; }
+  .feed .pc-slide > img, .feed .pc-slide > video { object-fit: contain; position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; }
+  .feed .pc-slide .pc-blur { position: absolute; inset: -20px; width: calc(100% + 40px); height: calc(100% + 40px); object-fit: cover; filter: blur(22px) brightness(.75); z-index: 0; pointer-events: none; }
+}
+.pc-blur { display: none; }
+@media (min-width: 900px) { .feed .pc-blur { display: block; } }
 
 /* My status (Profile) */
 .st-mine { display: grid; gap: 10px; margin-bottom: 16px; }

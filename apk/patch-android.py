@@ -9,6 +9,7 @@
 import json, os, re, shutil, sys, glob
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 app = sys.argv[1] if len(sys.argv) > 1 else "main"
+PLAY = os.environ.get("TMN_PLAY") == "1"     # bersyon para sa Google Play (walang sariling download ng update)
 AND = os.path.join(ROOT, "apk", app, "android")
 cfg = json.load(open(os.path.join(ROOT, "apk", app, "capacitor.config.json")))
 pkg = cfg["appId"]
@@ -95,6 +96,7 @@ public class MainActivity extends BridgeActivity {{
             if (prev != null) prev.uncaughtException(t, e);
         }});
         registerPlugin(TmnNative.class);   // Gallery ng phone + music player (apk/native/*.java)
+{"" if PLAY else "        registerPlugin(AppUpdater.class);   // in-app update mula sa GitHub Releases (apk/native/AppUpdater.java)"}
         super.onCreate(savedInstanceState);
         final WebView wv = getBridge().getWebView();
         WebSettings s = wv.getSettings();
@@ -247,6 +249,11 @@ public class MainActivity extends BridgeActivity {{
                 }} else c.show(WindowInsetsCompat.Type.systemBars());
             }});
         }}
+        // Tigo (sa loob ng TigoMeNote): ⛶ = pahiga ang screen habang naglalaro; balik sa dati kapag lumabas
+        @JavascriptInterface
+        public void setLandscape(final boolean on) {{
+            runOnUiThread(() -> setRequestedOrientation(on ? android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE : android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED));
+        }}
         // ✕ Exit (Tigo app): isara ang app
         @JavascriptInterface
         public void exitApp() {{ runOnUiThread(() -> finishAndRemoveTask()); }}
@@ -265,7 +272,7 @@ public class MainActivity extends BridgeActivity {{
 
 # 2a) Native: music player (service, notification, lock screen, widget) at Gallery ng phone — apk/native/
 jdir = os.path.dirname(java)
-for f in ("MusicEngine.java", "MusicService.java", "MusicWidget.java", "MessagesWidget.java", "UploadKeepService.java", "TmnNative.java"):
+for f in ("MusicEngine.java", "MusicService.java", "MusicWidget.java", "MessagesWidget.java", "UploadKeepService.java", "TmnNative.java") + (() if PLAY else ("AppUpdater.java", "TmnUpdateProvider.java")):
     open(os.path.join(jdir, f), "w").write(open(os.path.join(ROOT, "apk/native", f)).read().replace("__PKG__", pkg))
 nres = os.path.join(ROOT, "apk/native/res")
 for d in os.listdir(nres):
@@ -307,7 +314,6 @@ m = os.path.join(AND, "app/src/main/AndroidManifest.xml"); s = open(m).read()
 s = re.sub(r'android:configChanges="([^"]*)"', lambda k: 'android:configChanges="' + (k.group(1) if "density" in k.group(1) else k.group(1) + "|density") + '"', s, count=1)
 # permissions: camera (litrato/video, video call), mic (voice, video), location (Safety, weather, Explore), notifications, vibrate
 # Bawat app: kung ano lang ang kailangan (Play: bawal humingi ng hindi ginagamit)
-PLAY = os.environ.get("TMN_PLAY") == "1"     # bersyon para sa Google Play (walang sariling download ng update)
 BASE = ["POST_NOTIFICATIONS", "VIBRATE", "WAKE_LOCK"]
 PERMS = {
     # TigoMeNote: camera/video, lokasyon (Safety, weather, Explore), gallery ng phone, music player, upload sa background
@@ -319,6 +325,7 @@ PERMS = {
     # Tigo: laro lang (walang camera, mic, lokasyon, gallery, push)
     "tigo": ["VIBRATE"],
 }[app]
+if not PLAY and app in ("main", "chat"): PERMS = PERMS + ["REQUEST_INSTALL_PACKAGES"]   # in-app update (AppUpdater); bawal sa Play
 # Mga permission na inaalis kahit idagdag ng plugin (hal. push-notifications)
 DROP = [p for p in ["POST_NOTIFICATIONS", "CAMERA", "RECORD_AUDIO", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO",
         "READ_MEDIA_AUDIO", "READ_EXTERNAL_STORAGE", "FOREGROUND_SERVICE_MEDIA_PLAYBACK", "FOREGROUND_SERVICE_DATA_SYNC", "REQUEST_INSTALL_PACKAGES"] if p not in PERMS]
@@ -352,7 +359,12 @@ if app == "main" and ".MusicWidget" not in s:
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/tmn_widget_music_info" />
         </receiver>
     </application>''', 1)
-# (Inalis 2026-11-02: in-app installer at FileProvider ng update.apk — Chrome download na lang; bawal sa Play)
+# In-app update (0.11.57, hindi sa Play): sariling FileProvider para sa <files>/updates/*.apk (AppUpdater.java)
+if not PLAY and app in ("main", "chat") and ".TmnUpdateProvider" not in s:
+    s = s.replace("</application>", f'''    <provider android:name=".TmnUpdateProvider" android:authorities="{pkg}.tmnupdate" android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/tmn_update_paths" />
+        </provider>
+    </application>''', 1)
 if app == "tigo" and "screenOrientation" not in s:
     s = s.replace('android:name=".MainActivity"', 'android:name=".MainActivity"\n            android:screenOrientation="sensorLandscape"', 1)
 open(m, "w").write(s)

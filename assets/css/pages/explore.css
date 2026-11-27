@@ -24,14 +24,18 @@
   .ex-head h1 { font-size: 32px; }
 }
 
-/* Desktop (0.11.55): isang malapad na feed sa gitna — walang side panel (ang hanap + suggestions ay nasa 🔍 sa itaas),
-   mas malaking post at photo (hanggang ~84% ng taas ng screen) */
+/* Desktop (0.11.57): parang Facebook — malapad na feed sa gitna + side panel sa kanan (hanap + suggestions), magkasamang nakagitna.
+   Buong photo ang kita (walang putol): contain sa loob ng kahon, may malabong kulay ng photo sa gilid. */
 @media (min-width: 900px) {
-  .layout:has(> .ex-aside) { grid-template-columns: minmax(0, 1fr); }
-  .ex-aside { display: none; }
-  .ex-find { display: inline-grid; }
-  .ex-main { width: 100%; max-width: 760px; margin-inline: auto; gap: 16px; }
-  .ex-main .pcard-media { max-height: min(84vh, 920px); }
+  .layout:has(> .ex-aside) { grid-template-columns: minmax(0, 700px) 320px; justify-content: center; gap: 28px; }
+  .ex-aside { display: grid; }
+  .ex-find { display: none; }
+  .ex-main { width: 100%; max-width: 700px; margin-inline: 0; gap: 16px; }
   .ex-main .pc-who b { font-size: 15.5px; }
 }
-@media (min-width: 1500px) { .ex-main { max-width: 820px; } }
+@media (min-width: 900px) and (max-width: 1099px) {   /* makitid na laptop: feed lang, ang hanap ay nasa 🔍 */
+  .layout:has(> .ex-aside) { grid-template-columns: minmax(0, 700px); }
+  .ex-aside { display: none; }
+  .ex-find { display: inline-grid; }
+}
+@media (min-width: 1500px) { .layout:has(> .ex-aside) { grid-template-columns: minmax(0, 760px) 340px; } .ex-main { max-width: 760px; } }

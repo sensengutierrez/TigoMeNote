@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       app:
-        description: "Aling app (main | chat | tigo); blangko = lahat"
+        description: "Aling app (main | chat); blangko = lahat (ang Tigo ay nasa loob na ng TigoMeNote mula 0.11.57)"
         default: ""
 permissions:
   contents: read
@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: ${{ fromJSON(github.event.inputs.app && format('["{0}"]', github.event.inputs.app) || '["main","chat","tigo"]') }}
+        app: ${{ fromJSON(github.event.inputs.app && format('["{0}"]', github.event.inputs.app) || '["main","chat"]') }}
     env:
       APP: ${{ matrix.app }}
       TMN_PLAY: "1"

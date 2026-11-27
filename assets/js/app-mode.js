@@ -103,17 +103,7 @@
     }
   };
 
-  // Sa TigoMeNote (main): pindot sa "Tigo" → buksan ang Tigo app kung naka-install; kung wala, ang download page (Get app)
-  if (APP_ID === "main") {
-    document.addEventListener("click", function (e) {
-      var a = e.target.closest && e.target.closest('a[href$="tigo.html"], a[href*="tigo.html?"]');
-      if (!a || e.defaultPrevented || e.button) return;
-      e.preventDefault(); e.stopPropagation();
-      if (window.TMN_APP.hasApp("tigo")) { window.TMN_APP.openApp("tigo"); return; }
-      try { if (window.TMN_UI && TMN_UI.toast) TMN_UI.toast("Tigo app isn't installed yet. Opening the download page…", 2500); } catch (x) {}
-      setTimeout(function () { window.TMN_APP.installApp(); }, 600);
-    }, true);
-  }
+  // (0.11.57) Ang Tigo ay nasa loob na ng TigoMeNote — hindi na binubuksan ang hiwalay na Tigo app.
 
   function closeTop() {
     if (window.TMN_UPDATE && TMN_UPDATE.open()) return true;   // may update: hindi puwedeng isara

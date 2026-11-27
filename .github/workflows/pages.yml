@@ -29,7 +29,7 @@ jobs:
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
           mkdir -p dl
-          python3 -c "import json;[print(k+'-v'+v['version']) for k,v in json.load(open('app-version.json')).items()]" | while read TAG; do
+          python3 -c "import json;[print(k+'-v'+v['version']) for k,v in json.load(open('app-version.json')).items() if not v.get('moved')]" | while read TAG; do
             gh release download "$TAG" -R "${{ github.repository }}" -p "*.apk" -D dl --clobber || echo "::warning::walang APK sa $TAG"
           done
           ls -la dl

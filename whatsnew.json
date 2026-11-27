@@ -1,4 +1,9 @@
 {
+  "0.11.57": [
+    "Android: “Update now” downloads and installs the update inside the app — it resumes if the internet drops and checks the file first",
+    "Tigo is now inside the TigoMeNote app — 2 apps only: TigoMeNote and TigoMeNote Chat",
+    "Computer: Explore shows the whole photo again, and Search and Suggested for you are back on the side"
+  ],
   "0.11.56": [
     "📞 Calls in Messages: voice and video calls with friends (1-on-1)",
     "Mute, camera on/off and flip camera during a call",
