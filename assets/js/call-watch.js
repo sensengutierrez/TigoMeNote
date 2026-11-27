@@ -1,7 +1,7 @@
 /* TigoMeNote · call-watch.js — bantay ng tawag sa bawat page ng app (📞 Messages)
    - Nakikinig sa sariling "ring" channel (Supabase Realtime; lihim na key galing calls-fast "key") → papasok na tawag kahit ibang page ang bukas.
    - Push na "call" (service worker) at link na ?call=<id> (pinindot ang notification) → ipakita ang papasok na tawag kung nagri-ring pa.
-   - TMN_CALL.start(conversationId, video, who) → tumawag (chat-view.js). Kinukuha lang ang call-view.js, call-rtc.js at call.css kapag kailangan.
+   - TMN_CALL.start(conversationId, video, who) → tumawag o sumali sa group call (chat-view.js). TMN_CALL.current(conversationId) → may tawag ba sa group? Kinukuha lang ang call-view.js, call-rtc.js at call.css kapag kailangan.
    Walang tawag sa APK ng Tigo (laro lang) at kapag naka-logout. */
 (function () {
   var C = window.TMN_CONFIG, N = window.TMN_NATIVE || {};
@@ -18,7 +18,7 @@
     if (window.TMN_CALL_VIEW) return Promise.resolve();
     if (!loading) {
       var l = document.createElement("link"); l.rel = "stylesheet"; l.href = base + "css/call.css" + V; document.head.appendChild(l);
-      loading = Promise.all([window.TMN_RT ? null : script(base + "js/realtime.js"), script(base + "js/components/call-rtc.js")])
+      loading = Promise.all([window.TMN_RT ? null : script(base + "js/realtime.js"), script(base + "js/components/call-effects.js"), script(base + "js/components/call-rtc.js")])
         .then(function () { return script(base + "js/components/call-view.js"); })
         .catch(function (e) { loading = null; throw e; });
     }
@@ -40,7 +40,7 @@
       if (!key) { var r = await TMN_API.call("calls", "key", {}, { timeout: 15000 }); key = r.ring_key; }
       if (ringCh || !key) return;
       ringCh = TMN_RT.join("tmn-ring-" + key, function (ev, d) {
-        if (ev === "ring" && d && d.id) show({ id: d.id, video: !!d.video, with: d.from, conversation_id: d.conversation_id });
+        if (ev === "ring" && d && d.id) show({ id: d.id, video: !!d.video, with: d.from, conversation_id: d.conversation_id, group: !!d.group, title: d.title });
         if ((ev === "cancel" || ev === "taken") && d && window.TMN_CALL_VIEW) TMN_CALL_VIEW.cancel(d.id);
       });
     } catch (e) { setTimeout(listen, 30000); }
@@ -62,6 +62,7 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
 
   window.TMN_CALL = {
+    current: function (convId) { return TMN_API.call("calls", "current", { conversation_id: convId }, { timeout: 12000 }).then(function (r) { return r.call || null; }).catch(function () { return null; }); },
     start: function (convId, video, who) {
       return ready().then(function () { TMN_CALL_VIEW.outgoing(convId, video, who); })
         .catch(function () { if (window.TMN_UI) TMN_UI.toast("Couldn't start the call. Check your internet."); });

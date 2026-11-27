@@ -97,6 +97,8 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-27 · Laptop na mababa ang screen: naiipit ang Share button at may scrollbar ang menu → `flex-shrink: 0`, siksik na menu, nakatagong scrollbar (`shell.css`)
 - 2026-11-27 · Tawag: walang tunog kahit konektado → magkahiwalay na stream ang dating ng audio at video (napalitan ng video-only) → iisang remote stream na pinagsasama ang mga track (`components/call-rtc.js`)
 - 2026-11-27 · Desktop Explore: putol ang mahabang photo (cover) at nawala ang side panel → contain + malabong likod; ibinalik ang hanap at suggestions sa gilid; tiyak na taas ng track (absolute) para hindi lumampas ang img (`social.css`, `pages/explore.css`)
+- 2026-11-27 · Group info: humahaba ang litrato ng miyembro → ang `.ch-mem > span { flex: 1 }` ay tumatama rin sa avatar (span din) → `span:not(.avatar)` (`pages/messages.css`)
+- 2026-11-27 · Tawag (mesh): hindi natatapos ang 1:1 sa kabila kapag ibinaba → "bye" = tapos na ang 1:1 (umalis lang sa group) (`components/call-rtc.js`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.

@@ -3,12 +3,14 @@
 //   pahintulot (magkaibigan lang), pag-ring (Realtime + push), lihim na signal channel, at "Missed call"/"Voice call · 3:12" sa chat.
 // Actions (kailangan ng session token):
 //   key                       → { ring_key, ice } (sariling ring channel; ICE servers para sa WebRTC)
-//   ring   { conversation_id, video } → { call, ice }   (caller)
+//   ring   { conversation_id, video } → { call, ice }   (caller; sa group: bagong group call o sumali sa kasalukuyan)
+//   current{ conversation_id } → { call | null }       (may tawag ba ngayon sa chat na ito — "Join" sa group)
 //   get    { id }             → { call }                (dalawang kasali lang)
 //   answer { id }             → { call, ice }           (callee; ringing → active)
 //   decline{ id }             → callee: declined
 //   end    { id, secs }       → sinuman: ringing → missed (kung caller) · active → ended
-// Patakaran: 1-on-1 (dm) lang; magkaibigan lang ang puwedeng tumawag: nagfa-follow sa isa't isa, o Family/Friends (safety_links).
+// Patakaran: 1-on-1 (dm): magkaibigan lang ang puwedeng tumawag: nagfa-follow sa isa't isa, o Family/Friends (safety_links).
+//   Group (0.11.58): sinumang aktibong miyembro ng group; hanggang 8 sa tawag (mesh); tapos kapag umalis ang lahat (call_members).
 //   Busy kapag may ibang tawag ang tatawagan. Hanggang 12 tawag bawat 10 minuto. Ang ringing na lampas 50 s = missed.
 // ICE: STUN (Google at Cloudflare). TURN kung may secrets: CF_TURN_KEY_ID + CF_TURN_KEY_TOKEN (Cloudflare) o TURN_URLS + TURN_USER + TURN_PASS.
 // Tables: call_keys, calls (sql/132). Push: notify-fast pushRaw (category messages; sinusunod ang settings at sleep).
@@ -117,12 +119,23 @@ async function friends(a: string, b: string) {
 // Ang ringing na lumampas sa oras = missed (kung naiwan dahil nawala ang caller)
 async function expire() {
   const cut = new Date(Date.now() - RING_S * 1000).toISOString();
-  await db.from("calls").update({ status: "missed", ended_at: nowIso() }).eq("status", "ringing").lt("created_at", cut);
+  await db.from("calls").update({ status: "missed", ended_at: nowIso() }).eq("status", "ringing").eq("is_group", false).lt("created_at", cut);
+  // group na walang sumali nang 75 s = missed
+  await db.from("calls").update({ status: "missed", ended_at: nowIso() }).eq("status", "ringing").eq("is_group", true).lt("created_at", new Date(Date.now() - 75 * 1000).toISOString());
   // aktibong tawag na 6 na oras na = tapos na (hal. parehong nawala)
   await db.from("calls").update({ status: "ended", ended_at: nowIso() }).eq("status", "active").lt("answered_at", new Date(Date.now() - 6 * 3600 * 1000).toISOString());
 }
 // deno-lint-ignore no-explicit-any
 async function shape(c: any, me: any) {
+  if (c.is_group) {
+    const [{ data: conv }, { data: by }, { count }] = await Promise.all([
+      db.from("conversations").select("title").eq("id", c.conversation_id).maybeSingle(),
+      db.from("users").select("id, username, display_name, avatar_url").eq("id", c.caller_id).maybeSingle(),
+      db.from("call_members").select("user_id", { count: "exact", head: true }).eq("call_id", c.id).is("left_at", null),
+    ]);
+    return { id: c.id, conversation_id: c.conversation_id, video: c.video, status: c.status, mine: c.caller_id === me.id, signal: c.signal_key, group: true,
+      title: conv?.title || "Group call", with: pub(by), in_call: count ?? 0, at: c.created_at, answered_at: c.answered_at, ended_at: c.ended_at };
+  }
   const other = c.caller_id === me.id ? c.callee_id : c.caller_id;
   const { data: u } = await db.from("users").select("id, username, display_name, avatar_url").eq("id", other).maybeSingle();
   return { id: c.id, conversation_id: c.conversation_id, video: c.video, status: c.status, mine: c.caller_id === me.id, signal: c.signal_key,
@@ -136,11 +149,17 @@ async function chatNote(c: any, text: string) {
   if (conv) await broadcast(conv.channel_key, "msg", { system: true });
 }
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+async function groupMember(convId: string, uid: string) {
+  const { data } = await db.from("conversation_members").select("status").eq("conversation_id", convId).eq("user_id", uid).maybeSingle();
+  return !!data && data.status === "active";
+}
 // deno-lint-ignore no-explicit-any
 async function load(id: unknown, me: any) {
   if (!isUuid(id)) return null;
   const { data } = await db.from("calls").select("*").eq("id", String(id)).maybeSingle();
-  return data && (data.caller_id === me.id || data.callee_id === me.id) ? data : null;
+  if (!data) return null;
+  if (data.caller_id === me.id || data.callee_id === me.id) return data;
+  return data.is_group && (await groupMember(data.conversation_id, me.id)) ? data : null;
 }
 
 // ---------- actions ----------
@@ -156,6 +175,7 @@ async function ring(p: any, me: any) {
   // deno-lint-ignore no-explicit-any
   const conv = (mem as any)?.conversations;
   if (!mem || mem.status === "left" || !conv) return fail("Chat not found.", 404);
+  if (conv.kind === "group") return await ringGroup(p, me, convId);
   if (conv.kind !== "dm") return fail("Calls are for 1-on-1 chats for now.", 400);
   const { data: others } = await db.from("conversation_members").select("user_id, status, users(id, username, display_name, avatar_url, status)").eq("conversation_id", convId).neq("user_id", me.id);
   // deno-lint-ignore no-explicit-any
@@ -188,6 +208,68 @@ async function ring(p: any, me: any) {
   ]));
   return reply({ ok: true, call: await shape(c, me), ice: await iceServers() });
 }
+// ---------- group call ----------
+const GROUP_MAX = 8;
+// deno-lint-ignore no-explicit-any
+async function ringGroup(p: any, me: any, convId: string) {
+  const { data: mem } = await db.from("conversation_members").select("status").eq("conversation_id", convId).eq("user_id", me.id).maybeSingle();
+  if (!mem || mem.status !== "active") return fail("Accept the group first, then you can call.", 403);
+  await expire();
+  // may tawag na sa group: sumali na lang
+  const { data: open } = await db.from("calls").select("*").eq("conversation_id", convId).eq("is_group", true).in("status", ["ringing", "active"]).order("created_at", { ascending: false }).limit(1);
+  if (open && open[0]) return await joinGroup(open[0], me);
+  const since = new Date(Date.now() - RATE_MIN * 60 * 1000).toISOString();
+  const { count } = await db.from("calls").select("id", { count: "exact", head: true }).eq("caller_id", me.id).gt("created_at", since);
+  if ((count ?? 0) >= RATE_N) return fail("Too many calls. Please wait a few minutes.", 429);
+  const video = !!p.video;
+  const { data: c, error } = await db.from("calls").insert({ conversation_id: convId, caller_id: me.id, callee_id: null, is_group: true, video, signal_key: secret(24) }).select("*").single();
+  if (error) throw error;
+  await db.from("call_members").insert({ call_id: c.id, user_id: me.id });
+  const { data: others } = await db.from("conversation_members").select("user_id, muted").eq("conversation_id", convId).eq("status", "active").neq("user_id", me.id);
+  const { data: conv } = await db.from("conversations").select("title").eq("id", convId).maybeSingle();
+  const title = conv?.title || "Group call", from = pub(me);
+  const to = (others ?? []).map((o) => o.user_id);
+  later((async () => {
+    for (const uid of to) await broadcast("tmn-ring-" + (await ringKey(uid)), "ring", { id: c.id, video, from, conversation_id: convId, group: true, title });
+    const loud = (others ?? []).filter((o) => !o.muted).map((o) => o.user_id);
+    if (loud.length) await pushRaw(loud, { type: "call", id: c.id, tag: "call-" + c.id, title: `${video ? "🎥" : "📞"} ${title}`, body: `${nameOf(me)} started a ${video ? "video" : "voice"} call · Tap to join`, url: `app/messages.html?c=${convId}&call=${c.id}` });
+  })());
+  return reply({ ok: true, call: { ...(await shape(c, me)), joined: false }, ice: await iceServers() });
+}
+// deno-lint-ignore no-explicit-any
+async function joinGroup(c: any, me: any) {
+  const { count } = await db.from("call_members").select("user_id", { count: "exact", head: true }).eq("call_id", c.id).is("left_at", null).neq("user_id", me.id);
+  if ((count ?? 0) >= GROUP_MAX) return fail(`This call is full (${GROUP_MAX} people).`, 409);
+  await db.from("call_members").upsert({ call_id: c.id, user_id: me.id, joined_at: nowIso(), left_at: null });
+  let row = c;
+  if (c.status === "ringing" && c.caller_id !== me.id) {
+    const { data: u } = await db.from("calls").update({ status: "active", answered_at: nowIso() }).eq("id", c.id).eq("status", "ringing").select("*").maybeSingle();
+    if (u) row = u;
+  }
+  later(broadcast("tmn-ring-" + (await ringKey(me.id)), "taken", { id: c.id }));
+  return reply({ ok: true, call: { ...(await shape(row, me)), joined: true }, ice: await iceServers() });
+}
+// deno-lint-ignore no-explicit-any
+async function leaveGroup(c: any, me: any) {
+  await db.from("call_members").update({ left_at: nowIso() }).eq("call_id", c.id).eq("user_id", me.id).is("left_at", null);
+  const { count } = await db.from("call_members").select("user_id", { count: "exact", head: true }).eq("call_id", c.id).is("left_at", null);
+  if ((count ?? 0) > 0 || (c.status !== "ringing" && c.status !== "active")) return;
+  // wala nang natira: tapos na ang tawag
+  const status = c.answered_at ? "ended" : "missed";
+  const { data: u } = await db.from("calls").update({ status, ended_at: nowIso() }).eq("id", c.id).in("status", ["ringing", "active"]).select("*").maybeSingle();
+  if (!u) return;
+  const secs = c.answered_at ? Math.max(0, Math.round((Date.now() - new Date(c.answered_at).getTime()) / 1000)) : 0;
+  await Promise.all([broadcast("tmn-call-" + c.signal_key, "end", { why: "ended" }),
+    chatNote(c, c.answered_at ? `${c.video ? "🎥 Group video" : "📞 Group"} call · ${mmss(secs)}` : `📞 Missed group call`)]);
+}
+// deno-lint-ignore no-explicit-any
+async function current(p: any, me: any) {
+  const convId = String(p.conversation_id || "");
+  if (!isUuid(convId) || !(await groupMember(convId, me.id))) return reply({ ok: true, call: null });
+  await expire();
+  const { data } = await db.from("calls").select("*").eq("conversation_id", convId).eq("is_group", true).in("status", ["ringing", "active"]).order("created_at", { ascending: false }).limit(1);
+  return reply({ ok: true, call: data && data[0] ? await shape(data[0], me) : null });
+}
 // deno-lint-ignore no-explicit-any
 async function get(p: any, me: any) {
   await expire();
@@ -199,6 +281,7 @@ async function get(p: any, me: any) {
 async function answer(p: any, me: any) {
   await expire();
   const c = await load(p.id, me);
+  if (c && c.is_group) { if (c.status !== "ringing" && c.status !== "active") return fail("The call has ended.", 409, { status: c.status }); return await joinGroup(c, me); }
   if (!c || c.callee_id !== me.id) return fail("Call not found.", 404);
   if (c.status !== "ringing") return fail(c.status === "active" ? "This call was answered on another device." : "The call has ended.", 409, { status: c.status });
   const { data: u } = await db.from("calls").update({ status: "active", answered_at: nowIso() }).eq("id", c.id).eq("status", "ringing").select("*").maybeSingle();
@@ -210,6 +293,7 @@ async function answer(p: any, me: any) {
 // deno-lint-ignore no-explicit-any
 async function decline(p: any, me: any) {
   const c = await load(p.id, me);
+  if (c && c.is_group) { later(broadcast("tmn-ring-" + (await ringKey(me.id)), "taken", { id: c.id })); return reply({ ok: true }); }
   if (!c || c.callee_id !== me.id) return fail("Call not found.", 404);
   if (c.status === "ringing") {
     await db.from("calls").update({ status: "declined", ended_at: nowIso() }).eq("id", c.id);
@@ -222,6 +306,7 @@ async function decline(p: any, me: any) {
 async function end(p: any, me: any) {
   const c = await load(p.id, me);
   if (!c) return fail("Call not found.", 404);
+  if (c.is_group) { await leaveGroup(c, me); return reply({ ok: true }); }
   if (c.status === "ringing") {
     await db.from("calls").update({ status: "missed", ended_at: nowIso() }).eq("id", c.id);
     later(Promise.all([broadcast("tmn-ring-" + (await ringKey(c.callee_id)), "cancel", { id: c.id }), broadcast("tmn-call-" + c.signal_key, "end", { by: me.id, why: "cancel" }),
@@ -245,6 +330,7 @@ Deno.serve(async (req) => {
       case "key":     return await key(p, me);
       case "ring":    return await ring(p, me);
       case "get":     return await get(p, me);
+      case "current": return await current(p, me);
       case "answer":  return await answer(p, me);
       case "decline": return await decline(p, me);
       case "end":     return await end(p, me);

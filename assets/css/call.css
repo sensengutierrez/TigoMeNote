@@ -7,42 +7,66 @@
 }
 @keyframes call-in { from { opacity: 0; transform: scale(1.02); } }
 .call-ov.ending { opacity: .85; }
+.call-ov.flash::after { content: ""; position: absolute; inset: 0; background: #fff; opacity: .7; animation: call-flash .35s ease forwards; pointer-events: none; z-index: 9; }
+@keyframes call-flash { to { opacity: 0; } }
 body.in-call { overflow: hidden; }
 
-.call-remote { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; opacity: 0; transition: opacity .3s; pointer-events: none; }
-.call-ov.peer-cam .call-remote { opacity: 1; }
-.call-audio { display: none; }
+/* ---------- mga kausap ---------- */
+.call-grid { position: absolute; inset: 0; display: grid; gap: 6px; padding: 6px; grid-template-columns: 1fr; grid-auto-rows: 1fr; }
+.call-ov:not(.has-peers) .call-grid { display: none; }
+.call-grid[data-n="2"] { grid-template-columns: 1fr; }
+.call-grid[data-n="3"], .call-grid[data-n="4"] { grid-template-columns: 1fr 1fr; }
+.call-grid[data-n="5"], .call-grid[data-n="6"], .call-grid[data-n="7"], .call-grid[data-n="8"] { grid-template-columns: 1fr 1fr; }
+@media (min-width: 900px) {
+  .call-grid[data-n="2"] { grid-template-columns: 1fr 1fr; }
+  .call-grid[data-n="5"], .call-grid[data-n="6"] { grid-template-columns: repeat(3, 1fr); }
+  .call-grid[data-n="7"], .call-grid[data-n="8"] { grid-template-columns: repeat(4, 1fr); }
+}
+.call-grid[data-n="1"] { padding: 0; }
+.call-tile { position: relative; overflow: hidden; border-radius: 16px; background: rgba(255,255,255,.06); display: grid; place-items: center; min-height: 0; }
+.call-grid[data-n="1"] .call-tile { border-radius: 0; background: transparent; }
+.call-tile video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; opacity: 0; transition: opacity .3s; }
+.call-tile.has-video video { opacity: 1; }
+.call-tile.is-screen video { object-fit: contain; }
+.call-tile audio { display: none; }
+.call-tile-av { position: relative; display: grid; place-items: center; }
+.call-tile.has-video .call-tile-av { display: none; }
+.call-tile-name { position: absolute; left: 10px; bottom: 8px; font-size: 13px; font-weight: 650; padding: 3px 9px; border-radius: 999px; background: rgba(0,0,0,.45); max-width: calc(100% - 20px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.call-grid[data-n="1"] .call-tile-name { display: none; }
+.call-tile.weak { opacity: .7; }
 
-.call-who { position: relative; align-self: center; justify-self: center; display: grid; justify-items: center; gap: 10px; text-align: center; padding: 24px 20px; transition: transform .3s, opacity .3s; }
-.call-who h2 { margin: 6px 0 0; font-size: 26px; font-weight: 750; letter-spacing: -.02em; color: #fff; max-width: 86vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.call-status { margin: 0; font-size: 15px; color: rgba(255,255,255,.75); font-variant-numeric: tabular-nums; min-height: 1.4em; }
-.call-av { --size: 116px; box-shadow: 0 0 0 6px rgba(255,255,255,.08); font-size: 40px; }
-.call-ov.is-incoming .call-av { animation: call-pulse 1.6s ease-in-out infinite; }
+/* ---------- pangalan + status ---------- */
+.call-who { position: relative; z-index: 2; align-self: center; justify-self: center; display: grid; justify-items: center; gap: 10px; text-align: center; padding: 24px 20px; pointer-events: none; }
+.call-who h2 { margin: 6px 0 0; font-size: 26px; font-weight: 750; letter-spacing: -.02em; color: #fff; max-width: 86vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 6px rgba(0,0,0,.5); }
+.call-status { margin: 0; font-size: 15px; color: rgba(255,255,255,.8); font-variant-numeric: tabular-nums; min-height: 1.4em; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+.call-av { --size: 116px; box-shadow: 0 0 0 6px rgba(255,255,255,.08); font-size: calc(var(--size) * .36); }
+.call-ov.is-incoming .call-who .call-av { animation: call-pulse 1.6s ease-in-out infinite; }
 @keyframes call-pulse { 0%, 100% { box-shadow: 0 0 0 6px rgba(255,255,255,.08); } 50% { box-shadow: 0 0 0 22px rgba(255,255,255,.04); } }
-/* kapag may video ang kausap: maliit na pangalan sa taas */
-.call-ov.peer-cam .call-who { align-self: start; padding-top: 18px; }
-.call-ov.peer-cam .call-av { display: none; }
-.call-ov.peer-cam .call-who h2 { font-size: 18px; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
-.call-ov.peer-cam .call-status { text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+/* may kausap na: maliit na pangalan sa taas */
+.call-ov.has-peers .call-who { align-self: start; padding-top: 14px; }
+.call-ov.has-peers .call-who .call-av { display: none; }
+.call-ov.has-peers .call-who h2 { font-size: 17px; }
+.call-ov.has-peers.is-group .call-who { justify-self: start; justify-items: start; padding-left: 16px; }
 
 .call-local {
   position: absolute; right: 14px; top: calc(14px + env(safe-area-inset-top)); width: 112px; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 16px;
-  background: #222; box-shadow: 0 6px 24px rgba(0,0,0,.45); border: 2px solid rgba(255,255,255,.18); z-index: 2;
+  background: #222; box-shadow: 0 6px 24px rgba(0,0,0,.45); border: 2px solid rgba(255,255,255,.18); z-index: 3;
 }
 .call-local.mirror { transform: scaleX(-1); }
-.call-ov:not(.peer-cam) .call-local { width: 96px; }
+.call-local.is-screen { aspect-ratio: 16 / 10; width: 180px; object-fit: contain; }
+.call-ov.is-group.has-peers .call-local { top: auto; bottom: 118px; width: 96px; }
 
-.call-bar { position: relative; z-index: 2; display: flex; justify-content: center; gap: 18px; padding: 16px 16px 34px; flex-wrap: wrap; }
-.call-btn {
-  display: grid; justify-items: center; gap: 6px; border: 0; background: none; color: #fff; cursor: pointer; font: inherit; padding: 0; min-width: 64px;
-}
-.call-btn .ic { width: 58px; height: 58px; padding: 16px; border-radius: 50%; background: rgba(255,255,255,.16); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: transform .12s, background-color .15s; box-sizing: border-box; }
-.call-btn small { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.85); }
+/* ---------- mga button ---------- */
+.call-bar { position: relative; z-index: 4; display: flex; justify-content: center; gap: 12px; padding: 14px 12px 30px; flex-wrap: wrap; }
+.call-btn { display: grid; justify-items: center; gap: 6px; border: 0; background: none; color: #fff; cursor: pointer; font: inherit; padding: 0; min-width: 58px; }
+.call-btn .ic { width: 54px; height: 54px; padding: 15px; border-radius: 50%; background: rgba(255,255,255,.16); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: transform .12s, background-color .15s; box-sizing: border-box; }
+.call-btn .call-emo { display: grid; place-items: center; padding: 0; font-size: 22px; line-height: 1; }
+.call-btn small { font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,.85); white-space: nowrap; }
 .call-btn:hover .ic { background: rgba(255,255,255,.26); }
 .call-btn:active .ic { transform: scale(.93); }
 .call-btn:focus { outline: none; }
 .call-btn:focus-visible .ic { outline: 3px solid #fff; outline-offset: 3px; }
-.call-btn.off .ic { background: #fff; color: #1b1b26; }
+.call-btn.off .ic, .call-btn.sel .ic { background: #fff; color: #1b1b26; }
 .call-btn.end .ic { background: #ef3b3b; }
 .call-btn.end:hover .ic { background: #d92c2c; }
 .call-btn.accept .ic { background: #22b35e; animation: call-bob 1.2s ease-in-out infinite; }
@@ -51,10 +75,33 @@ body.in-call { overflow: hidden; }
 @keyframes call-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 .call-ov.is-incoming .call-bar { gap: 72px; padding-bottom: 54px; }
 
+/* ---------- ✨ effects ---------- */
+.call-fx { position: absolute; left: 50%; bottom: 112px; transform: translateX(-50%); z-index: 5; width: min(560px, calc(100% - 20px)); max-height: 46vh; overflow-y: auto;
+  background: rgba(20,20,30,.78); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 20px; padding: 10px 12px 12px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+.call-fx-t { margin: 4px 4px 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: rgba(255,255,255,.7); }
+.call-fx-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.call-fx-row::-webkit-scrollbar { display: none; }
+.call-chip { flex: none; display: grid; justify-items: center; gap: 4px; min-width: 66px; padding: 6px 4px; border: 2px solid transparent; border-radius: 14px; background: rgba(255,255,255,.08); color: #fff; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.call-chip.on { border-color: #fff; background: rgba(255,255,255,.18); }
+.call-chip.loading { opacity: .5; pointer-events: none; }
+.call-sw { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #ffb48a, #ff6b8b 45%, #6bb7ff); }
+.call-sw-e { font-size: 28px; line-height: 40px; height: 40px; }
+
+.call-note { position: absolute; left: 50%; top: 70px; transform: translate(-50%, -8px); z-index: 6; padding: 8px 14px; border-radius: 999px; background: rgba(0,0,0,.6); font-size: 13.5px; font-weight: 600; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; max-width: calc(100% - 24px); text-align: center; }
+.call-note.on { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 480px) {   /* phone: kasya sa isang hanay ang mga button */
+  .call-bar { gap: 4px; padding: 10px 6px 24px; flex-wrap: nowrap; }
+  .call-btn { min-width: 46px; flex: 1 1 0; max-width: 64px; }
+  .call-btn .ic { width: 46px; height: 46px; padding: 12px; }
+  .call-btn .call-emo { font-size: 19px; }
+  .call-btn small { font-size: 10px; }
+}
 @media (min-width: 900px) {
   .call-local { width: 220px; aspect-ratio: 16 / 10; right: 24px; top: 24px; }
-  .call-ov:not(.peer-cam) .call-local { width: 180px; }
+  .call-ov:not(.has-peers) .call-local { width: 180px; }
   .call-who h2 { font-size: 30px; }
+  .call-bar { gap: 18px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .call-ov, .call-ov.is-incoming .call-av, .call-btn.accept .ic { animation: none; }

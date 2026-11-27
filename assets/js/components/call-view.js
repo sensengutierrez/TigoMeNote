@@ -1,15 +1,16 @@
-/* TigoMeNote · components/call-view.js — screen ng tawag (buong screen): Calling… / papasok na tawag / habang nag-uusap
-   TMN_CALL_VIEW.outgoing(conversationId, video, who)   → tumawag (who = { display_name, avatar_url } para sa agad na itsura)
-   TMN_CALL_VIEW.incoming(call)                          → papasok (galing sa ring channel o push) · Accept / Decline
-   TMN_CALL_VIEW.cancel(id)                              → tumigil ang pag-ring (binaba ng tumawag / sinagot sa ibang device)
-   TMN_CALL_VIEW.active()                                → may bukas na tawag?
-   Server: calls-fast (ring, answer, decline, end). Koneksyon: components/call-rtc.js. Tunog: WebAudio (walang file). */
+/* TigoMeNote · components/call-view.js — screen ng tawag (buong screen): 1-on-1 at group call
+   TMN_CALL_VIEW.outgoing(conversationId, video, who)   → tumawag / sumali sa group call (who = { display_name, avatar_url, group, title })
+   TMN_CALL_VIEW.incoming(call)                          → papasok (ring channel o push) · Accept / Decline
+   TMN_CALL_VIEW.cancel(id) · TMN_CALL_VIEW.active()
+   Sa tawag: 🎤 Mute · 📷 Camera · ✨ Effects (filter + mukha: bigote, salamin…) · 🖥️ Share screen (computer) · 📸 Screenshot · 🔄 Flip · End
+   Server: calls-fast. Koneksyon: call-rtc.js (mesh). Effects: call-effects.js. Tunog: WebAudio (walang file). */
 (function () {
   var UI = window.TMN_UI, I = window.TMN_ICON, esc = UI.esc;
-  var NO_ANSWER_S = 45, RING_S = 50;
-  var cur = null;   // { id, el, rtc, mode: "out"|"in"|"live", ... }
+  var NO_ANSWER_S = 45, RING_S = 50, GROUP_WAIT_S = 70;
+  var cur = null;
+  var me = function () { var u = window.TMN_USER || {}; return { id: u.id, name: u.display_name || "@" + (u.username || ""), avatar: u.avatar_url || null }; };
 
-  // ---------- tunog: ringback (tumatawag ka) at ringtone (may tumatawag) ----------
+  // ---------- tunog ----------
   var ac = null, toneT = null;
   function beep(freqs, dur, vol) {
     try {
@@ -33,17 +34,19 @@
   // ---------- itsura ----------
   function avatar(u, size) {
     u = u || {};
-    return '<span class="avatar call-av" style="--size:' + size + 'px">' + (u.avatar_url ? '<img alt="" src="' + esc(u.avatar_url) + '">' : esc(UI.initials(u.display_name || u.username || "?"))) + "</span>";
+    return '<span class="avatar call-av" style="--size:' + size + 'px">' + (u.avatar_url || u.avatar ? '<img alt="" src="' + esc(u.avatar_url || u.avatar) + '">' : esc(UI.initials(u.display_name || u.name || u.username || "?"))) + "</span>";
   }
-  function btn(act, icon, label, cls) { return '<button type="button" class="call-btn ' + (cls || "") + '" data-call="' + act + '" aria-label="' + label + '" title="' + label + '">' + I(icon) + "<small>" + label + "</small></button>"; }
+  function btn(act, icon, label, cls, emoji) { return '<button type="button" class="call-btn ' + (cls || "") + '" data-call="' + act + '" aria-label="' + label + '" title="' + label + '">' + (emoji ? '<span class="ic call-emo">' + emoji + "</span>" : I(icon)) + "<small>" + label + "</small></button>"; }
   function mount(who, video) {
     var el = document.createElement("div");
-    el.className = "call-ov" + (video ? " is-video" : "");
-    el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", "Call with " + (who.display_name || who.username || ""));
+    el.className = "call-ov" + (video ? " is-video" : "") + (who.group ? " is-group" : "");
+    el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", "Call with " + (who.title || who.display_name || ""));
     el.innerHTML =
-      '<video class="call-remote" playsinline autoplay muted></video><audio class="call-audio" autoplay></audio>' +
-      '<div class="call-who">' + avatar(who, 116) + '<h2 translate="no">' + esc(who.display_name || "@" + (who.username || "")) + '</h2><p class="call-status" aria-live="polite"></p></div>' +
+      '<div class="call-grid" aria-live="polite"></div>' +
+      '<div class="call-who">' + avatar(who, 116) + '<h2 translate="no">' + esc(who.title || who.display_name || "@" + (who.username || "")) + '</h2><p class="call-status" aria-live="polite"></p></div>' +
       '<video class="call-local hidden" playsinline autoplay muted></video>' +
+      '<div class="call-fx hidden" role="dialog" aria-label="Effects"></div>' +
+      '<div class="call-note" aria-live="polite"></div>' +
       '<div class="call-bar"></div>';
     document.body.appendChild(el);
     document.body.classList.add("in-call");
@@ -51,67 +54,155 @@
   }
   function status(t) { if (cur) cur.el.querySelector(".call-status").textContent = t; }
   function bar(html) { if (cur) cur.el.querySelector(".call-bar").innerHTML = html; }
+  function note(t) {
+    if (!cur) return; var n = cur.el.querySelector(".call-note"); n.textContent = t; n.classList.add("on");
+    clearTimeout(n._t); n._t = setTimeout(function () { n.classList.remove("on"); }, 3000);
+  }
   function liveBar() {
-    var c = cur;
+    var c = cur, r = c.rtc, on = r && r.hasCam(), sh = r && r.sharing();
     bar(btn("mic", c.muted ? "micOff" : "mic", c.muted ? "Unmute" : "Mute", c.muted ? "off" : "") +
-      btn("cam", c.camOn ? "video" : "videoOff", c.camOn ? "Camera off" : "Camera on", c.camOn ? "" : "off") +
-      (c.camOn ? btn("flip", "camSwitch", "Flip") : "") +
+      btn("cam", on ? "video" : "videoOff", on ? "Camera off" : "Camera on", on ? "" : "off") +
+      (on ? btn("fx", "", "Effects", c.fxOpen ? "sel" : "", "✨") : "") +
+      (r && r.canShare() && !/Android|iPhone|iPad/i.test(navigator.userAgent) ? btn("share", "monitor", sh ? "Stop share" : "Share screen", sh ? "sel" : "") : "") +
+      btn("shot", "camera", "Screenshot") +
+      (on && !sh ? btn("flip", "camSwitch", "Flip") : "") +
       btn("end", "callEnd", "End", "end"));
   }
   function mmss(s) { return Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0"); }
   function guard(e) { if (cur && cur.mode !== "done") { e.preventDefault(); e.returnValue = ""; } }
 
+  // ---------- mga kausap (grid) ----------
+  function paintPeers(list) {
+    var c = cur; if (!c) return;
+    var g = c.el.querySelector(".call-grid");
+    var keep = {};
+    list.forEach(function (p) {
+      keep[p.sid] = 1;
+      var t = g.querySelector('[data-sid="' + p.sid + '"]');
+      if (!t) {
+        t = document.createElement("div"); t.className = "call-tile"; t.dataset.sid = p.sid;
+        t.innerHTML = '<video playsinline autoplay muted></video><audio autoplay></audio><div class="call-tile-av"></div><span class="call-tile-name" translate="no"></span>';
+        g.appendChild(t);
+      }
+      var v = t.querySelector("video"), a = t.querySelector("audio");
+      if (v.srcObject !== p.stream) v.srcObject = p.stream;
+      if (a.srcObject !== p.stream) { a.srcObject = p.stream; var pr = a.play(); if (pr && pr.catch) pr.catch(function () {}); }
+      var hasV = p.cam && p.stream.getVideoTracks().length > 0;
+      t.classList.toggle("has-video", hasV); t.classList.toggle("is-screen", !!p.screen); t.classList.toggle("weak", p.state !== "connected");
+      t.querySelector(".call-tile-av").innerHTML = avatar({ name: p.name, avatar: p.avatar }, list.length > 2 ? 72 : 104);
+      t.querySelector(".call-tile-name").textContent = (p.name || "") + (p.screen ? " · sharing screen" : "") + (p.state === "reconnecting" ? " · reconnecting…" : "");
+    });
+    [].slice.call(g.children).forEach(function (t) { if (!keep[t.dataset.sid]) t.remove(); });
+    g.dataset.n = String(list.length);
+    c.el.classList.toggle("has-peers", list.length > 0);
+    c.el.classList.toggle("peer-cam", list.length === 1 && list[0].cam);
+    if (list.length && c.mode === "out") { stopTone(); clearTimeout(c.noAns); status("Connecting…"); }
+    if (c.group && c.mode === "live") status(list.length ? list.length + 1 + " in call · " + (c.startAt ? mmss((Date.now() - c.startAt) / 1000) : "") : "Waiting for others…");
+    // group: lahat ay umalis → tapos na rin ako (pagkalipas ng ilang segundo)
+    if (c.group && c.hadPeers && !list.length) { clearTimeout(c.aloneT); c.aloneT = setTimeout(function () { if (cur === c && !c.rtc.peers().length) finish("Everyone left"); }, 20000); }
+    if (list.length) { c.hadPeers = true; clearTimeout(c.aloneT); }
+  }
+
+  // ---------- ✨ effects ----------
+  function fxPanel() {
+    var c = cur, box = c.el.querySelector(".call-fx"), fx = c.rtc && c.rtc.fx();
+    if (!fx) { UI.toast("Effects aren't available here."); return; }
+    c.fxOpen = !c.fxOpen; box.classList.toggle("hidden", !c.fxOpen); liveBar();
+    if (!c.fxOpen) return;
+    box.style.bottom = (c.el.querySelector(".call-bar").offsetHeight + 8) + "px";   // laging nasa ibabaw ng mga button
+    box.innerHTML = '<p class="call-fx-t">Filters</p><div class="call-fx-row">' + TMN_CALL_FX.FILTERS.map(function (f) {
+      return '<button type="button" class="call-chip' + (fx.filter() === f.id ? " on" : "") + '" data-fx-filter="' + f.id + '" aria-pressed="' + (fx.filter() === f.id) + '"><span class="call-sw" style="filter:' + f.css + '"></span>' + f.name + "</button>";
+    }).join("") + '</div><p class="call-fx-t">Fun faces</p><div class="call-fx-row">' + TMN_CALL_FX.MASKS.map(function (m) {
+      return '<button type="button" class="call-chip' + (fx.mask() === m.id ? " on" : "") + '" data-fx-mask="' + m.id + '" aria-pressed="' + (fx.mask() === m.id) + '"><span class="call-sw-e">' + m.icon + "</span>" + m.name + "</button>";
+    }).join("") + "</div>";
+  }
+
+  // ---------- 📸 screenshot (larawan ng screen ng tawag) ----------
+  function cover(cx, v, x, y, w, h, fit, mirror) {
+    var vw = v.videoWidth, vh = v.videoHeight; if (!vw || !vh) return;
+    var s = fit === "contain" ? Math.min(w / vw, h / vh) : Math.max(w / vw, h / vh), dw = vw * s, dh = vh * s;
+    cx.save(); cx.beginPath(); cx.rect(x, y, w, h); cx.clip();
+    if (mirror) { cx.translate(x + w, y); cx.scale(-1, 1); cx.drawImage(v, (w - dw) / 2, (h - dh) / 2, dw, dh); }
+    else cx.drawImage(v, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+    cx.restore();
+  }
+  async function screenshot() {
+    var c = cur, el = c.el, r0 = el.getBoundingClientRect(), k = Math.min(2, window.devicePixelRatio || 1);
+    var cv = document.createElement("canvas"); cv.width = Math.round(r0.width * k); cv.height = Math.round(r0.height * k);
+    var cx = cv.getContext("2d"); cx.scale(k, k);
+    var bg = cx.createLinearGradient(0, 0, 0, r0.height); bg.addColorStop(0, "#2b2a3c"); bg.addColorStop(1, "#0e0e14"); cx.fillStyle = bg; cx.fillRect(0, 0, r0.width, r0.height);
+    el.querySelectorAll(".call-tile").forEach(function (t) {
+      var r = t.getBoundingClientRect(), x = r.left - r0.left, y = r.top - r0.top, v = t.querySelector("video");
+      if (t.classList.contains("has-video")) cover(cx, v, x, y, r.width, r.height, t.classList.contains("is-screen") ? "contain" : "cover", false);
+      else {
+        cx.fillStyle = "rgba(255,255,255,.12)"; cx.beginPath(); cx.arc(x + r.width / 2, y + r.height / 2 - 10, 42, 0, Math.PI * 2); cx.fill();
+        cx.fillStyle = "#fff"; cx.font = "700 30px system-ui, sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle";
+        cx.fillText(UI.initials(t.querySelector(".call-tile-name").textContent || "?"), x + r.width / 2, y + r.height / 2 - 10);
+      }
+      cx.fillStyle = "#fff"; cx.font = "600 14px system-ui, sans-serif"; cx.textAlign = "left"; cx.textBaseline = "alphabetic";
+      cx.fillText(t.querySelector(".call-tile-name").textContent, x + 12, y + r.height - 12);
+    });
+    var lv = el.querySelector(".call-local");
+    if (!lv.classList.contains("hidden")) { var lr = lv.getBoundingClientRect(); cover(cx, lv, lr.left - r0.left, lr.top - r0.top, lr.width, lr.height, "cover", lv.classList.contains("mirror")); }
+    cx.fillStyle = "rgba(255,255,255,.75)"; cx.font = "600 12px system-ui, sans-serif"; cx.textAlign = "right";
+    cx.fillText("TigoMeNote · " + new Date().toLocaleString(), r0.width - 12, 20);
+    el.classList.add("flash"); setTimeout(function () { el.classList.remove("flash"); }, 350);
+    beep([1200], 0.08, 0.08);
+    var blob = await new Promise(function (ok) { cv.toBlob(ok, "image/jpeg", 0.92); });
+    if (!blob) { UI.toast("Couldn't take a screenshot."); return; }
+    var name = "TigoMeNote_call_" + new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19) + ".jpg";
+    var file = new File([blob], name, { type: "image/jpeg" });
+    try {
+      if (window.TMN_PHONE && TMN_PHONE.ok && TMN_PHONE.ok()) { await TMN_PHONE.save(file); note("Screenshot saved to your gallery 📸"); }
+      else { var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000); note("Screenshot saved 📸"); }
+    } catch (e) { UI.toast("Couldn't save the screenshot."); }
+    if (c.rtc) c.rtc.shot(me().name);
+  }
+
   // ---------- pagtatapos ----------
   function finish(text, why) {
     var c = cur; if (!c || c.mode === "done") return;
-    var wasLive = c.mode === "live";
+    var wasLive = !!c.startAt;
     c.mode = "done"; stopTone();
-    clearInterval(c.clock); clearTimeout(c.noAns); clearTimeout(c.ringT);
-    if (c.rtc) { if (why !== "peer") c.rtc.bye(why || "hangup"); c.rtc.close(); }
+    clearInterval(c.clock); clearTimeout(c.noAns); clearTimeout(c.ringT); clearTimeout(c.aloneT); clearTimeout(c.waitT);
+    if (c.rtc) { if (why !== "peer") c.rtc.bye(); c.rtc.close(); }
     if (c.id && why !== "peer" && why !== "declined-here") TMN_API.call("calls", "end", { id: c.id }).catch(function () {});
     var secs = c.startAt ? (Date.now() - c.startAt) / 1000 : 0;
     status(text || (wasLive ? "Call ended · " + mmss(secs) : "Call ended"));
-    bar("");
-    c.el.classList.add("ending");
+    bar(""); c.el.querySelector(".call-fx").classList.add("hidden");
+    c.el.classList.add("ending"); c.el.classList.remove("has-peers", "peer-cam");
     window.removeEventListener("beforeunload", guard);
     setTimeout(function () { c.el.remove(); if (cur === c) cur = null; if (!cur) document.body.classList.remove("in-call"); }, 1500);
   }
 
-  // ---------- koneksyon (pareho sa caller at callee) ----------
-  async function connect(call, ice, caller) {
+  // ---------- koneksyon ----------
+  async function connect(call, ice) {
     var c = cur;
     c.rtc = TMN_CALL_RTC.create({
-      signal: call.signal, ice: ice, video: call.video, caller: caller,
+      signal: call.signal, ice: ice, video: call.video, me: me(),
       onState: function (s) {
         if (!cur || cur !== c || c.mode === "done") return;
         if (s === "connected") {
-          stopTone(); clearTimeout(c.noAns);
-          if (!c.startAt) { c.startAt = Date.now(); c.clock = setInterval(function () { if (c.mode === "live" && c.state === "connected") status(mmss((Date.now() - c.startAt) / 1000)); }, 1000); }
-          c.mode = "live"; status(mmss((Date.now() - c.startAt) / 1000)); liveBar();
+          stopTone(); clearTimeout(c.noAns); clearTimeout(c.waitT);
+          if (!c.startAt) { c.startAt = Date.now(); c.clock = setInterval(function () { if (c.mode !== "live") return; if (c.group) paintPeers(c.rtc.peers()); else if (c.state === "connected") status(mmss((Date.now() - c.startAt) / 1000)); }, 1000); }
+          if (c.mode !== "live") { c.mode = "live"; liveBar(); }
+          if (!c.group) status(mmss((Date.now() - c.startAt) / 1000));
         }
         if (s === "reconnecting") status("Reconnecting…");
-        if (s === "connecting" && !caller) status("Connecting…");
-        if (s === "failed") finish("Connection lost", "failed");
+        if (s === "waiting" && c.group && c.mode !== "live") { c.mode = "live"; liveBar(); status("Waiting for others…"); }
         c.state = s;
       },
-      onLocal: function (st) {
+      onPeers: paintPeers,
+      onLocal: function (st, info) {
         var v = c.el.querySelector(".call-local");
-        c.camOn = c.rtc ? c.rtc.hasCam() : !!st.getVideoTracks().length;
-        v.classList.toggle("hidden", !c.camOn); v.classList.toggle("mirror", !c.rtc || c.rtc.facing() === "user");
-        if (v.srcObject !== st) v.srcObject = st;
+        v.classList.toggle("hidden", !info.preview); v.classList.toggle("mirror", !info.screen && c.rtc && c.rtc.facing() === "user");
+        v.classList.toggle("is-screen", !!info.screen);
+        if (info.preview) { if (!v.srcObject || v.srcObject.getVideoTracks()[0] !== info.preview) v.srcObject = new MediaStream([info.preview]); }
+        else v.srcObject = null;
         if (c.mode === "live") liveBar();
       },
-      onRemote: function (st) {
-        var au = c.el.querySelector(".call-audio"), v = c.el.querySelector(".call-remote");
-        if (au.srcObject !== st) au.srcObject = st;
-        if (v.srcObject !== st) v.srcObject = st;
-        var p = au.play(); if (p && p.catch) p.catch(function () {});
-      },
-      onPeer: function (x) {
-        if (x.answered && c.mode === "out") { stopTone(); clearTimeout(c.noAns); status("Connecting…"); }
-        if (x.cam !== undefined) c.el.classList.toggle("peer-cam", !!x.cam);
-        if (x.end) finish(x.end === "declined" ? "Declined" : x.end === "cancel" ? "Missed call" : null, "peer");
-      },
+      onEnd: function (why) { if (!c.group || why === "ended") finish(why === "declined" ? "Declined" : why === "cancel" ? "Missed call" : null, "peer"); },
+      onNote: note,
     });
     try { await c.rtc.start(); }
     catch (e) {
@@ -121,25 +212,32 @@
     }
   }
 
-  // ---------- tumawag ----------
+  // ---------- tumawag / sumali ----------
   async function outgoing(convId, video, who) {
     if (cur) { UI.toast("You're already on a call."); return; }
     if (!window.TMN_CALL_RTC || !TMN_CALL_RTC.supported()) { UI.toast("Calls don't work in this browser. Try Chrome, Edge or Safari.", 4500); return; }
     who = who || {};
-    cur = { mode: "out", video: !!video, muted: false, camOn: !!video };
+    cur = { mode: "out", video: !!video, muted: false, group: !!who.group };
     cur.el = mount(who, video);
     var c = cur;
-    status(video ? "Starting video call…" : "Calling…");
+    status(who.group ? "Starting group call…" : video ? "Starting video call…" : "Calling…");
     bar(btn("end", "callEnd", "Cancel", "end"));
     window.addEventListener("beforeunload", guard);
     try {
       var r = await TMN_API.call("calls", "ring", { conversation_id: convId, video: !!video });
       if (c.mode === "done") { TMN_API.call("calls", "end", { id: r.call.id }).catch(function () {}); return; }
-      c.id = r.call.id; c.call = r.call;
-      if (r.call.with) { c.el.querySelector(".call-who h2").textContent = r.call.with.display_name || "@" + r.call.with.username; }
-      status("Ringing…"); tone("ringback");
-      c.noAns = setTimeout(function () { if (c.mode === "out") finish("No answer", "noanswer"); }, NO_ANSWER_S * 1000);
-      connect(r.call, r.ice, true);
+      c.id = r.call.id; c.call = r.call; c.group = !!r.call.group;
+      c.el.classList.toggle("is-group", c.group);
+      if (r.call.title || (r.call.with && !c.group)) c.el.querySelector(".call-who h2").textContent = c.group ? r.call.title : (r.call.with.display_name || "@" + r.call.with.username);
+      if (c.group) {
+        status(r.call.joined ? "Joining…" : "Ringing everyone…");
+        if (!r.call.joined) tone("ringback");
+        c.waitT = setTimeout(function () { if (cur === c && !c.rtc.peers().length) finish("No one joined", "noanswer"); }, GROUP_WAIT_S * 1000);
+      } else {
+        status("Ringing…"); tone("ringback");
+        c.noAns = setTimeout(function () { if (c.mode === "out") finish("No answer", "noanswer"); }, NO_ANSWER_S * 1000);
+      }
+      connect(r.call, r.ice);
     } catch (e) {
       stopTone(); status(e.message || "Couldn't call."); bar(btn("close", "x", "Close", ""));
       c.id = null; c.mode = "error";
@@ -149,19 +247,14 @@
 
   // ---------- may tumatawag ----------
   function incoming(call) {
-    if (!call || !call.id) return;
-    if (cur) {
-      if (cur.id === call.id) return;
-      // may kausap ka na: hindi na mag-ri-ring dito (busy na sa server ang bago)
-      return;
-    }
-    var who = call.with || call.from || {};
-    cur = { id: call.id, mode: "in", video: !!call.video, muted: false, camOn: !!call.video };
+    if (!call || !call.id || cur) return;   // may kausap ka na: hindi na mag-ri-ring dito
+    var who = call.group ? { display_name: call.title || "Group call", avatar_url: call.with && call.with.avatar_url, group: true, title: call.title } : (call.with || call.from || {});
+    cur = { id: call.id, mode: "in", video: !!call.video, muted: false, group: !!call.group };
     cur.el = mount(who, call.video);
     var c = cur;
     c.el.classList.add("is-incoming");
-    status(call.video ? "Incoming video call" : "Incoming voice call");
-    bar(btn("decline", "callEnd", "Decline", "end") + btn("accept", call.video ? "video" : "call", "Accept", "accept"));
+    status(call.group ? (((call.with && (call.with.display_name || call.with.username)) || "Someone") + " started a " + (call.video ? "video" : "voice") + " call") : call.video ? "Incoming video call" : "Incoming voice call");
+    bar(btn("decline", "callEnd", "Decline", "end") + btn("accept", call.video ? "video" : "call", call.group ? "Join" : "Accept", "accept"));
     tone("ring");
     c.ringT = setTimeout(function () { if (c.mode === "in") finish("Missed call", "peer"); }, RING_S * 1000);
     var a = c.el.querySelector('[data-call="accept"]'); if (a) a.focus();
@@ -174,31 +267,51 @@
     window.addEventListener("beforeunload", guard);
     try {
       var r = await TMN_API.call("calls", "answer", { id: c.id });
-      c.call = r.call;
-      connect(r.call, r.ice, false);
+      c.call = r.call; c.group = !!r.call.group;
+      connect(r.call, r.ice);
     } catch (e) { c.mode = "in"; finish(e.message || "The call has ended.", "peer"); }
   }
   function decline() {
     var c = cur; if (!c || c.mode !== "in") return;
     TMN_API.call("calls", "decline", { id: c.id }).catch(function () {});
-    finish("Declined", "declined-here");
+    finish(c.group ? "Not joined" : "Declined", "declined-here");
   }
 
   document.addEventListener("click", function (e) {
-    var b = e.target.closest && e.target.closest("[data-call]"); if (!b || !cur || !cur.el.contains(b)) return;
-    var a = b.dataset.call, c = cur;
+    if (!cur) return;
+    var c = cur, f1 = e.target.closest && e.target.closest("[data-fx-filter]"), f2 = e.target.closest && e.target.closest("[data-fx-mask]");
+    if ((f1 || f2) && c.el.contains(e.target) && c.rtc) {
+      if (f1) { c.rtc.setFilter(f1.dataset.fxFilter); c.fxOpen = false; fxPanel(); return; }
+      var id = f2.dataset.fxMask; f2.classList.add("loading");
+      c.rtc.setMask(id).then(function () { c.fxOpen = false; fxPanel(); })
+        .catch(function () { f2.classList.remove("loading"); UI.toast("Fun faces need a good internet connection. Try again in a bit.", 4000); });
+      return;
+    }
+    var b = e.target.closest && e.target.closest("[data-call]"); if (!b || !c.el.contains(b)) return;
+    var a = b.dataset.call;
     if (a === "accept") accept();
     else if (a === "decline") decline();
-    else if (a === "end") finish(null, c.mode === "out" ? "cancel" : "hangup");
+    else if (a === "end") finish(null, c.mode === "out" && !c.group ? "cancel" : "hangup");
     else if (a === "close") { c.el.remove(); cur = null; document.body.classList.remove("in-call"); window.removeEventListener("beforeunload", guard); }
     else if (a === "mic" && c.rtc) { c.muted = !c.muted; c.rtc.mute(c.muted); liveBar(); }
     else if (a === "cam" && c.rtc) {
       b.disabled = true;
-      c.rtc.camera(!c.rtc.hasCam()).catch(function () { UI.toast("Couldn't turn on the camera. Please allow the camera for TigoMeNote.", 4500); }).then(function () { b.disabled = false; liveBar(); });
+      c.rtc.camera(!c.rtc.hasCam()).catch(function () { UI.toast("Couldn't turn on the camera. Please allow the camera for TigoMeNote.", 4500); }).then(function () { if (!c.rtc.hasCam()) { c.fxOpen = false; c.el.querySelector(".call-fx").classList.add("hidden"); } liveBar(); });
     }
+    else if (a === "fx") fxPanel();
+    else if (a === "share" && c.rtc) {
+      c.rtc.share(!c.rtc.sharing()).then(function () { liveBar(); if (c.rtc.sharing()) note("You're sharing your screen. Movies from paid apps may show black to others."); })
+        .catch(function (err) { if (!err || err.name !== "NotAllowedError") UI.toast("Couldn't share your screen."); liveBar(); });
+    }
+    else if (a === "shot") screenshot();
     else if (a === "flip" && c.rtc) c.rtc.flip().catch(function () { UI.toast("Couldn't switch the camera."); });
   });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && cur && cur.mode === "in") decline(); });
+  // isinara ang page habang may tawag: sabihan ang server (para hindi maiwang "may tawag" ang group)
+  window.addEventListener("pagehide", function () {
+    var c = cur; if (!c || !c.id || c.mode === "done" || c.mode === "in" || !navigator.sendBeacon) return;
+    try { navigator.sendBeacon(TMN_CONFIG.fn.calls, new Blob([JSON.stringify({ action: "end", id: c.id, token: window.TMN_TOKEN })], { type: "text/plain;charset=UTF-8" })); } catch (e) {}
+  });
 
   window.TMN_CALL_VIEW = {
     outgoing: outgoing, incoming: incoming,

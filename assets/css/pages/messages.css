@@ -40,6 +40,8 @@ body.msg-gate .inbox { display: none; }
 .ch-head { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--line); background: var(--surface); }
 .ch-calls { display: flex; align-items: center; gap: 2px; flex: none; }
 .ch-calls:empty { display: none; }
+.ch-join { background: #22b35e; color: #fff; border: 0; animation: ch-join 1.6s ease-in-out infinite; }
+@keyframes ch-join { 50% { box-shadow: 0 0 0 6px rgba(34,179,94,.2); } }
 .ch-who { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; border: 0; background: none; padding: 4px; cursor: pointer; color: var(--text); text-align: start; }
 .ch-who .avatar { background: var(--ink); color: var(--ink-text); }
 .ch-who-t { display: grid; min-width: 0; }
@@ -127,7 +129,7 @@ body.msg-gate .inbox { display: none; }
 .ch-acts .btn { justify-content: flex-start; }
 .ch-members { display: grid; gap: 6px; max-height: 260px; overflow-y: auto; }
 .ch-mem { display: flex; align-items: center; gap: 10px; }
-.ch-mem > span { flex: 1; display: grid; min-width: 0; }
+.ch-mem > span:not(.avatar) { flex: 1; display: grid; min-width: 0; }   /* (0.11.58) hindi kasama ang avatar — dati humahaba ito */
 .ch-mem .avatar { background: var(--ink); color: var(--ink-text); }
 .ch-map { height: min(60vh, 420px); border-radius: var(--r-md); overflow: hidden; display: grid; place-items: center; }
 .ch-viewer .modal-body { padding: 0; display: grid; place-items: center; background: #000; }

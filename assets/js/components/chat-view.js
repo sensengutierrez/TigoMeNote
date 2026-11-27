@@ -70,11 +70,23 @@
       var pic = c.kind === "group" ? '<span class="ch-stack">' + av(o[1], 26) + av(o[0], 26) + "</span>" : av(o[0], 38);
       var sub = c.kind === "group" ? S.members.length + " members" : o[0] ? "@" + o[0].username : "";
       // 📞 tawag (1-on-1 lang; magkaibigan lang ang tinatanggap ng server — calls-fast)
-      root.querySelector(".ch-calls").innerHTML = c.kind === "dm" && window.TMN_CALL && c.status !== "request" ?
+      // group: may tawag na → "Join" (calls-fast current)
+      root.querySelector(".ch-calls").innerHTML = window.TMN_CALL && c.status !== "request" ?
+        (c.kind === "group" && S.live ? '<button type="button" class="btn btn-sm ch-join" data-ch="join">' + I(S.live.video ? "video" : "call", "ic-sm") + "Join</button>" : "") +
         '<button type="button" class="icon-btn" data-ch="call" aria-label="Voice call" title="Voice call">' + I("call") + "</button>" +
         '<button type="button" class="icon-btn" data-ch="vcall" aria-label="Video call" title="Video call">' + I("video") + "</button>" : "";
+      if (c.kind === "group" && window.TMN_CALL && !S.liveT) { S.liveT = 1; checkLive(); }
       root.querySelector(".ch-who").innerHTML = pic + '<span class="ch-who-t"><b translate="no">' + esc(chatName(c, S.members, me.id)) + '</b><span class="faint small" translate="no">' + esc(sub) + "</span></span>" +
         (c.muted ? I("bellOff", "ic-sm ch-muted") : "");
+    }
+    // may tawag ba sa group na ito? (tuwing 20 s habang bukas ang chat)
+    function checkLive() {
+      if (S.dead) return;
+      TMN_CALL.current(S.chat.id).then(function (call) {
+        var had = !!S.live; S.live = call && (call.status === "ringing" || call.status === "active") ? call : null;
+        if (had !== !!S.live) paintHead();
+        if (!S.dead) S.liveT = setTimeout(checkLive, 20000);
+      });
     }
     function pinText(m) { return m.kind === "photo" ? "📷 Photo" : m.kind === "location" ? "Location" : m.kind === "sticker" ? "Sticker" : m.kind === "gif" ? "GIF" : (m.body || ""); }
     function paintPin() {
@@ -435,7 +447,11 @@
             onGif: function (g) { queue({ kind: "gif", body: g.full.url, gif: g.full }); } });
         }
         else if (a === "loc") sendLocation();
-        else if (a === "call" || a === "vcall") { var ou = others()[0] || {}; TMN_CALL.start(S.chat.id, a === "vcall", { display_name: ou.display_name || "@" + (ou.username || ""), avatar_url: ou.avatar_url, username: ou.username }); }
+        else if (a === "call" || a === "vcall" || a === "join") {
+          var ou = others()[0] || {}, grp = S.chat.kind === "group";
+          var who = grp ? { group: true, title: chatName(S.chat, S.members, me.id), display_name: chatName(S.chat, S.members, me.id), avatar_url: ou.avatar_url } : { display_name: ou.display_name || "@" + (ou.username || ""), avatar_url: ou.avatar_url, username: ou.username };
+          TMN_CALL.start(S.chat.id, a === "join" ? !!(S.live && S.live.video) : a === "vcall", who);
+        }
         else if (a === "menu" || a === "who") { if (a === "who" && S.chat.kind === "dm" && others()[0] && window.TMN_SOCIAL) TMN_SOCIAL.userSheet(others()[0].id); else menu(); }
         else if (a === "older") older();
         else if (a === "retry" && m) deliver(m);
@@ -474,7 +490,7 @@
     load();
     return {
       destroy: function () {
-        S.dead = true; clearTimeout(poll); clearTimeout(refreshT); clearTimeout(typingTimer);
+        S.dead = true; clearTimeout(poll); clearTimeout(refreshT); clearTimeout(typingTimer); clearTimeout(S.liveT);
         if (rt) rt.leave();
         document.removeEventListener("visibilitychange", onVisible);
         if ("serviceWorker" in navigator) navigator.serviceWorker.removeEventListener("message", onPush);

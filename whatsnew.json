@@ -1,4 +1,11 @@
 {
+  "0.11.58": [
+    "📞 Group calls: voice and video with up to 8 people — tap Join when a call is on",
+    "📸 Screenshot button during a call (the other person gets a little heads-up)",
+    "✨ Free filters and fun faces: mustache, glasses, shades, gentleman, kitty, crown and blush",
+    "🖥️ Share your screen on a computer (with sound, if you allow it)",
+    "Fixed: group member photos in the chat info looked stretched"
+  ],
   "0.11.57": [
     "Android: “Update now” downloads and installs the update inside the app — it resumes if the internet drops and checks the file first",
     "Tigo is now inside the TigoMeNote app — 2 apps only: TigoMeNote and TigoMeNote Chat",
