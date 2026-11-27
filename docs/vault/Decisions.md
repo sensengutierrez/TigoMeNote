@@ -160,6 +160,7 @@ updated: 2026-10-24
 | 2026-11-27 | Dalawang app na lang: TigoMeNote (kasama ang Tigo) at TigoMeNote Chat; ang lumang Tigo app ay itinuturo sa TigoMeNote | Mas madaling i-update at mas kaunti ang build |
 | 2026-11-27 | Group call = mesh (walang media server), hanggang 8; sinumang aktibong miyembro ng group ang puwedeng tumawag | Libre; sapat para sa barkada; mas mabigat sa data kapag marami |
 | 2026-11-27 | Fun faces: MediaPipe Face Landmarker (kinukuha lang kapag pinili) + sariling disenyo sa canvas | Libre at walang server; gumagana sa web at APK |
+| 2026-11-27 | Update ng APK: sa loob lang ng app; Chrome ay reserba lang kapag 2 beses pumalya | Hiling ni Bench: hindi lilipat sa ibang app |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

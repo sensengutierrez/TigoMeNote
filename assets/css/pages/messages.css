@@ -130,7 +130,7 @@ body.msg-gate .inbox { display: none; }
 .ch-members { display: grid; gap: 6px; max-height: 260px; overflow-y: auto; }
 .ch-mem { display: flex; align-items: center; gap: 10px; }
 .ch-mem > span:not(.avatar) { flex: 1; display: grid; min-width: 0; }   /* (0.11.58) hindi kasama ang avatar — dati humahaba ito */
-.ch-mem .avatar { background: var(--ink); color: var(--ink-text); }
+.ch-mem .avatar { background: var(--ink); color: var(--ink-text); flex: none; width: var(--size); height: var(--size); }
 .ch-map { height: min(60vh, 420px); border-radius: var(--r-md); overflow: hidden; display: grid; place-items: center; }
 .ch-viewer .modal-body { padding: 0; display: grid; place-items: center; background: #000; }
 .ch-viewer img { max-width: 100%; max-height: 80vh; display: block; }

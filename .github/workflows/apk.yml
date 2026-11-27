@@ -33,7 +33,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: 21 }
+        with: { distribution: temurin, java-version: 21, cache: gradle, cache-dependency-path: "apk/*/package.json" }   # cache: iwas "429 Too Many Requests" ng Maven Central
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - name: Version
@@ -65,7 +65,15 @@ jobs:
         run: |
           cd apk/$APP/android && chmod +x gradlew
           T=assembleDebug; [ "$SIGN" = release ] && T=assembleRelease
-          set +e; ./gradlew --no-daemon $T > "$RUNNER_TEMP/gradle.log" 2>&1; ST=$?; set -e
+          # hanggang 3 subok: minsan "429 Too Many Requests" ang Maven Central (pansamantala lang)
+          set +e
+          for TRY in 1 2 3; do
+            ./gradlew --no-daemon $T > "$RUNNER_TEMP/gradle.log" 2>&1; ST=$?
+            [ $ST -eq 0 ] && break
+            grep -qE "status code 429|Could not resolve|Could not GET|timed out" "$RUNNER_TEMP/gradle.log" || break
+            echo "::warning::Gradle download problem (subok $TRY) — uulit pagkalipas ng $((TRY * 45)) s"; sleep $((TRY * 45))
+          done
+          set -e
           tail -60 "$RUNNER_TEMP/gradle.log"
           if [ $ST -ne 0 ]; then
             # ipakita ang dahilan bilang annotation (nababasa kahit walang access sa logs)

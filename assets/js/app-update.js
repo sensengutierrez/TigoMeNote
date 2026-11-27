@@ -2,7 +2,7 @@
    Kapag may mas bagong version sa tigomenote.com/app-version.json, HINDI na magagamit ang app hangga't hindi naa-update.
    0.11.57: in-app update (OTA) — "Update now": dina-download ng app mismo ang APK mula sa GitHub Releases (itinutuloy kapag naputol),
    sinusuri ang laki at SHA-256, saka binubuksan ang installer ng Android (native: apk/native/AppUpdater.java, plugin "TmnUpdate").
-   Kung kailangan: "Install unknown apps" para sa app na ito (isang beses). Reserba: "Download in Chrome instead".
+   Kung kailangan: "Install unknown apps" para sa app na ito (isang beses). Lahat sa loob ng app; ang "Download in Chrome instead" ay lumalabas lang kapag 2 beses nang pumalya (0.11.59).
    Ang lumang Tigo app (app-version.json "tigo".moved = "main"): ida-download ang TigoMeNote (nasa loob na ang Tigo).
    Chine-check: pagbukas, pagbalik sa app (resume) at bawat 30 minuto. Walang internet = hindi hinaharang. */
 (function () {
@@ -11,7 +11,7 @@
   var Cap = window.Capacitor, P = (Cap && Cap.Plugins) || {};
   var URL_V = (C.apps && C.apps.remoteVersion) || "https://tigomenote.com/app-version.json";
   var NAMES = { main: "TigoMeNote", chat: "TigoMeNote Chat", tigo: "Tigo" };
-  var U = P.TmnUpdate || null, state = "idle", file = null, waitPerm = false;
+  var U = P.TmnUpdate || null, state = "idle", file = null, waitPerm = false, fails = 0;
   var code = function (v) { var p = String(v || "0.0.0").split(".").map(Number); return (p[0] || 0) * 1000000 + (p[1] || 0) * 1000 + (p[2] || 0); };
   var mine = code(C.version), box = null, info = null, notes = [];
   var URL_N = URL_V.replace(/app-version\.json.*$/, "whatsnew.json");
@@ -50,7 +50,7 @@
         '<div class="upd-bar hidden" role="progressbar" aria-label="Download" aria-valuemin="0" aria-valuemax="100"><i></i></div>' +
         '<p class="upd-msg small" aria-live="polite"></p>' +
         '<button type="button" class="btn btn-primary btn-lg upd-go">' + (U && !info.moved ? "⬇ Update now" : "⬇ Download new version") + "</button>" +
-        (U && !info.moved ? '<button type="button" class="upd-alt upd-chrome">Download in Chrome instead</button>' :
+        (U && !info.moved ? '<button type="button" class="upd-alt upd-chrome hidden">Download in Chrome instead</button>' :
           '<p class="upd-how faint small">Opens in Chrome. When it finishes, tap the downloaded file → Install. Your data stays.</p>') +
       "</div>";
     document.body.appendChild(box);
@@ -91,7 +91,8 @@
       file = r.path; state = "ready"; bar(100);
       install();
     } catch (e) {
-      state = "idle"; bar(null);
+      state = "idle"; bar(null); fails++;
+      if (fails >= 2) box.querySelector(".upd-chrome").classList.remove("hidden");
       btn("⬇ Try again"); msg((e && e.message ? e.message : "Download failed.") + " Check your internet and try again.");
     }
   }
