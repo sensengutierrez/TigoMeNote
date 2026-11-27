@@ -217,7 +217,7 @@
 .sx-write .mod-hint { order: 10; flex-basis: 100%; margin-top: 0; }
 /* Modal (Report, Delete) sa ibabaw ng status viewer */
 body:has(.st-view) .modal-backdrop { z-index: 95; }
-@media (min-width: 900px) { .feed .pcard-media { max-height: min(76vh, 700px); } }
+@media (min-width: 900px) { .feed .pcard-media { max-height: min(84vh, 920px); } }
 
 /* My status (Profile) */
 .st-mine { display: grid; gap: 10px; margin-bottom: 16px; }

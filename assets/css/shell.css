@@ -1,5 +1,6 @@
 /* TigoMeNote · shell.css — layout ng app pages (sidebar, topbar, hamburger drawer, bottom tabs)
    Desktop (>= 900px): isang full screen, walang whole-page scroll; ang content box lang ang nag-i-scroll.
+   (0.11.55: gulong ng mouse sa menu/gilid = scroll pa rin ng content; arrow/Space/PgDn gumagana agad — app-shell.js)
    Phone (< 900px): normal na scroll, may topbar sa taas at tabs sa baba. */
 
 .shell { min-height: 100vh; min-height: 100dvh; }
@@ -118,7 +119,11 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
   .sidebar-cta { margin: 8px 0 4px; }
   .sidebar-foot { margin-top: auto; display: grid; gap: 10px; padding-top: 16px; }
 
-  .shell-main { height: 100%; overflow-y: auto; padding-bottom: 0; background: var(--bg); scrollbar-gutter: stable; }
+  .shell-main { height: 100%; overflow-y: auto; padding-bottom: 0; background: var(--bg); scrollbar-gutter: stable; overscroll-behavior-y: contain; outline: none; }
+  /* sidebar: manipis na scrollbar na lumalabas lang kapag naka-hover (0.11.55) */
+  .sidebar > * { flex-shrink: 0; }   /* hindi naiipit ang Share/menu sa mababang screen — scroll na lang */
+  .sidebar { scrollbar-width: thin; scrollbar-color: transparent transparent; overscroll-behavior-y: contain; }
+  .sidebar:hover { scrollbar-color: var(--line-strong, rgba(0,0,0,.25)) transparent; }
   /* Full UI sa desktop/laptop: buong lapad ang gamit (rule ni Bench) */
   .page, .page.wide { max-width: 1480px; padding: 32px 40px 48px; }
 
@@ -132,6 +137,14 @@ body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
   .page.fill { height: 100%; display: flex; flex-direction: column; padding-bottom: 24px; }
 }
 
+/* Mababang screen (laptop): mas siksik ang menu para kasya nang walang scroll */
+@media (min-width: 900px) and (max-height: 1000px) {
+  .sidebar { padding: 14px 12px; gap: 2px; }
+  .sidebar .brand { padding: 2px 8px 12px; }
+  .sidebar .nav-link { height: 38px; }
+  .sidebar .nav-section { padding: 12px 12px 4px; }
+  .sidebar-foot { padding-top: 10px; gap: 8px; }
+}
 /* Malapad na screen: mas malaking side panel */
 @media (min-width: 1500px) {
   .layout { grid-template-columns: minmax(0, 1fr) 380px; }

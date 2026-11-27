@@ -153,6 +153,7 @@ updated: 2026-10-24
 | 2026-11-13 | Banyo at kusina = gamit sa loob ng bahay (hindi hiwalay na kwarto) | Puwedeng ilagay kahit saan sa 1F/2F; walang bagong table |
 | 2026-11-13 | Upgrade (stove-1→2→3, shower→bathtub→jacuzzi): kailangan muna ang nauna; ang Bath/Cook ay ayon sa pinakamataas na pag-aari (server) | Walang dayaan sa epekto; simple sa phone |
 | 2026-11-13 | 🧱 Block avatar = sariling disenyo (kahon), pareho ang API at sukat ng Kid | Tugma agad sa upuan, kama, sasakyan at mga laro |
+| 2026-11-27 | Desktop Explore: isang malapad na feed, walang side panel (hanap at suggestions sa 🔍) | Hiling ni Bench: hindi pang-phone ang itsura; mas malaki ang post |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

@@ -130,6 +130,34 @@
     el.outerHTML = I(el.dataset.icon, el.dataset.size ? "ic-" + el.dataset.size : "");
   });
 
+  // ---------- desktop scroll (0.11.55) ----------
+  // Ang .shell-main ang nag-i-scroll. (1) Gulong ng mouse sa menu na hindi na maka-scroll → content ang mag-i-scroll.
+  // (2) Naka-focus ang content (tabindex=-1) para gumana agad ang ↑ ↓ Space PgUp PgDn Home End nang hindi kinikick muna.
+  (function () {
+    var mainEl = shell.querySelector(".shell-main"), side = shell.querySelector(".sidebar"), wide = window.matchMedia("(min-width: 900px)");
+    if (!mainEl) return;
+    mainEl.setAttribute("tabindex", "-1");
+    function focusMain() { if (wide.matches && !document.querySelector(".page.fill, .tg-stage") && body.dataset.page !== "tigo" && (!document.activeElement || document.activeElement === body)) { try { mainEl.focus({ preventScroll: true }); } catch (e) {} } }
+    setTimeout(focusMain, 0); document.addEventListener("tmn:user", function () { setTimeout(focusMain, 0); });
+    // walang naka-focus (hal. pagkatapos mag-click sa blangko): ang scroll keys ay para sa content pa rin
+    var KEYS = { PageDown: 0.9, PageUp: -0.9, " ": 0.9, ArrowDown: 0.12, ArrowUp: -0.12 };
+    document.addEventListener("keydown", function (e) {
+      if (!wide.matches || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+      var a = document.activeElement; if (a && a !== body && a !== document.documentElement) return;
+      if (body.dataset.page === "tigo" || document.querySelector(".page.fill, .modal-backdrop")) return;
+      var h = mainEl.clientHeight;
+      if (e.key === "Home" || e.key === "End") { mainEl.scrollTo({ top: e.key === "Home" ? 0 : mainEl.scrollHeight, behavior: "smooth" }); e.preventDefault(); return; }
+      if (KEYS[e.key] === undefined) return;
+      mainEl.scrollBy({ top: KEYS[e.key] * h * (e.key === " " && e.shiftKey ? -1 : 1), behavior: "smooth" }); e.preventDefault();
+    });
+    if (side) side.addEventListener("wheel", function (e) {
+      if (!wide.matches || e.ctrlKey) return;
+      var dy = e.deltaY, max = side.scrollHeight - side.clientHeight;
+      var can = max > 1 && (dy < 0 ? side.scrollTop > 0 : side.scrollTop < max - 1);
+      if (!can) mainEl.scrollBy({ top: dy * (e.deltaMode === 1 ? 32 : 1), behavior: "auto" });
+    }, { passive: true });
+  })();
+
   var toastHost = document.createElement("div");
   toastHost.className = "toast-host";
   toastHost.setAttribute("aria-live", "polite");

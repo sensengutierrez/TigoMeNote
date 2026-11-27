@@ -1,4 +1,9 @@
 {
+  "0.11.55": [
+    "Bigger on computers: Explore is one wide feed with larger photos (search people with 🔍 at the top)",
+    "Smoother scrolling on desktop: mouse wheel and Page Up/Down work anywhere",
+    "Wider Settings page and a tidier side menu on small laptop screens"
+  ],
   "0.11.54": [
     "🧱 Block avatar and a new Avatar editor: Avatars, Body, Face, Clothing and Accessories, with a turning preview",
     "🛁 Bathroom: toilet, sink, shower, bathtub and jacuzzi — tap Bath (upgrades give a better bath)",

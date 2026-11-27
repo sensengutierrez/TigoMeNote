@@ -93,6 +93,8 @@ Format: **PROBLEMA → SANHI → AYOS (file)**. Pinakabago sa ibaba.
 - 2026-11-13 · Sasakyan: hindi abot ng kamay ang manibela (malaki ang sasakyan, malayo ang manibela) → mas maliit na sasakyan, grips + `reach()` na tumututok sa manibela (`tigo/vehicles.js`, `tigo/human-model.js`)
 - 2026-11-13 · `reach()`: iisang punto ang naabot ng dalawang kamay → binago ng `sub()` ang punto habang pinipili pa → `clone()` muna (`tigo/human-model.js`, `tigo/block-model.js`)
 - 2026-11-13 · Decorate: natatakpan ng bar ang napiling gamit → bar na sumusunod sa itaas/ibaba ng gamit (`tigo/room-ui.js`)
+- 2026-11-27 · Desktop: hindi nag-i-scroll ang feed kapag nasa menu ang mouse o kapag PgDn/Space → content box ang nag-i-scroll, hindi ang page → ipinapasa ang gulong at mga scroll key sa content (`components/app-shell.js`)
+- 2026-11-27 · Laptop na mababa ang screen: naiipit ang Share button at may scrollbar ang menu → `flex-shrink: 0`, siksik na menu, nakatagong scrollbar (`shell.css`)
 
 Hindi bug (para hindi na hanapin ulit):
 - GitHub Desktop: "This file uses LF line endings… CRLF" → normal sa Windows, walang epekto sa site.
