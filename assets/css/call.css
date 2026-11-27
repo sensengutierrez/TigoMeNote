@@ -1,0 +1,62 @@
+/* TigoMeNote · call.css — screen ng tawag (components/call-view.js). Kinukuha lang kapag may tawag (call-watch.js). */
+.call-ov {
+  position: fixed; inset: 0; z-index: 400; display: grid; grid-template-rows: 1fr auto; overflow: hidden; color: #fff;
+  background: radial-gradient(circle at 50% 30%, #3b3a52 0%, #1b1b26 60%, #0e0e14 100%);
+  animation: call-in .25s ease;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+@keyframes call-in { from { opacity: 0; transform: scale(1.02); } }
+.call-ov.ending { opacity: .85; }
+body.in-call { overflow: hidden; }
+
+.call-remote { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; opacity: 0; transition: opacity .3s; pointer-events: none; }
+.call-ov.peer-cam .call-remote { opacity: 1; }
+.call-audio { display: none; }
+
+.call-who { position: relative; align-self: center; justify-self: center; display: grid; justify-items: center; gap: 10px; text-align: center; padding: 24px 20px; transition: transform .3s, opacity .3s; }
+.call-who h2 { margin: 6px 0 0; font-size: 26px; font-weight: 750; letter-spacing: -.02em; color: #fff; max-width: 86vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.call-status { margin: 0; font-size: 15px; color: rgba(255,255,255,.75); font-variant-numeric: tabular-nums; min-height: 1.4em; }
+.call-av { --size: 116px; box-shadow: 0 0 0 6px rgba(255,255,255,.08); font-size: 40px; }
+.call-ov.is-incoming .call-av { animation: call-pulse 1.6s ease-in-out infinite; }
+@keyframes call-pulse { 0%, 100% { box-shadow: 0 0 0 6px rgba(255,255,255,.08); } 50% { box-shadow: 0 0 0 22px rgba(255,255,255,.04); } }
+/* kapag may video ang kausap: maliit na pangalan sa taas */
+.call-ov.peer-cam .call-who { align-self: start; padding-top: 18px; }
+.call-ov.peer-cam .call-av { display: none; }
+.call-ov.peer-cam .call-who h2 { font-size: 18px; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+.call-ov.peer-cam .call-status { text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+
+.call-local {
+  position: absolute; right: 14px; top: calc(14px + env(safe-area-inset-top)); width: 112px; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 16px;
+  background: #222; box-shadow: 0 6px 24px rgba(0,0,0,.45); border: 2px solid rgba(255,255,255,.18); z-index: 2;
+}
+.call-local.mirror { transform: scaleX(-1); }
+.call-ov:not(.peer-cam) .call-local { width: 96px; }
+
+.call-bar { position: relative; z-index: 2; display: flex; justify-content: center; gap: 18px; padding: 16px 16px 34px; flex-wrap: wrap; }
+.call-btn {
+  display: grid; justify-items: center; gap: 6px; border: 0; background: none; color: #fff; cursor: pointer; font: inherit; padding: 0; min-width: 64px;
+}
+.call-btn .ic { width: 58px; height: 58px; padding: 16px; border-radius: 50%; background: rgba(255,255,255,.16); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: transform .12s, background-color .15s; box-sizing: border-box; }
+.call-btn small { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.85); }
+.call-btn:hover .ic { background: rgba(255,255,255,.26); }
+.call-btn:active .ic { transform: scale(.93); }
+.call-btn:focus { outline: none; }
+.call-btn:focus-visible .ic { outline: 3px solid #fff; outline-offset: 3px; }
+.call-btn.off .ic { background: #fff; color: #1b1b26; }
+.call-btn.end .ic { background: #ef3b3b; }
+.call-btn.end:hover .ic { background: #d92c2c; }
+.call-btn.accept .ic { background: #22b35e; animation: call-bob 1.2s ease-in-out infinite; }
+.call-btn.accept:hover .ic { background: #1c9c51; }
+.call-btn:disabled { opacity: .5; }
+@keyframes call-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.call-ov.is-incoming .call-bar { gap: 72px; padding-bottom: 54px; }
+
+@media (min-width: 900px) {
+  .call-local { width: 220px; aspect-ratio: 16 / 10; right: 24px; top: 24px; }
+  .call-ov:not(.peer-cam) .call-local { width: 180px; }
+  .call-who h2 { font-size: 30px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .call-ov, .call-ov.is-incoming .call-av, .call-btn.accept .ic { animation: none; }
+}
+[dir="rtl"] .call-local { right: auto; left: 14px; }

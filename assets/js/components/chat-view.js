@@ -40,6 +40,7 @@
       '<div class="ch">' +
         '<header class="ch-head"><button type="button" class="icon-btn ch-back" aria-label="Back">' + I("chevronL") + "</button>" +
           '<button type="button" class="ch-who" data-ch="who"></button>' +
+          '<span class="ch-calls"></span>' +
           '<button type="button" class="icon-btn" data-ch="menu" aria-label="Chat settings">' + I("more") + "</button></header>" +
         '<div class="ch-pin hidden"></div>' +
         '<div class="ch-list" role="log" aria-live="polite"><div class="ch-loading faint small">Loading…</div></div>' +
@@ -68,6 +69,10 @@
       var o = others(), c = S.chat;
       var pic = c.kind === "group" ? '<span class="ch-stack">' + av(o[1], 26) + av(o[0], 26) + "</span>" : av(o[0], 38);
       var sub = c.kind === "group" ? S.members.length + " members" : o[0] ? "@" + o[0].username : "";
+      // 📞 tawag (1-on-1 lang; magkaibigan lang ang tinatanggap ng server — calls-fast)
+      root.querySelector(".ch-calls").innerHTML = c.kind === "dm" && window.TMN_CALL && c.status !== "request" ?
+        '<button type="button" class="icon-btn" data-ch="call" aria-label="Voice call" title="Voice call">' + I("call") + "</button>" +
+        '<button type="button" class="icon-btn" data-ch="vcall" aria-label="Video call" title="Video call">' + I("video") + "</button>" : "";
       root.querySelector(".ch-who").innerHTML = pic + '<span class="ch-who-t"><b translate="no">' + esc(chatName(c, S.members, me.id)) + '</b><span class="faint small" translate="no">' + esc(sub) + "</span></span>" +
         (c.muted ? I("bellOff", "ic-sm ch-muted") : "");
     }
@@ -430,6 +435,7 @@
             onGif: function (g) { queue({ kind: "gif", body: g.full.url, gif: g.full }); } });
         }
         else if (a === "loc") sendLocation();
+        else if (a === "call" || a === "vcall") { var ou = others()[0] || {}; TMN_CALL.start(S.chat.id, a === "vcall", { display_name: ou.display_name || "@" + (ou.username || ""), avatar_url: ou.avatar_url, username: ou.username }); }
         else if (a === "menu" || a === "who") { if (a === "who" && S.chat.kind === "dm" && others()[0] && window.TMN_SOCIAL) TMN_SOCIAL.userSheet(others()[0].id); else menu(); }
         else if (a === "older") older();
         else if (a === "retry" && m) deliver(m);

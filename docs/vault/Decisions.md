@@ -154,6 +154,8 @@ updated: 2026-10-24
 | 2026-11-13 | Upgrade (stove-1→2→3, shower→bathtub→jacuzzi): kailangan muna ang nauna; ang Bath/Cook ay ayon sa pinakamataas na pag-aari (server) | Walang dayaan sa epekto; simple sa phone |
 | 2026-11-13 | 🧱 Block avatar = sariling disenyo (kahon), pareho ang API at sukat ng Kid | Tugma agad sa upuan, kama, sasakyan at mga laro |
 | 2026-11-27 | Desktop Explore: isang malapad na feed, walang side panel (hanap at suggestions sa 🔍) | Hiling ni Bench: hindi pang-phone ang itsura; mas malaki ang post |
+| 2026-11-27 | 📞 Tawag: WebRTC diretso sa dalawang phone; ang server ay para sa pahintulot, ring at lihim na signal channel lang | Walang audio/video sa server; libre at mabilis |
+| 2026-11-27 | Tawag: magkaibigan lang (mutual follow o Family/Friends), 1-on-1 muna; ring = Realtime + push (walang full-screen na tawag sa APK) | Ligtas para sa 13+; simple ang unang bersyon |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

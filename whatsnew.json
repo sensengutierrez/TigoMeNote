@@ -1,4 +1,10 @@
 {
+  "0.11.56": [
+    "📞 Calls in Messages: voice and video calls with friends (1-on-1)",
+    "Mute, camera on/off and flip camera during a call",
+    "Incoming calls ring on any page, and as a notification when the app is closed",
+    "Missed and finished calls show in the chat"
+  ],
   "0.11.55": [
     "Bigger on computers: Explore is one wide feed with larger photos (search people with 🔍 at the top)",
     "Smoother scrolling on desktop: mouse wheel and Page Up/Down work anywhere",

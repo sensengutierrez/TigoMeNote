@@ -81,7 +81,7 @@ self.addEventListener("fetch", function (e) {
 self.addEventListener("push", function (e) {
   var d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) { d = { title: "TigoMeNote", body: e.data ? e.data.text() : "" }; }
-  var sos = d.type === "sos", alarm = d.type === "alarm";
+  var sos = d.type === "sos", alarm = d.type === "alarm", call = d.type === "call";
   var base = self.registration.scope;
   var opts = {
     body: d.body || "",
@@ -89,14 +89,16 @@ self.addEventListener("push", function (e) {
     badge: base + "assets/img/badge-72.png",
     tag: (d.type || "tmn") + "-" + (d.id || ""),
     renotify: true,
-    requireInteraction: sos || alarm, // alarm (Daily): nananatili sa screen hanggang pindutin
-    vibrate: sos ? [800, 300, 800, 300, 800, 300, 800] : alarm ? [600, 200, 600, 200, 600, 200, 600, 200, 600] : d.type === "reminder" ? [300, 150, 300] : [200],
+    requireInteraction: sos || alarm || call, // alarm (Daily) at 📞 tawag: nananatili sa screen hanggang pindutin
+    vibrate: sos ? [800, 300, 800, 300, 800, 300, 800] : call ? [500, 250, 500, 250, 500, 250, 500, 250, 500] : alarm ? [600, 200, 600, 200, 600, 200, 600, 200, 600] : d.type === "reminder" ? [300, 150, 300] : [200],
     data: { url: d.url || "app/home.html", type: d.type, id: d.id }
   };
   e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
     list.forEach(function (c) { c.postMessage({ type: "tmn-push", data: d }); });
     // Message: huwag nang ipakita kung bukas at nakikita mo na ang chat na iyon
     var open = d.type === "message" && list.some(function (c) { return c.focused && c.url.indexOf("messages.html") > -1 && c.url.indexOf("c=" + d.id) > -1; });
+    // 📞 tawag: kung nakabukas at nakikita ang app, ang page na ang nagri-ring (call-watch.js)
+    if (call && list.some(function (c) { return c.focused || c.visibilityState === "visible"; })) open = true;
     if (!open) return self.registration.showNotification(d.title || "TigoMeNote", opts);
   }));
 });
