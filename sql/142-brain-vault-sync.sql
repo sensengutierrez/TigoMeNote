@@ -1,0 +1,13 @@
+-- TigoMeNote · 142 brain vault sync (Change log #93, Decisions, walang bagong fix)
+update brain_notes set body = rtrim(body, E' \n') || $v$
+
+## 2026-11-27 · #93 Live: link na lang (tinanggal ang camera live sa Cloudflare); Privacy at Third-party: YouTube, Facebook, Twitch, TikTok, MediaPipe, STUN
+
+- **Hiling:** Alisin ang sariling camera live (Cloudflare) para link na lang; idagdag sa Privacy at Third-party page ang YouTube, Facebook at Twitch (baka makasuhan).
+- **Ginawa:** (1) `components/live-view.js` (bagong ayos, link lang): sheet na ipapaste ang link, player (YouTube nocookie / Twitch / Facebook), TikTok card, chat, ❤️, bilang ng nanonood, End ng may-ari; wala na ang camera, screen, WebRTC at Cloudflare. `live.css`: tinanggal ang hindi na ginagamit. (2) `backend/live-fast.ts`: tinanggal ang Cloudflare (cf(), beat, answer, CF_REALTIME_* secrets); actions: status, start (link), end, list, watch, say; ang lumang "cf" na live ay tinatapos ng expire(). (3) `legal/privacy.html`: bagong hanay na Calls (sino, kailan, gaano katagal; hindi nire-record ang boses/video) at Live (link, pamagat, chat); talata tungkol sa player ng YouTube/Facebook/Twitch at TikTok (IP, cookies, link sa privacy policy nila, YouTube Terms) at sa STUN at MediaPipe. `legal/third-party.html`: YouTube, Facebook, Twitch, TikTok, MediaPipe 0.10.14 (Apache 2.0), jsDelivr, STUN; notice ng MediaPipe.
+- **Files:** `assets/js/components/live-view.js`, `assets/css/live.css`, `backend/live-fast.ts`, `legal/privacy.html`, `legal/third-party.html`, `whatsnew.json`, `config.js` (0.11.62)
+- **Paano:** livetest2 (390×844, 844×390, 1366×800; pekeng live-fast): 14 na pasado bawat laki (sheet, YouTube player, TikTok card, Live now, chat, bilang na 2, End → ended). live-fast: syntax check (node strip-types). Hindi pa nasubukan: totoong video sa player at YouTube sa loob ng APK.$v$, updated_by = 'claude', updated_at = now() where lower(title) = 'change log';
+update brain_notes set body = replace(body, $v$| 2026-11-27 | Live: ang video ay sa YouTube / TikTok / Facebook / Twitch (link); sa atin ang player, chat at ❤️; sariling Live sa Cloudflare naka-hold | Libre at walang limit; ayaw ni Bench ng posibleng bill |
+$v$, $v$| 2026-11-27 | Live: ang video ay sa YouTube / TikTok / Facebook / Twitch (link); sa atin ang player, chat at ❤️; sariling Live sa Cloudflare naka-hold | Libre at walang limit; ayaw ni Bench ng posibleng bill |
+| 2026-11-27 | Tinanggal ang sariling camera live (Cloudflare) sa app at server; link na lang ang Live | Hiling ni Bench: walang posibleng bayad |
+$v$), updated_by = 'claude', updated_at = now() where lower(title) = 'decisions';

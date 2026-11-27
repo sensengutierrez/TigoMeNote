@@ -1,21 +1,16 @@
-// TigoMeNote · live-fast (Supabase Edge Function, verify_jwt = off) — 🔴 Live sa Explore (phone o computer)
-// Ang video ay dumadaan sa Cloudflare Realtime (SFU): isang upload lang ang nagla-live, at ang Cloudflare ang nagpapadala sa lahat ng nanonood.
-// Ang server na ito ay para lang sa: pahintulot, paggawa ng Cloudflare session/tracks, listahan ng live, at chat (may moderation).
+// TigoMeNote · live-fast (Supabase Edge Function, verify_jwt = off) — 🔴 Live sa Explore
+// Ang video ay nasa YouTube / Twitch / Facebook / TikTok (libre — sila ang nagpapadala ng video). Dito: link, listahan, chat at ❤️.
+// 0.11.62: tinanggal ang sariling camera live (Cloudflare Realtime) — walang bayad, link na lang.
 // Actions (kailangan ng session token):
-//   status                                   → { ready, can_live, ice }       (naka-setup ba ang Cloudflare; puwede bang mag-live ang user)
-//   start  { title, source, sdp, tracks:[{mid,name}] } → { live, sdp }        (nagla-live: offer → answer ng Cloudflare)
-//   start  { title, link }                   → { live }                       (0.11.61: live sa YouTube / Twitch / Facebook / TikTok — libre, sila ang nagpapadala ng video)
-//   beat   { id, viewers }                   → { ok }                         (bawat 20 s habang live)
-//   end    { id }                            → { ok }
-//   list                                     → { lives:[...] }                (live ngayon: sarili + mga fina-follow)
-//   watch  { id }                            → { live, session, sdp, ice }    (nanonood: Cloudflare offer → sasagutin ng browser)
-//   answer { session, sdp }                  → { ok }                         (sagot ng nanonood)
-//   say    { id, text }                      → { msg }                        (chat; dumadaan sa moderation; ipinapasa sa lahat sa Realtime)
+//   status                    → { can_live }                   (puwede bang mag-live ang user)
+//   start  { title, link }    → { live }                       (ibahagi ang live mo; tinatanggap lang ang kilalang link)
+//   end    { id }             → { ok }                         (may-ari lang)
+//   list                      → { lives:[...] }                (live ngayon: sarili + mga fina-follow)
+//   watch  { id }             → { live }                       (para sa player; pati sa may-ari para makita ang chat)
+//   say    { id, text }       → { msg }                        (chat; dumadaan sa moderation; ipinapasa sa lahat sa Realtime)
 // Patakaran: 18+ lang ang puwedeng mag-live (teen ay puwedeng manood). Nakikita ng mga fina-follow ka (at ng sarili).
-//   Isang live bawat user; ang live na walang "beat" nang 60 s ay tapos na (Cloudflare). Ang live na link ay tapos pagkalipas ng 6 na oras
-//   o kapag pinindot ng may-ari ang End. Hanggang 6 na live bawat oras.
-// Secrets: CF_REALTIME_APP_ID + CF_REALTIME_APP_TOKEN (Cloudflare dashboard → Realtime → SFU app). Kapag wala: ready = false.
-// Tables: lives, live_chat (sql/138). Push sa followers: notify-fast pushRaw (category updates).
+//   Isang live bawat user; tapos pagkalipas ng 6 na oras o kapag pinindot ng may-ari ang End. Hanggang 6 na live bawat oras.
+// Tables: lives, live_chat (sql/138, 140). Push sa followers: notify-fast pushRaw (category updates).
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import { checkFor, blockMessage, logBlock, isTeen } from "./moderation.ts";
@@ -23,10 +18,7 @@ import { checkFor, blockMessage, logBlock, isTeen } from "./moderation.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
-const APP_ID = Deno.env.get("CF_REALTIME_APP_ID") || "";
-const APP_TOKEN = Deno.env.get("CF_REALTIME_APP_TOKEN") || "";
-const CF = `https://rtc.live.cloudflare.com/v1/apps/${APP_ID}`;
-const STALE_S = 60, RATE_N = 6, LINK_H = 6;
+const RATE_N = 6, LINK_H = 6;
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -61,19 +53,6 @@ async function sessionUser(token: string): Promise<any | null> {
 const pub = (u: any) => (u ? { id: u.id, username: u.username, display_name: u.display_name, avatar_url: u.avatar_url } : null);
 // deno-lint-ignore no-explicit-any
 const nameOf = (u: any) => (u ? u.display_name || "@" + u.username : "Someone");
-const ICE = [{ urls: "stun:stun.cloudflare.com:3478" }];
-
-// ---------- Cloudflare Realtime ----------
-// deno-lint-ignore no-explicit-any
-async function cf(method: string, path: string, body?: unknown): Promise<any> {
-  const r = await fetch(CF + path, {
-    method, headers: { Authorization: "Bearer " + APP_TOKEN, "Content-Type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok || j.errorCode) { console.error("cf", path.replace(/sessions\/[^/]+/, "sessions/…"), r.status, j.errorCode, j.errorDescription); throw new Error("cf"); }
-  return j;
-}
 
 async function broadcast(topic: string, event: string, payload: Record<string, unknown>) {
   try {
@@ -94,13 +73,12 @@ async function follows(a: string, b: string) {
   const { data } = await db.from("follows").select("follower_id").eq("follower_id", a).eq("following_id", b).maybeSingle();
   return !!data;
 }
-// Tapusin ang mga live na nawala (Cloudflare: walang beat) o lumampas sa oras (link)
+// Tapusin ang mga live na lumampas sa oras (at ang lumang camera live, kung may naiwan)
 async function expire() {
-  await db.from("lives").update({ status: "ended", ended_at: nowIso() }).eq("status", "live").eq("platform", "cf").lt("heartbeat_at", new Date(Date.now() - STALE_S * 1000).toISOString());
-  await db.from("lives").update({ status: "ended", ended_at: nowIso() }).eq("status", "live").neq("platform", "cf").lt("started_at", new Date(Date.now() - LINK_H * 3600 * 1000).toISOString());
+  await db.from("lives").update({ status: "ended", ended_at: nowIso() }).eq("status", "live").eq("platform", "cf");
+  await db.from("lives").update({ status: "ended", ended_at: nowIso() }).eq("status", "live").lt("started_at", new Date(Date.now() - LINK_H * 3600 * 1000).toISOString());
 }
-const gone = (l: { platform: string; heartbeat_at: string; started_at: string }) =>
-  l.platform === "cf" ? new Date(l.heartbeat_at).getTime() < Date.now() - STALE_S * 1000 : new Date(l.started_at).getTime() < Date.now() - LINK_H * 3600 * 1000;
+const gone = (l: { platform: string; started_at: string }) => l.platform === "cf" || new Date(l.started_at).getTime() < Date.now() - LINK_H * 3600 * 1000;
 
 // ---------- link ng live sa ibang platform → platform + embed (tanggap lang ang kilalang anyo; walang ibang site) ----------
 function parseLink(raw: string): { platform: string; embed: string; link: string } | null {
@@ -142,46 +120,18 @@ const view = (l: any) => ({ id: l.id, title: l.title, source: l.source, viewers:
 // ---------- actions ----------
 // deno-lint-ignore no-explicit-any
 async function status(me: any) {
-  return reply({ ok: true, ready: !!(APP_ID && APP_TOKEN), links: true, can_live: !isTeen(me.birthdate), ice: ICE });
+  return reply({ ok: true, links: true, can_live: !isTeen(me.birthdate) });
 }
 
 // deno-lint-ignore no-explicit-any
 async function start(p: any, me: any) {
-  const viaLink = p.link !== undefined && p.link !== null;
-  if (!viaLink && (!APP_ID || !APP_TOKEN)) return fail("Live isn't set up yet. Please try again later.", 503);
   if (isTeen(me.birthdate)) return fail("Going live is for 18+ accounts. You can still watch lives.", 403);
   const title = String(p.title ?? "").trim().slice(0, 80);
   if (title) {
     const v = checkFor(me, title);
     if (!v.ok && v.level === "block") { later(logBlock(db, me.id, v, "live title")); return fail(blockMessage(v.category)); }
   }
-  if (viaLink) return startLink(p, me, title);
-  const sdp = String(p.sdp ?? "");
-  // deno-lint-ignore no-explicit-any
-  const tracks = (Array.isArray(p.tracks) ? p.tracks : []).slice(0, 2).map((t: any) => ({ mid: String(t.mid ?? ""), name: String(t.name ?? "").replace(/[^a-z0-9-]/gi, "").slice(0, 32) }));
-  if (!sdp.startsWith("v=0") || sdp.length > 20000 || !tracks.length || tracks.some((t: { mid: string; name: string }) => !t.mid || !t.name)) return fail("Couldn't start the live.");
-  const { count } = await db.from("lives").select("id", { count: "exact", head: true }).eq("user_id", me.id).gte("started_at", new Date(Date.now() - 3600 * 1000).toISOString());
-  if ((count ?? 0) >= RATE_N) return fail("You've started a lot of lives. Please wait a bit.", 429);
-  await db.from("lives").update({ status: "ended", ended_at: nowIso() }).eq("user_id", me.id).eq("status", "live");
-
-  let session: string, answer: string;
-  try {
-    session = (await cf("POST", "/sessions/new")).sessionId;
-    const r = await cf("POST", `/sessions/${session}/tracks/new`, {
-      sessionDescription: { type: "offer", sdp },
-      tracks: tracks.map((t: { mid: string; name: string }) => ({ location: "local", mid: t.mid, trackName: t.name })),
-    });
-    answer = r.sessionDescription?.sdp;
-    if (!answer) throw new Error("no answer");
-  } catch { return fail("Couldn't reach the live server. Please try again.", 502); }
-
-  const source = p.source === "screen" ? "screen" : "camera";
-  const { data: l, error } = await db.from("lives").insert({
-    user_id: me.id, title, source, cf_session: session, tracks: tracks.map((t: { name: string }) => t.name), channel: "tmn-live-" + secret(12),
-  }).select("*").single();
-  if (error) { console.error("insert live", error.message); return fail("Couldn't start the live."); }
-  tellFollowers(me, l.id, title);
-  return reply({ ok: true, live: { ...view({ ...l, users: me }), mine: true, channel: l.channel }, sdp: answer });
+  return startLink(p, me, title);
 }
 // sabihan ang followers (sinusunod ang notification settings nila)
 // deno-lint-ignore no-explicit-any
@@ -210,16 +160,6 @@ async function startLink(p: any, me: any, title: string) {
 }
 
 // deno-lint-ignore no-explicit-any
-async function beat(p: any, me: any) {
-  if (!isUuid(p.id)) return fail("Live not found.", 404);
-  const n = Math.max(0, Math.min(100000, Math.floor(Number(p.viewers) || 0)));
-  const { data: l } = await db.from("lives").select("id, status, peak").eq("id", p.id).eq("user_id", me.id).maybeSingle();
-  if (!l || l.status !== "live") return fail("This live has ended.", 410);
-  await db.from("lives").update({ heartbeat_at: nowIso(), viewers: n, peak: Math.max(n, l.peak ?? 0) }).eq("id", p.id);
-  return reply({ ok: true });
-}
-
-// deno-lint-ignore no-explicit-any
 async function end(p: any, me: any) {
   if (!isUuid(p.id)) return fail("Live not found.", 404);
   const { data: l } = await db.from("lives").update({ status: "ended", ended_at: nowIso() }).eq("id", p.id).eq("user_id", me.id).eq("status", "live").select("channel").maybeSingle();
@@ -235,35 +175,15 @@ async function list(me: any) {
   const { data } = await db.from("lives").select("id, user_id, title, source, viewers, started_at, platform, link, embed, users!lives_user_id_fkey(id, username, display_name, avatar_url)")
     .eq("status", "live").in("user_id", ids).order("started_at", { ascending: false }).limit(30);
   // deno-lint-ignore no-explicit-any
-  return reply({ ok: true, ready: !!(APP_ID && APP_TOKEN), links: true, lives: (data ?? []).map((l: any) => ({ ...view(l), mine: l.user_id === me.id })) });
+  return reply({ ok: true, links: true, lives: (data ?? []).map((l: any) => ({ ...view(l), mine: l.user_id === me.id })) });
 }
 
 // deno-lint-ignore no-explicit-any
 async function watch(p: any, me: any) {
   const l = await liveFor(String(p.id ?? ""), me);
   if (!l) return fail("This live has ended.", 410);
-  if (l.platform !== "cf") return reply({ ok: true, live: { ...view(l), mine: l.user_id === me.id, channel: l.channel } });   // player ng platform na; chat at ❤️ sa atin
-  if (!APP_ID || !APP_TOKEN) return fail("Live isn't set up yet.", 503);
-  if (l.user_id === me.id) return fail("This is your own live.");
-  try {
-    const session = (await cf("POST", "/sessions/new")).sessionId;
-    const r = await cf("POST", `/sessions/${session}/tracks/new`, {
-      tracks: (l.tracks as string[]).map((name) => ({ location: "remote", sessionId: l.cf_session, trackName: name })),
-    });
-    if (!r.sessionDescription?.sdp) throw new Error("no offer");
-    return reply({ ok: true, live: { ...view(l), channel: l.channel }, session, sdp: r.sessionDescription.sdp, ice: ICE });
-  } catch { return fail("Couldn't connect to the live. Please try again.", 502); }
+  return reply({ ok: true, live: { ...view(l), mine: l.user_id === me.id, channel: l.channel } });   // player ng platform; chat at ❤️ sa atin
 }
-
-// deno-lint-ignore no-explicit-any
-async function answer(p: any) {
-  const session = String(p.session ?? ""), sdp = String(p.sdp ?? "");
-  if (!/^[A-Za-z0-9_-]{8,128}$/.test(session) || !sdp.startsWith("v=0") || sdp.length > 20000) return fail("Couldn't connect to the live.");
-  try { await cf("PUT", `/sessions/${session}/renegotiate`, { sessionDescription: { type: "answer", sdp } }); }
-  catch { return fail("Couldn't connect to the live. Please try again.", 502); }
-  return reply({ ok: true });
-}
-
 // deno-lint-ignore no-explicit-any
 async function say(p: any, me: any) {
   const text = String(p.text ?? "").replace(/\s+/g, " ").trim().slice(0, 200);
@@ -291,11 +211,9 @@ Deno.serve(async (req) => {
     switch (p.action) {
       case "status": return await status(me);
       case "start":  return await start(p, me);
-      case "beat":   return await beat(p, me);
       case "end":    return await end(p, me);
       case "list":   return await list(me);
       case "watch":  return await watch(p, me);
-      case "answer": return await answer(p);
       case "say":    return await say(p, me);
       default:       return fail("Unknown action.");
     }

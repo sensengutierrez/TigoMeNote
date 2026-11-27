@@ -1,4 +1,8 @@
 {
+  "0.11.62": [
+    "🔴 Live is now link-only: share your YouTube, TikTok, Facebook or Twitch live — always free",
+    "Privacy Policy and Third-party page now list the YouTube, Facebook, Twitch and TikTok players, call effects (MediaPipe) and call servers"
+  ],
   "0.11.61": [
     "🔴 Live now works with YouTube, TikTok, Facebook and Twitch: go live there, paste the link in Explore, and your followers watch here",
     "💬 Chat, ❤️ and a viewer count on every live — free, no limits",

@@ -165,6 +165,7 @@ updated: 2026-10-24
 | 2026-11-27 | Live: 18+ lang ang nagla-live; nakikita ng followers; chat dumadaan sa moderation | Kaligtasan (may teen users) |
 | 2026-11-27 | Minimize ng tawag: maliit na window sa loob ng app + Android Picture-in-Picture | Hiling ni Bench (parang Messenger bubbles) |
 | 2026-11-27 | Live: ang video ay sa YouTube / TikTok / Facebook / Twitch (link); sa atin ang player, chat at ❤️; sariling Live sa Cloudflare naka-hold | Libre at walang limit; ayaw ni Bench ng posibleng bill |
+| 2026-11-27 | Tinanggal ang sariling camera live (Cloudflare) sa app at server; link na lang ang Live | Hiling ni Bench: walang posibleng bayad |
 
 ## Bukas pa (hinihintay si Bench)
 - **Approval:** auto-active ang bagong users, o kailangan i-approve? (`REQUIRE_APPROVAL`)

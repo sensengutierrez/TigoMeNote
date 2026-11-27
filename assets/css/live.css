@@ -1,4 +1,4 @@
-/* TigoMeNote · live.css — 🔴 Live sa Explore (components/live-view.js) at "Live now" na hanay */
+/* TigoMeNote · live.css — 🔴 Live sa Explore (components/live-view.js: player ng YouTube/Twitch/Facebook, TikTok card, chat, ❤️) at "Live now" na hanay */
 /* ---------- Live now (Explore) ---------- */
 .ex-live { display: flex; gap: 14px; overflow-x: auto; padding: 12px 14px; scrollbar-width: none; }
 .ex-live::-webkit-scrollbar { display: none; }
@@ -13,11 +13,6 @@
 body.in-live { overflow: hidden; }
 .lv-ov { position: fixed; inset: 0; z-index: 420; background: #000; color: #fff; display: grid; grid-template-rows: auto 1fr auto auto; overflow: hidden;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
-.lv-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; }
-.lv-video.mirror { transform: scaleX(-1); }
-.lv-video.is-screen { object-fit: contain; }
-@media (min-width: 900px) { .lv-video { object-fit: contain; } }
-.lv-ov::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(rgba(0,0,0,.5), transparent 20%, transparent 58%, rgba(0,0,0,.6)); }
 .lv-top { position: relative; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 12px 12px 0; }
 .lv-who { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
 .lv-who > span:not(.avatar) { display: grid; min-width: 0; }
@@ -29,13 +24,6 @@ body.in-live { overflow: hidden; }
 .lv-x { flex: none; width: 38px; height: 38px; border: 0; border-radius: 50%; background: rgba(0,0,0,.4); color: #fff; font-size: 16px; cursor: pointer; }
 .lv-mid { position: relative; z-index: 2; display: grid; place-items: center; padding: 16px; }
 .lv-wait { margin: 0; padding: 10px 16px; border-radius: 14px; background: rgba(0,0,0,.55); font-weight: 600; text-align: center; display: grid; gap: 10px; justify-items: center; }
-.lv-setup { display: grid; gap: 12px; width: min(420px, 100%); justify-items: center; }
-.lv-title { width: 100%; height: 46px; padding: 0 16px; border-radius: 14px; border: 0; background: rgba(0,0,0,.5); color: #fff; font: inherit; font-size: 16px; text-align: center; }
-.lv-title::placeholder { color: rgba(255,255,255,.7); }
-.lv-src { background: rgba(0,0,0,.5); }
-.lv-src button { color: #fff; }
-.lv-src button[aria-pressed="true"] { background: #fff; color: #111; }
-.lv-tip { margin: 0; font-size: 13px; opacity: .9; text-align: center; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
 .lv-chat { position: relative; z-index: 2; max-height: 30vh; overflow-y: auto; padding: 0 12px 6px; display: grid; gap: 6px; align-content: end; width: min(440px, 100%);
   mask-image: linear-gradient(transparent, #000 24%); -webkit-mask-image: linear-gradient(transparent, #000 24%); scrollbar-width: none; }
 .lv-chat::-webkit-scrollbar { display: none; }
@@ -48,13 +36,11 @@ body.in-live { overflow: hidden; }
 .lv-in::placeholder { color: rgba(255,255,255,.7); }
 .lv-send { border: 0; background: none; color: #fff; font-size: 17px; padding: 0 14px; cursor: pointer; }
 .lv-round { flex: none; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(0,0,0,.45); font-size: 20px; cursor: pointer; color: #fff; }
-.lv-go { height: 50px; padding: 0 28px; border-radius: 999px; border: 0; background: #ff2d55; color: #fff; font-size: 16px; font-weight: 750; }
 .lv-end { flex: none; height: 44px; padding: 0 18px; border-radius: 999px; border: 0; background: #ff2d55; color: #fff; font-weight: 750; }
-.lv-snd { background: #fff; color: #111; border: 0; }
 .lv-hearts { position: absolute; right: 22px; bottom: 90px; width: 40px; height: 50vh; z-index: 2; pointer-events: none; }
 .lv-heart { position: absolute; bottom: 0; left: 50%; font-size: 26px; animation: lv-up 2.2s ease-out forwards; }
 @keyframes lv-up { to { transform: translate(var(--dx, 0), -45vh) scale(1.3); opacity: 0; } }
-.lv-round:focus-visible, .lv-x:focus-visible, .lv-go:focus-visible, .lv-end:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.lv-round:focus-visible, .lv-x:focus-visible, .lv-end:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 @media (orientation: landscape) and (max-height: 520px) {
   .lv-chat { max-height: 38vh; }
   .lv-bot { padding-bottom: 8px; }
@@ -68,7 +54,6 @@ body.in-live { overflow: hidden; }
 .lv-link .field > span { font-size: 13px; font-weight: 600; }
 .lv-plats { display: flex; flex-wrap: wrap; gap: 6px; }
 .lv-plats span { padding: 4px 10px; border-radius: 999px; background: var(--surface-2, rgba(0,0,0,.06)); font-size: 12.5px; font-weight: 600; }
-.lv-ov.is-link::before { display: none; }
 .lv-ov.is-link .lv-mid { padding: 0; min-height: 0; }
 .lv-frame { width: 100%; height: 100%; border: 0; background: #000; display: block; }
 .lv-card { display: grid; justify-items: center; gap: 10px; text-align: center; padding: 20px; max-width: 360px; }
